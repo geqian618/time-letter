@@ -129,22 +129,33 @@
                   </template>
                   <ul class="options">
                     <li class="option">
-                      <div class="label">边框颜色</div>
+                      <div class="label">边框</div>
                       <div class="value">
                         <el-color-picker
                             size="small"
                             @change="handleBorders"
-                            v-model="param.border.borderColor"
+                            v-model="param.color.borderColor"
                             show-alpha
                             :predefine="predefineColors"/>
                       </div>
                     </li>
                     <li class="option">
-                      <div class="label">字体颜色</div>
+                      <div class="label">标签背景</div>
                       <div class="value">
                         <el-color-picker
                             @change="handleBorders"
-                            v-model="param.base.fontColor"
+                            v-model="param.color.tagBackground"
+                            show-alpha
+                            size="small"
+                            :predefine="predefineColors"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">标签字体</div>
+                      <div class="value">
+                        <el-color-picker
+                            @change="handleBorders"
+                            v-model="param.color.fontColor"
                             show-alpha
                             size="small"
                             :predefine="predefineColors"/>
@@ -247,15 +258,19 @@ const param = ref({
     iso: '',
     shutter: '',
     aperture: '',
-    shootingTime: '',
-    fontColor: 'rgba(255, 255, 255, 1)'
+    shootingTime: ''
+  },
+  color: {
+    borderColor: 'rgba(255, 255, 255, 1)',
+    fontColor: 'rgba(255, 255, 255, 1)',
+    tagBackground: 'rgba(255, 255, 255, 1)',
   },
   border: {
     borderLeft: 0,
     borderRight: 0,
     borderTop: 0,
     borderBottom: 0,
-    borderColor: 'rgba(255, 255, 255, 1)'
+
   },
   tags: []
 })
@@ -291,7 +306,8 @@ onMounted(async () => {
 const handleBorders = () => {
   const img = picture.value;
   if (img.complete && img.naturalWidth > 0) {
-    const {borderLeft, borderRight, borderTop, borderBottom, borderColor} = param.value.border;
+    const {borderLeft, borderRight, borderTop, borderBottom} = param.value.border;
+    const {borderColor} = param.value.color;
     img.style.borderLeft = `${borderLeft}px solid ${borderColor}`
     img.style.borderRight = `${borderRight}px solid ${borderColor}`
     img.style.borderTop = `${borderTop}px solid ${borderColor}`

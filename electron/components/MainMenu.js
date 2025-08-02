@@ -97,7 +97,7 @@ const mainMenu = (args) => {
             submenu: [
                 {
                     label: '导出设置',
-                    role: 'toggleDevTools'
+                    role: ''
                 },
             ]
         },
