@@ -5,6 +5,7 @@ const os = require('os');
 const Exif = require('exif');
 // 默认并发限制为CPU核心数
 const DEFAULT_CONCURRENCY = os.cpus().length;
+const shutterSpeed = require('./shutter-speed')
 
 /**
  * 添加图片边框
@@ -304,26 +305,59 @@ async function findFilePaths(dirPath, extensions, deepSearch = false) {
     return results;
 }
 
-
-/**
- * 解析图片元信息
- * @param imagePath 图片路径
- * @returns {Promise<unknown>}
- */
 async function parseMetadata(imagePath) {
     try {
         const data = await fs.promises.readFile(imagePath);
-        return new Promise((resolve, reject) => {
-            new Exif.ExifImage({image: data}, (error, exifData) => {
-                if (error) return reject(error);
-                resolve(exifData);
+        // 将 ExifImage 转换为 Promise
+        return await new Promise((resolve, reject) => {
+            new Exif.ExifImage({image: data}, (error, data) => {
+                if (error) reject(error);
+                else resolve(data);
             });
         });
     } catch (err) {
-        throw new Error(`读取文件失败: ${err.message}`);
+        // 统一处理所有错误，避免暴露文件路径
+        throw new Error(`解析元数据失败: ${err.message}`);
     }
 }
 
+/**
+ * 获取图片分辨率
+ * @param imagePath
+ * @returns {Promise<{width: undefined, height: undefined}>}
+ */
+async function getImageResolution(imagePath) {
+    const {width, height} = await createSharp(imagePath).metadata();
+    return width + ' x ' + height
+}
+
+function getFileSize(filePath) {
+    const size = fs.statSync(filePath)?.size;
+    return size ? (size / 1000 / 1000).toFixed(2) + 'MB' : size
+}
+
+
+async function parsePhotoMetadata(filePath) {
+    const {
+        image: {Make, Model},
+        exif: {ISO, ExposureTime, FNumber, FocalLength, LensMake, LensModel, CreateDate, DateTimeOriginal}
+    } = await parseMetadata(filePath);
+    return [
+        {label: '文件名称', value: path.basename(filePath)},
+        {label: '文件大小', value: getFileSize(filePath)},
+        {label: '分辨率', value: await getImageResolution(filePath)},
+        {label: '拍摄日期', value: DateTimeOriginal},
+        {label: '修改日期', value: CreateDate},
+        {label: '设备厂商', value: Make},
+        {label: '设备型号', value: Model},
+        {label: '镜头厂商', value: LensMake},
+        {label: '镜头型号', value: LensModel},
+        {label: 'ISO', value: ISO},
+        {label: '快门速度', value: shutterSpeed.formatShutterSpeed(ExposureTime)},
+        {label: '光圈', value: FNumber ? FNumber + 'f' : ''},
+        {label: '焦段', value: FocalLength ? Math.trunc(FocalLength * 1.5) + 'mm' : ''},
+    ]
+}
 
 // findFilePaths("D:\\desktop\\摄影后期", ['.jpg']).then(paths => {
 //     let images = paths.map(path => {
@@ -340,6 +374,6 @@ async function parseMetadata(imagePath) {
 // })
 
 
-module.exports = {parseMetadata};
+module.exports = {parsePhotoMetadata};
 
 

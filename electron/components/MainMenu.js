@@ -14,15 +14,14 @@ function getSafeImagePath(absolutePath) {
 /**
  * 打开选择文件对话框
  */
-const selectFile = async (window) => {
+const selectFile = async (window, type) => {
     const {filePaths} = await dialog.showOpenDialog({
         buttonLabel: '选择',
         properties: ['openFile', 'multiSelections'],
         filters: [{name: 'Images', extensions: ['jpg', 'png', 'gif', 'webp']}]
     });
-    if (filePaths) {
-        // 读取图片并转换为Base64
-        const data = await Promise.all(
+    if (filePaths && filePaths.length) {
+        const files = await Promise.all(
             filePaths.map(async (filePath) => {
                 const extname = path.extname(filePath).slice(1);
                 return {
@@ -33,7 +32,8 @@ const selectFile = async (window) => {
                 };
             })
         );
-        window.webContents.send('input-images', data);
+        const data = new Map(files.map(item => [item.path, item]));
+        window.webContents.send('input-images', {type, data})
     }
 }
 
@@ -75,8 +75,14 @@ const mainMenu = (args) => {
                 {
                     label: '导入',
                     // 无传参
-                    click: () => selectFile(args.window),
+                    click: () => selectFile(args.window, 0),
                     accelerator: 'ctrl+n'
+
+                }, {
+                    label: '追加导入',
+                    // 无传参
+                    click: () => selectFile(args.window, 1),
+                    accelerator: 'ctrl+p'
 
                 },
                 {

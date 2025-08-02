@@ -1,7 +1,8 @@
 const {app, ipcMain, protocol, BrowserWindow, Menu} = require('electron')
 const WinState = require('electron-win-state').default
 const path = require('path')
-const pictureEditor = require('./utils/picture-editor')
+const fs = require('fs')
+const  pictureEditor= require('./utils/picture-editor')
 
 const environment = process.env.NODE_ENV
 
@@ -67,7 +68,8 @@ const createWindow = () => {
 
 
 ipcMain.handle('parse-photo-metadata', async (event, filePath) => {
-    return await pictureEditor.parseMetadata(filePath)
+    console.log(await pictureEditor.parsePhotoMetadata(filePath));
+    return await pictureEditor.parsePhotoMetadata(filePath)
 })
 
 
