@@ -4,7 +4,7 @@
     <div class="page-main">
       <div class="page-left">
         <div class="metadata">
-          元信息
+          图片元信息
         </div>
         <div class="details">
           <ul ref="metadataContainer" @wheel="handleMetadataWheel">
@@ -20,7 +20,7 @@
       </div>
       <div class="page-right">
         <div class="settings">
-          配置项
+          配置选项
         </div>
         <div class="settings-details">
           <el-aside>
@@ -38,6 +38,12 @@
                           <div class="label">相机品牌</div>
                           <div class="value">
                             <el-input v-model="param.base.cameraBrand" size="small"/>
+                          </div>
+                        </li>
+                        <li class="item">
+                          <div class="label">相机型号</div>
+                          <div class="value">
+                            <el-input v-model="param.base.cameraModel" size="small"/>
                           </div>
                         </li>
                         <li class="item">
@@ -219,6 +225,7 @@ const picture = ref(null);
 const param = ref({
   base: {
     cameraBrand: '',
+    cameraModel:'',
     lensModel: '',
     focalLength: '',
     iso: '',
@@ -296,7 +303,9 @@ async function handlePreview(event: object, image: object) {
   selectedElement.value && selectedElement.value.classList.remove('active')
   selectedElement.value = event.target;
   selectedElement.value && selectedElement.value.classList.add('active')
-  metadata.value = await window.electronAPI.parsePhotoMetadata(image.path);
+  const data = await window.electronAPI.parsePhotoMetadata(image.path);
+  metadata.value = data.details;
+  param.value.base = data.base
   handleBorders()
 }
 
@@ -397,7 +406,7 @@ const handleWheel = (e: Event) => {
     height: 40px;
     border-bottom: 2px solid #484949;
     padding-left: 10px;
-    font-size: 20px;
+    font-size: 16px;
     display: flex;
     justify-content: start;
     align-items: center;
@@ -407,7 +416,6 @@ const handleWheel = (e: Event) => {
     height: calc(100% - 40px);
     width: 100%;
     font-size: 10px;
-
     ul {
       display: block;
       box-sizing: border-box;
@@ -448,6 +456,7 @@ const handleWheel = (e: Event) => {
 }
 
 .page-main .page-right {
+
   width: 20%;
   height: 100%;
   background: #817e7e;
@@ -456,7 +465,7 @@ const handleWheel = (e: Event) => {
     height: 40px;
     border-bottom: 2px solid #484949;
     padding-left: 10px;
-    font-size: 20px;
+    font-size: 16px;
     display: flex;
     justify-content: start;
     align-items: center;
@@ -466,18 +475,15 @@ const handleWheel = (e: Event) => {
     width: 100%;
     height: calc(100% - 80px);
     box-sizing: border-box;
-
     .el-menu {
       border-right: none;
       background-color: #484949;
     }
-
     .el-aside {
       color: var(--el-text-color-primary);
       background: #817e7e;
       width: 100%;
       height: 100%;
-
       .el-sub-menu {
         border-top: 1px solid #a2a4a6;
         background-color: #a2a0a0;
