@@ -37,43 +37,43 @@
                         <li class="item">
                           <div class="label">相机品牌</div>
                           <div class="value">
-                            <el-input v-model="param.base.cameraBrand" size="small" placeholder="Please input"/>
+                            <el-input v-model="param.base.cameraBrand" size="small"/>
                           </div>
                         </li>
                         <li class="item">
                           <div class="label">镜头型号</div>
                           <div class="value">
-                            <el-input v-model="param.base.lensModel" size="small" placeholder="Please input"/>
+                            <el-input v-model="param.base.lensModel" size="small"/>
                           </div>
                         </li>
                         <li class="item">
                           <div class="label">焦段</div>
                           <div class="value">
-                            <el-input v-model="param.base.focalLength" size="small" placeholder="Please input"/>
+                            <el-input v-model="param.base.focalLength" size="small"/>
                           </div>
                         </li>
                         <li class="item">
                           <div class="label">IOS</div>
                           <div class="value">
-                            <el-input v-model="param.base.iso" size="small" placeholder="Please input"/>
+                            <el-input v-model="param.base.iso" size="small"/>
                           </div>
                         </li>
                         <li class="item">
                           <div class="label">快门</div>
                           <div class="value">
-                            <el-input v-model="param.base.shutter" size="small" placeholder="Please input"/>
+                            <el-input v-model="param.base.shutter" size="small"/>
                           </div>
                         </li>
                         <li class="item">
                           <div class="label">光圈</div>
                           <div class="value">
-                            <el-input v-model="param.base.aperture" size="small" placeholder="Please input"/>
+                            <el-input v-model="param.base.aperture" size="small"/>
                           </div>
                         </li>
                         <li class="item">
                           <div class="label">拍摄日期</div>
                           <div class="value">
-                            <el-input v-model="param.base.shootingTime" size="small" placeholder="Please input"/>
+                            <el-input v-model="param.base.shootingTime" size="small"/>
                           </div>
                         </li>
                       </ul>
@@ -130,10 +130,10 @@
                   <div class="options">
                     <div class="option">
                       <div class="items">
-                        <div class="item" v-for="tag in tags" :key="tag.id">
+                        <div class="item" v-for="tag in param.tags" :key="tag.id">
                           <div class="label">{{ tag.label }}</div>
                           <div class="value">
-                            <el-input v-model="tag.value" size="small" placeholder="Please input"/>
+                            <el-input v-model="tag.value" size="small"/>
                             <el-icon @click="removeTag(tag)">
                               <Delete/>
                             </el-icon>
@@ -276,16 +276,16 @@ const handleBorders = () => {
 }
 
 const removeTag = (tag) => {
-  const index = tags.value.indexOf(tag);
+  const index = param.value.tags.indexOf(tag);
   if (index !== -1) {
-    tags.value.splice(index, 1);
+    param.value.tags.splice(index, 1);
   }
 }
 
 const handleNewTag = () => {
   if (customTag.value.label && customTag.value.value) {
     customTag.value.id = Date.now()
-    tags.value.push(customTag.value)
+    param.value.tags.push(customTag.value)
     dialogVisible.value = false
     customTag.value = {}
   }
@@ -481,9 +481,11 @@ const handleWheel = (e: Event) => {
       .el-sub-menu {
         border-top: 1px solid #a2a4a6;
         background-color: #a2a0a0;
+
         span {
           color: white;
         }
+
         .control-option {
           background-color: #a2a0a0;
           display: flex;
@@ -491,6 +493,7 @@ const handleWheel = (e: Event) => {
           height: 50px;
           padding-left: 20px;
         }
+
         .options {
           background-color: #a2a0a0;
           font-size: 13px;
@@ -530,6 +533,7 @@ const handleWheel = (e: Event) => {
                   align-items: center;
                   width: calc(100% - 55px);
                   padding: 0 20px;
+
                   .el-icon {
                     margin-left: 5px;
                   }
@@ -540,6 +544,7 @@ const handleWheel = (e: Event) => {
                       margin: 0;
                     }
                   }
+
                   .el-slider {
                     width: 100%;
                   }
