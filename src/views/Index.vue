@@ -84,29 +84,25 @@
                         <li class="item">
                           <div class="label">上边框</div>
                           <div class="value">
-                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderTop"
-                                       placement="top"/>
-                          </div>
-                        </li>
-                        <li class="item">
-                          <div class="label">下边框</div>
-                          <div class="value">
-                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderBottom"
-                                       placement="top"/>
+                            <el-slider @change="handleBorders" size="small"  v-model="param.border.borderTop" placement="top"/>
                           </div>
                         </li>
                         <li class="item">
                           <div class="label">左边框</div>
                           <div class="value">
-                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderLeft"
-                                       placement="top"/>
+                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderLeft" placement="top"/>
                           </div>
                         </li>
                         <li class="item">
                           <div class="label">右边框</div>
                           <div class="value">
-                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderRight"
-                                       placement="top"/>
+                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderRight" placement="top"/>
+                          </div>
+                        </li>
+                        <li class="item">
+                          <div class="label">下边框</div>
+                          <div class="value">
+                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderBottom" placement="top"/>
                           </div>
                         </li>
                       </ul>
@@ -147,7 +143,7 @@
     </div>
 
     <div class="page-images" ref="imageList" @wheel="handleWheel" @contextmenu="imageListContextmenu">
-      <img v-lazy="value.url" v-for="([key, value]) in images" :key="key" @click="preview($event, value)">
+      <img v-lazy="value.url" v-for="([key, value]) in images" :key="key" @click="handlePreview($event, value)">
     </div>
   </div>
 
@@ -238,7 +234,7 @@ onMounted(async () => {
 
 const handleBorders = () => {
   const img = picture.value;
-  if (img) {
+  if (img.complete && img.naturalWidth > 0) {
     const {borderLeft, borderRight, borderTop, borderBottom} = param.value.border;
     img.style.borderLeft = `${borderLeft}px solid white`
     img.style.borderRight = `${borderRight}px solid white`
@@ -263,12 +259,13 @@ const handleNewTag = () => {
   }
 }
 
-async function preview(event: object, image: object) {
+async function handlePreview(event: object, image: object) {
   previewUrl.value = image.url
   selectedElement.value && selectedElement.value.classList.remove('active')
   selectedElement.value = event.target;
   selectedElement.value && selectedElement.value.classList.add('active')
   metadata.value = await window.electronAPI.parsePhotoMetadata(image.path);
+  handleBorders()
 }
 
 
