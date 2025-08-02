@@ -1,5 +1,5 @@
 {
-  "name": "Photo Editor",
+  "name": "photo-editor",
   "version": "0.0.0",
   "private": true,
   "main": "electron/main.js",
