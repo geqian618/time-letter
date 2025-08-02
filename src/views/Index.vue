@@ -82,27 +82,41 @@
                       <div class="items-title">边框</div>
                       <ul class="items">
                         <li class="item">
+                          <div class="label">边框颜色</div>
+                          <div class="value">
+                            <el-color-picker
+                                @change="handleBorders"
+                                v-model="param.border.borderColor"
+                                show-alpha
+                                :predefine="predefineColors"/>
+                          </div>
+                        </li>
+                        <li class="item">
                           <div class="label">上边框</div>
                           <div class="value">
-                            <el-slider @change="handleBorders" size="small"  v-model="param.border.borderTop" placement="top"/>
+                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderTop"
+                                       placement="top"/>
                           </div>
                         </li>
                         <li class="item">
                           <div class="label">左边框</div>
                           <div class="value">
-                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderLeft" placement="top"/>
+                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderLeft"
+                                       placement="top"/>
                           </div>
                         </li>
                         <li class="item">
                           <div class="label">右边框</div>
                           <div class="value">
-                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderRight" placement="top"/>
+                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderRight"
+                                       placement="top"/>
                           </div>
                         </li>
                         <li class="item">
                           <div class="label">下边框</div>
                           <div class="value">
-                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderBottom" placement="top"/>
+                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderBottom"
+                                       placement="top"/>
                           </div>
                         </li>
                       </ul>
@@ -169,6 +183,23 @@
 
 import {onMounted, ref, watch} from "vue";
 
+const predefineColors = ref([
+  '#ff4500',
+  '#ff8c00',
+  '#ffd700',
+  '#90ee90',
+  '#00ced1',
+  '#1e90ff',
+  '#c71585',
+  'rgba(255, 69, 0, 0.68)',
+  'rgb(255, 120, 0)',
+  'hsv(51, 100, 98)',
+  'hsva(120, 40, 94, 0.5)',
+  'hsl(181, 100%, 37%)',
+  'hsla(209, 100%, 56%, 0.73)',
+  '#c7158577',
+])
+
 const formLabelWidth = '50px'
 
 const images = ref(new Map())
@@ -200,6 +231,7 @@ const param = ref({
     borderRight: 0,
     borderTop: 0,
     borderBottom: 0,
+    borderColor: 'rgba(255, 255, 255, 1)'
   },
   tags: []
 })
@@ -235,11 +267,11 @@ onMounted(async () => {
 const handleBorders = () => {
   const img = picture.value;
   if (img.complete && img.naturalWidth > 0) {
-    const {borderLeft, borderRight, borderTop, borderBottom} = param.value.border;
-    img.style.borderLeft = `${borderLeft}px solid white`
-    img.style.borderRight = `${borderRight}px solid white`
-    img.style.borderTop = `${borderTop}px solid white`
-    img.style.borderBottom = `${borderBottom}px solid white`
+    const {borderLeft, borderRight, borderTop, borderBottom, borderColor} = param.value.border;
+    img.style.borderLeft = `${borderLeft}px solid ${borderColor}`
+    img.style.borderRight = `${borderRight}px solid ${borderColor}`
+    img.style.borderTop = `${borderTop}px solid ${borderColor}`
+    img.style.borderBottom = `${borderBottom}px solid ${borderColor}`
   }
 }
 
@@ -449,11 +481,9 @@ const handleWheel = (e: Event) => {
       .el-sub-menu {
         border-top: 1px solid #a2a4a6;
         background-color: #a2a0a0;
-
         span {
           color: white;
         }
-
         .control-option {
           background-color: #a2a0a0;
           display: flex;
@@ -461,7 +491,6 @@ const handleWheel = (e: Event) => {
           height: 50px;
           padding-left: 20px;
         }
-
         .options {
           background-color: #a2a0a0;
           font-size: 13px;
@@ -501,11 +530,16 @@ const handleWheel = (e: Event) => {
                   align-items: center;
                   width: calc(100% - 55px);
                   padding: 0 20px;
-
                   .el-icon {
                     margin-left: 5px;
                   }
 
+                  :deep(.el-color-picker) {
+                    .el-icon {
+                      font-size: 12px;
+                      margin: 0;
+                    }
+                  }
                   .el-slider {
                     width: 100%;
                   }
