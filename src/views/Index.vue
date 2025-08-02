@@ -225,7 +225,7 @@ const picture = ref(null);
 const param = ref({
   base: {
     cameraBrand: '',
-    cameraModel:'',
+    cameraModel: '',
     lensModel: '',
     focalLength: '',
     iso: '',
@@ -416,6 +416,7 @@ const handleWheel = (e: Event) => {
     height: calc(100% - 40px);
     width: 100%;
     font-size: 10px;
+
     ul {
       display: block;
       box-sizing: border-box;
@@ -475,22 +476,29 @@ const handleWheel = (e: Event) => {
     width: 100%;
     height: calc(100% - 80px);
     box-sizing: border-box;
+
     .el-menu {
       border-right: none;
       background-color: #484949;
     }
+
     .el-aside {
       color: var(--el-text-color-primary);
       background: #817e7e;
       width: 100%;
       height: 100%;
-      .el-sub-menu {
-        border-top: 1px solid #a2a4a6;
-        background-color: #a2a0a0;
 
-        span {
-          color: white;
-        }
+      .el-sub-menu:first-child {
+        border-top: none;
+      }
+
+      .el-sub-menu:last-child {
+        border-bottom: 1px solid #a2a4a6;
+      }
+
+      .el-sub-menu {
+        border-top: 1px solid #efefef;
+        background-color: #a2a0a0;
 
         .control-option {
           background-color: #a2a0a0;
@@ -501,15 +509,14 @@ const handleWheel = (e: Event) => {
         }
 
         .options {
-          background-color: #a2a0a0;
+          background-color: #b2b1b1;
           font-size: 13px;
-
           .option {
             border-bottom: 1px solid black;
             padding: 10px 0;
-
             .items-title {
               height: 30px;
+
               display: flex;
               justify-content: center;
               align-items: center;
@@ -559,10 +566,6 @@ const handleWheel = (e: Event) => {
             }
           }
         }
-      }
-
-      .el-sub-menu:last-child {
-        border-bottom: 1px solid #a2a4a6;
       }
     }
   }
