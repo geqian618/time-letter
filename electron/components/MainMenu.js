@@ -45,7 +45,6 @@ const saveFile = (args) => {
         console.log(res.filePath)
     })
 }
-
 /**
  * 打开保存文件对话框
  */
@@ -106,8 +105,12 @@ const mainMenu = (args) => {
             label: '帮助',
             submenu: [
                 {
-                    label: 'DevTools',
+                    label: '控制台',
                     role: 'toggleDevTools'
+                },
+                {
+                    label: '关于',
+                    role: ''
                 }
             ]
         }

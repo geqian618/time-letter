@@ -25,129 +25,148 @@
         <div class="settings-details">
           <el-aside>
             <el-scrollbar>
-              <el-menu :default-openeds="['1', '3']">
+              <el-menu :default-openeds="['1', '2']">
                 <el-sub-menu index="1">
                   <template #title>
                     <span>基本</span>
                   </template>
-                  <div class="options">
-                    <div class="option">
-                      <div class="items-title">图片信息</div>
-                      <ul class="items">
-                        <li class="item">
-                          <div class="label">相机品牌</div>
-                          <div class="value">
-                            <el-input v-model="param.base.cameraBrand" size="small"/>
-                          </div>
-                        </li>
-                        <li class="item">
-                          <div class="label">相机型号</div>
-                          <div class="value">
-                            <el-input v-model="param.base.cameraModel" size="small"/>
-                          </div>
-                        </li>
-                        <li class="item">
-                          <div class="label">镜头型号</div>
-                          <div class="value">
-                            <el-input v-model="param.base.lensModel" size="small"/>
-                          </div>
-                        </li>
-                        <li class="item">
-                          <div class="label">焦段</div>
-                          <div class="value">
-                            <el-input v-model="param.base.focalLength" size="small"/>
-                          </div>
-                        </li>
-                        <li class="item">
-                          <div class="label">IOS</div>
-                          <div class="value">
-                            <el-input v-model="param.base.iso" size="small"/>
-                          </div>
-                        </li>
-                        <li class="item">
-                          <div class="label">快门</div>
-                          <div class="value">
-                            <el-input v-model="param.base.shutter" size="small"/>
-                          </div>
-                        </li>
-                        <li class="item">
-                          <div class="label">光圈</div>
-                          <div class="value">
-                            <el-input v-model="param.base.aperture" size="small"/>
-                          </div>
-                        </li>
-                        <li class="item">
-                          <div class="label">拍摄日期</div>
-                          <div class="value">
-                            <el-input v-model="param.base.shootingTime" size="small"/>
-                          </div>
-                        </li>
-                      </ul>
-                    </div>
-                    <div class="option">
-                      <div class="items-title">边框</div>
-                      <ul class="items">
-                        <li class="item">
-                          <div class="label">边框颜色</div>
-                          <div class="value">
-                            <el-color-picker
-                                @change="handleBorders"
-                                v-model="param.border.borderColor"
-                                show-alpha
-                                :predefine="predefineColors"/>
-                          </div>
-                        </li>
-                        <li class="item">
-                          <div class="label">上边框</div>
-                          <div class="value">
-                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderTop"
-                                       placement="top"/>
-                          </div>
-                        </li>
-                        <li class="item">
-                          <div class="label">左边框</div>
-                          <div class="value">
-                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderLeft"
-                                       placement="top"/>
-                          </div>
-                        </li>
-                        <li class="item">
-                          <div class="label">右边框</div>
-                          <div class="value">
-                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderRight"
-                                       placement="top"/>
-                          </div>
-                        </li>
-                        <li class="item">
-                          <div class="label">下边框</div>
-                          <div class="value">
-                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderBottom"
-                                       placement="top"/>
-                          </div>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
+                  <ul class="options">
+                    <li class="option">
+                      <div class="label">相机品牌</div>
+                      <div class="value">
+                        <el-input v-model="param.base.cameraBrand" size="small"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">相机型号</div>
+                      <div class="value">
+                        <el-input v-model="param.base.cameraModel" size="small"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">镜头型号</div>
+                      <div class="value">
+                        <el-input v-model="param.base.lensModel" size="small"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">焦段</div>
+                      <div class="value">
+                        <el-input v-model="param.base.focalLength" size="small"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">IOS</div>
+                      <div class="value">
+                        <el-input v-model="param.base.iso" size="small"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">快门</div>
+                      <div class="value">
+                        <el-input v-model="param.base.shutter" size="small"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">光圈</div>
+                      <div class="value">
+                        <el-input v-model="param.base.aperture" size="small"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">拍摄日期</div>
+                      <div class="value">
+                        <el-input v-model="param.base.shootingTime" size="small"/>
+                      </div>
+                    </li>
+                  </ul>
                 </el-sub-menu>
                 <el-sub-menu index="2">
                   <template #title>
+                    <span>边框</span>
+                  </template>
+                  <ul class="options">
+                    <li class="option">
+                      <div class="label">上边框</div>
+                      <div class="value">
+                        <el-slider @change="handleBorders"
+                                   size="small"
+                                   v-model="param.border.borderTop"
+                                   placement="top"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">左边框</div>
+                      <div class="value">
+                        <el-slider @change="handleBorders" size="small"
+                                   v-model="param.border.borderLeft"
+                                   placement="top"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">右边框</div>
+                      <div class="value">
+                        <el-slider @change="handleBorders"
+                                   size="small"
+                                   v-model="param.border.borderRight"
+                                   placement="top"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">下边框</div>
+                      <div class="value">
+                        <el-slider @change="handleBorders"
+                                   size="small"
+                                   v-model="param.border.borderBottom"
+                                   placement="top"/>
+                      </div>
+                    </li>
+                  </ul>
+                </el-sub-menu>
+                <el-sub-menu index="3">
+                  <template #title>
+                    <span>颜色</span>
+                  </template>
+                  <ul class="options">
+                    <li class="option">
+                      <div class="label">边框颜色</div>
+                      <div class="value">
+                        <el-color-picker
+                            size="small"
+                            @change="handleBorders"
+                            v-model="param.border.borderColor"
+                            show-alpha
+                            :predefine="predefineColors"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">字体颜色</div>
+                      <div class="value">
+                        <el-color-picker
+                            @change="handleBorders"
+                            v-model="param.base.fontColor"
+                            show-alpha
+                            size="small"
+                            :predefine="predefineColors"/>
+                      </div>
+                    </li>
+                  </ul>
+                </el-sub-menu>
+                <el-sub-menu index="4">
+                  <template #title>
                     <span>自定义标签</span>
                   </template>
-                  <div class="options">
-                    <div class="option">
-                      <div class="items">
-                        <div class="item" v-for="tag in param.tags" :key="tag.id">
-                          <div class="label">{{ tag.label }}</div>
-                          <div class="value">
-                            <el-input v-model="tag.value" size="small"/>
-                            <el-icon @click="removeTag(tag)">
-                              <Delete/>
-                            </el-icon>
-                          </div>
-                        </div>
+                  <ul class="options">
+                    <div class="option" v-for="tag in param.tags" :key="tag.id">
+                      <div class="label">{{ tag.label }}</div>
+                      <div class="value">
+                        <el-input v-model="tag.value" size="small"/>
+                        <el-icon @click="removeTag(tag)">
+                          <Delete/>
+                        </el-icon>
                       </div>
                     </div>
-                  </div>
+                  </ul>
                   <div class="control-option">
                     <el-button type="info" @click="dialogVisible = true">添加标签</el-button>
                   </div>
@@ -155,9 +174,6 @@
               </el-menu>
             </el-scrollbar>
           </el-aside>
-        </div>
-        <div class="control">
-          同步
         </div>
       </div>
     </div>
@@ -231,7 +247,8 @@ const param = ref({
     iso: '',
     shutter: '',
     aperture: '',
-    shootingTime: ''
+    shootingTime: '',
+    fontColor: 'rgba(255, 255, 255, 1)'
   },
   border: {
     borderLeft: 0,
@@ -474,7 +491,7 @@ const handleWheel = (e: Event) => {
 
   .settings-details {
     width: 100%;
-    height: calc(100% - 80px);
+    height: calc(100% - 40px);
     box-sizing: border-box;
 
     .el-menu {
@@ -498,10 +515,10 @@ const handleWheel = (e: Event) => {
 
       .el-sub-menu {
         border-top: 1px solid #efefef;
-        background-color: #a2a0a0;
+        background-color: #838282;
 
         .control-option {
-          background-color: #a2a0a0;
+          background-color: #919090;
           display: flex;
           align-items: center;
           height: 50px;
@@ -509,76 +526,50 @@ const handleWheel = (e: Event) => {
         }
 
         .options {
-          background-color: #b2b1b1;
-          font-size: 13px;
+          width: 100%;
+          list-style: none;
+          padding-left: 10px;
+          background-color: #919090;
           .option {
-            border-bottom: 1px solid black;
+            height: 35px;
+            width: 100%;
+            display: flex;
+            justify-content: start;
+            align-items: center;
             padding: 10px 0;
-            .items-title {
-              height: 30px;
 
+            .label {
               display: flex;
-              justify-content: center;
               align-items: center;
+              justify-content: end;
+              width: 50px;
+              font-size: 12px;
             }
 
-            .items {
-              width: 100%;
-              list-style: none;
-              padding-left: 20px;
+            .value {
+              display: flex;
+              align-items: center;
+              width: calc(100% - 55px);
+              padding: 0 15px;
+              .el-icon {
+                margin-left: 5px;
+              }
 
-              .item {
-                height: 35px;
+              :deep(.el-color-picker) {
+                .el-icon {
+                  font-size: 12px;
+                  margin: 0;
+                }
+              }
+
+              .el-slider {
                 width: 100%;
-                display: flex;
-                justify-content: start;
-                align-items: center;
-
-                .label {
-                  display: flex;
-                  align-items: center;
-                  justify-content: end;
-                  width: 55px;
-                }
-
-                .value {
-                  display: flex;
-                  align-items: center;
-                  width: calc(100% - 55px);
-                  padding: 0 20px;
-
-                  .el-icon {
-                    margin-left: 5px;
-                  }
-
-                  :deep(.el-color-picker) {
-                    .el-icon {
-                      font-size: 12px;
-                      margin: 0;
-                    }
-                  }
-
-                  .el-slider {
-                    width: 100%;
-                  }
-                }
               }
             }
           }
         }
       }
     }
-  }
-
-  .control {
-    height: 40px;
-    border-bottom: 2px solid #484949;
-    border-top: 2px solid #484949;
-    padding-left: 10px;
-    font-size: 20px;
-    display: flex;
-    justify-content: start;
-    align-items: center;
   }
 
 }
