@@ -474,7 +474,6 @@ const handleWheel = (e: Event) => {
 }
 
 .page-main .page-right {
-
   width: 20%;
   height: 100%;
   background: #817e7e;
@@ -530,6 +529,7 @@ const handleWheel = (e: Event) => {
           list-style: none;
           padding-left: 10px;
           background-color: #919090;
+
           .option {
             height: 35px;
             width: 100%;
@@ -551,6 +551,7 @@ const handleWheel = (e: Event) => {
               align-items: center;
               width: calc(100% - 55px);
               padding: 0 15px;
+
               .el-icon {
                 margin-left: 5px;
               }
