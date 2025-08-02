@@ -84,25 +84,29 @@
                         <li class="item">
                           <div class="label">上边框</div>
                           <div class="value">
-                            <el-slider size="small" v-model="param.border.borderTop" placement="top"/>
+                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderTop"
+                                       placement="top"/>
                           </div>
                         </li>
                         <li class="item">
                           <div class="label">下边框</div>
                           <div class="value">
-                            <el-slider size="small" v-model="param.border.borderBottom" placement="top"/>
+                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderBottom"
+                                       placement="top"/>
                           </div>
                         </li>
                         <li class="item">
                           <div class="label">左边框</div>
                           <div class="value">
-                            <el-slider size="small" v-model="param.border.borderLeft" placement="top"/>
+                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderLeft"
+                                       placement="top"/>
                           </div>
                         </li>
                         <li class="item">
                           <div class="label">右边框</div>
                           <div class="value">
-                            <el-slider size="small" v-model="param.border.borderRight" placement="top"/>
+                            <el-slider @change="handleBorders" size="small" v-model="param.border.borderRight"
+                                       placement="top"/>
                           </div>
                         </li>
                       </ul>
@@ -213,22 +217,6 @@ const customTag = ref({
 
 const dialogVisible = ref(false);
 
-const stopWatch = watch(param.value.border, (newVal, oldVal) => {
-  console.log(newVal)
-  const img = picture.value;
-  if (img) {
-    img.style.borderLeft = `${newVal.borderLeft}px solid white`
-    img.style.borderRight = `${newVal.borderRight}px solid white`
-    img.style.borderTop = `${newVal.borderTop}px solid white`
-    img.style.borderBottom = `${newVal.borderBottom}px solid white`
-  }
-  //停止监听 stopWatch();
-}, {
-  //深度监视（监视属性变化）
-  deep: true,
-  //immediate 立即触发一次监视
-  // immediate: true
-});
 
 onMounted(async () => {
   window.electronAPI.inputImages((event: object, result: object) => {
@@ -247,6 +235,17 @@ onMounted(async () => {
   });
 })
 
+
+const handleBorders = () => {
+  const img = picture.value;
+  if (img) {
+    const {borderLeft, borderRight, borderTop, borderBottom} = param.value.border;
+    img.style.borderLeft = `${borderLeft}px solid white`
+    img.style.borderRight = `${borderRight}px solid white`
+    img.style.borderTop = `${borderTop}px solid white`
+    img.style.borderBottom = `${borderBottom}px solid white`
+  }
+}
 
 const removeTag = (tag) => {
   const index = tags.value.indexOf(tag);
