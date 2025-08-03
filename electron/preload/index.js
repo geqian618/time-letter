@@ -4,5 +4,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     parsePhotoMetadata: async (args) => await ipcRenderer.invoke('parse-photo-metadata', args),
     watchInputImage: (callback) => ipcRenderer.on('watch-input-image', callback),
     openContextMenu: () => ipcRenderer.send('open-contextMenu'),
-    watchContextMenu: (callback) => ipcRenderer.on('watch-contextMenu', callback)
+    watchContextMenu: (callback) => ipcRenderer.on('watch-contextMenu', callback),
+    requestSaveFiles: (args) => ipcRenderer.send('request-save-files', args)
 });

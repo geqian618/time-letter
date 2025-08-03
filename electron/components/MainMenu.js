@@ -40,7 +40,7 @@ const selectFile = async (window) => {
 /**
  * 图片导出
  */
-const saveFiles = (args) => {
+const saveFiles = () => {
     dialog.showOpenDialog({
         buttonLabel: '导出',
         defaultPath: app.getPath('desktop'),

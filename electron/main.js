@@ -1,8 +1,10 @@
 const {app, ipcMain, protocol, BrowserWindow, Menu} = require('electron')
 const WinState = require('electron-win-state').default
 const path = require('path')
-const fs = require('fs')
-const  pictureEditor= require('./utils/picture-editor')
+
+const imageParser = require('./utils/image-parser')
+
+const imageEditor = require('./utils/image-editor')
 
 const environment = process.env.NODE_ENV
 
@@ -28,7 +30,7 @@ const createWindow = () => {
         }
     });
 
-     window = new BrowserWindow({
+    window = new BrowserWindow({
         ...winState.winOptions,
         icon: path.join(icon),
         show: false,
@@ -69,7 +71,7 @@ const createWindow = () => {
 
 
 ipcMain.handle('parse-photo-metadata', async (event, filePath) => {
-    return await pictureEditor.parsePhotoMetadata(filePath)
+    return await imageParser.parsePhotoMetadata(filePath)
 })
 
 
@@ -77,6 +79,34 @@ ipcMain.on('open-contextMenu', () => {
     contextMenu(window).popup()
 })
 
+ipcMain.on('request-save-files', (event, params) => {
+    const {savePath, files} = params;
+    for (let file of files) {
+        const options = {
+            imagePath: file,      // 原始图片路径
+            outputPath: savePath + "\\" + path.basename(file),     // 输出图片路径
+            borderWidth: 300,
+            borderColor: '#3498db',
+            texts: [
+                {
+                    text: '旅行记忆 2023',
+                    textPosition: {x: 20, y: 20},
+                },
+                {
+                    text: '旅行记忆 2023',
+                    textPosition: {x: 2000, y: 0},
+                }
+            ],
+            textStyle: {
+                font: 'bold 40px "Microsoft YaHei"',
+                color: '#ffffff',
+                textAlign: 'left',
+                textBaseline: 'top'
+            }
+        }
+        imageEditor.addBorderAndText(options)
+    }
+})
 
 
 app.whenReady().then(() => {

@@ -276,11 +276,10 @@ const param = ref({
     tagBackground: 'rgba(255, 255, 255, 1)',
   },
   border: {
-    borderLeft: 0,
-    borderRight: 0,
-    borderTop: 0,
-    borderBottom: 0,
-
+    borderLeft: 20,
+    borderRight: 20,
+    borderTop: 20,
+    borderBottom: 50,
   },
   tags: []
 })
@@ -314,6 +313,11 @@ const watchContextMenu = () => {
         if (!images.value.size || !images.value.has(picture.value.getAttribute('path'))) {
           previewUrl.value = ''
         }
+      } else if (type === 1) {
+        window.electronAPI.requestSaveFiles({
+          savePath: data.savePath,
+          files: [...selectedImages.value.keys()]
+        })
       }
     }
   });
@@ -486,7 +490,9 @@ async function handlePreview(event, image) {
 
 
 const openContextMenu = () => {
-  window.electronAPI.openContextMenu()
+  if (images.value.size) {
+    window.electronAPI.openContextMenu()
+  }
 }
 
 const handleMetadataWheel = (e: Event) => {
