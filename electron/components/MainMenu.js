@@ -12,11 +12,11 @@ function getSafeImagePath(absolutePath) {
 }
 
 /**
- * 打开选择文件对话框
+ * 图片导入
  */
-const selectFile = async (window, type) => {
+const selectFile = async (window) => {
     const {filePaths} = await dialog.showOpenDialog({
-        buttonLabel: '选择',
+        buttonLabel: '导入',
         properties: ['openFile', 'multiSelections'],
         filters: [{name: 'Images', extensions: ['jpg', 'png', 'gif', 'webp']}]
     });
@@ -33,33 +33,22 @@ const selectFile = async (window, type) => {
             })
         );
         const data = new Map(files.map(item => [item.path, item]));
-        window.webContents.send('input-images', {type, data})
+        window.webContents.send('watch-input-image', data)
     }
 }
 
 /**
- * 打开保存文件对话框
+ * 图片导出
  */
-const saveFile = (args) => {
-    dialog.showSaveDialog().then(res => {
-        console.log(res.filePath)
-    })
-}
-/**
- * 打开保存文件对话框
- */
-const openFiles = () => {
+const saveFiles = (args) => {
     dialog.showOpenDialog({
-        buttonLabel: '打开',
+        buttonLabel: '导出',
         defaultPath: app.getPath('desktop'),
-        properties: ['openFile', 'multiSelections'],
-        filters: [{name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp']}]
+        properties: ['multiSelections', 'createDirectory', 'openFile', "openDirectory"]
     }).then(res => {
-        const {filePaths} = res;
-        console.log(filePaths)
+        console.log(res.filePaths)
     })
 }
-
 
 /**
  * mainMenu 定义为函数，主进程可以传参到菜单中
@@ -72,22 +61,16 @@ const mainMenu = (args) => {
             label: '文件',
             submenu: [
                 {
-                    label: '导入',
+                    label: '导入图片',
                     // 无传参
-                    click: () => selectFile(args.window, 0),
-                    accelerator: 'ctrl+n'
-
-                }, {
-                    label: '追加导入',
-                    // 无传参
-                    click: () => selectFile(args.window, 1),
-                    accelerator: 'ctrl+p'
+                    click: () => selectFile(args.window),
+                    accelerator: 'ctrl+i'
 
                 },
                 {
-                    label: '导出',
+                    label: '导出图片',
                     // 有传参，如何这样写 saveFile(args)函数会立即执行，而不是作为回调函数
-                    click: () => openFiles(args.window),
+                    click: () => saveFiles(args.window),
                     accelerator: 'ctrl+o'
                 }
             ]
@@ -97,6 +80,16 @@ const mainMenu = (args) => {
             submenu: [
                 {
                     label: '导出设置',
+                    role: '',
+                },
+            ]
+        },
+        {
+            label: '工具',
+            submenu: [
+                {
+                    label: '图片搬运',
+                    accelerator: 'ctrl+r',
                     role: ''
                 },
             ]

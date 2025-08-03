@@ -189,7 +189,7 @@
       </div>
     </div>
 
-    <div class="page-images" ref="imageList" @wheel="handleWheel" @contextmenu="imageListContextmenu">
+    <div class="page-images" ref="imageList" @wheel="handleWheel" @contextmenu="openContextMenu">
       <img v-lazy="value.url" v-for="([key, value]) in images" :key="key" @click="handlePreview($event, value)">
     </div>
   </div>
@@ -214,7 +214,7 @@
 
 <script setup lang="ts">
 
-import {onMounted, ref, watch} from "vue";
+import {onMounted, onUnmounted, ref, watch} from "vue";
 
 const predefineColors = ref([
   '#ff4500',
@@ -249,6 +249,8 @@ const metadata = ref([]);
 
 const picture = ref(null);
 
+const selectedImages = ref([])
+
 const param = ref({
   base: {
     cameraBrand: '',
@@ -275,8 +277,6 @@ const param = ref({
   tags: []
 })
 
-const tags = ref([]);
-
 const customTag = ref({
   label: '',
   value: ''
@@ -285,21 +285,29 @@ const customTag = ref({
 const dialogVisible = ref(false);
 
 
-onMounted(async () => {
-  window.electronAPI.inputImages((event: object, result: object) => {
-    if (result) {
-      const {data, type} = result;
-      switch (type) {
-        case 0:
-          images.value = data;
-          break;
-        case 1:
-          data.forEach((value: object, key: string) => images.value.set(key, value));
-          console.log(images.value)
-          break;
+const watchInputImages = () => {
+  window.electronAPI.watchInputImage((event, data) => {
+    if (data) {
+      data.forEach((value: object, key: string) => images.value.set(key, value));
+    }
+  });
+}
+
+const watchContextMenu = () => {
+  window.electronAPI.watchContextMenu((event, data) => {
+    if (data) {
+      const {type} = data;
+      if (type === 0) {
+        selectedImages.value.forEach(item => images.value.delete(item))
+        selectedImages.value = []
       }
     }
   });
+}
+
+onMounted(() => {
+  watchInputImages()
+  watchContextMenu()
 })
 
 
@@ -332,10 +340,16 @@ const handleNewTag = () => {
 }
 
 async function handlePreview(event: object, image: object) {
+  if (selectedElement.value) {
+    const {id, element} = selectedElement.value
+    element.classList.remove('active')
+    const index = selectedImages.value.indexOf(id);
+    selectedImages.value.splice(index, 1)
+  }
   previewUrl.value = image.url
-  selectedElement.value && selectedElement.value.classList.remove('active')
-  selectedElement.value = event.target;
-  selectedElement.value && selectedElement.value.classList.add('active')
+  selectedElement.value = {element: event.target, id: image.path};
+  selectedElement.value.element.classList.add('active')
+  selectedImages.value.push(image.path)
   const data = await window.electronAPI.parsePhotoMetadata(image.path);
   metadata.value = data.details;
   param.value.base = data.base
@@ -343,8 +357,8 @@ async function handlePreview(event: object, image: object) {
 }
 
 
-const imageListContextmenu = () => {
-  // window.electronAPI.triggerImageListContextmenu([])
+const openContextMenu = () => {
+  window.electronAPI.openContextMenu()
 }
 
 const handleMetadataWheel = (e: Event) => {

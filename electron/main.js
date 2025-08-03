@@ -16,6 +16,7 @@ const mainMenu = require('./components/MainMenu')
 
 const contextMenu = require('./components/ContextMenu')
 
+let window;
 
 const createWindow = () => {
 
@@ -27,7 +28,7 @@ const createWindow = () => {
         }
     });
 
-    const window = new BrowserWindow({
+     window = new BrowserWindow({
         ...winState.winOptions,
         icon: path.join(icon),
         show: false,
@@ -57,9 +58,9 @@ const createWindow = () => {
 
     Menu.setApplicationMenu(mainMenu({window}))
 
-    window.webContents.on('context-menu', () => {
-        contextMenu().popup()
-    })
+    // window.webContents.on('context-menu', () => {
+    //     contextMenu(window).popup()
+    // })
 
     window.on('ready-to-show', () => {
         window.show()
@@ -68,9 +69,14 @@ const createWindow = () => {
 
 
 ipcMain.handle('parse-photo-metadata', async (event, filePath) => {
-    console.log(await pictureEditor.parsePhotoMetadata(filePath));
     return await pictureEditor.parsePhotoMetadata(filePath)
 })
+
+
+ipcMain.on('open-contextMenu', () => {
+    contextMenu(window).popup()
+})
+
 
 
 app.whenReady().then(() => {
