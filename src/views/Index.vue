@@ -16,7 +16,7 @@
         </div>
       </div>
       <div class="page-center">
-        <img :src="previewUrl" ref="picture">
+        <img :src="previewUrl" path="" ref="picture">
       </div>
       <div class="page-right">
         <div class="settings">
@@ -307,6 +307,9 @@ const watchContextMenu = () => {
       if (type === 0) {
         selectedImages.value.forEach(item => images.value.delete(item))
         selectedImages.value = []
+        if (!images.value.size || !images.value.has(picture.value.getAttribute('path'))) {
+          previewUrl.value = ''
+        }
       }
     }
   });
@@ -356,8 +359,15 @@ const removeTag = (tag) => {
 }
 
 const handleMultipleSelect = (event: object, image: object) => {
-  selectedImages.value.push(image.path)
-  event.target.classList.add('active')
+  const element = event.target;
+  if (element.classList.contains('active')) {
+    element.classList.remove('active');
+    const index = selectedImages.value.indexOf(image.path);
+    selectedImages.value.splice(index, 1)
+  } else {
+    element.classList.add('active');
+    selectedImages.value.push(image.path)
+  }
 }
 
 
@@ -378,6 +388,7 @@ async function handlePreview(event: object, image: object) {
       const index = selectedImages.value.indexOf(id);
       selectedImages.value.splice(index, 1)
     }
+    picture.value.setAttribute('path', image.path)
     previewUrl.value = image.url
     selectedElement.value = {element: event.target, id: image.path};
     selectedElement.value.element.classList.add('active')
