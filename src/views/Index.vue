@@ -250,13 +250,13 @@ const imageList = ref(null);
 
 const metadataContainer = ref(null);
 
-const selectedElement = ref(null);
+const beforeSelectedElement = ref(null);
 
 const metadata = ref([]);
 
 const picture = ref(null);
 
-const selectedImages = ref([])
+const selectedImages = ref(new Map())
 
 const param = ref({
   base: {
@@ -305,8 +305,11 @@ const watchContextMenu = () => {
     if (data) {
       const {type} = data;
       if (type === 0) {
-        selectedImages.value.forEach(item => images.value.delete(item))
-        selectedImages.value = []
+        const selectedPaths = selectedImages.value.keys();
+        for (let path of selectedPaths) {
+          images.value.delete(path)
+        }
+        selectedImages.value.clear();
         if (!images.value.size || !images.value.has(picture.value.getAttribute('path'))) {
           previewUrl.value = ''
         }
@@ -320,12 +323,11 @@ const watchCtrlA = () => {
   window.addEventListener('keydown', event => {
     if (event.ctrlKey && event.key === 'a') {
       event.preventDefault();
-      if (selectedImages.value.length) {
+      if (selectedImages.value.size) {
         const elements = document.documentElement.querySelectorAll('img.imageItem');
         elements.forEach(element => {
           element.classList.add('active');
-          console.log(element.getAttribute('key'));
-          selectedImages.value.push(element.getAttribute('path'))
+          selectedImages.value.set(element.getAttribute('path', element))
         })
       }
     }
@@ -341,7 +343,7 @@ onMounted(() => {
 
 const handleBorders = () => {
   const img = picture.value;
-  if (img.complete && img.naturalWidth > 0) {
+  if (img && img.complete && img.naturalWidth > 0) {
     const {borderLeft, borderRight, borderTop, borderBottom} = param.value.border;
     const {borderColor} = param.value.color;
     img.style.borderLeft = `${borderLeft}px solid ${borderColor}`
@@ -362,11 +364,10 @@ const handleMultipleSelect = (event: object, image: object) => {
   const element = event.target;
   if (element.classList.contains('active')) {
     element.classList.remove('active');
-    const index = selectedImages.value.indexOf(image.path);
-    selectedImages.value.splice(index, 1)
+    selectedImages.value.delete(image.path)
   } else {
     element.classList.add('active');
-    selectedImages.value.push(image.path)
+    selectedImages.value.set(image.path, element)
   }
 }
 
@@ -380,22 +381,38 @@ const handleNewTag = () => {
   }
 }
 
-async function handlePreview(event: object, image: object) {
+async function handlePreview(event, image) {
   if (!event.ctrlKey) {
-    if (selectedElement.value) {
-      const {id, element} = selectedElement.value
-      element.classList.remove('active')
-      const index = selectedImages.value.indexOf(id);
-      selectedImages.value.splice(index, 1)
+    if (selectedImages.value && !selectedImages.value.size) {
+
+      beforeSelectedElement.value = event.target;
+    } else if (selectedImages.value && selectedImages.value.size === 1) {
+      if (beforeSelectedElement.value) {
+        selectedImages.value.delete(image.path);
+        beforeSelectedElement.classList.remove('active')
+      }
+    } else {
+      if (!selectedImages.value.has(image.path)) {
+        const selectedElements = selectedImages.value.values();
+        for (let element of selectedElements) {
+          element.classList.remove('active')
+        }
+        selectedImages.value.clear()
+      }
     }
+
+    if (!selectedImages.value.has(image.path)) {
+      selectedImages.value.set(image.path, event.target)
+      event.target.classList.add('active')
+    }
+
     picture.value.setAttribute('path', image.path)
     previewUrl.value = image.url
-    selectedElement.value = {element: event.target, id: image.path};
-    selectedElement.value.element.classList.add('active')
-    selectedImages.value.push(image.path)
     const data = await window.electronAPI.parsePhotoMetadata(image.path);
     metadata.value = data.details;
     param.value.base = data.base
+
+    // 后续优化，没有选中任何元素，首次选中是执行
     handleBorders()
   }
 }
