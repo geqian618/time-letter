@@ -190,7 +190,14 @@
     </div>
 
     <div class="page-images" ref="imageList" @wheel="handleWheel" @contextmenu="openContextMenu">
-      <img v-lazy="value.url" v-for="([key, value]) in images" :key="key" @click="handlePreview($event, value)">
+      <img class="imageItem"
+           :key="key"
+           :path="key"
+           v-lazy="image.url"
+           v-for="([key, image]) in images"
+           @click.meta.exact="handleMultipleSelect($event,image)"
+           @click.ctrl.exact="handleMultipleSelect($event, image)"
+           @click="handlePreview($event, image)">
     </div>
   </div>
 
@@ -305,9 +312,27 @@ const watchContextMenu = () => {
   });
 }
 
+
+const watchCtrlA = () => {
+  window.addEventListener('keydown', event => {
+    if (event.ctrlKey && event.key === 'a') {
+      event.preventDefault();
+      if (selectedImages.value.length) {
+        const elements = document.documentElement.querySelectorAll('img.imageItem');
+        elements.forEach(element => {
+          element.classList.add('active');
+          console.log(element.getAttribute('key'));
+          selectedImages.value.push(element.getAttribute('path'))
+        })
+      }
+    }
+  });
+}
+
 onMounted(() => {
   watchInputImages()
   watchContextMenu()
+  watchCtrlA()
 })
 
 
@@ -330,6 +355,12 @@ const removeTag = (tag) => {
   }
 }
 
+const handleMultipleSelect = (event: object, image: object) => {
+  selectedImages.value.push(image.path)
+  event.target.classList.add('active')
+}
+
+
 const handleNewTag = () => {
   if (customTag.value.label && customTag.value.value) {
     customTag.value.id = Date.now()
@@ -340,20 +371,22 @@ const handleNewTag = () => {
 }
 
 async function handlePreview(event: object, image: object) {
-  if (selectedElement.value) {
-    const {id, element} = selectedElement.value
-    element.classList.remove('active')
-    const index = selectedImages.value.indexOf(id);
-    selectedImages.value.splice(index, 1)
+  if (!event.ctrlKey) {
+    if (selectedElement.value) {
+      const {id, element} = selectedElement.value
+      element.classList.remove('active')
+      const index = selectedImages.value.indexOf(id);
+      selectedImages.value.splice(index, 1)
+    }
+    previewUrl.value = image.url
+    selectedElement.value = {element: event.target, id: image.path};
+    selectedElement.value.element.classList.add('active')
+    selectedImages.value.push(image.path)
+    const data = await window.electronAPI.parsePhotoMetadata(image.path);
+    metadata.value = data.details;
+    param.value.base = data.base
+    handleBorders()
   }
-  previewUrl.value = image.url
-  selectedElement.value = {element: event.target, id: image.path};
-  selectedElement.value.element.classList.add('active')
-  selectedImages.value.push(image.path)
-  const data = await window.electronAPI.parsePhotoMetadata(image.path);
-  metadata.value = data.details;
-  param.value.base = data.base
-  handleBorders()
 }
 
 
