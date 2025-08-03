@@ -197,6 +197,7 @@
            v-for="([key, image]) in images"
            @click.meta.exact="handleMultipleSelect($event,image)"
            @click.ctrl.exact="handleMultipleSelect($event, image)"
+           @click.shift.exact="handleShiftClick($event,image)"
            @click="handlePreview($event, image)">
     </div>
   </div>
@@ -372,6 +373,70 @@ const handleMultipleSelect = (event: object, image: object) => {
 }
 
 
+const handleShiftClick = (event: object, image: object) => {
+  if (selectedImages.value.size) {
+    const elements = document.documentElement.querySelectorAll('img.imageItem');
+    const path = image.path;
+    let index = -1;
+    const beforeElements = [];
+    const afterElements = [];
+    for (let i = 0; i < elements.length; i++) {
+      const originalElement = elements[i];
+      const active = originalElement.classList.contains('active');
+      if (path === originalElement.getAttribute('path')) {
+        index = i;
+        beforeElements.push({active, originalElement})
+        afterElements.push({active, originalElement})
+        continue
+      }
+      if (index === -1) {
+        beforeElements.push({active, originalElement})
+      } else {
+        afterElements.push({active, originalElement})
+      }
+    }
+
+    for (let i = 0; i < beforeElements.length; i++) {
+      const beforeElement = beforeElements[i];
+      if (beforeElement.active) {
+        for (let j = i; j < beforeElements.length; j++) {
+          const usefulElement = beforeElements[j];
+          const original = usefulElement.originalElement;
+          if (!usefulElement.active) {
+            original.classList.add('active')
+            selectedImages.value.set(original.getAttribute('path'), original)
+          }
+        }
+        for (let afterElement of afterElements) {
+          const original = afterElement.originalElement;
+          if (afterElement.active) {
+            selectedImages.value.delete(original.getAttribute('path'))
+            original.classList.remove('active')
+          }
+        }
+        return
+      }
+    }
+
+    for (let i = 0; i < afterElements.length; i++) {
+      const afterElement = afterElements[i];
+      if (afterElement.active) {
+        for (let j = 0; j < i; j++) {
+          const usefulElement = afterElements[j];
+          const original = usefulElement.originalElement;
+          if (!usefulElement.active) {
+            original.classList.add('active')
+            selectedImages.value.set(original.getAttribute('path'), original)
+          }
+        }
+        return
+      }
+    }
+
+  }
+}
+
+
 const handleNewTag = () => {
   if (customTag.value.label && customTag.value.value) {
     customTag.value.id = Date.now()
@@ -384,12 +449,13 @@ const handleNewTag = () => {
 async function handlePreview(event, image) {
   if (!event.ctrlKey) {
     if (selectedImages.value && !selectedImages.value.size) {
-
       beforeSelectedElement.value = event.target;
     } else if (selectedImages.value && selectedImages.value.size === 1) {
       if (beforeSelectedElement.value) {
-        selectedImages.value.delete(image.path);
-        beforeSelectedElement.classList.remove('active')
+        const beforePath = beforeSelectedElement.value.getAttribute('path');
+        selectedImages.value.delete(beforePath);
+        beforeSelectedElement.value.classList.remove('active')
+        beforeSelectedElement.value = event.target;
       }
     } else {
       if (!selectedImages.value.has(image.path)) {
@@ -398,6 +464,7 @@ async function handlePreview(event, image) {
           element.classList.remove('active')
         }
         selectedImages.value.clear()
+        beforeSelectedElement.value = event.target;
       }
     }
 
