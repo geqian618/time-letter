@@ -79,14 +79,13 @@ ipcMain.on('open-contextMenu', () => {
     contextMenu(window).popup()
 })
 
-ipcMain.on('request-save-files', (event, params) => {
-    const {savePath, files} = params;
+ipcMain.on('request-save-files', (event, settingss) => {
+    const {outputDirectory, files, border} = settingss;
     for (let file of files) {
         const options = {
-            imagePath: file,      // 原始图片路径
-            outputPath: savePath + "\\" + path.basename(file),     // 输出图片路径
-            borderWidth: 300,
-            borderColor: '#3498db',
+            inputPath: file,      // 原始图片路径
+            outputDirectory: outputDirectory,     // 输出图片路径
+            border: {...border, percentage: true},
             texts: [
                 {
                     text: '旅行记忆 2023',

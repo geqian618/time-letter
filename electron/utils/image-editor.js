@@ -7,9 +7,9 @@ const fs = require('fs').promises;
 /**
  * 查找指定目录下指定类型文件集合
  *
- * @param dirPath 查找目录
- * @param extensions 文件类型
- * @param deepSearch 深度查找
+ * @settings dirPath 查找目录
+ * @settings extensions 文件类型
+ * @settings deepSearch 深度查找
  * @returns {Promise<*[]>}
  */
 async function findFilePaths(dirPath, extensions, deepSearch = false) {
@@ -31,37 +31,39 @@ async function findFilePaths(dirPath, extensions, deepSearch = false) {
 }
 
 async function addBorderAndText(options) {
-    const {
-        imagePath,      // 原始图片路径
-        outputPath,     // 输出图片路径
-        borderWidth = 300,
-        borderColor = '#3498db',
-        texts = [
-            {
-                text: '旅行记忆 2023',
-                textPosition: {x: 20, y: 20},
-            },
-            {
-                text: '旅行记忆 2023',
-                textPosition: {x: 2000, y: 0},
-            }
-        ],
-        textStyle = {
-            font: 'bold 40px "Microsoft YaHei"',
-            color: '#ffffff',
-            textAlign: 'left',
-            textBaseline: 'top'
-        }
+    let {
+        inputPath,      // 原始图片路径
+        outputDirectory,     // 输出目录
+        border: {borderLeft, borderRight, borderTop, borderBottom, borderColor, percentage = false},
+        texts,
+        textStyle
     } = options;
 
     try {
+
+        const outputPath = path.join(outputDirectory, path.basename(inputPath))
+
+        let extname = path.extname(inputPath).slice(1);
+
+        extname = extname === 'jpg' ? 'jpeg' : extname
+
         // 1. 读取图片为 Buffer
-        const imageBuffer = await fs.readFile(imagePath);
+        const imageBuffer = await fs.readFile(inputPath);
         const image = await loadImage(imageBuffer);
 
+        const baseLength = Math.max(image.width, image.height);
+
+        // 边框值为比率
+        if (percentage) {
+            borderLeft = Number.parseInt(borderLeft * baseLength)
+            borderRight = Number.parseInt(borderRight * baseLength)
+            borderTop = Number.parseInt(borderTop * baseLength)
+            borderBottom = Number.parseInt(borderBottom * baseLength)
+        }
+
         // 2. 计算新画布尺寸
-        const newWidth = image.width + borderWidth * 2;
-        const newHeight = image.height + borderWidth * 2;
+        const newWidth = image.width + borderLeft + borderRight;
+        const newHeight = image.height + borderTop + borderBottom;
 
         // 3. 创建画布
         const canvas = createCanvas(newWidth, newHeight);
@@ -72,14 +74,13 @@ async function addBorderAndText(options) {
         ctx.fillRect(0, 0, newWidth, newHeight);
 
         // 5. 绘制原始图片（居中）
-        ctx.drawImage(image, borderWidth, borderWidth);
+        ctx.drawImage(image, borderLeft, borderTop, image.width, image.height);
 
         // 6. 添加文字
         ctx.font = textStyle.font;
         ctx.fillStyle = textStyle.color;
         ctx.textAlign = textStyle.textAlign;
         ctx.textBaseline = textStyle.textBaseline;
-
 
         for (let text of texts) {
             const textX = text.textPosition.x;
@@ -88,7 +89,7 @@ async function addBorderAndText(options) {
         }
 
         // 7. 保存图片 (使用 Buffer 写入)
-        const buffer = canvas.toBuffer('image/jpeg', {quality: 0.95}); // 或 'image/png'
+        const buffer = canvas.toBuffer(`image/${extname}`, {quality: 0.95}); // 或 'image/png'
         await fs.writeFile(outputPath, buffer);
         console.log(`处理完成！图片已保存至: ${outputPath}`);
     } catch (error) {

@@ -52,7 +52,7 @@ const saveFiles = () => {
 
 /**
  * mainMenu 定义为函数，主进程可以传参到菜单中
- * @param args
+ * @settings args
  * @returns {Electron.Menu}
  */
 const mainMenu = (args) => {

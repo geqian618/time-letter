@@ -34,49 +34,49 @@
                     <li class="option">
                       <div class="label">相机品牌</div>
                       <div class="value">
-                        <el-input v-model="param.base.cameraBrand" size="small"/>
+                        <el-input v-model="settings.base.cameraBrand" size="small"/>
                       </div>
                     </li>
                     <li class="option">
                       <div class="label">相机型号</div>
                       <div class="value">
-                        <el-input v-model="param.base.cameraModel" size="small"/>
+                        <el-input v-model="settings.base.cameraModel" size="small"/>
                       </div>
                     </li>
                     <li class="option">
                       <div class="label">镜头型号</div>
                       <div class="value">
-                        <el-input v-model="param.base.lensModel" size="small"/>
+                        <el-input v-model="settings.base.lensModel" size="small"/>
                       </div>
                     </li>
                     <li class="option">
                       <div class="label">焦段</div>
                       <div class="value">
-                        <el-input v-model="param.base.focalLength" size="small"/>
+                        <el-input v-model="settings.base.focalLength" size="small"/>
                       </div>
                     </li>
                     <li class="option">
                       <div class="label">IOS</div>
                       <div class="value">
-                        <el-input v-model="param.base.iso" size="small"/>
+                        <el-input v-model="settings.base.iso" size="small"/>
                       </div>
                     </li>
                     <li class="option">
                       <div class="label">快门</div>
                       <div class="value">
-                        <el-input v-model="param.base.shutter" size="small"/>
+                        <el-input v-model="settings.base.shutter" size="small"/>
                       </div>
                     </li>
                     <li class="option">
                       <div class="label">光圈</div>
                       <div class="value">
-                        <el-input v-model="param.base.aperture" size="small"/>
+                        <el-input v-model="settings.base.aperture" size="small"/>
                       </div>
                     </li>
                     <li class="option">
                       <div class="label">拍摄日期</div>
                       <div class="value">
-                        <el-input v-model="param.base.shootingTime" size="small"/>
+                        <el-input v-model="settings.base.shootingTime" size="small"/>
                       </div>
                     </li>
                   </ul>
@@ -91,15 +91,20 @@
                       <div class="value">
                         <el-slider @change="handleBorders"
                                    size="small"
-                                   v-model="param.border.borderTop"
+                                   :min="0"
+                                   :max="20"
+                                   v-model="settings.border.borderTop"
                                    placement="top"/>
                       </div>
                     </li>
                     <li class="option">
                       <div class="label">左边框</div>
                       <div class="value">
-                        <el-slider @change="handleBorders" size="small"
-                                   v-model="param.border.borderLeft"
+                        <el-slider @change="handleBorders"
+                                   size="small"
+                                   :min="0"
+                                   :max="20"
+                                   v-model="settings.border.borderLeft"
                                    placement="top"/>
                       </div>
                     </li>
@@ -108,7 +113,9 @@
                       <div class="value">
                         <el-slider @change="handleBorders"
                                    size="small"
-                                   v-model="param.border.borderRight"
+                                   :min="0"
+                                   :max="20"
+                                   v-model="settings.border.borderRight"
                                    placement="top"/>
                       </div>
                     </li>
@@ -117,45 +124,77 @@
                       <div class="value">
                         <el-slider @change="handleBorders"
                                    size="small"
-                                   v-model="param.border.borderBottom"
+                                   :min="0"
+                                   :max="20"
+                                   v-model="settings.border.borderBottom"
                                    placement="top"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">边框颜色</div>
+                      <div class="value">
+                        <el-color-picker
+                            size="small"
+                            @change="handleBorders"
+                            v-model="settings.border.borderColor"
+                            show-alpha
+                            :predefine="predefineColors"/>
                       </div>
                     </li>
                   </ul>
                 </el-sub-menu>
                 <el-sub-menu index="3">
                   <template #title>
-                    <span>颜色</span>
+                    <span>文本</span>
                   </template>
                   <ul class="options">
                     <li class="option">
-                      <div class="label">边框</div>
+                      <div class="label">字体类型</div>
                       <div class="value">
-                        <el-color-picker
+                        <el-select
+                            v-model="settings.font.fontFamily"
+                            :options="options"
                             size="small"
-                            @change="handleBorders"
-                            v-model="param.color.borderColor"
+                            placeholder="Select"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">字体大小</div>
+                      <div class="value">
+                        <el-slider
+                            @change=""
+                            v-model="settings.font.fontSize"
                             show-alpha
+                            size="small"
                             :predefine="predefineColors"/>
                       </div>
                     </li>
                     <li class="option">
-                      <div class="label">标签背景</div>
+                      <div class="label">旋转角度</div>
+                      <div class="value">
+                        <el-slider @change=""
+                                   size="small"
+                                   v-model="settings.font.angle"
+                                   placement="top"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">字体颜色</div>
                       <div class="value">
                         <el-color-picker
-                            @change="handleBorders"
-                            v-model="param.color.tagBackground"
+                            @change=""
+                            v-model="settings.font.fontColor"
                             show-alpha
                             size="small"
                             :predefine="predefineColors"/>
                       </div>
                     </li>
                     <li class="option">
-                      <div class="label">标签字体</div>
+                      <div class="label">背景颜色</div>
                       <div class="value">
                         <el-color-picker
-                            @change="handleBorders"
-                            v-model="param.color.fontColor"
+                            @change=""
+                            v-model="settings.font.tagBackground"
                             show-alpha
                             size="small"
                             :predefine="predefineColors"/>
@@ -168,7 +207,7 @@
                     <span>自定义标签</span>
                   </template>
                   <ul class="options">
-                    <div class="option" v-for="tag in param.tags" :key="tag.id">
+                    <div class="option" v-for="tag in settings.tags" :key="tag.id">
                       <div class="label">{{ tag.label }}</div>
                       <div class="value">
                         <el-input v-model="tag.value" size="small"/>
@@ -241,6 +280,30 @@ const predefineColors = ref([
   '#c7158577',
 ])
 
+
+const options = [
+  {
+    value: 'Option1',
+    label: 'Option1',
+  },
+  {
+    value: 'Option2',
+    label: 'Option2',
+  },
+  {
+    value: 'Option3',
+    label: 'Option3',
+  },
+  {
+    value: 'Option4',
+    label: 'Option4',
+  },
+  {
+    value: 'Option5',
+    label: 'Option5',
+  },
+]
+
 const formLabelWidth = '50px'
 
 const images = ref(new Map())
@@ -259,7 +322,9 @@ const picture = ref(null);
 
 const selectedImages = ref(new Map())
 
-const param = ref({
+const settings = ref({
+  outputDirectory: '',
+  files: [],
   base: {
     cameraBrand: '',
     cameraModel: '',
@@ -270,16 +335,19 @@ const param = ref({
     aperture: '',
     shootingTime: ''
   },
-  color: {
-    borderColor: 'rgba(255, 255, 255, 1)',
+  font: {
+    fontSize: '',
+    fontFamily: '',
     fontColor: 'rgba(255, 255, 255, 1)',
     tagBackground: 'rgba(255, 255, 255, 1)',
+    angle: 0
   },
   border: {
-    borderLeft: 20,
-    borderRight: 20,
-    borderTop: 20,
-    borderBottom: 50,
+    borderLeft: 3,
+    borderRight: 3,
+    borderTop: 3,
+    borderBottom: 6,
+    borderColor: 'rgba(255, 255, 255, 1)',
   },
   tags: []
 })
@@ -314,10 +382,14 @@ const watchContextMenu = () => {
           previewUrl.value = ''
         }
       } else if (type === 1) {
-        window.electronAPI.requestSaveFiles({
-          savePath: data.savePath,
-          files: [...selectedImages.value.keys()]
-        })
+        settings.value.outputDirectory = data.outputDirectory
+        settings.value.files = [...selectedImages.value.keys()]
+        const newSettings = JSON.parse(JSON.stringify(settings.value));
+        newSettings.border.borderLeft /= 100;
+        newSettings.border.borderRight /= 100;
+        newSettings.border.borderTop /= 100;
+        newSettings.border.borderBottom /= 100;
+        window.electronAPI.requestSaveFiles(newSettings)
       }
     }
   });
@@ -349,19 +421,20 @@ onMounted(() => {
 const handleBorders = () => {
   const img = picture.value;
   if (img && img.complete && img.naturalWidth > 0) {
-    const {borderLeft, borderRight, borderTop, borderBottom} = param.value.border;
-    const {borderColor} = param.value.color;
-    img.style.borderLeft = `${borderLeft}px solid ${borderColor}`
-    img.style.borderRight = `${borderRight}px solid ${borderColor}`
-    img.style.borderTop = `${borderTop}px solid ${borderColor}`
-    img.style.borderBottom = `${borderBottom}px solid ${borderColor}`
+    const {offsetWidth, offsetHeight} = img;
+    const baseLength = Math.max(offsetWidth, offsetHeight);
+    const {borderLeft, borderRight, borderTop, borderBottom, borderColor} = settings.value.border;
+    img.style.borderLeft = `${baseLength * borderLeft / 100}px solid ${borderColor}`
+    img.style.borderRight = `${baseLength * borderRight / 100}px solid ${borderColor}`
+    img.style.borderTop = `${baseLength * borderTop / 100}px solid ${borderColor}`
+    img.style.borderBottom = `${baseLength * borderBottom / 100}px solid ${borderColor}`
   }
 }
 
 const removeTag = (tag) => {
-  const index = param.value.tags.indexOf(tag);
+  const index = settings.value.tags.indexOf(tag);
   if (index !== -1) {
-    param.value.tags.splice(index, 1);
+    settings.value.tags.splice(index, 1);
   }
 }
 
@@ -444,7 +517,7 @@ const handleShiftClick = (event: object, image: object) => {
 const handleNewTag = () => {
   if (customTag.value.label && customTag.value.value) {
     customTag.value.id = Date.now()
-    param.value.tags.push(customTag.value)
+    settings.value.tags.push(customTag.value)
     dialogVisible.value = false
     customTag.value = {}
   }
@@ -481,7 +554,7 @@ async function handlePreview(event, image) {
     previewUrl.value = image.url
     const data = await window.electronAPI.parsePhotoMetadata(image.path);
     metadata.value = data.details;
-    param.value.base = data.base
+    settings.value.base = data.base
 
     // 后续优化，没有选中任何元素，首次选中是执行
     handleBorders()
@@ -691,7 +764,7 @@ const handleWheel = (e: Event) => {
         .options {
           width: 100%;
           list-style: none;
-          padding-left: 10px;
+          padding: 10px 0 10px 10px;
           background-color: #919090;
 
           .option {
@@ -701,6 +774,7 @@ const handleWheel = (e: Event) => {
             justify-content: start;
             align-items: center;
             padding: 10px 0;
+            margin-top: 5px;
 
             .label {
               display: flex;

@@ -27,11 +27,11 @@ const contextMenu = (mainWindow) => {
 const saveFiles = async () => {
     const {canceled, filePaths} = await dialog.showOpenDialog({
         buttonLabel: '导出',
-        defaultPath: app.getPath('desktop'),
+        // defaultPath: app.getPath('desktop'),
         properties: ['multiSelections', 'createDirectory', 'openFile', "openDirectory"]
     })
     if (!canceled && filePaths) {
-        window.webContents.send('watch-contextMenu', {type: 1, savePath: filePaths[0]})
+        window.webContents.send('watch-contextMenu', {type: 1, outputDirectory: filePaths[0]})
     }
 }
 

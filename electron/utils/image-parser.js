@@ -23,7 +23,7 @@ async function parseMetadata(imagePath) {
 
 /**
  * 获取图片分辨率
- * @param imagePath
+ * @settings imagePath
  * @returns {Promise<{width: undefined, height: undefined}>}
  */
 async function getImageResolution(imagePath) {
