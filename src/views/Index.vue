@@ -336,10 +336,10 @@ const settings = ref({
     shootingTime: ''
   },
   font: {
-    fontSize: '',
+    fontSize: 14,
     fontFamily: '',
-    fontColor: 'rgba(255, 255, 255, 1)',
-    tagBackground: 'rgba(255, 255, 255, 1)',
+    fontColor: 'rgb(0,0,0,1)',
+    tagBackground: 'rgb(0,0,0,1)',
     angle: 0
   },
   border: {
@@ -358,6 +358,12 @@ const customTag = ref({
 });
 
 const dialogVisible = ref(false);
+
+
+// const stopWatch = watch(settings.value.base, (newVal, oldVal) => {
+//   console.log(newVal)
+//   //停止监听 stopWatch();
+// });
 
 
 const watchInputImages = () => {
@@ -555,6 +561,7 @@ async function handlePreview(event, image) {
     const data = await window.electronAPI.parsePhotoMetadata(image.path);
     metadata.value = data.details;
     settings.value.base = data.base
+
 
     // 后续优化，没有选中任何元素，首次选中是执行
     handleBorders()

@@ -22,6 +22,7 @@
     "p-limit": "^6.2.0",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
+    "piscina": "^5.0.0",
     "sharp": "^0.34.3",
     "vue": "^3.4.15",
     "vue-lazyload": "^3.0.0",
