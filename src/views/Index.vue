@@ -3,18 +3,60 @@
     <div class="page-top"></div>
     <div class="page-main">
       <div class="page-left">
-        <div class="metadata">
-          图片元信息
+        <!--        <div class="metadata">-->
+        <!--          图片元信息-->
+        <!--        </div>-->
+        <!--        <div class="details">-->
+        <!--          <ul ref="metadataContainer" @wheel="handleMetadataWheel">-->
+        <!--            <li v-for="(item) in metadata" :key="item.label">-->
+        <!--              <span class="label">{{ item.label + '：' }}</span>-->
+        <!--              <span class="data">{{ item.value }}</span>-->
+        <!--            </li>-->
+        <!--          </ul>-->
+        <!--        </div>-->
+
+        <div class="image-mark-container">
+
+          <div class="image-mark-title">
+            <div class="text">图片标签</div>
+            <img src="../assets/icon/upload.svg" class="upload"/>
+          </div>
+          <el-scrollbar class="scrollBar">
+            <div class="image-marks">
+              <!--            <div class="image-mark"></div>-->
+              <img class="image-mark" src=" ../assets/icon/visible.svg">
+              <img class="image-mark" src=" ../assets/icon/visible.svg">
+              <img class="image-mark" src=" ../assets/icon/visible.svg">
+              <img class="image-mark" src=" ../assets/icon/visible.svg">
+              <img class="image-mark" src=" ../assets/icon/visible.svg">
+              <img class="image-mark" src=" ../assets/icon/visible.svg">
+              <img class="image-mark" src=" ../assets/icon/visible.svg">
+              <img class="image-mark" src=" ../assets/icon/visible.svg">
+              <img class="image-mark" src=" ../assets/icon/visible.svg">
+              <img class="image-mark" src=" ../assets/icon/visible.svg">
+              <img class="image-mark" src=" ../assets/icon/visible.svg">
+            </div>
+          </el-scrollbar>
         </div>
-        <div class="details">
-          <ul ref="metadataContainer" @wheel="handleMetadataWheel">
-            <li v-for="(item) in metadata" :key="item.label">
-              <span class="label">{{ item.label + '：' }}</span>
-              <span class="data">{{ item.value }}</span>
-            </li>
-          </ul>
+
+        <div class="text-marks-container">
+          <div class="text-mark-title">
+            <div class="text">文本标签</div>
+            <img src="../assets/icon/editor.svg" class="editor"/>
+          </div>
+          <el-scrollbar class="scrollBar">
+            <div class="text-marks">
+              <div class="text-mark">文本标签</div>
+              <div class="text-mark">文本标签</div>
+              <div class="text-mark">文本标签</div>
+              <div class="text-mark">文本标签</div>
+              <div class="text-mark">文本标签</div>
+              <div class="text-mark">文本标签</div>
+            </div>
+          </el-scrollbar>
         </div>
       </div>
+
       <div class="page-center">
         <img :src="previewUrl" path="" ref="picture">
       </div>
@@ -662,6 +704,87 @@ const handleWheel = (e: Event) => {
   width: 20%;
   height: 100%;
   background: #817e7e;
+
+  .text-marks-container {
+    height: 50%;
+    width: 100%;
+    box-sizing: border-box;
+
+    .text-mark-title {
+      height: 50px;
+      border-bottom: 2px solid #484949;
+      border-top: 2px solid #484949;
+      padding: 0 10px;
+      font-size: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .editor {
+        width: 20px;
+      }
+    }
+
+    .scrollBar {
+      height: calc(100% - 50px);
+      overflow-y: auto;
+      box-sizing: border-box;
+
+      .text-marks {
+        padding: 20px 10px;
+        display: grid;
+        gap: 20px;
+        grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+        font-size: 12px;
+        .text-mark {
+          max-width: 100px;
+          text-align: center;
+          border: 1px solid #b4b3b3;
+          padding: 5px 0;
+          overflow: hidden;
+        }
+      }
+    }
+
+  }
+
+  .image-mark-container {
+    height: 50%;
+    width: 100%;
+    box-sizing: border-box;
+
+    .image-mark-title {
+      height: 50px;
+      border-bottom: 2px solid #484949;
+      padding: 0 10px;
+      font-size: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .upload {
+        width: 20px;
+      }
+    }
+
+    .scrollBar {
+      height: calc(100% - 50px);
+      overflow-y: auto;
+      box-sizing: border-box;
+
+      .image-marks {
+        box-sizing: border-box;
+        padding: 10px 10px;
+        display: grid;
+        gap: 5px;
+        grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+
+        .image-mark {
+          max-width: 50px;
+        }
+      }
+    }
+  }
 
   .metadata {
     height: 40px;
