@@ -15,46 +15,58 @@
         <!--          </ul>-->
         <!--        </div>-->
 
-        <div class="image-mark-container">
 
-          <div class="image-mark-title">
-            <div class="text">图片标签</div>
-            <img src="../assets/icon/upload.svg" class="upload"/>
-          </div>
-          <el-scrollbar class="scrollBar">
-            <div class="image-marks">
-              <!--            <div class="image-mark"></div>-->
-              <img class="image-mark" src=" ../assets/icon/visible.svg">
-              <img class="image-mark" src=" ../assets/icon/visible.svg">
-              <img class="image-mark" src=" ../assets/icon/visible.svg">
-              <img class="image-mark" src=" ../assets/icon/visible.svg">
-              <img class="image-mark" src=" ../assets/icon/visible.svg">
-              <img class="image-mark" src=" ../assets/icon/visible.svg">
-              <img class="image-mark" src=" ../assets/icon/visible.svg">
-              <img class="image-mark" src=" ../assets/icon/visible.svg">
-              <img class="image-mark" src=" ../assets/icon/visible.svg">
-              <img class="image-mark" src=" ../assets/icon/visible.svg">
-              <img class="image-mark" src=" ../assets/icon/visible.svg">
-            </div>
+        <el-aside>
+          <el-scrollbar>
+            <el-menu :default-openeds="['1', '2']">
+              <el-sub-menu index="1" class="templates-options">
+                <template #title>
+                  <span>模版预设</span>
+                </template>
+                <div class="templates">
+                  <el-menu-item class="template" index="1-1">模板一</el-menu-item>
+                  <el-menu-item class="template" index="1-2">模板二</el-menu-item>
+                  <el-menu-item class="template" index="1-3">模板三</el-menu-item>
+                  <el-menu-item class="template" index="1-4">模板四</el-menu-item>
+                </div>
+              </el-sub-menu>
+              <el-sub-menu index="2" class="image-mark-options">
+                <template #title>
+                  <span>图片标签</span>
+                </template>
+                <div class="image-marks">
+                  <!--            <div class="image-mark"></div>-->
+                  <img class="image-mark" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" src=" ../assets/icon/visible.svg">
+                </div>
+              </el-sub-menu>
+              <el-sub-menu index="3" class="text-marks-options">
+                <template #title>
+                  <span>文本标签</span>
+                </template>
+                <el-scrollbar class="scrollBar">
+                  <div class="text-marks">
+                    <div class="text-mark">文本标签</div>
+                    <div class="text-mark">文本标签</div>
+                    <div class="text-mark">文本标签</div>
+                    <div class="text-mark">文本标签</div>
+                    <div class="text-mark">文本标签</div>
+                    <div class="text-mark">文本标签</div>
+                  </div>
+                </el-scrollbar>
+              </el-sub-menu>
+            </el-menu>
           </el-scrollbar>
-        </div>
-
-        <div class="text-marks-container">
-          <div class="text-mark-title">
-            <div class="text">文本标签</div>
-            <img src="../assets/icon/editor.svg" class="editor"/>
-          </div>
-          <el-scrollbar class="scrollBar">
-            <div class="text-marks">
-              <div class="text-mark">文本标签</div>
-              <div class="text-mark">文本标签</div>
-              <div class="text-mark">文本标签</div>
-              <div class="text-mark">文本标签</div>
-              <div class="text-mark">文本标签</div>
-              <div class="text-mark">文本标签</div>
-            </div>
-          </el-scrollbar>
-        </div>
+        </el-aside>
       </div>
 
       <div class="page-center">
@@ -704,87 +716,75 @@ const handleWheel = (e: Event) => {
   width: 20%;
   height: 100%;
   background: #817e7e;
+  box-sizing: border-box;
 
-  .text-marks-container {
-    height: 50%;
+  .el-aside {
+    color: var(--el-text-color-primary);
+    background: #817e7e;
     width: 100%;
-    box-sizing: border-box;
+    height: 100%;
 
-    .text-mark-title {
-      height: 50px;
-      border-bottom: 2px solid #484949;
-      border-top: 2px solid #484949;
-      padding: 0 10px;
-      font-size: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .el-menu {
+      border-right: none;
+      border-bottom: none;
+      background-color: #484949;
 
-      .editor {
-        width: 20px;
-      }
-    }
-
-    .scrollBar {
-      height: calc(100% - 50px);
-      overflow-y: auto;
-      box-sizing: border-box;
-
-      .text-marks {
-        padding: 20px 10px;
-        display: grid;
-        gap: 20px;
-        grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-        font-size: 12px;
-        .text-mark {
-          max-width: 100px;
-          text-align: center;
-          border: 1px solid #b4b3b3;
-          padding: 5px 0;
-          overflow: hidden;
-        }
-      }
-    }
-
-  }
-
-  .image-mark-container {
-    height: 50%;
-    width: 100%;
-    box-sizing: border-box;
-
-    .image-mark-title {
-      height: 50px;
-      border-bottom: 2px solid #484949;
-      padding: 0 10px;
-      font-size: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      .upload {
-        width: 20px;
-      }
-    }
-
-    .scrollBar {
-      height: calc(100% - 50px);
-      overflow-y: auto;
-      box-sizing: border-box;
-
-      .image-marks {
+      .text-marks-options {
+        height: 50%;
+        width: 100%;
         box-sizing: border-box;
-        padding: 10px 10px;
-        display: grid;
-        gap: 5px;
-        grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+        background-color: #838282;
 
-        .image-mark {
-          max-width: 50px;
+        .text-marks {
+          padding: 20px 10px;
+          display: grid;
+          gap: 20px;
+          grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+          font-size: 12px;
+          background-color: #919090;
+          border-bottom: 1px solid #a2a4a6;
+          .text-mark {
+            max-width: 100px;
+            text-align: center;
+            padding: 5px 0;
+            overflow: hidden;
+          }
+        }
+
+      }
+
+      .image-mark-options {
+        height: 50%;
+        width: 100%;
+        box-sizing: border-box;
+        background-color: #838282;
+        border-bottom: 1px solid #a2a4a6;
+
+        .image-marks {
+          box-sizing: border-box;
+          padding: 10px 10px;
+          display: grid;
+          gap: 5px;
+          grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+          background-color: #919090;
+
+          .image-mark {
+            max-width: 50px;
+          }
+        }
+      }
+
+      .templates-options {
+        background-color: #838282;
+        border-bottom: 1px solid #a2a4a6;
+        .templates {
+          background-color: #919090;
         }
       }
     }
+
   }
+
 
   .metadata {
     height: 40px;
@@ -817,6 +817,7 @@ const handleWheel = (e: Event) => {
       }
     }
   }
+
 }
 
 .page-main .page-center {
@@ -860,84 +861,85 @@ const handleWheel = (e: Event) => {
     height: calc(100% - 40px);
     box-sizing: border-box;
 
-    .el-menu {
-      border-right: none;
-      background-color: #484949;
-    }
-
     .el-aside {
       color: var(--el-text-color-primary);
       background: #817e7e;
       width: 100%;
       height: 100%;
 
-      .el-sub-menu:first-child {
-        border-top: none;
-      }
+      .el-menu {
+        border-right: none;
+        background-color: #484949;
 
-      .el-sub-menu:last-child {
-        border-bottom: 1px solid #a2a4a6;
-      }
-
-      .el-sub-menu {
-        border-top: 1px solid #efefef;
-        background-color: #838282;
-
-        .control-option {
-          background-color: #919090;
-          display: flex;
-          align-items: center;
-          height: 50px;
-          padding-left: 20px;
-        }
-
-        .options {
-          width: 100%;
-          list-style: none;
-          padding: 10px 0 10px 10px;
-          background-color: #919090;
-
-          .option {
-            height: 35px;
-            width: 100%;
+        .el-sub-menu {
+          background-color: #838282;
+          border-bottom: 1px solid #a2a4a6;
+          .control-option {
+            background-color: #919090;
             display: flex;
-            justify-content: start;
             align-items: center;
-            padding: 10px 0;
-            margin-top: 5px;
+            height: 50px;
+            padding-left: 20px;
+          }
 
-            .label {
+          .options {
+            width: 100%;
+            list-style: none;
+            padding: 10px 0 10px 10px;
+            background-color: #919090;
+
+            .option {
+              height: 35px;
+              width: 100%;
               display: flex;
+              justify-content: start;
               align-items: center;
-              justify-content: end;
-              width: 50px;
-              font-size: 12px;
-            }
+              padding: 10px 0;
+              margin-top: 5px;
 
-            .value {
-              display: flex;
-              align-items: center;
-              width: calc(100% - 55px);
-              padding: 0 15px;
-
-              .el-icon {
-                margin-left: 5px;
+              .label {
+                display: flex;
+                align-items: center;
+                justify-content: end;
+                width: 50px;
+                font-size: 12px;
               }
 
-              :deep(.el-color-picker) {
+              .value {
+                display: flex;
+                align-items: center;
+                width: calc(100% - 55px);
+                padding: 0 15px;
+
                 .el-icon {
-                  font-size: 12px;
-                  margin: 0;
+                  margin-left: 5px;
                 }
-              }
 
-              .el-slider {
-                width: 100%;
+                :deep(.el-color-picker) {
+                  .el-icon {
+                    font-size: 12px;
+                    margin: 0;
+                  }
+                }
+
+                .el-slider {
+                  width: 100%;
+                }
               }
             }
           }
         }
+
+        .el-sub-menu:first-child {
+          border-top: none;
+        }
+
+        .el-sub-menu:last-child {
+          border-bottom: 1px solid #a2a4a6;
+        }
       }
+
+
     }
   }
 
