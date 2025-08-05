@@ -34,19 +34,19 @@
                 <template #title>
                   <span>图片标签</span>
                 </template>
-                <div class="image-marks">
+                <div class="image-marks" ref="imageMarks">
                   <!--            <div class="image-mark"></div>-->
-                  <img class="image-mark" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
                 </div>
               </el-sub-menu>
               <el-sub-menu index="3" class="text-marks-options">
@@ -54,13 +54,13 @@
                   <span>文本标签</span>
                 </template>
                 <el-scrollbar class="scrollBar">
-                  <div class="text-marks">
-                    <div class="text-mark">文本标签</div>
-                    <div class="text-mark">文本标签</div>
-                    <div class="text-mark">文本标签</div>
-                    <div class="text-mark">文本标签</div>
-                    <div class="text-mark">文本标签</div>
-                    <div class="text-mark">文本标签</div>
+                  <div class="text-marks" ref="textMarks">
+                    <div class="text-mark" draggable="true">文本标签</div>
+                    <div class="text-mark" draggable="true">文本标签</div>
+                    <div class="text-mark" draggable="true">文本标签</div>
+                    <div class="text-mark" draggable="true">文本标签</div>
+                    <div class="text-mark" draggable="true">文本标签</div>
+                    <div class="text-mark" draggable="true">文本标签</div>
                   </div>
                 </el-scrollbar>
               </el-sub-menu>
@@ -199,6 +199,33 @@
                 </el-sub-menu>
                 <el-sub-menu index="3">
                   <template #title>
+                    <span>图片</span>
+                  </template>
+                  <ul class="options">
+                    <li class="option">
+                      <div class="label">缩放</div>
+                      <div class="value">
+                        <el-slider @change=""
+                                   :min="0"
+                                   :max="10"
+                                   size="small"
+                                   v-model="settings.image.scale"
+                                   placement="top"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">旋转角度</div>
+                      <div class="value">
+                        <el-slider @change=""
+                                   size="small"
+                                   v-model="settings.image.angle"
+                                   placement="top"/>
+                      </div>
+                    </li>
+                  </ul>
+                </el-sub-menu>
+                <el-sub-menu index="4">
+                  <template #title>
                     <span>文本</span>
                   </template>
                   <ul class="options">
@@ -206,7 +233,7 @@
                       <div class="label">字体类型</div>
                       <div class="value">
                         <el-select
-                            v-model="settings.font.fontFamily"
+                            v-model="settings.text.fontFamily"
                             :options="options"
                             size="small"
                             placeholder="Select"/>
@@ -217,7 +244,7 @@
                       <div class="value">
                         <el-slider
                             @change=""
-                            v-model="settings.font.fontSize"
+                            v-model="settings.text.fontSize"
                             show-alpha
                             size="small"
                             :predefine="predefineColors"/>
@@ -228,7 +255,7 @@
                       <div class="value">
                         <el-slider @change=""
                                    size="small"
-                                   v-model="settings.font.angle"
+                                   v-model="settings.text.angle"
                                    placement="top"/>
                       </div>
                     </li>
@@ -237,7 +264,7 @@
                       <div class="value">
                         <el-color-picker
                             @change=""
-                            v-model="settings.font.fontColor"
+                            v-model="settings.text.fontColor"
                             show-alpha
                             size="small"
                             :predefine="predefineColors"/>
@@ -248,7 +275,7 @@
                       <div class="value">
                         <el-color-picker
                             @change=""
-                            v-model="settings.font.tagBackground"
+                            v-model="settings.text.tagBackground"
                             show-alpha
                             size="small"
                             :predefine="predefineColors"/>
@@ -315,7 +342,8 @@
 
 <script setup lang="ts">
 
-import {onMounted, onUnmounted, ref, watch} from "vue";
+import {onMounted, ref} from "vue";
+import {b} from "vite/dist/node/types.d-jgA8ss1A";
 
 const predefineColors = ref([
   '#ff4500',
@@ -389,12 +417,16 @@ const settings = ref({
     aperture: '',
     shootingTime: ''
   },
-  font: {
+  image: {
+    scale: 1,
+    angle: 0,
+  },
+  text: {
     fontSize: 14,
     fontFamily: '',
     fontColor: 'rgb(0,0,0,1)',
-    tagBackground: 'rgb(0,0,0,1)',
-    angle: 0
+    tagBackground: 'rgb(255,255,255,0)',
+    angle: 0,
   },
   border: {
     borderLeft: 3,
@@ -413,11 +445,130 @@ const customTag = ref({
 
 const dialogVisible = ref(false);
 
+const textMarks = ref(null)
+
+const imageMarks = ref(null)
+
 
 // const stopWatch = watch(settings.value.base, (newVal, oldVal) => {
 //   console.log(newVal)
 //   //停止监听 stopWatch();
 // });
+
+const bindDragEvent = () => {
+  const container = picture.value;
+  let dragElement;
+  let originalElement;
+  let offsetX;
+  let offsetY;
+  // 设置拖拽事件
+  document.querySelectorAll('.image-mark, .text-mark').forEach(component => {
+    component.addEventListener('dragstart', function (event) {
+      const {left, top, width, height} = component.getBoundingClientRect();
+      offsetX = event.clientX - left;
+      // 元素与鼠标箭头之间的垂直方向偏移量差
+      offsetY = event.clientY - top;
+      originalElement = component
+      dragElement = component.cloneNode(true);
+      const computedStyle = window.getComputedStyle(component);
+      // 将计算样式复制到克隆元素的内联样式中
+      for (let i = 0; i < computedStyle.length; i++) {
+        const property = computedStyle[i];
+        const value = computedStyle.getPropertyValue(property);
+        // 设置内联样式
+        dragElement.style.setProperty(property, value);
+      }
+      // 关键：设置拖拽数据传输
+      event.dataTransfer.setData('text/plain', 'drag-element');
+    });
+  });
+
+  container.addEventListener('dragover', e =>
+      e.preventDefault()
+  );
+
+  container.addEventListener('dragleave', () =>
+      container.style.borderColor = '#95a5a6'
+  );
+
+  // 修复放置逻辑
+  container.addEventListener('drop', function (e) {
+
+    e.preventDefault();
+
+    if (!dragElement) return;
+
+    const mouseX = e.clientX;
+
+    const mouseY = e.clientY;
+
+    // 计算相对容器的坐标
+    const {left, right, top, bottom} = container.getBoundingClientRect();
+
+    const {width, height} = originalElement.getBoundingClientRect();
+
+    if (mouseX >= left + offsetX && mouseX <= right - (width - offsetX)) {
+
+      if (mouseY >= top + offsetY && mouseY <= bottom - (height - offsetY)) {
+        // 关键：必须设为绝对定位
+        dragElement.style.position = 'absolute';
+        // 设置元素定位
+        dragElement.style.left = `${mouseX - offsetX}px`;
+        dragElement.style.top = `${mouseY - offsetY}px`;
+
+        // 关键：将元素添加到容器
+        container.parentNode.appendChild(dragElement);
+
+        makeDraggable(dragElement)
+      }
+
+    }
+
+    // 重置拖拽元素引用
+    dragElement = null;
+
+    originalElement = null;
+
+  });
+
+  // 使形状可拖动
+  function makeDraggable(element) {
+
+    let offsetX, offsetY
+
+    element.onmousedown = function dragMouseDown(event) {
+      event.preventDefault();
+      const rect = element.getBoundingClientRect();
+      // 获取鼠标位置
+      offsetX = event.clientX - rect.left;
+      offsetY = event.clientY - rect.top
+      document.onmousemove = function elementDrag(event) {
+
+        event.preventDefault();
+
+        const mouseX = event.clientX;
+
+        const mouseY = event.clientY;
+
+        // 限制在画布范围内
+        const {left, right, top, bottom} = container.getBoundingClientRect();
+
+        if (mouseX >= left + offsetX && mouseX <= right - (rect.width - offsetX)) {
+          if (mouseY >= top + offsetY && mouseY <= bottom - (rect.height - offsetY)) {
+            element.style.left = `${mouseX - offsetX}px`;
+            element.style.top = `${mouseY - offsetY}px`;
+          }
+        }
+
+      }
+      document.onmouseup = function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+      }
+    }
+
+  }
+};
 
 
 const watchInputImages = () => {
@@ -475,6 +626,7 @@ onMounted(() => {
   watchInputImages()
   watchContextMenu()
   watchCtrlA()
+  bindDragEvent()
 })
 
 
@@ -717,6 +869,7 @@ const handleWheel = (e: Event) => {
   height: 100%;
   background: #817e7e;
   box-sizing: border-box;
+  flex-shrink: 0;
 
   .el-aside {
     color: var(--el-text-color-primary);
@@ -743,11 +896,20 @@ const handleWheel = (e: Event) => {
           font-size: 12px;
           background-color: #919090;
           border-bottom: 1px solid #a2a4a6;
+
           .text-mark {
             max-width: 100px;
             text-align: center;
             padding: 5px 0;
             overflow: hidden;
+            cursor: move;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            user-select: none;
+          }
+
+          .text-mark:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            background: #e3f2fd;
           }
         }
 
@@ -767,9 +929,14 @@ const handleWheel = (e: Event) => {
           gap: 5px;
           grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
           background-color: #919090;
-
           .image-mark {
+            cursor: move;
+            user-select: none;
             max-width: 50px;
+          }
+
+          .image-mark:hover {
+            background: #e3f2fd;
           }
         }
       }
@@ -777,6 +944,7 @@ const handleWheel = (e: Event) => {
       .templates-options {
         background-color: #838282;
         border-bottom: 1px solid #a2a4a6;
+
         .templates {
           background-color: #919090;
         }
@@ -874,6 +1042,7 @@ const handleWheel = (e: Event) => {
         .el-sub-menu {
           background-color: #838282;
           border-bottom: 1px solid #a2a4a6;
+
           .control-option {
             background-color: #919090;
             display: flex;
@@ -938,10 +1107,16 @@ const handleWheel = (e: Event) => {
           border-bottom: 1px solid #a2a4a6;
         }
       }
-
-
     }
   }
+
+  .element-clone {
+    position: absolute;
+    z-index: 1000;
+    pointer-events: none; /* 防止副本拦截点击事件 */
+    opacity: 0.7; /* 添加透明度以示区别 */
+  }
+
 
 }
 
