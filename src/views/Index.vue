@@ -35,7 +35,6 @@
                   <span>图片标签</span>
                 </template>
                 <div class="image-marks" ref="imageMarks">
-                  <!--            <div class="image-mark"></div>-->
                   <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
                   <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
                   <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
@@ -70,7 +69,11 @@
       </div>
 
       <div class="page-center">
-        <img :src="previewUrl" path="" ref="picture">
+        <template v-for="([key, image]) in images" :key="image.path">
+          <div class="preview-item" :path="image.path" v-show="image.visible">
+            <img :src="image.url" :id="image.path">
+          </div>
+        </template>
       </div>
       <div class="page-right">
         <div class="settings">
@@ -283,25 +286,6 @@
                     </li>
                   </ul>
                 </el-sub-menu>
-                <el-sub-menu index="4">
-                  <template #title>
-                    <span>自定义标签</span>
-                  </template>
-                  <ul class="options">
-                    <div class="option" v-for="tag in settings.tags" :key="tag.id">
-                      <div class="label">{{ tag.label }}</div>
-                      <div class="value">
-                        <el-input v-model="tag.value" size="small"/>
-                        <el-icon @click="removeTag(tag)">
-                          <Delete/>
-                        </el-icon>
-                      </div>
-                    </div>
-                  </ul>
-                  <div class="control-option">
-                    <el-button type="info" @click="dialogVisible = true">添加标签</el-button>
-                  </div>
-                </el-sub-menu>
               </el-menu>
             </el-scrollbar>
           </el-aside>
@@ -322,28 +306,11 @@
     </div>
   </div>
 
-  <el-dialog v-model="dialogVisible" title="自定义标签" width="300">
-    <el-form :model="customTag">
-      <el-form-item label="说明" :label-width="formLabelWidth">
-        <el-input v-model="customTag.label" autocomplete="off"/>
-      </el-form-item>
-      <el-form-item label="标签" :label-width="formLabelWidth">
-        <el-input v-model="customTag.value" autocomplete="off"/>
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleNewTag">添加</el-button>
-      </div>
-    </template>
-  </el-dialog>
 </template>
 
 <script setup lang="ts">
 
-import {onMounted, ref} from "vue";
-import {b} from "vite/dist/node/types.d-jgA8ss1A";
+import {nextTick, onMounted, ref, watch} from "vue";
 
 const predefineColors = ref([
   '#ff4500',
@@ -390,17 +357,13 @@ const formLabelWidth = '50px'
 
 const images = ref(new Map())
 
-const previewUrl = ref('');
-
 const imageList = ref(null);
 
 const metadataContainer = ref(null);
 
-const beforeSelectedElement = ref(null);
+const selectedElement = ref(null);
 
 const metadata = ref([]);
-
-const picture = ref(null);
 
 const selectedImages = ref(new Map())
 
@@ -435,13 +398,7 @@ const settings = ref({
     borderBottom: 6,
     borderColor: 'rgba(255, 255, 255, 1)',
   },
-  tags: []
 })
-
-const customTag = ref({
-  label: '',
-  value: ''
-});
 
 const dialogVisible = ref(false);
 
@@ -452,160 +409,36 @@ const imageMarks = ref(null)
 const markTemplates = ref(new Map())
 
 
-// const stopWatch = watch(settings.value.base, (newVal, oldVal) => {
-//   console.log(newVal)
-//   //停止监听 stopWatch();
-// });
-
-const bindDragEvent = () => {
-  const container = picture.value;
-  let dragElement;
-  let originalElement;
-  let offsetX;
-  let offsetY;
-  // 设置拖拽事件
-  document.querySelectorAll('.image-mark, .text-mark').forEach(component => {
-    component.addEventListener('dragstart', function (event) {
-      const componentRect = component.getBoundingClientRect();
-      offsetX = event.clientX - componentRect.left;
-      // 元素与鼠标箭头之间的垂直方向偏移量差
-      offsetY = event.clientY - componentRect.top;
-      originalElement = component
-      dragElement = component.cloneNode(true);
-      const computedStyle = window.getComputedStyle(component);
-      // 将计算样式复制到克隆元素的内联样式中
-      for (let i = 0; i < computedStyle.length; i++) {
-        const property = computedStyle[i];
-        const value = computedStyle.getPropertyValue(property);
-        // 设置内联样式
-        dragElement.style.setProperty(property, value);
-      }
-      // 关键：设置拖拽数据传输
-      event.dataTransfer.setData('text/plain', 'drag-element');
-    });
-  });
-
-  container.addEventListener('dragover', e =>
-      e.preventDefault()
-  );
-
-  container.addEventListener('dragleave', () =>
-      container.style.borderColor = '#95a5a6'
-  );
-
-  // 修复放置逻辑
-  container.addEventListener('drop', function (e) {
-
-    e.preventDefault();
-
-    if (!dragElement) return;
-
-    const mouseX = e.clientX;
-
-    const mouseY = e.clientY;
-
-    const containerRect = container.getBoundingClientRect();
-
-    const dragElementRect = dragElement.getBoundingClientRect();
-
-    // 计算相对容器的坐标
-
-    const originalElementRect = originalElement.getBoundingClientRect();
-
-    if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (originalElementRect.width - offsetX)) {
-
-      if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (originalElementRect.height - offsetY)) {
-        // 关键：必须设为绝对定位
-        dragElement.style.position = 'absolute';
-        // 设置元素定位
-        dragElement.style.left = `${mouseX - offsetX}px`;
-        dragElement.style.top = `${mouseY - offsetY}px`;
-
-
-        // 关键：将元素添加到容器
-        container.parentNode.appendChild(dragElement);
-
-
-        const positionX = (dragElement.offsetLeft - containerRect.left) / containerRect.width;
-
-        const positionY = (dragElement.offsetTop - containerRect.top) / containerRect.height;
-
-
-        markTemplates.value.set(dragElement, {
-          positionX,
-          positionY,
-          containerRect,
-          text: dragElement.innerText,
-          src: dragElement.src,
-          baseLength: Math.max(containerRect.width, containerRect.height),
-          baseFontSize: dragElement.style.fontSize.replace('px', ''),
-          originalElement
-        })
-
-        makeDraggable(dragElement)
-      }
-
-    }
-
-    // 重置拖拽元素引用
-    dragElement = null;
-
-    originalElement = null;
-
-  });
-
-  // 使形状可拖动
-  function makeDraggable(element) {
-
-    let offsetX, offsetY
-
-    element.onmousedown = function dragMouseDown(event) {
-      event.preventDefault();
-      const elementRect = element.getBoundingClientRect();
-      // 获取鼠标位置
-      offsetX = event.clientX - elementRect.left;
-      offsetY = event.clientY - elementRect.top
-      document.onmousemove = function elementDrag(event) {
-
-        event.preventDefault();
-
-        const mouseX = event.clientX;
-
-        const mouseY = event.clientY;
-
-        // 限制在画布范围内
-        const containerRect = container.getBoundingClientRect();
-
-        if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (elementRect.width - offsetX)) {
-          if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (elementRect.height - offsetY)) {
-            element.style.left = `${mouseX - offsetX}px`;
-            element.style.top = `${mouseY - offsetY}px`;
-
-            const options = markTemplates.value.get(element);
-
-            options.positionX = (element.offsetLeft - options.containerRect.left) / options.containerRect.width
-            options.positionY = (element.offsetTop - options.containerRect.top) / options.containerRect.height
-
-          }
-        }
-
-      }
-      document.onmouseup = function closeDragElement() {
-        document.onmouseup = null;
-        document.onmousemove = null;
-      }
-    }
-
-  }
-};
-
-
 const watchInputImages = () => {
+
   window.electronAPI.watchInputImage((event, data) => {
     if (data) {
-      data.forEach((value: object, key: string) => images.value.set(key, value));
+      data.forEach((image: object, path: string) => {
+        image.visible = false
+        image.elment = null
+        image.getTargetElement = () => {
+          if (!image.element) {
+            image.element = document.getElementById(path)
+          }
+          return image.element
+        }
+        images.value.set(path, image)
+      });
+
+      nextTick(() => {
+        images.value.forEach((image: object, path: string) => {
+          const element = image.getTargetElement();
+          bindDragEvent(element);
+        })
+      })
     }
   });
+}
+
+const openContextMenu = () => {
+  if (images.value.size) {
+    window.electronAPI.openContextMenu()
+  }
 }
 
 const watchContextMenu = () => {
@@ -618,9 +451,10 @@ const watchContextMenu = () => {
           images.value.delete(path)
         }
         selectedImages.value.clear();
-        if (!images.value.size || !images.value.has(picture.value.getAttribute('path'))) {
-          previewUrl.value = ''
-        }
+        // const beforePath = selectedElement.value.getAttribute('path');
+        // if (!images.value.size || !images.value.has(beforePath)) {
+        //   images.value.get(beforePath).visible = false
+        // }
       } else if (type === 1) {
         settings.value.outputDirectory = data.outputDirectory
         settings.value.files = [...selectedImages.value.keys()]
@@ -641,7 +475,7 @@ const watchCtrlA = () => {
     if (event.ctrlKey && event.key === 'a') {
       event.preventDefault();
       if (selectedImages.value.size) {
-        const elements = document.documentElement.querySelectorAll('img.imageItem');
+        const elements = document.querySelectorAll('img.imageItem');
         elements.forEach(element => {
           element.classList.add('active');
           selectedImages.value.set(element.getAttribute('path', element))
@@ -655,29 +489,53 @@ onMounted(() => {
   watchInputImages()
   watchContextMenu()
   watchCtrlA()
-  bindDragEvent()
 })
 
+async function handlePreview(event, image) {
+  if (!event.ctrlKey) {
+    if (selectedImages.value && !selectedImages.value.size) {
+      selectedElement.value = event.target;
+    } else if (selectedImages.value && selectedImages.value.size === 1) {
+      if (selectedElement.value) {
+        const beforePath = selectedElement.value.getAttribute('path');
+        selectedImages.value.delete(beforePath);
+        selectedElement.value.classList.remove('active')
+        images.value.get(beforePath).visible = false
+        selectedElement.value = event.target;
+      }
+    } else {
+      if (!selectedImages.value.has(image.path)) {
+        const selectedElements = selectedImages.value.values();
+        for (let element of selectedElements) {
+          element.classList.remove('active')
+        }
+        selectedImages.value.clear()
+      }
+      const beforePath = selectedElement.value.getAttribute('path');
+      images.value.get(beforePath).visible = false
+      selectedElement.value = event.target;
+      images.value.get(image.path).visible = true
+    }
 
-const handleBorders = () => {
-  const img = picture.value;
-  if (img && img.complete && img.naturalWidth > 0) {
-    const {offsetWidth, offsetHeight} = img;
-    const baseLength = Math.max(offsetWidth, offsetHeight);
-    const {borderLeft, borderRight, borderTop, borderBottom, borderColor} = settings.value.border;
-    img.style.borderLeft = `${baseLength * borderLeft / 100}px solid ${borderColor}`
-    img.style.borderRight = `${baseLength * borderRight / 100}px solid ${borderColor}`
-    img.style.borderTop = `${baseLength * borderTop / 100}px solid ${borderColor}`
-    img.style.borderBottom = `${baseLength * borderBottom / 100}px solid ${borderColor}`
+    if (!selectedImages.value.has(image.path)) {
+      selectedImages.value.set(image.path, event.target)
+      event.target.classList.add('active')
+    }
+
+    const targetImage = images.value.get(image.path);
+
+    image.visible = true;
+
+    const data = await window.electronAPI.parsePhotoMetadata(image.path);
+    metadata.value = data.details;
+    settings.value.base = data.base
+
+    handleBorders()
+
   }
+
 }
 
-const removeTag = (tag) => {
-  const index = settings.value.tags.indexOf(tag);
-  if (index !== -1) {
-    settings.value.tags.splice(index, 1);
-  }
-}
 
 const handleMultipleSelect = (event: object, image: object) => {
   const element = event.target;
@@ -755,118 +613,20 @@ const handleShiftClick = (event: object, image: object) => {
 }
 
 
-const handleNewTag = () => {
-  if (customTag.value.label && customTag.value.value) {
-    customTag.value.id = Date.now()
-    settings.value.tags.push(customTag.value)
-    dialogVisible.value = false
-    customTag.value = {}
+const handleBorders = () => {
+  console.log(selectedElement.value.getAttribute('path'))
+  const targetElement = images.value.get(selectedElement.value.getAttribute('path')).getTargetElement();
+  if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
+    const {offsetWidth, offsetHeight} = targetElement;
+    const baseLength = Math.max(offsetWidth, offsetHeight);
+    const {borderLeft, borderRight, borderTop, borderBottom, borderColor} = settings.value.border;
+    targetElement.style.borderLeft = `${baseLength * borderLeft / 100}px solid ${borderColor}`
+    targetElement.style.borderRight = `${baseLength * borderRight / 100}px solid ${borderColor}`
+    targetElement.style.borderTop = `${baseLength * borderTop / 100}px solid ${borderColor}`
+    targetElement.style.borderBottom = `${baseLength * borderBottom / 100}px solid ${borderColor}`
   }
 }
 
-
-const flushMarksPosition = () => {
-
-  const {height, width, left, right, bottom, top} = picture.value.getBoundingClientRect();
-
-  markTemplates.value.forEach((options, element) => {
-    const {positionX, positionY, baseLength, baseFontSize, originalElement} = options;
-
-    const elementWidth = originalElement.offsetWidth;
-
-    const elementHeight = originalElement.offsetHeight;
-
-    const ratio = Math.max(width, height) / baseLength
-
-    let newPositionX = width * positionX + left;
-
-    let newPositionY = height * positionY + top;
-
-    if (newPositionX < left) {
-      newPositionX = 0
-    }
-
-    if (newPositionX + elementWidth > right) {
-      newPositionX = newPositionX - (newPositionX + elementWidth - right)
-    }
-
-    if (newPositionY < top) {
-      newPositionY = 0
-    }
-
-    if (newPositionY + elementHeight > bottom) {
-      newPositionY = newPositionY - (newPositionY + elementHeight - right)
-    }
-
-    element.style.left = `${newPositionX}px`
-
-    element.style.top = `${newPositionY}px`
-
-    // element.style.fontSize = (baseFontSize * ratio) + 'px'
-  })
-
-}
-
-async function handlePreview(event, image) {
-  if (!event.ctrlKey) {
-    if (selectedImages.value && !selectedImages.value.size) {
-      beforeSelectedElement.value = event.target;
-    } else if (selectedImages.value && selectedImages.value.size === 1) {
-      if (beforeSelectedElement.value) {
-        const beforePath = beforeSelectedElement.value.getAttribute('path');
-        selectedImages.value.delete(beforePath);
-        beforeSelectedElement.value.classList.remove('active')
-        beforeSelectedElement.value = event.target;
-      }
-    } else {
-      if (!selectedImages.value.has(image.path)) {
-        const selectedElements = selectedImages.value.values();
-        for (let element of selectedElements) {
-          element.classList.remove('active')
-        }
-        selectedImages.value.clear()
-        beforeSelectedElement.value = event.target;
-      }
-    }
-
-    if (!selectedImages.value.has(image.path)) {
-      selectedImages.value.set(image.path, event.target)
-      event.target.classList.add('active')
-    }
-
-    picture.value.setAttribute('path', image.path)
-    previewUrl.value = image.url
-    const data = await window.electronAPI.parsePhotoMetadata(image.path);
-    metadata.value = data.details;
-    settings.value.base = data.base
-    flushMarksPosition()
-
-    // 后续优化，没有选中任何元素，首次选中是执行
-    handleBorders()
-  }
-}
-
-
-const openContextMenu = () => {
-  if (images.value.size) {
-    window.electronAPI.openContextMenu()
-  }
-}
-
-const handleMetadataWheel = (e: Event) => {
-  // 1. 阻止默认的垂直滚动行为
-  e.preventDefault();
-  // 2. 获取滚轮滚动方向（deltaY > 0 向下滚，< 0 向上滚）
-  // 3. 转换为水平滚动：向下滚向右移动，向上滚向左移动
-  const scrollAmount = e.deltaY * 0.5; // 调整滚动速度
-  // 4. 应用滚动
-  if (metadataContainer.value) {
-    metadataContainer.value.scrollBy({
-      left: scrollAmount,
-      behavior: 'smooth' // 平滑滚动效果
-    });
-  }
-};
 
 const handleWheel = (e: Event) => {
   // 1. 阻止默认的垂直滚动行为
@@ -882,6 +642,139 @@ const handleWheel = (e: Event) => {
     });
   }
 };
+
+
+const bindDragEvent = (previewImage) => {
+  let dragElement;
+  let originalElement;
+  let offsetX;
+  let offsetY;
+  // 设置拖拽事件
+  document.querySelectorAll('.image-mark, .text-mark').forEach(component => {
+    component.addEventListener('dragstart', function (event) {
+      const componentRect = component.getBoundingClientRect();
+      offsetX = event.clientX - componentRect.left;
+      // 元素与鼠标箭头之间的垂直方向偏移量差
+      offsetY = event.clientY - componentRect.top;
+      originalElement = component
+      dragElement = component.cloneNode(true);
+      const computedStyle = window.getComputedStyle(component);
+      // 将计算样式复制到克隆元素的内联样式中
+      for (let i = 0; i < computedStyle.length; i++) {
+        const property = computedStyle[i];
+        const value = computedStyle.getPropertyValue(property);
+        // 设置内联样式
+        dragElement.style.setProperty(property, value);
+      }
+      // 关键：设置拖拽数据传输
+      event.dataTransfer.setData('text/plain', 'drag-element');
+    });
+  });
+
+  previewImage.addEventListener('dragover', event =>
+      event.preventDefault()
+  );
+
+  previewImage.addEventListener('dragleave', () =>
+      container.style.borderColor = '#95a5a6'
+  );
+
+  // 修复放置逻辑
+  previewImage.addEventListener('drop', function (event) {
+
+    event.preventDefault();
+
+    if (!dragElement) return;
+
+    const mouseX = event.clientX;
+
+    const mouseY = event.clientY;
+
+    const containerRect = previewImage.getBoundingClientRect();
+
+    const originalElementRect = originalElement.getBoundingClientRect();
+
+    if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (originalElementRect.width - offsetX)) {
+
+      if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (originalElementRect.height - offsetY)) {
+        // 关键：必须设为绝对定位
+        dragElement.style.position = 'absolute';
+        // 设置元素定位
+        dragElement.style.left = `${mouseX - offsetX}px`;
+        dragElement.style.top = `${mouseY - offsetY}px`;
+
+        // 关键：将元素添加到容器
+        previewImage.parentNode.appendChild(dragElement);
+
+        const positionX = (dragElement.offsetLeft - containerRect.left) / containerRect.width;
+
+        const positionY = (dragElement.offsetTop - containerRect.top) / containerRect.height;
+
+        markTemplates.value.set(dragElement, {
+          positionX,
+          positionY,
+          containerRect,
+          text: dragElement.innerText,
+          src: dragElement.src,
+          baseLength: Math.max(containerRect.width, containerRect.height),
+          baseFontSize: dragElement.style.fontSize.replace('px', ''),
+          originalElement
+        })
+
+        makeDraggable(dragElement)
+      }
+    }
+
+    // 重置拖拽元素引用
+    dragElement = null;
+
+    originalElement = null;
+
+  });
+
+  // 使形状可拖动
+  function makeDraggable(element) {
+    let offsetX, offsetY
+    element.onmousedown = function dragMouseDown(event) {
+      event.preventDefault();
+      const elementRect = element.getBoundingClientRect();
+      // 获取鼠标位置
+      offsetX = event.clientX - elementRect.left;
+      offsetY = event.clientY - elementRect.top
+      document.onmousemove = function elementDrag(event) {
+
+        event.preventDefault();
+
+        const mouseX = event.clientX;
+
+        const mouseY = event.clientY;
+
+        // 限制在画布范围内
+        const containerRect = previewImage.getBoundingClientRect();
+
+        if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (elementRect.width - offsetX)) {
+          if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (elementRect.height - offsetY)) {
+            element.style.left = `${mouseX - offsetX}px`;
+            element.style.top = `${mouseY - offsetY}px`;
+
+            const options = markTemplates.value.get(element);
+
+            options.positionX = (element.offsetLeft - options.containerRect.left) / options.containerRect.width
+
+            options.positionY = (element.offsetTop - options.containerRect.top) / options.containerRect.height
+
+          }
+        }
+      }
+      document.onmouseup = function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+      }
+    }
+
+  }
+};
+
 
 </script>
 
@@ -1062,22 +955,27 @@ const handleWheel = (e: Event) => {
 }
 
 .page-main .page-center {
+  background: #a2a4a6;
   width: 60%;
   height: 100%;
-  background: #a2a4a6;
-  box-sizing: border-box;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   border-left: 2px solid #484949;
   border-right: 2px solid #484949;
+  box-sizing: border-box;
 
-  img {
-    max-width: 95%;
-    max-height: 95%;
-    width: auto; /* 保持原始宽高比 */
-    height: auto; /* 保持原始宽高比 */
-    transition: background-color 0.3s; /* 可选，添加过渡效果 */
+  .preview-item {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    img {
+      max-width: 95%;
+      max-height: 95%;
+      width: auto; /* 保持原始宽高比 */
+      height: auto; /* 保持原始宽高比 */
+      transition: background-color 0.3s; /* 可选，添加过渡效果 */
+    }
   }
 
 }
