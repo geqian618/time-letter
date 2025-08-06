@@ -449,6 +449,8 @@ const textMarks = ref(null)
 
 const imageMarks = ref(null)
 
+const markTemplates = ref(new Map())
+
 
 // const stopWatch = watch(settings.value.base, (newVal, oldVal) => {
 //   console.log(newVal)
@@ -464,10 +466,10 @@ const bindDragEvent = () => {
   // 设置拖拽事件
   document.querySelectorAll('.image-mark, .text-mark').forEach(component => {
     component.addEventListener('dragstart', function (event) {
-      const {left, top, width, height} = component.getBoundingClientRect();
-      offsetX = event.clientX - left;
+      const componentRect = component.getBoundingClientRect();
+      offsetX = event.clientX - componentRect.left;
       // 元素与鼠标箭头之间的垂直方向偏移量差
-      offsetY = event.clientY - top;
+      offsetY = event.clientY - componentRect.top;
       originalElement = component
       dragElement = component.cloneNode(true);
       const computedStyle = window.getComputedStyle(component);
@@ -502,22 +504,43 @@ const bindDragEvent = () => {
 
     const mouseY = e.clientY;
 
+    const containerRect = container.getBoundingClientRect();
+
+    const dragElementRect = dragElement.getBoundingClientRect();
+
     // 计算相对容器的坐标
-    const {left, right, top, bottom} = container.getBoundingClientRect();
 
-    const {width, height} = originalElement.getBoundingClientRect();
+    const originalElementRect = originalElement.getBoundingClientRect();
 
-    if (mouseX >= left + offsetX && mouseX <= right - (width - offsetX)) {
+    if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (originalElementRect.width - offsetX)) {
 
-      if (mouseY >= top + offsetY && mouseY <= bottom - (height - offsetY)) {
+      if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (originalElementRect.height - offsetY)) {
         // 关键：必须设为绝对定位
         dragElement.style.position = 'absolute';
         // 设置元素定位
         dragElement.style.left = `${mouseX - offsetX}px`;
         dragElement.style.top = `${mouseY - offsetY}px`;
 
+
         // 关键：将元素添加到容器
         container.parentNode.appendChild(dragElement);
+
+
+        const positionX = (dragElement.offsetLeft - containerRect.left) / containerRect.width;
+
+        const positionY = (dragElement.offsetTop - containerRect.top) / containerRect.height;
+
+
+        markTemplates.value.set(dragElement, {
+          positionX,
+          positionY,
+          containerRect,
+          text: dragElement.innerText,
+          src: dragElement.src,
+          baseLength: Math.max(containerRect.width, containerRect.height),
+          baseFontSize: dragElement.style.fontSize.replace('px', ''),
+          originalElement
+        })
 
         makeDraggable(dragElement)
       }
@@ -538,10 +561,10 @@ const bindDragEvent = () => {
 
     element.onmousedown = function dragMouseDown(event) {
       event.preventDefault();
-      const rect = element.getBoundingClientRect();
+      const elementRect = element.getBoundingClientRect();
       // 获取鼠标位置
-      offsetX = event.clientX - rect.left;
-      offsetY = event.clientY - rect.top
+      offsetX = event.clientX - elementRect.left;
+      offsetY = event.clientY - elementRect.top
       document.onmousemove = function elementDrag(event) {
 
         event.preventDefault();
@@ -551,12 +574,18 @@ const bindDragEvent = () => {
         const mouseY = event.clientY;
 
         // 限制在画布范围内
-        const {left, right, top, bottom} = container.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
 
-        if (mouseX >= left + offsetX && mouseX <= right - (rect.width - offsetX)) {
-          if (mouseY >= top + offsetY && mouseY <= bottom - (rect.height - offsetY)) {
+        if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (elementRect.width - offsetX)) {
+          if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (elementRect.height - offsetY)) {
             element.style.left = `${mouseX - offsetX}px`;
             element.style.top = `${mouseY - offsetY}px`;
+
+            const options = markTemplates.value.get(element);
+
+            options.positionX = (element.offsetLeft - options.containerRect.left) / options.containerRect.width
+            options.positionY = (element.offsetTop - options.containerRect.top) / options.containerRect.height
+
           }
         }
 
@@ -735,6 +764,49 @@ const handleNewTag = () => {
   }
 }
 
+
+const flushMarksPosition = () => {
+
+  const {height, width, left, right, bottom, top} = picture.value.getBoundingClientRect();
+
+  markTemplates.value.forEach((options, element) => {
+    const {positionX, positionY, baseLength, baseFontSize, originalElement} = options;
+
+    const elementWidth = originalElement.offsetWidth;
+
+    const elementHeight = originalElement.offsetHeight;
+
+    const ratio = Math.max(width, height) / baseLength
+
+    let newPositionX = width * positionX + left;
+
+    let newPositionY = height * positionY + top;
+
+    if (newPositionX < left) {
+      newPositionX = 0
+    }
+
+    if (newPositionX + elementWidth > right) {
+      newPositionX = newPositionX - (newPositionX + elementWidth - right)
+    }
+
+    if (newPositionY < top) {
+      newPositionY = 0
+    }
+
+    if (newPositionY + elementHeight > bottom) {
+      newPositionY = newPositionY - (newPositionY + elementHeight - right)
+    }
+
+    element.style.left = `${newPositionX}px`
+
+    element.style.top = `${newPositionY}px`
+
+    // element.style.fontSize = (baseFontSize * ratio) + 'px'
+  })
+
+}
+
 async function handlePreview(event, image) {
   if (!event.ctrlKey) {
     if (selectedImages.value && !selectedImages.value.size) {
@@ -767,7 +839,7 @@ async function handlePreview(event, image) {
     const data = await window.electronAPI.parsePhotoMetadata(image.path);
     metadata.value = data.details;
     settings.value.base = data.base
-
+    flushMarksPosition()
 
     // 后续优化，没有选中任何元素，首次选中是执行
     handleBorders()
@@ -929,6 +1001,7 @@ const handleWheel = (e: Event) => {
           gap: 5px;
           grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
           background-color: #919090;
+
           .image-mark {
             cursor: move;
             user-select: none;
