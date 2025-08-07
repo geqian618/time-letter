@@ -583,6 +583,10 @@ const handleResize = () => {
             }
           })
         }
+
+        if (textLabels.size || imageLabels.size) {
+          handleBorders()
+        }
       })
     }, 0); // 200ms 防抖间隔
   });
@@ -726,7 +730,9 @@ const handleBorders = () => {
   const image = images.value.get(selectedElement.value.getAttribute('path'))
   const targetElement = image.getTargetElement();
   if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
+
     const {offsetWidth, offsetHeight} = targetElement;
+
     const baseLength = Math.max(offsetWidth, offsetHeight);
 
     const {borderLeft, borderRight, borderTop, borderBottom, borderColor} = settings.value.border;
@@ -780,7 +786,11 @@ const bindDragEvent = (previewImage, image) => {
         dragElement.style.setProperty(property, value);
       }
 
-      document.id = Date.now();
+      dragElement.style.width = 'fit-content'
+
+      dragElement.style.minWidth = '50px'
+
+      dragElement.setAttribute('tabindex','0')
 
       // 关键：设置拖拽数据传输
       event.dataTransfer.setData('text/plain', 'drag-element');
@@ -791,8 +801,9 @@ const bindDragEvent = (previewImage, image) => {
       event.preventDefault()
   );
 
-  previewImage.addEventListener('dragleave', () =>
-      container.style.borderColor = '#95a5a6'
+  previewImage.addEventListener('dragleave', () => {
+        // previewImage.style.borderColor = '#95a5a6'
+      }
   );
 
   // 修复放置逻辑
@@ -860,7 +871,6 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.image.positionY = positionY
           settings.value.image.path = dragElement.src
           image.settings.images.set(dragElement, _.cloneDeep(settings.value.image))
-          console.log(settings.value.image)
         }
         makeDraggable(dragElement)
       }
@@ -876,6 +886,7 @@ const bindDragEvent = (previewImage, image) => {
   // 使形状可拖动
   function makeDraggable(dragElement) {
     let offsetX, offsetY
+    let clickTimeout = null;
     dragElement.onmousedown = function dragMouseDown(event) {
       event.preventDefault();
       const elementRect = dragElement.getBoundingClientRect();
@@ -947,6 +958,81 @@ const bindDragEvent = (previewImage, image) => {
       }
     }
 
+    dragElement.addEventListener('keydown', (event) => {
+      // 检测 Delete (46) 或 Backspace (8) 键
+      if (event.key === 'Delete' || event.key === 'Backspace' || event.keyCode === 46 || event.keyCode === 8) {
+        event.preventDefault();
+        if (dragElement.getAttribute('selected')) {
+          dragElement.remove()
+        }
+      }
+    })
+
+    dragElement.addEventListener('click', (event) => {
+      // 清除之前的定时器（如果有）
+      clearTimeout(clickTimeout);
+      // 设置新的定时器
+      clickTimeout = setTimeout(function () {
+        dragElement.focus()
+        dragElement.style.border = '1px dashed #f00'
+        dragElement.setAttribute('selected', true)
+        console.log('单击');
+      }, 200); // 300毫秒内没有再次点击，则视为单击
+    })
+
+    if (!dragElement.src) {
+      dragElement.addEventListener('dblclick', (event) => {
+        // 双击时清除单击的定时器
+        clearTimeout(clickTimeout);
+
+        // 保存原始文本
+        const originalText = dragElement.textContent;
+        // 创建输入框
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = originalText;
+        input.style.width = 'fit-content'
+        input.style.height = dragElement.style.height
+        input.style.padding = '0 5px'
+
+        // 清空元素内容并添加输入框
+        dragElement.innerHTML = '';
+
+        dragElement.appendChild(input);
+
+        // 自动聚焦并全选文本
+        input.focus();
+        input.select();
+        dragElement.setAttribute('draggable', 'false')
+
+        // 绑定保存事件
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') {
+            const newValue = input.value;
+            input.remove()
+            dragElement.innerHTML = newValue ? newValue : ' '
+            dragElement.setAttribute('draggable', 'true')
+          }
+        });
+
+        // 失去焦点时保存
+        input.addEventListener('blur', function () {
+          const newValue = input.value;
+          input.remove()
+          dragElement.innerHTML = newValue ? newValue : ' '
+          dragElement.setAttribute('draggable', 'true')
+        });
+
+      })
+      dragElement.parentNode.addEventListener('click', () => {
+        const marks = dragElement.parentNode.querySelectorAll('.image-mark,.text-mark');
+        for (let mark of marks) {
+          if (mark.getAttribute('selected')) {
+            mark.style.border = ''
+          }
+        }
+      })
+    }
   }
 };
 
@@ -1042,10 +1128,10 @@ const bindDragEvent = (previewImage, image) => {
           border-bottom: 1px solid #a2a4a6;
 
           .text-mark {
-            max-width: 100px;
-            text-align: center;
-            padding: 5px 0;
-            overflow: hidden;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             cursor: move;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
             user-select: none;
@@ -1067,7 +1153,6 @@ const bindDragEvent = (previewImage, image) => {
         border-bottom: 1px solid #a2a4a6;
 
         .image-marks {
-          box-sizing: border-box;
           padding: 10px 10px;
           display: grid;
           gap: 5px;
@@ -1267,6 +1352,14 @@ const bindDragEvent = (previewImage, image) => {
     opacity: 0.7; /* 添加透明度以示区别 */
   }
 
+
+  .edit-text {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    border: 1px solid #ccc; /* 边框也不会导致超出 */
+    margin: 0; /* 移除默认的margin */
+  }
 
 }
 
