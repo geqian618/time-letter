@@ -310,7 +310,7 @@
 
 <script setup lang="ts">
 
-import {nextTick, onMounted, ref, watch} from "vue";
+import {nextTick, onBeforeMount, onMounted, ref, watch} from "vue";
 
 import _ from 'lodash';
 
@@ -507,10 +507,51 @@ const watchCtrlA = () => {
   });
 }
 
+// 处理 resize 事件（添加防抖优化性能）
+const handleResize = () => {
+  let resizeTimer;
+  // 添加 resize 事件监听
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      images.value.forEach((image, path) => {
+        const imageLabels = image.settings.images;
+        const textLabels = image.settings.texts;
+        const {width, left, top, height} = image.getTargetElement().getBoundingClientRect();
+        if (imageLabels.size) {
+          imageLabels.forEach((items, element) => {
+            let {positionX, positionY} = items
+            positionX = width * positionX;
+            positionY = height * positionY;
+            element.style.left = left + positionX +'px';
+            element.style.top = top + positionY +'px'
+          })
+        }
+        if (textLabels.size) {
+          textLabels.forEach((items, element) => {
+            let {positionX, positionY} = items
+            positionX = width * positionX;
+            positionY = height * positionY;
+            element.style.left = left + positionX +'px';
+            element.style.top = top + positionY +'px'
+          })
+        }
+      })
+    }, 0); // 200ms 防抖间隔
+  });
+
+}
+
 onMounted(() => {
   watchInputImages()
   watchContextMenu()
   watchCtrlA()
+  handleResize()
+})
+
+onBeforeMount(() => {
+  // 组件销毁前移除监听，避免内存泄漏
+  window.removeEventListener("resize", handleResize);
 })
 
 async function handlePreview(event, image) {
@@ -742,14 +783,13 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.text.positionX = positionX
           settings.value.text.positionY = positionY
           settings.value.text.content = dragElement.innerText
-          image.settings.texts.set(dragElement, settings.value.text)
+          image.settings.texts.set(dragElement,  _.cloneDeep(settings.value.text))
         } else {
           settings.value.image.positionX = positionX
           settings.value.image.positionY = positionY
           settings.value.image.path = dragElement.src
-          image.settings.images.set(dragElement, settings.value.image)
+          image.settings.images.set(dragElement, _.cloneDeep(settings.value.image))
         }
-
         makeDraggable(dragElement)
       }
     }
@@ -795,12 +835,13 @@ const bindDragEvent = (previewImage, image) => {
             if (!element.src) {
               image.settings.texts.get(element).positionX = positionX
               image.settings.texts.get(element).positionY = positionY
+              console.log(image.settings.texts)
             } else {
               image.settings.images.get(element).positionX = positionX
               image.settings.images.get(element).positionY = positionY
+              console.log(image.settings.images)
             }
 
-            console.log(image.settings)
           }
         }
       }
