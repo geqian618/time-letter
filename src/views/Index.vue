@@ -412,9 +412,6 @@ const textMarks = ref([])
 
 const imageMarks = ref([])
 
-const markTemplates = ref(new Map())
-
-
 const watchInputImages = () => {
 
   window.electronAPI.watchInputImage((event, data) => {
@@ -433,8 +430,8 @@ const watchInputImages = () => {
                 borderBottom: 0,
                 borderColor: 'rgba(255, 255, 255, 1)',
               },
-              texts: [],
-              images: [],
+              texts: new Map(),
+              images: new Map(),
             },
             getTargetElement() {
               if (!this.element) {
@@ -451,7 +448,7 @@ const watchInputImages = () => {
         images.value.forEach((image: object, path: string) => {
           if (!image.render) {
             const element = image.getTargetElement();
-            bindDragEvent(element);
+            bindDragEvent(element, image);
             image.render = true
           }
         })
@@ -547,10 +544,7 @@ async function handlePreview(event, image) {
       event.target.classList.add('active')
     }
 
-    const targetImage = images.value.get(image.path);
-
     image.visible = true;
-
     settings.value.border = image.settings.border
 
     const data = await window.electronAPI.parsePhotoMetadata(image.path);
@@ -675,7 +669,7 @@ const handleWheel = (e: Event) => {
 };
 
 
-const bindDragEvent = (previewImage) => {
+const bindDragEvent = (previewImage, image) => {
   let dragElement;
   let originalElement;
   let offsetX;
@@ -697,6 +691,9 @@ const bindDragEvent = (previewImage) => {
         // 设置内联样式
         dragElement.style.setProperty(property, value);
       }
+
+      document.id = Date.now();
+
       // 关键：设置拖拽数据传输
       event.dataTransfer.setData('text/plain', 'drag-element');
     });
@@ -741,16 +738,17 @@ const bindDragEvent = (previewImage) => {
 
         const positionY = (dragElement.offsetTop - containerRect.top) / containerRect.height;
 
-        markTemplates.value.set(dragElement, {
-          positionX,
-          positionY,
-          containerRect,
-          text: dragElement.innerText,
-          src: dragElement.src,
-          baseLength: Math.max(containerRect.width, containerRect.height),
-          baseFontSize: dragElement.style.fontSize.replace('px', ''),
-          originalElement
-        })
+        if (!dragElement.src) {
+          settings.value.text.positionX = positionX
+          settings.value.text.positionY = positionY
+          settings.value.text.content = dragElement.innerText
+          image.settings.texts.set(dragElement, settings.value.text)
+        } else {
+          settings.value.image.positionX = positionX
+          settings.value.image.positionY = positionY
+          settings.value.image.path = dragElement.src
+          image.settings.images.set(dragElement, settings.value.image)
+        }
 
         makeDraggable(dragElement)
       }
@@ -785,15 +783,24 @@ const bindDragEvent = (previewImage) => {
 
         if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (elementRect.width - offsetX)) {
           if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (elementRect.height - offsetY)) {
+
             element.style.left = `${mouseX - offsetX}px`;
+
             element.style.top = `${mouseY - offsetY}px`;
 
-            const options = markTemplates.value.get(element);
+            const positionX = (element.offsetLeft - containerRect.left) / containerRect.width
 
-            options.positionX = (element.offsetLeft - options.containerRect.left) / options.containerRect.width
+            const positionY = (element.offsetTop - containerRect.top) / containerRect.height
 
-            options.positionY = (element.offsetTop - options.containerRect.top) / options.containerRect.height
+            if (!element.src) {
+              image.settings.texts.get(element).positionX = positionX
+              image.settings.texts.get(element).positionY = positionY
+            } else {
+              image.settings.images.get(element).positionX = positionX
+              image.settings.images.get(element).positionY = positionY
+            }
 
+            console.log(image.settings)
           }
         }
       }
@@ -841,6 +848,10 @@ const bindDragEvent = (previewImage) => {
     padding: 15px;
     height: 100%;
     border-right: 2px solid #a2a4a6;
+  }
+
+  img:last-child {
+    border: none;
   }
 
   .active {
