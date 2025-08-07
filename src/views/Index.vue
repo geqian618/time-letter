@@ -382,6 +382,7 @@ const settings = ref({
     path: '',
     positionX: 0,
     positionY: 0,
+    references: [],
     options: {
       scale: 1,
       angle: 0,
@@ -391,6 +392,7 @@ const settings = ref({
     content: '',
     positionX: 0,
     positionY: 0,
+    references: [],
     options: {
       fontSize: 14,
       fontFamily: '',
@@ -517,23 +519,68 @@ const handleResize = () => {
       images.value.forEach((image, path) => {
         const imageLabels = image.settings.images;
         const textLabels = image.settings.texts;
-        const {width, left, top, height} = image.getTargetElement().getBoundingClientRect();
+        const {width, left, right, bottom, top, height} = image.getTargetElement().getBoundingClientRect();
         if (imageLabels.size) {
           imageLabels.forEach((items, element) => {
-            let {positionX, positionY} = items
-            positionX = width * positionX;
-            positionY = height * positionY;
-            element.style.left = left + positionX +'px';
-            element.style.top = top + positionY +'px'
+
+            let {positionX, positionY, references} = items
+
+            let newPositionX, newPositionY
+
+            if (references.includes('left')) {
+              newPositionX = left + width * positionX;
+              element.style.removeProperty('right')
+              element.style.left = newPositionX + 'px'
+            }
+
+            if (references.includes('right')) {
+              newPositionX = window.innerWidth - right + width * positionX;
+              element.style.removeProperty('left')
+              element.style.right = newPositionX + 'px'
+            }
+
+            if (references.includes('top')) {
+              newPositionY = top + height * positionY;
+              element.style.removeProperty('bottom')
+              element.style.top = newPositionY + 'px'
+            }
+
+            if (references.includes('bottom')) {
+              newPositionY = window.innerHeight - bottom + height * positionY;
+              element.style.removeProperty('top')
+              element.style.bottom = newPositionY + 'px';
+            }
           })
         }
         if (textLabels.size) {
           textLabels.forEach((items, element) => {
-            let {positionX, positionY} = items
-            positionX = width * positionX;
-            positionY = height * positionY;
-            element.style.left = left + positionX +'px';
-            element.style.top = top + positionY +'px'
+            let {positionX, positionY, references} = items
+
+            let newPositionX, newPositionY
+
+            if (references.includes('left')) {
+              newPositionX = left + width * positionX;
+              element.style.removeProperty('right')
+              element.style.left = newPositionX + 'px'
+            }
+
+            if (references.includes('right')) {
+              newPositionX = window.innerWidth - right + width * positionX;
+              element.style.removeProperty('left')
+              element.style.right = newPositionX + 'px'
+            }
+
+            if (references.includes('top')) {
+              newPositionY = top + height * positionY;
+              element.style.removeProperty('bottom')
+              element.style.top = newPositionY + 'px'
+            }
+
+            if (references.includes('bottom')) {
+              newPositionY = window.innerHeight - bottom + height * positionY;
+              element.style.removeProperty('top')
+              element.style.bottom = newPositionY + 'px';
+            }
           })
         }
       })
@@ -775,20 +822,45 @@ const bindDragEvent = (previewImage, image) => {
         // 关键：将元素添加到容器
         previewImage.parentNode.appendChild(dragElement);
 
-        const positionX = (dragElement.offsetLeft - containerRect.left) / containerRect.width;
+        const heightCutLine = containerRect.top + containerRect.height / 2;
 
-        const positionY = (dragElement.offsetTop - containerRect.top) / containerRect.height;
+        const widthCutLine = containerRect.left + containerRect.width / 2;
+
+        let positionX;
+
+        let positionY;
+
+        let references = []
+
+        if (dragElement.offsetLeft > widthCutLine) {
+          references.push('right')
+          positionX = (containerRect.right - dragElement.offsetLeft - dragElement.offsetWidth) / containerRect.width
+        } else {
+          references.push('left')
+          positionX = (dragElement.offsetLeft - containerRect.left) / containerRect.width;
+        }
+
+        if (dragElement.offsetTop > heightCutLine) {
+          references.push('bottom')
+          positionY = (containerRect.bottom - dragElement.offsetTop - dragElement.offsetHeight) / containerRect.height;
+        } else {
+          references.push('top')
+          positionY = (dragElement.offsetTop - containerRect.top) / containerRect.height;
+        }
 
         if (!dragElement.src) {
+          settings.value.text.references = references
           settings.value.text.positionX = positionX
           settings.value.text.positionY = positionY
           settings.value.text.content = dragElement.innerText
-          image.settings.texts.set(dragElement,  _.cloneDeep(settings.value.text))
+          image.settings.texts.set(dragElement, _.cloneDeep(settings.value.text))
         } else {
+          settings.value.image.references = references
           settings.value.image.positionX = positionX
           settings.value.image.positionY = positionY
           settings.value.image.path = dragElement.src
           image.settings.images.set(dragElement, _.cloneDeep(settings.value.image))
+          console.log(settings.value.image)
         }
         makeDraggable(dragElement)
       }
@@ -802,11 +874,11 @@ const bindDragEvent = (previewImage, image) => {
   });
 
   // 使形状可拖动
-  function makeDraggable(element) {
+  function makeDraggable(dragElement) {
     let offsetX, offsetY
-    element.onmousedown = function dragMouseDown(event) {
+    dragElement.onmousedown = function dragMouseDown(event) {
       event.preventDefault();
-      const elementRect = element.getBoundingClientRect();
+      const elementRect = dragElement.getBoundingClientRect();
       // 获取鼠标位置
       offsetX = event.clientX - elementRect.left;
       offsetY = event.clientY - elementRect.top
@@ -824,22 +896,46 @@ const bindDragEvent = (previewImage, image) => {
         if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (elementRect.width - offsetX)) {
           if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (elementRect.height - offsetY)) {
 
-            element.style.left = `${mouseX - offsetX}px`;
+            dragElement.style.left = `${mouseX - offsetX}px`;
 
-            element.style.top = `${mouseY - offsetY}px`;
+            dragElement.style.top = `${mouseY - offsetY}px`;
 
-            const positionX = (element.offsetLeft - containerRect.left) / containerRect.width
 
-            const positionY = (element.offsetTop - containerRect.top) / containerRect.height
+            const heightCutLine = containerRect.top + containerRect.height / 2;
 
-            if (!element.src) {
-              image.settings.texts.get(element).positionX = positionX
-              image.settings.texts.get(element).positionY = positionY
-              console.log(image.settings.texts)
+            const widthCutLine = containerRect.left + containerRect.width / 2;
+
+            let positionX;
+
+            let positionY;
+
+            let references = []
+
+            if (dragElement.offsetLeft > widthCutLine) {
+              references.push('right')
+              positionX = (containerRect.right - dragElement.offsetLeft - dragElement.offsetWidth) / containerRect.width
             } else {
-              image.settings.images.get(element).positionX = positionX
-              image.settings.images.get(element).positionY = positionY
-              console.log(image.settings.images)
+              references.push('left')
+              positionX = (dragElement.offsetLeft - containerRect.left) / containerRect.width;
+            }
+
+            if (dragElement.offsetTop > heightCutLine) {
+              references.push('bottom')
+              positionY = (containerRect.bottom - dragElement.offsetTop - dragElement.offsetHeight) / containerRect.height;
+            } else {
+              references.push('top')
+              positionY = (dragElement.offsetTop - containerRect.top) / containerRect.height;
+            }
+
+            if (!dragElement.src) {
+              image.settings.texts.get(dragElement).references = references
+              image.settings.texts.get(dragElement).positionX = positionX
+              image.settings.texts.get(dragElement).positionY = positionY
+            } else {
+              image.settings.images.get(dragElement).references = references
+              image.settings.images.get(dragElement).positionX = positionX
+              image.settings.images.get(dragElement).positionY = positionY
+              console.log(settings.value.image)
             }
 
           }
