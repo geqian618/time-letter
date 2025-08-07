@@ -771,6 +771,7 @@ const bindDragEvent = (previewImage, image) => {
   // 设置拖拽事件
   document.querySelectorAll('.image-mark, .text-mark').forEach(component => {
     component.addEventListener('dragstart', function (event) {
+
       const componentRect = component.getBoundingClientRect();
       offsetX = event.clientX - componentRect.left;
       // 元素与鼠标箭头之间的垂直方向偏移量差
@@ -790,7 +791,7 @@ const bindDragEvent = (previewImage, image) => {
 
       dragElement.style.minWidth = '50px'
 
-      dragElement.setAttribute('tabindex','0')
+      dragElement.setAttribute('tabindex', '0')
 
       // 关键：设置拖拽数据传输
       event.dataTransfer.setData('text/plain', 'drag-element');
@@ -864,7 +865,14 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.text.positionX = positionX
           settings.value.text.positionY = positionY
           settings.value.text.content = dragElement.innerText
+
+          const dragElementStyle = window.getComputedStyle(dragElement);
+          settings.value.text.options.fontSize = dragElementStyle.fontSize
+          settings.value.text.options.fontFamily = dragElementStyle.fontFamily
+          settings.value.text.options.fontColor = dragElementStyle.color
+
           image.settings.texts.set(dragElement, _.cloneDeep(settings.value.text))
+          console.log(image.settings.texts.get(dragElement))
         } else {
           settings.value.image.references = references
           settings.value.image.positionX = positionX
@@ -887,13 +895,24 @@ const bindDragEvent = (previewImage, image) => {
   function makeDraggable(dragElement) {
     let offsetX, offsetY
     let clickTimeout = null;
+    let mouseSetupX, mouseSetupY
     dragElement.onmousedown = function dragMouseDown(event) {
+
       event.preventDefault();
       const elementRect = dragElement.getBoundingClientRect();
       // 获取鼠标位置
       offsetX = event.clientX - elementRect.left;
       offsetY = event.clientY - elementRect.top
+
+      mouseSetupX = event.clientX
+
+      mouseSetupY = event.clientY
+
       document.onmousemove = function elementDrag(event) {
+
+        if (dragElement.getAttribute('selected') === 'true') {
+          return
+        }
 
         event.preventDefault();
 
@@ -939,16 +958,16 @@ const bindDragEvent = (previewImage, image) => {
             }
 
             if (!dragElement.src) {
-              image.settings.texts.get(dragElement).references = references
-              image.settings.texts.get(dragElement).positionX = positionX
-              image.settings.texts.get(dragElement).positionY = positionY
+              const textMark = image.settings.texts.get(dragElement);
+              textMark.references = references
+              textMark.positionX = positionX
+              textMark.positionY = positionY
             } else {
-              image.settings.images.get(dragElement).references = references
-              image.settings.images.get(dragElement).positionX = positionX
-              image.settings.images.get(dragElement).positionY = positionY
-              console.log(settings.value.image)
+              const imageMark = image.settings.images.get(dragElement);
+              imageMark.references = references
+              imageMark.positionX = positionX
+              imageMark.positionY = positionY
             }
-
           }
         }
       }
@@ -962,28 +981,44 @@ const bindDragEvent = (previewImage, image) => {
       // 检测 Delete (46) 或 Backspace (8) 键
       if (event.key === 'Delete' || event.key === 'Backspace' || event.keyCode === 46 || event.keyCode === 8) {
         event.preventDefault();
-        if (dragElement.getAttribute('selected')) {
+        if (dragElement.getAttribute('selected') === 'true') {
+          if (!dragElement.src) {
+            image.settings.texts.delete(dragElement)
+          } else {
+            image.settings.images.delete(dragElement)
+          }
           dragElement.remove()
         }
       }
     })
 
     dragElement.addEventListener('click', (event) => {
-      // 清除之前的定时器（如果有）
-      clearTimeout(clickTimeout);
-      // 设置新的定时器
-      clickTimeout = setTimeout(function () {
-        dragElement.focus()
-        dragElement.style.border = '1px dashed #f00'
-        dragElement.setAttribute('selected', true)
-        console.log('单击');
-      }, 200); // 300毫秒内没有再次点击，则视为单击
+      if (event.clientX === mouseSetupX && event.clientY === mouseSetupY) {
+        // 清除之前的定时器（如果有）
+        clearTimeout(clickTimeout);
+        // 设置新的定时器
+        clickTimeout = setTimeout(function () {
+          dragElement.focus()
+          dragElement.style.border = '1px dashed #f00'
+          dragElement.setAttribute('selected', 'true')
+          console.log('单击');
+        }, 200); // 300毫秒内没有再次点击，则视为单击
+      }
+    })
+
+    dragElement.addEventListener('blur', () => {
+      if (dragElement.getAttribute('selected') === 'true') {
+        dragElement.style.border = ''
+        dragElement.setAttribute('selected', 'false')
+      }
     })
 
     if (!dragElement.src) {
       dragElement.addEventListener('dblclick', (event) => {
         // 双击时清除单击的定时器
         clearTimeout(clickTimeout);
+
+        dragElement.setAttribute('selected', 'true')
 
         // 保存原始文本
         const originalText = dragElement.textContent;
@@ -1003,7 +1038,7 @@ const bindDragEvent = (previewImage, image) => {
         // 自动聚焦并全选文本
         input.focus();
         input.select();
-        dragElement.setAttribute('draggable', 'false')
+
 
         // 绑定保存事件
         input.addEventListener('keydown', function (e) {
@@ -1011,7 +1046,9 @@ const bindDragEvent = (previewImage, image) => {
             const newValue = input.value;
             input.remove()
             dragElement.innerHTML = newValue ? newValue : ' '
-            dragElement.setAttribute('draggable', 'true')
+            dragElement.setAttribute('selected', 'false')
+
+            image.settings.texts.get(dragElement).content = newValue
           }
         });
 
@@ -1020,18 +1057,13 @@ const bindDragEvent = (previewImage, image) => {
           const newValue = input.value;
           input.remove()
           dragElement.innerHTML = newValue ? newValue : ' '
-          dragElement.setAttribute('draggable', 'true')
+          dragElement.setAttribute('selected', 'false')
+
+          image.settings.texts.get(dragElement).content = newValue
         });
 
       })
-      dragElement.parentNode.addEventListener('click', () => {
-        const marks = dragElement.parentNode.querySelectorAll('.image-mark,.text-mark');
-        for (let mark of marks) {
-          if (mark.getAttribute('selected')) {
-            mark.style.border = ''
-          }
-        }
-      })
+
     }
   }
 };
