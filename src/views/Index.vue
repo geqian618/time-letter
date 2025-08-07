@@ -312,6 +312,8 @@
 
 import {nextTick, onMounted, ref, watch} from "vue";
 
+import _ from 'lodash';
+
 const predefineColors = ref([
   '#ff4500',
   '#ff8c00',
@@ -353,13 +355,9 @@ const options = [
   },
 ]
 
-const formLabelWidth = '50px'
-
-const images = ref(new Map())
+const images = ref(new Map<string, object>())
 
 const imageList = ref(null);
-
-const metadataContainer = ref(null);
 
 const selectedElement = ref(null);
 
@@ -381,15 +379,25 @@ const settings = ref({
     shootingTime: ''
   },
   image: {
-    scale: 1,
-    angle: 0,
+    path: '',
+    positionX: 0,
+    positionY: 0,
+    options: {
+      scale: 1,
+      angle: 0,
+    }
   },
   text: {
-    fontSize: 14,
-    fontFamily: '',
-    fontColor: 'rgb(0,0,0,1)',
-    tagBackground: 'rgb(255,255,255,0)',
-    angle: 0,
+    content: '',
+    positionX: 0,
+    positionY: 0,
+    options: {
+      fontSize: 14,
+      fontFamily: '',
+      fontColor: 'rgb(0,0,0,1)',
+      tagBackground: 'rgb(255,255,255,0)',
+      angle: 0,
+    }
   },
   border: {
     borderLeft: 3,
@@ -400,11 +408,9 @@ const settings = ref({
   },
 })
 
-const dialogVisible = ref(false);
+const textMarks = ref([])
 
-const textMarks = ref(null)
-
-const imageMarks = ref(null)
+const imageMarks = ref([])
 
 const markTemplates = ref(new Map())
 
@@ -413,22 +419,41 @@ const watchInputImages = () => {
 
   window.electronAPI.watchInputImage((event, data) => {
     if (data) {
-      data.forEach((image: object, path: string) => {
-        image.visible = false
-        image.elment = null
-        image.getTargetElement = () => {
-          if (!image.element) {
-            image.element = document.getElementById(path)
+      data.forEach((item: object, path: string) => {
+        if (!images.value.has(path)) {
+          const image = {
+            visible: false,
+            element: null,
+            render: false,
+            settings: {
+              border: {
+                borderLeft: 0,
+                borderRight: 0,
+                borderTop: 0,
+                borderBottom: 0,
+                borderColor: 'rgba(255, 255, 255, 1)',
+              },
+              texts: [],
+              images: [],
+            },
+            getTargetElement() {
+              if (!this.element) {
+                this.element = document.getElementById(this.path)
+              }
+              return this.element
+            }
           }
-          return image.element
+          images.value.set(path, {...image, ...item})
         }
-        images.value.set(path, image)
       });
 
       nextTick(() => {
         images.value.forEach((image: object, path: string) => {
-          const element = image.getTargetElement();
-          bindDragEvent(element);
+          if (!image.render) {
+            const element = image.getTargetElement();
+            bindDragEvent(element);
+            image.render = true
+          }
         })
       })
     }
@@ -526,6 +551,8 @@ async function handlePreview(event, image) {
 
     image.visible = true;
 
+    settings.value.border = image.settings.border
+
     const data = await window.electronAPI.parsePhotoMetadata(image.path);
     metadata.value = data.details;
     settings.value.base = data.base
@@ -614,12 +641,16 @@ const handleShiftClick = (event: object, image: object) => {
 
 
 const handleBorders = () => {
-  console.log(selectedElement.value.getAttribute('path'))
-  const targetElement = images.value.get(selectedElement.value.getAttribute('path')).getTargetElement();
+  const image = images.value.get(selectedElement.value.getAttribute('path'))
+  const targetElement = image.getTargetElement();
   if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
     const {offsetWidth, offsetHeight} = targetElement;
     const baseLength = Math.max(offsetWidth, offsetHeight);
+
     const {borderLeft, borderRight, borderTop, borderBottom, borderColor} = settings.value.border;
+
+    image.settings.border = settings.value.border
+
     targetElement.style.borderLeft = `${baseLength * borderLeft / 100}px solid ${borderColor}`
     targetElement.style.borderRight = `${baseLength * borderRight / 100}px solid ${borderColor}`
     targetElement.style.borderTop = `${baseLength * borderTop / 100}px solid ${borderColor}`

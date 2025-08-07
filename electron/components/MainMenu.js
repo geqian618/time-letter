@@ -25,7 +25,7 @@ const selectFile = async (window) => {
             filePaths.map(async (filePath) => {
                 const extname = path.extname(filePath).slice(1);
                 return {
-                    name: path.basename(filePath),
+                    filename: path.basename(filePath),
                     url: getSafeImagePath(filePath),
                     path: filePath,
                     extname: extname
