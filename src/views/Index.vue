@@ -647,7 +647,7 @@ const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVa
     if (element.getAttribute('selected') === 'true') {
       image.settings.images.get(element).options.angle = newVal
       element.style.transformOrigin = 'center center'
-      element.style.transform = `scale(${imageOptions.value.scale / 10}) rotate(${newVal}deg)`;
+      element.style.transform = `rotate(${newVal}deg)`;
     }
   }
 });
@@ -660,8 +660,22 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
       image.settings.images.get(element).options.scale = newVal
-      element.style.transformOrigin = 'left top'
-      element.style.transform = `scale(${newVal / 10}) rotate(${imageOptions.value.angle}deg)`;
+
+      let width = Number.parseFloat(element.style.left.replace('px', ''))
+      let height = Number.parseFloat(element.style.top.replace('px', ''))
+      if (isNaN(width) || isNaN(height)) {
+        width = Number.parseFloat(window.getComputedStyle(element).width.replace('px', ''))
+        height = Number.parseFloat(window.getComputedStyle(element).height.replace('px', ''))
+      }
+      let left = Number.parseFloat(element.style.left.replace('px', ''))
+      let top = Number.parseFloat(element.style.top.replace('px', ''))
+
+      const scale = (newVal - oldVal) / 10;
+
+      element.style.width = width + width * scale + 'px'
+      element.style.height = height + height * scale + 'px'
+      element.style.left = left - width * scale / 2 + 'px'
+      element.style.top = top - height * scale / 2 + 'px'
     }
   }
 });
