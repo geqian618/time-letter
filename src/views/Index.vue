@@ -1019,7 +1019,6 @@ const bindDragEvent = (previewImage, image) => {
 
 
             if (dragElement.src) {
-              const scale = imageOptions.value.scale;
               dragElement.style.left = (mouseX - offsetX) + 'px';
               dragElement.style.top = (mouseY - offsetY) + 'px';
             } else {
