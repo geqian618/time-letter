@@ -209,10 +209,10 @@
                       <div class="label">缩放</div>
                       <div class="value">
                         <el-slider @change=""
-                                   :min="0"
-                                   :max="10"
+                                   :min="1"
+                                   :max="100"
                                    size="small"
-                                   v-model="settings.image.scale"
+                                   v-model="imageOptions.scale"
                                    placement="top"/>
                       </div>
                     </li>
@@ -221,7 +221,9 @@
                       <div class="value">
                         <el-slider @change=""
                                    size="small"
-                                   v-model="settings.image.angle"
+                                   :min="0"
+                                   :max="360"
+                                   v-model="imageOptions.angle"
                                    placement="top"/>
                       </div>
                     </li>
@@ -236,7 +238,7 @@
                       <div class="label">字体类型</div>
                       <div class="value">
                         <el-select
-                            v-model="settings.text.fontFamily"
+                            v-model="textOptions.fontFamily"
                             :options="options"
                             size="small"
                             placeholder="Select"/>
@@ -247,7 +249,7 @@
                       <div class="value">
                         <el-slider
                             @change=""
-                            v-model="settings.text.fontSize"
+                            v-model="textOptions.fontSize"
                             show-alpha
                             size="small"
                             :predefine="predefineColors"/>
@@ -258,7 +260,9 @@
                       <div class="value">
                         <el-slider @change=""
                                    size="small"
-                                   v-model="settings.text.angle"
+                                   :min="0"
+                                   :max="360"
+                                   v-model="textOptions.angle"
                                    placement="top"/>
                       </div>
                     </li>
@@ -267,7 +271,7 @@
                       <div class="value">
                         <el-color-picker
                             @change=""
-                            v-model="settings.text.fontColor"
+                            v-model="textOptions.fontColor"
                             show-alpha
                             size="small"
                             :predefine="predefineColors"/>
@@ -278,7 +282,7 @@
                       <div class="value">
                         <el-color-picker
                             @change=""
-                            v-model="settings.text.tagBackground"
+                            v-model="textOptions.tagBackground"
                             show-alpha
                             size="small"
                             :predefine="predefineColors"/>
@@ -334,24 +338,24 @@ const predefineColors = ref([
 
 const options = [
   {
-    value: 'Option1',
-    label: 'Option1',
+    value: 'Microsoft YaHei',
+    label: '微软雅黑',
   },
   {
-    value: 'Option2',
-    label: 'Option2',
+    value: 'SimSun',
+    label: '宋体',
   },
   {
-    value: 'Option3',
-    label: 'Option3',
+    value: 'KaiTi',
+    label: '楷体',
   },
   {
-    value: 'Option4',
-    label: 'Option4',
+    value: 'FangSong',
+    label: '仿宋',
   },
   {
-    value: 'Option5',
-    label: 'Option5',
+    value: 'SimHei',
+    label: '黑体',
   },
 ]
 
@@ -359,11 +363,27 @@ const images = ref(new Map<string, object>())
 
 const imageList = ref(null);
 
-const selectedElement = ref(null);
+const selectedElement = ref({
+  element: null,
+  path: ''
+});
 
 const metadata = ref([]);
 
 const selectedImages = ref(new Map())
+
+const textOptions = ref({
+  fontSize: 14,
+  fontFamily: '',
+  fontColor: 'rgb(0,0,0,1)',
+  tagBackground: 'rgb(255,255,255,0)',
+  angle: 0,
+})
+
+const imageOptions = ref({
+  scale: 10,
+  angle: 0,
+})
 
 const settings = ref({
   outputDirectory: '',
@@ -384,7 +404,7 @@ const settings = ref({
     positionY: 0,
     references: [],
     options: {
-      scale: 1,
+      scale: 10,
       angle: 0,
     }
   },
@@ -593,6 +613,60 @@ const handleResize = () => {
 
 }
 
+
+const stopTextSettingsWatch = watch(textOptions, (newVal, oldVal) => {
+  //停止监听 stopWatch();
+  const {path} = selectedElement.value;
+  const image = images.value.get(path);
+  const parentNode = image.getTargetElement().parentNode;
+  const elements = parentNode.querySelectorAll('.text-mark');
+  for (let element of elements) {
+    if (element.getAttribute('selected') === 'true') {
+      image.settings.texts.get(element).options = _.cloneDeep(newVal)
+      element.style.fontFamily = newVal.fontFamily
+      element.style.fontSize = newVal.fontSize + 'px'
+      element.style.color = newVal.fontColor
+      element.style.background = newVal.tagBackground
+      element.style.transformOrigin = 'center center'
+      element.style.transform = ` rotate(${newVal.angle}deg)`
+    }
+  }
+}, {
+  //深度监视（监视属性变化）
+  deep: true,
+  //immediate 立即触发一次监视
+  //immediate: true
+});
+
+const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVal) => {
+  const {path} = selectedElement.value;
+  const image = images.value.get(path);
+  const parentNode = image.getTargetElement().parentNode;
+  const elements = parentNode.querySelectorAll('.image-mark');
+  for (let element of elements) {
+    if (element.getAttribute('selected') === 'true') {
+      image.settings.images.get(element).options.angle = newVal
+      element.style.transformOrigin = 'center center'
+      element.style.transform = `scale(${imageOptions.value.scale / 10}) rotate(${newVal}deg)`;
+    }
+  }
+});
+
+const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVal) => {
+  const {path} = selectedElement.value;
+  const image = images.value.get(path);
+  const parentNode = image.getTargetElement().parentNode;
+  const elements = parentNode.querySelectorAll('.image-mark');
+  for (let element of elements) {
+    if (element.getAttribute('selected') === 'true') {
+      image.settings.images.get(element).options.scale = newVal
+      element.style.transformOrigin = 'left top'
+      element.style.transform = `scale(${newVal / 10}) rotate(${imageOptions.value.angle}deg)`;
+    }
+  }
+});
+
+
 onMounted(() => {
   watchInputImages()
   watchContextMenu()
@@ -608,14 +682,16 @@ onBeforeMount(() => {
 async function handlePreview(event, image) {
   if (!event.ctrlKey) {
     if (selectedImages.value && !selectedImages.value.size) {
-      selectedElement.value = event.target;
+      selectedElement.value.element = event.target;
+      selectedElement.value.path = event.target.getAttribute('path')
     } else if (selectedImages.value && selectedImages.value.size === 1) {
-      if (selectedElement.value) {
-        const beforePath = selectedElement.value.getAttribute('path');
+      if (selectedElement.value.path) {
+        const beforePath = selectedElement.value.path;
         selectedImages.value.delete(beforePath);
-        selectedElement.value.classList.remove('active')
+        selectedElement.value.element.classList.remove('active')
         images.value.get(beforePath).visible = false
-        selectedElement.value = event.target;
+        selectedElement.value.element = event.target;
+        selectedElement.value.path = event.target.getAttribute('path');
       }
     } else {
       if (!selectedImages.value.has(image.path)) {
@@ -625,9 +701,10 @@ async function handlePreview(event, image) {
         }
         selectedImages.value.clear()
       }
-      const beforePath = selectedElement.value.getAttribute('path');
+      const beforePath = selectedElement.value.path;
       images.value.get(beforePath).visible = false
-      selectedElement.value = event.target;
+      selectedElement.value.element = event.target;
+      selectedElement.value.path = event.target.getAttribute('path')
       images.value.get(image.path).visible = true
     }
 
@@ -727,7 +804,7 @@ const handleShiftClick = (event: object, image: object) => {
 
 
 const handleBorders = () => {
-  const image = images.value.get(selectedElement.value.getAttribute('path'))
+  const image = images.value.get(selectedElement.value.path)
   const targetElement = image.getTargetElement();
   if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
 
@@ -778,25 +855,36 @@ const bindDragEvent = (previewImage, image) => {
       offsetY = event.clientY - componentRect.top;
       originalElement = component
       dragElement = component.cloneNode(true);
-      const computedStyle = window.getComputedStyle(component);
+
       // 将计算样式复制到克隆元素的内联样式中
-      for (let i = 0; i < computedStyle.length; i++) {
-        const property = computedStyle[i];
-        const value = computedStyle.getPropertyValue(property);
-        // 设置内联样式
-        dragElement.style.setProperty(property, value);
-      }
+      // const computedStyle = window.getComputedStyle(component);
+      // for (let i = 0; i < computedStyle.length; i++) {
+      //   const property = computedStyle[i];
+      //   const value = computedStyle.getPropertyValue(property);
+      //   // 设置内联样式
+      //   dragElement.style.setProperty(property, value);
+      // }
 
-      dragElement.style.width = 'fit-content'
 
-      dragElement.style.minWidth = '50px'
-
-      dragElement.setAttribute('tabindex', '0')
+      setDefaultStyle(dragElement);
 
       // 关键：设置拖拽数据传输
       event.dataTransfer.setData('text/plain', 'drag-element');
     });
   });
+
+  const setDefaultStyle = (dragElement) => {
+    if (dragElement.src) {
+      dragElement.style.width = '50px'
+    } else {
+      dragElement.style.width = 'fit-content'
+    }
+    dragElement.style.outline = 'none';
+    dragElement.style.cursor = 'move';
+    dragElement.style.userSelect = 'none';
+    dragElement.setAttribute('tabindex', '0')
+  }
+
 
   previewImage.addEventListener('dragover', event =>
       event.preventDefault()
@@ -900,8 +988,10 @@ const bindDragEvent = (previewImage, image) => {
 
       event.preventDefault();
       const elementRect = dragElement.getBoundingClientRect();
+
       // 获取鼠标位置
       offsetX = event.clientX - elementRect.left;
+
       offsetY = event.clientY - elementRect.top
 
       mouseSetupX = event.clientX
@@ -923,12 +1013,19 @@ const bindDragEvent = (previewImage, image) => {
         // 限制在画布范围内
         const containerRect = previewImage.getBoundingClientRect();
 
+
         if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (elementRect.width - offsetX)) {
           if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (elementRect.height - offsetY)) {
 
-            dragElement.style.left = `${mouseX - offsetX}px`;
 
-            dragElement.style.top = `${mouseY - offsetY}px`;
+            if (dragElement.src) {
+              const scale = imageOptions.value.scale;
+              dragElement.style.left = (mouseX - offsetX) + 'px';
+              dragElement.style.top = (mouseY - offsetY) + 'px';
+            } else {
+              dragElement.style.left = `${mouseX - offsetX}px`;
+              dragElement.style.top = `${mouseY - offsetY}px`;
+            }
 
 
             const heightCutLine = containerRect.top + containerRect.height / 2;
@@ -980,14 +1077,17 @@ const bindDragEvent = (previewImage, image) => {
     dragElement.addEventListener('keydown', (event) => {
       // 检测 Delete (46) 或 Backspace (8) 键
       if (event.key === 'Delete' || event.key === 'Backspace' || event.keyCode === 46 || event.keyCode === 8) {
-        event.preventDefault();
+        // event.preventDefault();
         if (dragElement.getAttribute('selected') === 'true') {
-          if (!dragElement.src) {
+          if (!dragElement.src && !dragElement.querySelectorAll('input').length) {
             image.settings.texts.delete(dragElement)
-          } else {
-            image.settings.images.delete(dragElement)
+            dragElement.remove()
           }
-          dragElement.remove()
+          if (dragElement.src) {
+            image.settings.images.delete(dragElement)
+            dragElement.remove()
+          }
+
         }
       }
     })
@@ -1006,7 +1106,8 @@ const bindDragEvent = (previewImage, image) => {
       }
     })
 
-    dragElement.addEventListener('blur', () => {
+
+    dragElement.parentNode.addEventListener('click', () => {
       if (dragElement.getAttribute('selected') === 'true') {
         dragElement.style.border = ''
         dragElement.setAttribute('selected', 'false')
@@ -1192,6 +1293,7 @@ const bindDragEvent = (previewImage, image) => {
           background-color: #919090;
 
           .image-mark {
+            padding: 0;
             cursor: move;
             user-select: none;
             max-width: 50px;
