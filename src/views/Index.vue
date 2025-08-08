@@ -661,8 +661,8 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
     if (element.getAttribute('selected') === 'true') {
       image.settings.images.get(element).options.scale = newVal
 
-      let width = Number.parseFloat(element.style.left.replace('px', ''))
-      let height = Number.parseFloat(element.style.top.replace('px', ''))
+      let width = Number.parseFloat(element.style.width.replace('px', ''))
+      let height = Number.parseFloat(element.style.height.replace('px', ''))
       if (isNaN(width) || isNaN(height)) {
         width = Number.parseFloat(window.getComputedStyle(element).width.replace('px', ''))
         height = Number.parseFloat(window.getComputedStyle(element).height.replace('px', ''))
