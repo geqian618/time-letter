@@ -79,8 +79,8 @@ ipcMain.on('open-contextMenu', () => {
     contextMenu(window).popup()
 })
 
-ipcMain.on('request-save-files', (event, settings) => {
-    imageExporter.exportImages(settings);
+ipcMain.on('request-save-files', (event, images) => {
+    imageExporter.exportImages(images);
 })
 
 

@@ -9,29 +9,15 @@ const threadPool = new Piscina({
 });
 
 
-const exportImages = (settings) => {
-    const {outputDirectory, files, border} = settings;
-    for (let file of files) {
+const exportImages = (dataList) => {
+    for (let data of dataList) {
+        const {outputDirectory, path, settings: {border, texts, images}} = data;
         const options = {
-            inputPath: file,      // 原始图片路径
+            inputPath: path,      // 原始图片路径
             outputDirectory: outputDirectory,     // 输出图片路径
             border: {...border, percentage: true},
-            texts: [
-                {
-                    text: '旅行记忆 2023',
-                    textPosition: {x: 20, y: 20},
-                },
-                {
-                    text: '旅行记忆 2023',
-                    textPosition: {x: 2000, y: 0},
-                }
-            ],
-            textStyle: {
-                font: 'bold 40px "Microsoft YaHei"',
-                color: '#ffffff',
-                textAlign: 'left',
-                textBaseline: 'top'
-            }
+            texts,
+            images
         }
         threadPool.run(options).catch(err => {
             console.error(`处理图片 ${file} 失败:`, err);

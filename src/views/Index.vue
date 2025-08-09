@@ -316,7 +316,9 @@
 
 import {nextTick, onBeforeMount, onMounted, ref, watch} from "vue";
 
-import _ from 'lodash';
+import _, {first} from 'lodash';
+
+import {deepClone} from '../utils/deep-clone'
 
 const predefineColors = ref([
   '#ff4500',
@@ -374,7 +376,7 @@ const selectedImages = ref(new Map())
 
 const textOptions = ref({
   fontSize: 14,
-  fontFamily: '',
+  fontFamily: 'Microsoft YaHei',
   fontColor: 'rgb(0,0,0,1)',
   tagBackground: 'rgb(255,255,255,0)',
   angle: 0,
@@ -500,14 +502,16 @@ const watchContextMenu = () => {
         //   images.value.get(beforePath).visible = false
         // }
       } else if (type === 1) {
-        settings.value.outputDirectory = data.outputDirectory
-        settings.value.files = [...selectedImages.value.keys()]
-        const newSettings = JSON.parse(JSON.stringify(settings.value));
-        newSettings.border.borderLeft /= 100;
-        newSettings.border.borderRight /= 100;
-        newSettings.border.borderTop /= 100;
-        newSettings.border.borderBottom /= 100;
-        window.electronAPI.requestSaveFiles(newSettings)
+        const newSettings = []
+        images.value.forEach((image, key) => {
+          const {settings: {border, texts, images}} = image
+          newSettings.push({
+            path: key,
+            outputDirectory: data.outputDirectory,
+            settings: {border, texts: Array.from(texts.values()), images: Array.from(images.values())}
+          })
+        })
+        window.electronAPI.requestSaveFiles(JSON.parse(JSON.stringify(newSettings)))
       }
     }
   });
@@ -619,10 +623,13 @@ const stopTextSettingsWatch = watch(textOptions, (newVal, oldVal) => {
   const {path} = selectedElement.value;
   const image = images.value.get(path);
   const parentNode = image.getTargetElement().parentNode;
+  const {height} = image.getTargetElement().getBoundingClientRect();
   const elements = parentNode.querySelectorAll('.text-mark');
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
       image.settings.texts.get(element).options = _.cloneDeep(newVal)
+      image.settings.texts.get(element).options.fontSizeRatio = newVal.fontSize / height
+      console.log(newVal)
       element.style.fontFamily = newVal.fontFamily
       element.style.fontSize = newVal.fontSize + 'px'
       element.style.color = newVal.fontColor
@@ -645,7 +652,9 @@ const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVa
   const elements = parentNode.querySelectorAll('.image-mark');
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
+
       image.settings.images.get(element).options.angle = newVal
+
       element.style.transformOrigin = 'center center'
       element.style.transform = `rotate(${newVal}deg)`;
     }
@@ -656,10 +665,11 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
   const {path} = selectedElement.value;
   const image = images.value.get(path);
   const parentNode = image.getTargetElement().parentNode;
+  const previewImageHeight = image.getTargetElement().getBoundingClientRect().height;
+  const previewImageWidth = image.getTargetElement().getBoundingClientRect().width;
   const elements = parentNode.querySelectorAll('.image-mark');
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
-      image.settings.images.get(element).options.scale = newVal
 
       let width = Number.parseFloat(element.style.width.replace('px', ''))
       let height = Number.parseFloat(element.style.height.replace('px', ''))
@@ -669,13 +679,15 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
       }
       let left = Number.parseFloat(element.style.left.replace('px', ''))
       let top = Number.parseFloat(element.style.top.replace('px', ''))
-
       const scale = (newVal - oldVal) / 10;
-
       element.style.width = width + width * scale + 'px'
       element.style.height = height + height * scale + 'px'
       element.style.left = left - width * scale / 2 + 'px'
       element.style.top = top - height * scale / 2 + 'px'
+
+      image.settings.images.get(element).options.scale = newVal
+      image.settings.images.get(element).options.imageHeightRatio = (height + height * scale) / previewImageHeight
+      image.settings.images.get(element).options.imageWidthRatio = (width + width * scale) / previewImageWidth
     }
   }
 });
@@ -969,17 +981,26 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.text.content = dragElement.innerText
 
           const dragElementStyle = window.getComputedStyle(dragElement);
-          settings.value.text.options.fontSize = dragElementStyle.fontSize
+          const fontSize = Number.parseFloat(dragElementStyle.fontSize.replace('px', ''));
+          settings.value.text.options.fontSize = fontSize
           settings.value.text.options.fontFamily = dragElementStyle.fontFamily
           settings.value.text.options.fontColor = dragElementStyle.color
 
+          settings.value.text.options.fontSizeRatio = fontSize / containerRect.height
           image.settings.texts.set(dragElement, _.cloneDeep(settings.value.text))
-          console.log(image.settings.texts.get(dragElement))
         } else {
           settings.value.image.references = references
           settings.value.image.positionX = positionX
           settings.value.image.positionY = positionY
           settings.value.image.path = dragElement.src
+
+          const dragElementStyle = window.getComputedStyle(dragElement);
+          const imageHeight = Number.parseFloat(dragElementStyle.height.replace('px', ''));
+          const imageWidth = Number.parseFloat(dragElementStyle.width.replace('px', ''));
+
+          settings.value.image.options.imageHeightRatio = imageHeight / containerRect.height
+          settings.value.image.options.imageWidthRatio = imageWidth / containerRect.width
+
           image.settings.images.set(dragElement, _.cloneDeep(settings.value.image))
         }
         makeDraggable(dragElement)
@@ -1072,11 +1093,13 @@ const bindDragEvent = (previewImage, image) => {
               textMark.references = references
               textMark.positionX = positionX
               textMark.positionY = positionY
+              console.log(textMark)
             } else {
               const imageMark = image.settings.images.get(dragElement);
               imageMark.references = references
               imageMark.positionX = positionX
               imageMark.positionY = positionY
+
             }
           }
         }

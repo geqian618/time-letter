@@ -36,7 +36,7 @@ async function addBorderAndText(options) {
         outputDirectory,     // 输出目录
         border: {borderLeft, borderRight, borderTop, borderBottom, borderColor, percentage = false},
         texts,
-        textStyle
+        images
     } = options;
 
     try {
@@ -55,10 +55,10 @@ async function addBorderAndText(options) {
 
         // 边框值为比率
         if (percentage) {
-            borderLeft = Number.parseInt(borderLeft * baseLength)
-            borderRight = Number.parseInt(borderRight * baseLength)
-            borderTop = Number.parseInt(borderTop * baseLength)
-            borderBottom = Number.parseInt(borderBottom * baseLength)
+            borderLeft = Number.parseInt(borderLeft / 100 * baseLength)
+            borderRight = Number.parseInt(borderRight / 100 * baseLength)
+            borderTop = Number.parseInt(borderTop / 100 * baseLength)
+            borderBottom = Number.parseInt(borderBottom / 100 * baseLength)
         }
 
         // 2. 计算新画布尺寸
@@ -76,17 +76,60 @@ async function addBorderAndText(options) {
         // 5. 绘制原始图片（居中）
         ctx.drawImage(image, borderLeft, borderTop, image.width, image.height);
 
-        // 6. 添加文字
-        ctx.font = textStyle.font;
-        ctx.fillStyle = textStyle.color;
-        ctx.textAlign = textStyle.textAlign;
-        ctx.textBaseline = textStyle.textBaseline;
 
         for (let text of texts) {
-            const textX = text.textPosition.x;
-            const textY = text.textPosition.y;
-            ctx.fillText(text.text, textX, textY);
+            const fontSize = text.options.fontSizeRatio * newHeight + 'px';
+            const fontFamily = text.options.fontFamily;
+            // 6. 添加文字
+            ctx.font = `${fontSize} ${fontFamily}`;
+            ctx.fillStyle = text.options.fontColor;
+
+            ctx.textAlign = text.references[0]
+            ctx.textBaseline = text.references[1];
+            // ctx.textAlign = text.options.textAlign;
+            // ctx.textBaseline = text.options.textBaseline;
+
+            let textX = text.positionX * newWidth;
+            let textY = text.positionY * newHeight;
+
+            if (text.references.includes('right')) {
+                textX = (1 - text.positionX) * newWidth
+            }
+
+            if (text.references.includes('bottom')) {
+                textY = (1 - text.positionY) * newHeight
+            }
+
+            ctx.fillText(text.content, textX, textY);
         }
+
+
+        for (let imageItem of images) {
+
+            const url = imageItem.path;
+
+            const height = imageItem.options.imageHeightRatio * newHeight;
+
+            const width = imageItem.options.imageWidthRatio * newWidth;
+
+            let imageX = imageItem.positionX * newWidth;
+
+            let imageY = imageItem.positionY * newHeight;
+
+            const overlay = await loadImage(url);
+
+
+            if (imageItem.references.includes('right')) {
+                imageX = (1 - imageItem.positionX) * newWidth - width
+            }
+
+            if (imageItem.references.includes('bottom')) {
+                imageY = (1 - imageItem.positionY) * newHeight - height
+            }
+
+            ctx.drawImage(overlay, imageX, imageY, width, height);
+        }
+
 
         // 7. 保存图片 (使用 Buffer 写入)
         const buffer = canvas.toBuffer(`image/${extname}`, {quality: 0.95}); // 或 'image/png'
