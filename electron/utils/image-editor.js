@@ -85,19 +85,24 @@ async function addBorderAndText(options) {
             ctx.fillStyle = text.options.fontColor;
 
             ctx.textAlign = text.references[0]
-            ctx.textBaseline = text.references[1];
+            ctx.textBaseline = 'top';
             // ctx.textAlign = text.options.textAlign;
             // ctx.textBaseline = text.options.textBaseline;
 
             let textX = text.positionX * newWidth;
             let textY = text.positionY * newHeight;
 
+            // 测量文本高度
+            const metrics = ctx.measureText(text.content);
+            const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+            const textWidth = metrics.width;
+
             if (text.references.includes('right')) {
                 textX = (1 - text.positionX) * newWidth
             }
 
             if (text.references.includes('bottom')) {
-                textY = (1 - text.positionY) * newHeight
+                textY = (1 - text.positionY) * newHeight - textHeight
             }
 
             ctx.fillText(text.content, textX, textY);
@@ -120,11 +125,11 @@ async function addBorderAndText(options) {
 
 
             if (imageItem.references.includes('right')) {
-                imageX = (1 - imageItem.positionX) * newWidth - width
+                imageX = (1 - imageItem.positionX) * newWidth + width
             }
 
             if (imageItem.references.includes('bottom')) {
-                imageY = (1 - imageItem.positionY) * newHeight - height
+                imageY = (1 - imageItem.positionY) * newHeight + height
             }
 
             ctx.drawImage(overlay, imageX, imageY, width, height);

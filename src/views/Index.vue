@@ -636,6 +636,9 @@ const stopTextSettingsWatch = watch(textOptions, (newVal, oldVal) => {
       element.style.background = newVal.tagBackground
       element.style.transformOrigin = 'center center'
       element.style.transform = ` rotate(${newVal.angle}deg)`
+
+      console.log(element.getBoundingClientRect())
+      console.log(element.offsetWidth, element.offsetHeight)
     }
   }
 }, {
@@ -904,6 +907,9 @@ const bindDragEvent = (previewImage, image) => {
       dragElement.style.width = '50px'
     } else {
       dragElement.style.width = 'fit-content'
+      dragElement.style.height = 'fit-content'
+      dragElement.style.fontSize = '12px'
+      dragElement.style.lineHeight = '1'
     }
     dragElement.style.outline = 'none';
     dragElement.style.cursor = 'move';
@@ -934,7 +940,7 @@ const bindDragEvent = (previewImage, image) => {
 
     const containerRect = previewImage.getBoundingClientRect();
 
-    const originalElementRect = originalElement.getBoundingClientRect();
+    const originalElementRect = dragElement.getBoundingClientRect();
 
     if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (originalElementRect.width - offsetX)) {
 
@@ -979,6 +985,7 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.text.positionX = positionX
           settings.value.text.positionY = positionY
           settings.value.text.content = dragElement.innerText
+
 
           const dragElementStyle = window.getComputedStyle(dragElement);
           const fontSize = Number.parseFloat(dragElementStyle.fontSize.replace('px', ''));
@@ -1048,10 +1055,8 @@ const bindDragEvent = (previewImage, image) => {
         // 限制在画布范围内
         const containerRect = previewImage.getBoundingClientRect();
 
-
         if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (elementRect.width - offsetX)) {
           if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (elementRect.height - offsetY)) {
-
 
             if (dragElement.src) {
               dragElement.style.left = (mouseX - offsetX) + 'px';
@@ -1072,7 +1077,7 @@ const bindDragEvent = (previewImage, image) => {
 
             let references = []
 
-            if (dragElement.offsetLeft > widthCutLine) {
+            if (elementRect.left > widthCutLine) {
               references.push('right')
               positionX = (containerRect.right - dragElement.offsetLeft - dragElement.offsetWidth) / containerRect.width
             } else {
@@ -1080,9 +1085,10 @@ const bindDragEvent = (previewImage, image) => {
               positionX = (dragElement.offsetLeft - containerRect.left) / containerRect.width;
             }
 
-            if (dragElement.offsetTop > heightCutLine) {
+            if (elementRect.top > heightCutLine) {
               references.push('bottom')
               positionY = (containerRect.bottom - dragElement.offsetTop - dragElement.offsetHeight) / containerRect.height;
+              console.log(containerRect.bottom, dragElement.offsetTop, dragElement.offsetHeight, positionY)
             } else {
               references.push('top')
               positionY = (dragElement.offsetTop - containerRect.top) / containerRect.height;
@@ -1297,10 +1303,8 @@ const bindDragEvent = (previewImage, image) => {
           border-bottom: 1px solid #a2a4a6;
 
           .text-mark {
-            height: 30px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            width: fit-content;
+            height: fit-content;
             cursor: move;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
             user-select: none;
