@@ -55,10 +55,10 @@ async function addBorderAndText(options) {
 
         // 边框值为比率
         if (percentage) {
-            borderLeft = borderLeft / 100 * baseLength
-            borderRight = borderRight / 100 * baseLength
-            borderTop = borderTop / 100 * baseLength
-            borderBottom = borderBottom / 100 * baseLength
+            borderLeft = borderLeft * baseLength / 100
+            borderRight = borderRight * baseLength / 100
+            borderTop = borderTop * baseLength / 100
+            borderBottom = borderBottom * baseLength / 100
         }
 
         // 2. 计算新画布尺寸
@@ -78,7 +78,7 @@ async function addBorderAndText(options) {
 
 
         for (let text of texts) {
-            const fontSize = text.options.fontSizeRatio * newHeight + 'px';
+            const fontSize = Math.min(text.options.fontWidthRatio, text.options.fontHeightRatio) * newHeight + 'px';
             const fontFamily = text.options.fontFamily;
             // 6. 添加文字
             ctx.font = `${fontSize} ${fontFamily}`;
@@ -137,7 +137,7 @@ async function addBorderAndText(options) {
 
 
         // 7. 保存图片 (使用 Buffer 写入)
-        const buffer = canvas.toBuffer(`image/${extname}`, {quality: 0.95}); // 或 'image/png'
+        const buffer = canvas.toBuffer(`image/${extname}`, {quality: 1}); // 或 'image/png'
         await fs.writeFile(outputPath, buffer);
         console.log(`处理完成！图片已保存至: ${outputPath}`);
     } catch (error) {

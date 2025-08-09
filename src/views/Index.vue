@@ -623,12 +623,13 @@ const stopTextSettingsWatch = watch(textOptions, (newVal, oldVal) => {
   const {path} = selectedElement.value;
   const image = images.value.get(path);
   const parentNode = image.getTargetElement().parentNode;
-  const {height} = image.getTargetElement().getBoundingClientRect();
+  const {height, width} = image.getTargetElement().getBoundingClientRect();
   const elements = parentNode.querySelectorAll('.text-mark');
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
       image.settings.texts.get(element).options = _.cloneDeep(newVal)
-      image.settings.texts.get(element).options.fontSizeRatio = newVal.fontSize / height
+      image.settings.texts.get(element).options.fontHeightRatio = newVal.fontSize / height
+      image.settings.texts.get(element).options.fontWidthRatio = newVal.fontSize / width
       console.log(newVal)
       element.style.fontFamily = newVal.fontFamily
       element.style.fontSize = newVal.fontSize + 'px'
@@ -990,7 +991,8 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.text.options.fontFamily = dragElementStyle.fontFamily
           settings.value.text.options.fontColor = dragElementStyle.color
 
-          settings.value.text.options.fontSizeRatio = fontSize / containerRect.height
+          settings.value.text.options.fontHeightRatio = fontSize / containerRect.height
+          settings.value.text.options.fontWidthRatio = fontSize / containerRect.width
           image.settings.texts.set(dragElement, _.cloneDeep(settings.value.text))
         } else {
           settings.value.image.references = references
