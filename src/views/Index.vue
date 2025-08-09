@@ -636,9 +636,6 @@ const stopTextSettingsWatch = watch(textOptions, (newVal, oldVal) => {
       element.style.background = newVal.tagBackground
       element.style.transformOrigin = 'center center'
       element.style.transform = ` rotate(${newVal.angle}deg)`
-
-      console.log(element.getBoundingClientRect())
-      console.log(element.offsetWidth, element.offsetHeight)
     }
   }
 }, {

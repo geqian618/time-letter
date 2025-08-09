@@ -55,10 +55,10 @@ async function addBorderAndText(options) {
 
         // 边框值为比率
         if (percentage) {
-            borderLeft = Number.parseInt(borderLeft / 100 * baseLength)
-            borderRight = Number.parseInt(borderRight / 100 * baseLength)
-            borderTop = Number.parseInt(borderTop / 100 * baseLength)
-            borderBottom = Number.parseInt(borderBottom / 100 * baseLength)
+            borderLeft = borderLeft / 100 * baseLength
+            borderRight = borderRight / 100 * baseLength
+            borderTop = borderTop / 100 * baseLength
+            borderBottom = borderBottom / 100 * baseLength
         }
 
         // 2. 计算新画布尺寸
