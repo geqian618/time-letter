@@ -49,16 +49,15 @@ async function addBorderAndText(options) {
 
         // 1. 读取图片为 Buffer
         const imageBuffer = await fs.readFile(inputPath);
-        const image = await loadImage(imageBuffer);
 
-        const baseLength = Math.max(image.width, image.height);
+        const image = await loadImage(imageBuffer);
 
         // 边框值为比率
         if (percentage) {
-            borderLeft = borderLeft * baseLength / 100
-            borderRight = borderRight * baseLength / 100
-            borderTop = borderTop * baseLength / 100
-            borderBottom = borderBottom * baseLength / 100
+            borderLeft = borderLeft * image.width
+            borderRight = borderRight * image.width
+            borderTop = borderTop * image.height
+            borderBottom = borderBottom * image.height
         }
 
         // 2. 计算新画布尺寸
@@ -78,10 +77,10 @@ async function addBorderAndText(options) {
 
 
         for (let text of texts) {
-            const fontSize = (text.options.fontWidthRatio * newWidth) / text.content.length + 'px';
+            const fontSize = (text.options.fontWidthRatio * newWidth) / text.content.length;
             const fontFamily = text.options.fontFamily;
             // 6. 添加文字
-            ctx.font = `${fontSize} ${fontFamily}`;
+            ctx.font = `normal ${fontSize + 'px'} ${fontFamily}`;
             ctx.fillStyle = text.options.fontColor;
 
             ctx.textAlign = text.references[0]
@@ -89,17 +88,20 @@ async function addBorderAndText(options) {
             // ctx.textAlign = text.options.textAlign;
             // ctx.textBaseline = text.options.textBaseline;
 
-            let textX = text.positionX * newWidth;
-            let textY = text.positionY * newHeight;
 
             // 测量文本高度
             const metrics = ctx.measureText(text.content);
             const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
             const textWidth = metrics.width;
 
+            let textX = text.positionX * newWidth;
+
+            let textY = text.positionY * newHeight - 0.15 * textHeight;
+
             if (text.references.includes('right')) {
                 textX = (1 - text.positionX) * newWidth
             }
+
 
             if (text.references.includes('bottom')) {
                 textY = (1 - text.positionY) * newHeight - 1.15 * textHeight

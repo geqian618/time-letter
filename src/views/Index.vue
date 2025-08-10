@@ -741,7 +741,7 @@ async function handlePreview(event, image) {
     }
 
     image.visible = true;
-    settings.value.border = image.settings.border
+    // settings.value.border = image.settings.border
 
     const data = await window.electronAPI.parsePhotoMetadata(image.path);
     metadata.value = data.details;
@@ -841,12 +841,25 @@ const handleBorders = () => {
 
     const {borderLeft, borderRight, borderTop, borderBottom, borderColor} = settings.value.border;
 
-    image.settings.border = settings.value.border
 
-    targetElement.style.borderLeft = `${baseLength * borderLeft / 100}px solid ${borderColor}`
-    targetElement.style.borderRight = `${baseLength * borderRight / 100}px solid ${borderColor}`
-    targetElement.style.borderTop = `${baseLength * borderTop / 100}px solid ${borderColor}`
-    targetElement.style.borderBottom = `${baseLength * borderBottom / 100}px solid ${borderColor}`
+    const borderLeftWidth = baseLength * borderLeft / 100;
+    const borderRightWidth = baseLength * borderRight / 100;
+    const borderTopHeight = baseLength * borderTop / 100;
+    const borderBottomHeight = baseLength * borderBottom / 100;
+
+    targetElement.style.borderLeft = `${borderLeftWidth}px solid ${borderColor}`
+    targetElement.style.borderRight = `${borderRightWidth}px solid ${borderColor}`
+    targetElement.style.borderTop = `${borderTopHeight}px solid ${borderColor}`
+    targetElement.style.borderBottom = `${borderBottomHeight}px solid ${borderColor}`
+
+    const {clientWidth, clientHeight} = targetElement;
+
+    image.settings.border.borderLeft = borderLeftWidth / clientWidth
+    image.settings.border.borderRight = borderRightWidth / clientWidth
+    image.settings.border.borderTop = borderTopHeight / clientHeight
+    image.settings.border.borderBottom = borderBottomHeight / clientHeight
+
+
   }
 }
 
