@@ -1009,8 +1009,8 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.text.options.fontFamily = dragElementStyle.fontFamily
           settings.value.text.options.fontColor = dragElementStyle.color
 
-          settings.value.text.options.fontHeightRatio = dragElement.offsetHeight / containerRect.height
-          settings.value.text.options.fontWidthRatio = dragElement.offsetWidth / containerRect.width
+          settings.value.text.options.fontWidthRatio = dragElementRect.width / containerRect.width
+          settings.value.text.options.fontHeightRatio = dragElementRect.height / containerRect.height
           image.settings.texts.set(dragElement, _.cloneDeep(settings.value.text))
         } else {
           settings.value.image.references = references
