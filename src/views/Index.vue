@@ -1246,6 +1246,11 @@ const bindDragEvent = (previewImage, image) => {
           dragElement.innerHTML = newValue ? newValue : ' '
           dragElement.setAttribute('selected', 'false')
 
+          const containerRect = images.value.get(selectedElement.value.path).getTargetElement().getBoundingClientRect()
+          // const dragElementRect = input.parentNode.getBoundingClientRect();
+
+          settings.value.text.options.fontWidthRatio = dragElementRect.width / containerRect.width
+          settings.value.text.options.fontHeightRatio = dragElementRect.height / containerRect.height
           image.settings.texts.get(dragElement).content = newValue
         });
 
