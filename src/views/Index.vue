@@ -854,10 +854,13 @@ const handleBorders = () => {
 
     const {clientWidth, clientHeight} = targetElement;
 
-    image.settings.border.borderLeft = borderLeftWidth / clientWidth
-    image.settings.border.borderRight = borderRightWidth / clientWidth
-    image.settings.border.borderTop = borderTopHeight / clientHeight
-    image.settings.border.borderBottom = borderBottomHeight / clientHeight
+
+    image.settings.border = _.cloneDeep(settings.value.border)
+
+    image.settings.border.borderLeftRatio = borderLeftWidth / clientWidth
+    image.settings.border.borderRightRatio = borderRightWidth / clientWidth
+    image.settings.border.borderTopRatio = borderTopHeight / clientHeight
+    image.settings.border.borderBottomRatio = borderBottomHeight / clientHeight
 
 
   }
@@ -1079,7 +1082,6 @@ const bindDragEvent = (previewImage, image) => {
               dragElement.style.left = `${mouseX - offsetX}px`;
               dragElement.style.top = `${mouseY - offsetY}px`;
             }
-
 
             const heightCutLine = containerRect.top + containerRect.height / 2;
 

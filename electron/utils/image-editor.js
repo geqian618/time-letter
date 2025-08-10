@@ -34,7 +34,7 @@ async function addBorderAndText(options) {
     let {
         inputPath,      // 原始图片路径
         outputDirectory,     // 输出目录
-        border: {borderLeft, borderRight, borderTop, borderBottom, borderColor, percentage = false},
+        border: {borderLeftRatio, borderRightRatio, borderTopRatio, borderBottomRatio, borderColor, percentage = false},
         texts,
         images
     } = options;
@@ -52,12 +52,14 @@ async function addBorderAndText(options) {
 
         const image = await loadImage(imageBuffer);
 
+        let borderLeft, borderRight, borderTop, borderBottom
+
         // 边框值为比率
         if (percentage) {
-            borderLeft = borderLeft * image.width
-            borderRight = borderRight * image.width
-            borderTop = borderTop * image.height
-            borderBottom = borderBottom * image.height
+            borderLeft = borderLeftRatio * image.width
+            borderRight = borderRightRatio * image.width
+            borderTop = borderTopRatio * image.height
+            borderBottom = borderBottomRatio * image.height
         }
 
         // 2. 计算新画布尺寸
@@ -92,7 +94,6 @@ async function addBorderAndText(options) {
             // 测量文本高度
             const metrics = ctx.measureText(text.content);
             const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-            const textWidth = metrics.width;
 
             let textX = text.positionX * newWidth;
 
