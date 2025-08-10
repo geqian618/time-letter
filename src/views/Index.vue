@@ -741,7 +741,7 @@ async function handlePreview(event, image) {
     }
 
     image.visible = true;
-    // settings.value.border = image.settings.border
+    settings.value.border = image.settings.border
 
     const data = await window.electronAPI.parsePhotoMetadata(image.path);
     metadata.value = data.details;
