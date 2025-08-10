@@ -120,7 +120,7 @@ async function addBorderAndText(options) {
 
             const width = imageItem.options.imageWidthRatio * newWidth;
 
-            let imageX = imageItem.positionX * newWidth;
+            let imageX = imageItem.positionX * newWidth
 
             let imageY = imageItem.positionY * newHeight;
 
@@ -128,11 +128,11 @@ async function addBorderAndText(options) {
 
 
             if (imageItem.references.includes('right')) {
-                imageX = (1 - imageItem.positionX) * newWidth + width
+                imageX = (1 - imageItem.positionX) * newWidth - width
             }
 
             if (imageItem.references.includes('bottom')) {
-                imageY = (1 - imageItem.positionY) * newHeight + height
+                imageY = (1 - imageItem.positionY) * newHeight - height
             }
 
             ctx.drawImage(overlay, imageX, imageY, width, height);

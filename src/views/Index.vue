@@ -687,8 +687,8 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
       element.style.top = top - height * scale / 2 + 'px'
 
       image.settings.images.get(element).options.scale = newVal
-      image.settings.images.get(element).options.imageHeightRatio = (height + height * scale) / previewImageHeight
-      image.settings.images.get(element).options.imageWidthRatio = (width + width * scale) / previewImageWidth
+      image.settings.images.get(element).options.imageHeightRatio = height * scale / previewImageHeight
+      image.settings.images.get(element).options.imageWidthRatio = width * scale / previewImageWidth
     }
   }
 });
