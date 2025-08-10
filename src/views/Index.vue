@@ -1230,28 +1230,23 @@ const bindDragEvent = (previewImage, image) => {
         // 绑定保存事件
         input.addEventListener('keydown', function (e) {
           if (e.key === 'Enter') {
-            const newValue = input.value;
-            input.remove()
-            dragElement.innerHTML = newValue ? newValue : ' '
-            dragElement.setAttribute('selected', 'false')
-
-            image.settings.texts.get(dragElement).content = newValue
+            input.blur()
           }
         });
 
         // 失去焦点时保存
         input.addEventListener('blur', function () {
           const newValue = input.value;
+          const dragElement = input.parentNode
           input.remove()
           dragElement.innerHTML = newValue ? newValue : ' '
           dragElement.setAttribute('selected', 'false')
-
           const containerRect = images.value.get(selectedElement.value.path).getTargetElement().getBoundingClientRect()
-          // const dragElementRect = input.parentNode.getBoundingClientRect();
-
-          settings.value.text.options.fontWidthRatio = dragElementRect.width / containerRect.width
-          settings.value.text.options.fontHeightRatio = dragElementRect.height / containerRect.height
-          image.settings.texts.get(dragElement).content = newValue
+          const dragElementRect = dragElement.getBoundingClientRect();
+          const textLabel = image.settings.texts.get(dragElement);
+          textLabel.options.fontWidthRatio = dragElementRect.width / containerRect.width
+          textLabel.options.fontHeightRatio = dragElementRect.height / containerRect.height
+          textLabel.content = newValue
         });
 
       })
