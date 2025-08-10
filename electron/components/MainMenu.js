@@ -37,6 +37,30 @@ const selectFile = async (window) => {
     }
 }
 
+
+const selectImageLabels = async () => {
+    const {filePaths} = await dialog.showOpenDialog({
+        buttonLabel: '导入',
+        properties: ['openFile', 'multiSelections'],
+        filters: [{name: 'Images', extensions: ['jpg', 'png', 'gif', 'webp']}]
+    });
+    if (filePaths && filePaths.length) {
+        const files = await Promise.all(
+            filePaths.map(async (filePath) => {
+                const extname = path.extname(filePath).slice(1);
+                return {
+                    filename: path.basename(filePath),
+                    url: getSafeImagePath(filePath),
+                    path: filePath,
+                    extname: extname
+                };
+            })
+        );
+        const data = new Map(files.map(item => [item.path, item]));
+        window.webContents.send('watch-image-label', data)
+    }
+}
+
 /**
  * 图片导出
  */
@@ -82,6 +106,15 @@ const mainMenu = (args) => {
                     label: '导出设置',
                     role: '',
                 },
+            ]
+        },
+        {
+            label: '资源',
+            submenu: [
+                {
+                    label: '导入图片标签',
+                    click: selectImageLabels
+                }
             ]
         },
         {

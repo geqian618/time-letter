@@ -53,13 +53,23 @@
                   <span>文本标签</span>
                 </template>
                 <el-scrollbar class="scrollBar">
+
                   <div class="text-marks" ref="textMarks">
-                    <div class="text-mark" draggable="true">文本标签</div>
-                    <div class="text-mark" draggable="true">文本标签</div>
-                    <div class="text-mark" draggable="true">文本标签</div>
-                    <div class="text-mark" draggable="true">文本标签</div>
-                    <div class="text-mark" draggable="true">文本标签</div>
-                    <div class="text-mark" draggable="true">文本标签</div>
+                    <el-tooltip class="box-item" effect="dark" content="文本" placement="top">
+                      <div class="text-mark" draggable="true" id="text">
+                        <img src="../assets/icon/text.svg">
+                      </div>
+                    </el-tooltip>
+                    <el-tooltip class="box-item" effect="dark" content="日期" placement="top">
+                      <div class="text-mark" draggable="true" id="date">
+                        <img src="../assets/icon/date.svg">
+                      </div>
+                    </el-tooltip>
+                    <el-tooltip class="box-item" effect="dark" content="日期时间" placement="top">
+                      <div class="text-mark" draggable="true" id="datetime">
+                        <img src="../assets/icon/datetime.svg">
+                      </div>
+                    </el-tooltip>
                   </div>
                 </el-scrollbar>
               </el-sub-menu>
@@ -316,9 +326,9 @@
 
 import {nextTick, onBeforeMount, onMounted, ref, watch} from "vue";
 
-import _, {first} from 'lodash';
+import {getDate, getDateTime} from '../utils/datetime'
 
-import {deepClone} from '../utils/deep-clone'
+import _ from 'lodash';
 
 const predefineColors = ref([
   '#ff4500',
@@ -436,6 +446,8 @@ const textMarks = ref([])
 
 const imageMarks = ref([])
 
+const imageLabels = ref([])
+
 const watchInputImages = () => {
 
   window.electronAPI.watchInputImage((event, data) => {
@@ -479,6 +491,14 @@ const watchInputImages = () => {
       })
     }
   });
+}
+
+const watchImageLabel = () => {
+  window.electronAPI.watchImageLabel((event, data) => {
+    if (data && data.length) {
+      imageLabels.value = data;
+    }
+  })
 }
 
 const openContextMenu = () => {
@@ -696,6 +716,7 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
 
 onMounted(() => {
   watchInputImages()
+  watchImageLabel()
   watchContextMenu()
   watchCtrlA()
   handleResize()
@@ -922,8 +943,17 @@ const bindDragEvent = (previewImage, image) => {
     } else {
       dragElement.style.width = 'fit-content'
       dragElement.style.height = 'fit-content'
-      dragElement.style.fontSize = '12px'
+      dragElement.style.fontSize = '14px'
       dragElement.style.lineHeight = '1'
+      const id = dragElement.getAttribute('id');
+      dragElement.firstChild.remove()
+      if (id === 'date') {
+        dragElement.innerHTML = getDate();
+      } else if (id === 'datetime') {
+        dragElement.innerHTML = getDateTime();
+      } else {
+        dragElement.innerHTML = '文本';
+      }
     }
     dragElement.style.outline = 'none';
     dragElement.style.cursor = 'move';
@@ -1197,7 +1227,6 @@ const bindDragEvent = (previewImage, image) => {
         input.focus();
         input.select();
 
-
         // 绑定保存事件
         input.addEventListener('keydown', function (e) {
           if (e.key === 'Enter') {
@@ -1312,7 +1341,7 @@ const bindDragEvent = (previewImage, image) => {
           padding: 20px 10px;
           display: grid;
           gap: 20px;
-          grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
           font-size: 12px;
           background-color: #919090;
           border-bottom: 1px solid #a2a4a6;
@@ -1321,8 +1350,11 @@ const bindDragEvent = (previewImage, image) => {
             width: fit-content;
             height: fit-content;
             cursor: move;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
             user-select: none;
+
+            img {
+              width: 25px;
+            }
           }
 
           .text-mark:hover {
