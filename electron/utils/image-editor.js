@@ -102,7 +102,7 @@ async function addBorderAndText(options) {
             }
 
             if (text.references.includes('bottom')) {
-                textY = (1 - text.positionY) * newHeight - textHeight
+                textY = (1 - text.positionY) * newHeight - 1.2 * textHeight
             }
 
             ctx.fillText(text.content, textX, textY);
