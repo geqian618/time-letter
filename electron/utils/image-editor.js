@@ -78,7 +78,7 @@ async function addBorderAndText(options) {
 
 
         for (let text of texts) {
-            const fontSize = Math.min(text.options.fontWidthRatio, text.options.fontHeightRatio) * newHeight + 'px';
+            const fontSize = (text.options.fontWidthRatio * newWidth) / text.content.length + 'px';
             const fontFamily = text.options.fontFamily;
             // 6. 添加文字
             ctx.font = `${fontSize} ${fontFamily}`;
@@ -102,7 +102,7 @@ async function addBorderAndText(options) {
             }
 
             if (text.references.includes('bottom')) {
-                textY = (1 - text.positionY) * newHeight - 1.2 * textHeight
+                textY = (1 - text.positionY) * newHeight - 1.15 * textHeight
             }
 
             ctx.fillText(text.content, textX, textY);

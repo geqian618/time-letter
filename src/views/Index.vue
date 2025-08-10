@@ -628,8 +628,8 @@ const stopTextSettingsWatch = watch(textOptions, (newVal, oldVal) => {
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
       image.settings.texts.get(element).options = _.cloneDeep(newVal)
-      image.settings.texts.get(element).options.fontHeightRatio = newVal.fontSize / height
-      image.settings.texts.get(element).options.fontWidthRatio = newVal.fontSize / width
+      image.settings.texts.get(element).options.fontHeightRatio = element.getBoundingClientRect().height / height
+      image.settings.texts.get(element).options.fontWidthRatio = element.getBoundingClientRect().width / width
       console.log(newVal)
       element.style.fontFamily = newVal.fontFamily
       element.style.fontSize = newVal.fontSize + 'px'
@@ -962,20 +962,22 @@ const bindDragEvent = (previewImage, image) => {
 
         let references = []
 
+        const dragElementRect = dragElement.getBoundingClientRect();
+
         if (dragElement.offsetLeft > widthCutLine) {
           references.push('right')
-          positionX = (containerRect.right - dragElement.offsetLeft - dragElement.offsetWidth) / containerRect.width
+          positionX = (containerRect.right - dragElementRect.left - dragElementRect.width) / containerRect.width
         } else {
           references.push('left')
-          positionX = (dragElement.offsetLeft - containerRect.left) / containerRect.width;
+          positionX = (dragElementRect.left - containerRect.left) / containerRect.width;
         }
 
-        if (dragElement.offsetTop > heightCutLine) {
+        if (dragElementRect.top > heightCutLine) {
           references.push('bottom')
-          positionY = (containerRect.bottom - dragElement.offsetTop - dragElement.offsetHeight) / containerRect.height;
+          positionY = (containerRect.bottom - dragElementRect.top - dragElementRect.height) / containerRect.height;
         } else {
           references.push('top')
-          positionY = (dragElement.offsetTop - containerRect.top) / containerRect.height;
+          positionY = (dragElementRect.top - containerRect.top) / containerRect.height;
         }
 
         if (!dragElement.src) {
@@ -991,8 +993,8 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.text.options.fontFamily = dragElementStyle.fontFamily
           settings.value.text.options.fontColor = dragElementStyle.color
 
-          settings.value.text.options.fontHeightRatio = fontSize / containerRect.height
-          settings.value.text.options.fontWidthRatio = fontSize / containerRect.width
+          settings.value.text.options.fontHeightRatio = dragElement.offsetHeight / containerRect.height
+          settings.value.text.options.fontWidthRatio = dragElement.offsetWidth / containerRect.width
           image.settings.texts.set(dragElement, _.cloneDeep(settings.value.text))
         } else {
           settings.value.image.references = references
@@ -1087,7 +1089,6 @@ const bindDragEvent = (previewImage, image) => {
             if (elementRect.top > heightCutLine) {
               references.push('bottom')
               positionY = (containerRect.bottom - dragElement.offsetTop - dragElement.offsetHeight) / containerRect.height;
-              console.log(containerRect.bottom, dragElement.offsetTop, dragElement.offsetHeight, positionY)
             } else {
               references.push('top')
               positionY = (dragElement.offsetTop - containerRect.top) / containerRect.height;
