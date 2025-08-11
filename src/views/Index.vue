@@ -26,7 +26,7 @@
                 <div class="templates">
                   <el-menu-item
                       @contextmenu="openTemplateContextMenu(template.id)"
-                      :index="template.id" class="template" v-for="template in templates" :key="template.id"
+                      class="template" v-for="template in templates" :key="template.id"
                       @click="useTemplate(template)">
                     {{ template.name }}
                   </el-menu-item>
@@ -55,7 +55,6 @@
                   <span>文本标签</span>
                 </template>
                 <el-scrollbar class="scrollBar">
-
                   <div class="text-marks" ref="textMarks">
                     <el-tooltip class="box-item" effect="dark" content="文本" placement="top">
                       <div class="text-mark" draggable="true" id="text">
@@ -82,7 +81,7 @@
 
       <div class="page-center">
         <template v-for="([key, image]) in images" :key="image.path">
-          <div class="preview-item" :path="image.path" v-show="image.visible">
+          <div class="preview-item" :path="image.path" v-show="image.visible" @contextmenu="openContextMenu">
             <img :src="image.url" :id="image.path">
           </div>
         </template>
@@ -224,35 +223,6 @@
                 </el-sub-menu>
                 <el-sub-menu index="3">
                   <template #title>
-                    <span>图片</span>
-                  </template>
-                  <ul class="options">
-                    <li class="option">
-                      <div class="label">缩放</div>
-                      <div class="value">
-                        <el-slider @change=""
-                                   :min="1"
-                                   :max="100"
-                                   size="small"
-                                   v-model="imageOptions.scale"
-                                   placement="top"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">旋转角度</div>
-                      <div class="value">
-                        <el-slider @change=""
-                                   size="small"
-                                   :min="0"
-                                   :max="360"
-                                   v-model="imageOptions.angle"
-                                   placement="top"/>
-                      </div>
-                    </li>
-                  </ul>
-                </el-sub-menu>
-                <el-sub-menu index="4">
-                  <template #title>
                     <span>文本</span>
                   </template>
                   <ul class="options">
@@ -308,6 +278,35 @@
                             show-alpha
                             size="small"
                             :predefine="predefineColors"/>
+                      </div>
+                    </li>
+                  </ul>
+                </el-sub-menu>
+                <el-sub-menu index="4">
+                  <template #title>
+                    <span>图片</span>
+                  </template>
+                  <ul class="options">
+                    <li class="option">
+                      <div class="label">缩放</div>
+                      <div class="value">
+                        <el-slider @change=""
+                                   :min="1"
+                                   :max="100"
+                                   size="small"
+                                   v-model="imageOptions.scale"
+                                   placement="top"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">旋转角度</div>
+                      <div class="value">
+                        <el-slider @change=""
+                                   size="small"
+                                   :min="0"
+                                   :max="360"
+                                   v-model="imageOptions.angle"
+                                   placement="top"/>
                       </div>
                     </li>
                   </ul>
@@ -813,6 +812,7 @@ const saveTemplates = () => {
 }
 
 const useTemplate = (template) => {
+
 
   template = _.cloneDeep(template)
 
