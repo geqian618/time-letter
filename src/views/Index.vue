@@ -1151,7 +1151,6 @@ const bindDragEvent = (previewImage, image) => {
       //   dragElement.style.setProperty(property, value);
       // }
 
-
       setDefaultStyle(dragElement);
 
       // 关键：设置拖拽数据传输
