@@ -730,7 +730,6 @@ const stopTextSettingsWatch = watch(textOptions, (newVal, oldVal) => {
       image.settings.texts.get(element).options = _.cloneDeep(newVal)
       image.settings.texts.get(element).options.fontHeightRatio = element.getBoundingClientRect().height / height
       image.settings.texts.get(element).options.fontWidthRatio = element.getBoundingClientRect().width / width
-      console.log(newVal)
       element.style.fontFamily = newVal.fontFamily
       element.style.fontSize = newVal.fontSize + 'px'
       element.style.color = newVal.fontColor
@@ -823,6 +822,8 @@ const useTemplate = (template) => {
 
   const parentNode = previewImage.parentNode;
 
+  template = _.cloneDeep(template)
+
   metadata.settings.border = template.settings.border
 
   settings.value.border = template.settings.border
@@ -837,6 +838,7 @@ const useTemplate = (template) => {
     img.style.userSelect = 'none';
     img.setAttribute('tabindex', '0')
     img.src = image.path
+    img.className = 'image-mark'
     // 关键：必须设为绝对定位
     img.style.position = 'absolute';
 
@@ -861,7 +863,6 @@ const useTemplate = (template) => {
 
     if (image.references.includes('bottom')) {
       newPositionY = window.innerHeight - bottom + positionY * height
-      console.log(newPositionX, newPositionY)
       img.style.bottom = `${newPositionY}px`;
     }
 
@@ -876,8 +877,9 @@ const useTemplate = (template) => {
     const div = document.createElement('div');
     div.style.width = 'fit-content'
     div.style.height = 'fit-content'
-    div.style.fontSize = '14px'
     div.style.lineHeight = '1'
+    div.style.fontSize = text.options.fontSize + 'px'
+    div.className = 'text-mark'
     const type = text.type;
     if (type === 'date') {
       div.innerHTML = getDate();
@@ -904,7 +906,7 @@ const useTemplate = (template) => {
     }
 
     if (text.references.includes('right')) {
-      newPositionX = window.innerWidth - right - positionX * width
+      newPositionX = window.innerWidth - right + positionX * width
       div.style.right = `${newPositionX}px`;
     }
 
@@ -914,7 +916,7 @@ const useTemplate = (template) => {
     }
 
     if (text.references.includes('bottom')) {
-      newPositionY = width.innerHeight - bottom - positionY * height
+      newPositionY = window.innerHeight - bottom + positionY * height
       div.style.bottom = `${newPositionY}px`;
     }
 
@@ -1132,7 +1134,7 @@ const bindDragEvent = (previewImage, image) => {
   let offsetX;
   let offsetY;
   // 设置拖拽事件
-  document.querySelectorAll('.image-mark, .text-mark').forEach(component => {
+  document.querySelectorAll('.image-marks .image-mark, .text-marks .text-mark').forEach(component => {
 
     component.addEventListener('dragstart', function (event) {
       const componentRect = component.getBoundingClientRect();
@@ -1398,7 +1400,6 @@ function makeDraggable(dragElement) {
             textMark.positionY = positionY
             textMark.offsetX = offsetX
             textMark.offsetY = offsetY
-            console.log(textMark)
           } else {
             const imageMark = image.settings.images.get(dragElement);
             imageMark.references = references
@@ -1443,7 +1444,6 @@ function makeDraggable(dragElement) {
         dragElement.focus()
         dragElement.style.border = '1px dashed #f00'
         dragElement.setAttribute('selected', 'true')
-        console.log('单击');
       }, 200); // 300毫秒内没有再次点击，则视为单击
     }
   })
