@@ -16,9 +16,19 @@ const contextMenu = (mainWindow) => {
             label: '导出',
             accelerator: 'ctrl+o',
             click: saveFiles
+        },
+        {
+            label: '保存为预设',
+            accelerator: 'ctrl+t',
+            click: saveTemplate
         }
     ])
 };
+
+
+const saveTemplate = () => {
+    window.webContents.send('watch-contextMenu', {type: 2})
+}
 
 
 /**

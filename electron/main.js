@@ -18,6 +18,8 @@ const mainMenu = require('./components/MainMenu')
 
 const contextMenu = require('./components/ContextMenu')
 
+const templateContextMenu = require('./components/TemplateContextMenu')
+
 let window;
 
 const createWindow = () => {
@@ -77,6 +79,10 @@ ipcMain.handle('parse-photo-metadata', async (event, filePath) => {
 
 ipcMain.on('open-contextMenu', () => {
     contextMenu(window).popup()
+})
+
+ipcMain.on('open-template-contextMenu', () => {
+    templateContextMenu(window).popup()
 })
 
 ipcMain.on('request-save-files', (event, images) => {

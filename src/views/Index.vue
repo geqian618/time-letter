@@ -24,10 +24,12 @@
                   <span>模版预设</span>
                 </template>
                 <div class="templates">
-                  <el-menu-item class="template" index="1-1">模板一</el-menu-item>
-                  <el-menu-item class="template" index="1-2">模板二</el-menu-item>
-                  <el-menu-item class="template" index="1-3">模板三</el-menu-item>
-                  <el-menu-item class="template" index="1-4">模板四</el-menu-item>
+                  <el-menu-item
+                      @contextmenu="openTemplateContextMenu(template.id)"
+                      :index="template.id" class="template" v-for="template in templates" :key="template.id"
+                      @click="useTemplate(template)">
+                    {{ template.name }}
+                  </el-menu-item>
                 </div>
               </el-sub-menu>
               <el-sub-menu index="2" class="image-mark-options">
@@ -154,6 +156,16 @@
                   </template>
                   <ul class="options">
                     <li class="option">
+                      <div class="label">边框数值</div>
+                      <div class="value">
+                        <el-select
+                            v-model="settings.border.borderType"
+                            :options="borderOptions"
+                            size="small"
+                            placeholder="Select"/>
+                      </div>
+                    </li>
+                    <li class="option">
                       <div class="label">上边框</div>
                       <div class="value">
                         <el-slider @change="handleBorders"
@@ -249,7 +261,7 @@
                       <div class="value">
                         <el-select
                             v-model="textOptions.fontFamily"
-                            :options="options"
+                            :options="fontOptions"
                             size="small"
                             placeholder="Select"/>
                       </div>
@@ -320,6 +332,24 @@
     </div>
   </div>
 
+
+  <el-dialog v-model="dialogVisible" title="保存预设模版" top="30vh" width="300" draggable>
+    <el-form :model="template" class="demo-form-inline">
+      <el-form-item label="预设名称">
+        <el-input v-model="template.desc" placeholder="" clearable/>
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveTemplates">
+          确认
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
+
+
 </template>
 
 <script setup lang="ts">
@@ -348,7 +378,7 @@ const predefineColors = ref([
 ])
 
 
-const options = [
+const fontOptions = [
   {
     value: 'Microsoft YaHei',
     label: '微软雅黑',
@@ -371,6 +401,17 @@ const options = [
   },
 ]
 
+const borderOptions = [
+  {
+    value: 0,
+    label: '按固定值增减',
+  },
+  {
+    value: 1,
+    label: '按比例增减',
+  }
+]
+
 const images = ref(new Map<string, object>())
 
 const imageList = ref(null);
@@ -383,6 +424,13 @@ const selectedElement = ref({
 const metadata = ref([]);
 
 const selectedImages = ref(new Map())
+
+const template = ref({
+  desc: ''
+})
+
+const templates = ref([])
+
 
 const textOptions = ref({
   fontSize: 14,
@@ -414,6 +462,8 @@ const settings = ref({
     path: '',
     positionX: 0,
     positionY: 0,
+    offsetX: 0,
+    offsetY: 0,
     references: [],
     options: {
       scale: 10,
@@ -421,9 +471,12 @@ const settings = ref({
     }
   },
   text: {
+    type: 'text',
     content: '',
     positionX: 0,
     positionY: 0,
+    offsetX: 0,
+    offsetY: 0,
     references: [],
     options: {
       fontSize: 14,
@@ -434,6 +487,7 @@ const settings = ref({
     }
   },
   border: {
+    borderType: 0,
     borderLeft: 3,
     borderRight: 3,
     borderTop: 3,
@@ -448,8 +502,11 @@ const imageMarks = ref([])
 
 const imageLabels = ref([])
 
-const watchInputImages = () => {
+const dialogVisible = ref(false)
 
+const deleteTemplateId = ref(0)
+
+const watchInputImages = () => {
   window.electronAPI.watchInputImage((event, data) => {
     if (data) {
       data.forEach((item: object, path: string) => {
@@ -507,6 +564,27 @@ const openContextMenu = () => {
   }
 }
 
+const openTemplateContextMenu = (id) => {
+  if (templates.value.length) {
+    deleteTemplateId.value = id
+    window.electronAPI.openTemplateContextMenu()
+  }
+}
+
+const watchTemplateContextMenu = () => {
+  window.electronAPI.watchTemplateContextMenu((event, data) => {
+    if (templates.value && templates.value.length) {
+      for (let i = 0; i < templates.value.length; i++) {
+        if (templates.value[i].id === deleteTemplateId.value) {
+          templates.value.splice(i, 1)
+          window.localStorage.setItem('templates', JSON.stringify(templates.value))
+          return
+        }
+      }
+    }
+  })
+}
+
 const watchContextMenu = () => {
   window.electronAPI.watchContextMenu((event, data) => {
     if (data) {
@@ -532,6 +610,8 @@ const watchContextMenu = () => {
           })
         })
         window.electronAPI.requestSaveFiles(JSON.parse(JSON.stringify(newSettings)))
+      } else if (type === 2) {
+        openDialog()
       }
     }
   });
@@ -673,9 +753,7 @@ const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVa
   const elements = parentNode.querySelectorAll('.image-mark');
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
-
       image.settings.images.get(element).options.angle = newVal
-
       element.style.transformOrigin = 'center center'
       element.style.transform = `rotate(${newVal}deg)`;
     }
@@ -713,11 +791,155 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
   }
 });
 
+const openDialog = () => {
+  dialogVisible.value = true
+}
+
+const saveTemplates = () => {
+  const {settings} = images.value.get(selectedElement.value.path);
+  const json = window.localStorage.getItem('templates');
+  const templateList = json ? JSON.parse(json) : []
+  templateList.push({
+    id: Date.now(),
+    name: template.value.desc,
+    settings: {
+      border: settings.border,
+      images: Array.from(settings.images.values()),
+      texts: Array.from(settings.texts.values())
+    }
+  })
+  templates.value = templateList
+  window.localStorage.setItem('templates', JSON.stringify(templateList))
+  dialogVisible.value = false
+}
+
+const useTemplate = (template) => {
+
+  const metadata = images.value.get(selectedElement.value.path);
+
+  const previewImage = metadata.getTargetElement();
+
+  const {left, right, top, bottom, width, height} = previewImage.getBoundingClientRect();
+
+  const parentNode = previewImage.parentNode;
+
+  metadata.settings.border = template.settings.border
+
+  settings.value.border = template.settings.border
+
+  handleBorders()
+
+  for (let image of template.settings.images) {
+    const img = document.createElement('img');
+    img.style.width = '50px'
+    img.style.outline = 'none';
+    img.style.cursor = 'move';
+    img.style.userSelect = 'none';
+    img.setAttribute('tabindex', '0')
+    img.src = image.path
+    // 关键：必须设为绝对定位
+    img.style.position = 'absolute';
+
+    let {positionX, positionY} = image
+
+    let newPositionX, newPositionY
+
+    if (image.references.includes('left')) {
+      newPositionX = left + positionX * width
+      img.style.left = `${newPositionX}px`;
+    }
+
+    if (image.references.includes('right')) {
+      newPositionX = window.innerWidth - right + positionX * width
+      img.style.right = `${newPositionX}px`;
+    }
+
+    if (image.references.includes('top')) {
+      newPositionY = top + positionY * height
+      img.style.top = `${newPositionY}px`;
+    }
+
+    if (image.references.includes('bottom')) {
+      newPositionY = window.innerHeight - bottom + positionY * height
+      console.log(newPositionX, newPositionY)
+      img.style.bottom = `${newPositionY}px`;
+    }
+
+    parentNode.appendChild(img)
+
+    metadata.settings.images.set(img, image)
+
+    makeDraggable(img)
+  }
+
+  for (let text of template.settings.texts) {
+    const div = document.createElement('div');
+    div.style.width = 'fit-content'
+    div.style.height = 'fit-content'
+    div.style.fontSize = '14px'
+    div.style.lineHeight = '1'
+    const type = text.type;
+    if (type === 'date') {
+      div.innerHTML = getDate();
+    } else if (type === 'datetime') {
+      div.innerHTML = getDateTime();
+    } else {
+      div.innerHTML = '文本';
+    }
+    div.style.outline = 'none';
+    div.style.cursor = 'move';
+    div.style.userSelect = 'none';
+    div.setAttribute('tabindex', '0')
+
+    // 关键：必须设为绝对定位
+    div.style.position = 'absolute';
+
+    let {positionX, positionY} = text
+
+    let newPositionX, newPositionY
+
+    if (text.references.includes('left')) {
+      newPositionX = left + positionX * width
+      div.style.left = `${newPositionX}px`;
+    }
+
+    if (text.references.includes('right')) {
+      newPositionX = window.innerWidth - right - positionX * width
+      div.style.right = `${newPositionX}px`;
+    }
+
+    if (text.references.includes('top')) {
+      newPositionY = top + positionY * height
+      div.style.top = `${newPositionY}px`;
+    }
+
+    if (text.references.includes('bottom')) {
+      newPositionY = width.innerHeight - bottom - positionY * height
+      div.style.bottom = `${newPositionY}px`;
+    }
+
+    parentNode.appendChild(div)
+
+    metadata.settings.text.set(div, text)
+
+    makeDraggable(div)
+  }
+
+
+}
+
+
+const loadTemplates = () => {
+  const jsonStr = window.localStorage.getItem('templates');
+  templates.value = jsonStr ? JSON.parse(jsonStr) : []
+}
 
 onMounted(() => {
+  loadTemplates()
   watchInputImages()
   watchImageLabel()
   watchContextMenu()
+  watchTemplateContextMenu()
   watchCtrlA()
   handleResize()
 })
@@ -911,8 +1133,8 @@ const bindDragEvent = (previewImage, image) => {
   let offsetY;
   // 设置拖拽事件
   document.querySelectorAll('.image-mark, .text-mark').forEach(component => {
-    component.addEventListener('dragstart', function (event) {
 
+    component.addEventListener('dragstart', function (event) {
       const componentRect = component.getBoundingClientRect();
       offsetX = event.clientX - componentRect.left;
       // 元素与鼠标箭头之间的垂直方向偏移量差
@@ -1006,32 +1228,42 @@ const bindDragEvent = (previewImage, image) => {
 
         let positionY;
 
+        let positionOffsetX;
+
+        let positionOffsetY;
+
         let references = []
 
         const dragElementRect = dragElement.getBoundingClientRect();
 
         if (dragElement.offsetLeft > widthCutLine) {
           references.push('right')
-          positionX = (containerRect.right - dragElementRect.left - dragElementRect.width) / containerRect.width
+          positionOffsetX = containerRect.right - dragElementRect.left - dragElementRect.width
+          positionX = positionOffsetX / containerRect.width
         } else {
           references.push('left')
-          positionX = (dragElementRect.left - containerRect.left) / containerRect.width;
+          positionOffsetX = dragElementRect.left - containerRect.left
+          positionX = positionOffsetX / containerRect.width;
         }
 
         if (dragElementRect.top > heightCutLine) {
           references.push('bottom')
-          positionY = (containerRect.bottom - dragElementRect.top - dragElementRect.height) / containerRect.height;
+          positionOffsetY = containerRect.bottom - dragElementRect.top - dragElementRect.height
+          positionY = positionOffsetY / containerRect.height;
         } else {
           references.push('top')
-          positionY = (dragElementRect.top - containerRect.top) / containerRect.height;
+          positionOffsetY = dragElementRect.top - containerRect.top
+          positionY = positionOffsetY / containerRect.height;
         }
 
         if (!dragElement.src) {
           settings.value.text.references = references
           settings.value.text.positionX = positionX
           settings.value.text.positionY = positionY
+          settings.value.text.offsetX = positionOffsetX
+          settings.value.text.offsetY = positionOffsetY
           settings.value.text.content = dragElement.innerText
-
+          settings.value.text.type = dragElement.getAttribute('id')
 
           const dragElementStyle = window.getComputedStyle(dragElement);
           const fontSize = Number.parseFloat(dragElementStyle.fontSize.replace('px', ''));
@@ -1046,6 +1278,8 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.image.references = references
           settings.value.image.positionX = positionX
           settings.value.image.positionY = positionY
+          settings.value.image.offsetX = positionOffsetX
+          settings.value.image.offsetY = positionOffsetY
           settings.value.image.path = dragElement.src
 
           const dragElementStyle = window.getComputedStyle(dragElement);
@@ -1068,192 +1302,213 @@ const bindDragEvent = (previewImage, image) => {
 
   });
 
-  // 使形状可拖动
-  function makeDraggable(dragElement) {
-    let offsetX, offsetY
-    let clickTimeout = null;
-    let mouseSetupX, mouseSetupY
-    dragElement.onmousedown = function dragMouseDown(event) {
+};
+
+
+// 使形状可拖动
+function makeDraggable(dragElement) {
+
+  let offsetX, offsetY
+
+  let clickTimeout = null;
+
+  let mouseSetupX, mouseSetupY
+
+  dragElement.onmousedown = function dragMouseDown(event) {
+
+    event.preventDefault();
+
+    const image = images.value.get(selectedElement.value.path);
+
+    const previewImage = image.getTargetElement();
+
+    // 限制在画布范围内
+    const containerRect = previewImage.getBoundingClientRect();
+
+    const elementRect = dragElement.getBoundingClientRect();
+
+    // 获取鼠标位置
+    offsetX = event.clientX - elementRect.left;
+
+    offsetY = event.clientY - elementRect.top
+
+    mouseSetupX = event.clientX
+
+    mouseSetupY = event.clientY
+
+    document.onmousemove = function elementDrag(event) {
+
+      if (dragElement.getAttribute('selected') === 'true') {
+        return
+      }
 
       event.preventDefault();
-      const elementRect = dragElement.getBoundingClientRect();
 
-      // 获取鼠标位置
-      offsetX = event.clientX - elementRect.left;
+      const mouseX = event.clientX;
 
-      offsetY = event.clientY - elementRect.top
+      const mouseY = event.clientY;
 
-      mouseSetupX = event.clientX
 
-      mouseSetupY = event.clientY
+      if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (elementRect.width - offsetX)) {
+        if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (elementRect.height - offsetY)) {
 
-      document.onmousemove = function elementDrag(event) {
+          if (dragElement.src) {
+            dragElement.style.left = (mouseX - offsetX) + 'px';
+            dragElement.style.top = (mouseY - offsetY) + 'px';
+          } else {
+            dragElement.style.left = `${mouseX - offsetX}px`;
+            dragElement.style.top = `${mouseY - offsetY}px`;
+          }
 
-        if (dragElement.getAttribute('selected') === 'true') {
-          return
-        }
+          const heightCutLine = containerRect.top + containerRect.height / 2;
 
-        event.preventDefault();
+          const widthCutLine = containerRect.left + containerRect.width / 2;
 
-        const mouseX = event.clientX;
+          let positionX;
 
-        const mouseY = event.clientY;
+          let positionY;
 
-        // 限制在画布范围内
-        const containerRect = previewImage.getBoundingClientRect();
+          let positionOffsetX, positionOffsetY
 
-        if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (elementRect.width - offsetX)) {
-          if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (elementRect.height - offsetY)) {
+          let references = []
 
-            if (dragElement.src) {
-              dragElement.style.left = (mouseX - offsetX) + 'px';
-              dragElement.style.top = (mouseY - offsetY) + 'px';
-            } else {
-              dragElement.style.left = `${mouseX - offsetX}px`;
-              dragElement.style.top = `${mouseY - offsetY}px`;
-            }
+          if (elementRect.left > widthCutLine) {
+            references.push('right')
+            positionOffsetX = containerRect.right - dragElement.offsetLeft - dragElement.offsetWidth
+            positionX = positionOffsetX / containerRect.width
+          } else {
+            references.push('left')
+            positionOffsetX = dragElement.offsetLeft - containerRect.left
+            positionX = positionOffsetX / containerRect.width;
+          }
 
-            const heightCutLine = containerRect.top + containerRect.height / 2;
+          if (elementRect.top > heightCutLine) {
+            references.push('bottom')
+            positionOffsetY = containerRect.bottom - dragElement.offsetTop - dragElement.offsetHeight
+            positionY = positionOffsetY / containerRect.height;
+          } else {
+            references.push('top')
+            positionOffsetY = dragElement.offsetTop - containerRect.top
+            positionY = positionOffsetY / containerRect.height;
+          }
 
-            const widthCutLine = containerRect.left + containerRect.width / 2;
-
-            let positionX;
-
-            let positionY;
-
-            let references = []
-
-            if (elementRect.left > widthCutLine) {
-              references.push('right')
-              positionX = (containerRect.right - dragElement.offsetLeft - dragElement.offsetWidth) / containerRect.width
-            } else {
-              references.push('left')
-              positionX = (dragElement.offsetLeft - containerRect.left) / containerRect.width;
-            }
-
-            if (elementRect.top > heightCutLine) {
-              references.push('bottom')
-              positionY = (containerRect.bottom - dragElement.offsetTop - dragElement.offsetHeight) / containerRect.height;
-            } else {
-              references.push('top')
-              positionY = (dragElement.offsetTop - containerRect.top) / containerRect.height;
-            }
-
-            if (!dragElement.src) {
-              const textMark = image.settings.texts.get(dragElement);
-              textMark.references = references
-              textMark.positionX = positionX
-              textMark.positionY = positionY
-              console.log(textMark)
-            } else {
-              const imageMark = image.settings.images.get(dragElement);
-              imageMark.references = references
-              imageMark.positionX = positionX
-              imageMark.positionY = positionY
-
-            }
+          if (!dragElement.src) {
+            const textMark = image.settings.texts.get(dragElement);
+            textMark.references = references
+            textMark.positionX = positionX
+            textMark.positionY = positionY
+            textMark.offsetX = offsetX
+            textMark.offsetY = offsetY
+            console.log(textMark)
+          } else {
+            const imageMark = image.settings.images.get(dragElement);
+            imageMark.references = references
+            imageMark.positionX = positionX
+            imageMark.positionY = positionY
+            imageMark.offsetX = offsetX
+            imageMark.offsetY = offsetY
           }
         }
-      }
-      document.onmouseup = function closeDragElement() {
-        document.onmouseup = null;
-        document.onmousemove = null;
       }
     }
-
-    dragElement.addEventListener('keydown', (event) => {
-      // 检测 Delete (46) 或 Backspace (8) 键
-      if (event.key === 'Delete' || event.key === 'Backspace' || event.keyCode === 46 || event.keyCode === 8) {
-        // event.preventDefault();
-        if (dragElement.getAttribute('selected') === 'true') {
-          if (!dragElement.src && !dragElement.querySelectorAll('input').length) {
-            image.settings.texts.delete(dragElement)
-            dragElement.remove()
-          }
-          if (dragElement.src) {
-            image.settings.images.delete(dragElement)
-            dragElement.remove()
-          }
-
-        }
-      }
-    })
-
-    dragElement.addEventListener('click', (event) => {
-      if (event.clientX === mouseSetupX && event.clientY === mouseSetupY) {
-        // 清除之前的定时器（如果有）
-        clearTimeout(clickTimeout);
-        // 设置新的定时器
-        clickTimeout = setTimeout(function () {
-          dragElement.focus()
-          dragElement.style.border = '1px dashed #f00'
-          dragElement.setAttribute('selected', 'true')
-          console.log('单击');
-        }, 200); // 300毫秒内没有再次点击，则视为单击
-      }
-    })
-
-
-    dragElement.parentNode.addEventListener('click', () => {
-      if (dragElement.getAttribute('selected') === 'true') {
-        dragElement.style.border = ''
-        dragElement.setAttribute('selected', 'false')
-      }
-    })
-
-    if (!dragElement.src) {
-      dragElement.addEventListener('dblclick', (event) => {
-        // 双击时清除单击的定时器
-        clearTimeout(clickTimeout);
-
-        dragElement.setAttribute('selected', 'true')
-
-        // 保存原始文本
-        const originalText = dragElement.textContent;
-        // 创建输入框
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = originalText;
-        input.style.width = 'fit-content'
-        input.style.height = dragElement.style.height
-        input.style.padding = '0 5px'
-
-        // 清空元素内容并添加输入框
-        dragElement.innerHTML = '';
-
-        dragElement.appendChild(input);
-
-        // 自动聚焦并全选文本
-        input.focus();
-        input.select();
-
-        // 绑定保存事件
-        input.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter') {
-            input.blur()
-          }
-        });
-
-        // 失去焦点时保存
-        input.addEventListener('blur', function () {
-          const newValue = input.value;
-          const dragElement = input.parentNode
-          input.remove()
-          dragElement.innerHTML = newValue ? newValue : ' '
-          dragElement.setAttribute('selected', 'false')
-          const containerRect = images.value.get(selectedElement.value.path).getTargetElement().getBoundingClientRect()
-          const dragElementRect = dragElement.getBoundingClientRect();
-          const textLabel = image.settings.texts.get(dragElement);
-          textLabel.options.fontWidthRatio = dragElementRect.width / containerRect.width
-          textLabel.options.fontHeightRatio = dragElementRect.height / containerRect.height
-          textLabel.content = newValue
-        });
-
-      })
-
+    document.onmouseup = function closeDragElement() {
+      document.onmouseup = null;
+      document.onmousemove = null;
     }
   }
-};
+
+  dragElement.addEventListener('keydown', (event) => {
+    // 检测 Delete (46) 或 Backspace (8) 键
+    if (event.key === 'Delete' || event.key === 'Backspace' || event.keyCode === 46 || event.keyCode === 8) {
+      // event.preventDefault();
+      if (dragElement.getAttribute('selected') === 'true') {
+        if (!dragElement.src && !dragElement.querySelectorAll('input').length) {
+          image.settings.texts.delete(dragElement)
+          dragElement.remove()
+        }
+        if (dragElement.src) {
+          image.settings.images.delete(dragElement)
+          dragElement.remove()
+        }
+
+      }
+    }
+  })
+
+  dragElement.addEventListener('click', (event) => {
+    if (event.clientX === mouseSetupX && event.clientY === mouseSetupY) {
+      // 清除之前的定时器（如果有）
+      clearTimeout(clickTimeout);
+      // 设置新的定时器
+      clickTimeout = setTimeout(function () {
+        dragElement.focus()
+        dragElement.style.border = '1px dashed #f00'
+        dragElement.setAttribute('selected', 'true')
+        console.log('单击');
+      }, 200); // 300毫秒内没有再次点击，则视为单击
+    }
+  })
+
+
+  dragElement.parentNode.addEventListener('click', () => {
+    if (dragElement.getAttribute('selected') === 'true') {
+      dragElement.style.border = ''
+      dragElement.setAttribute('selected', 'false')
+    }
+  })
+
+  if (!dragElement.src) {
+    dragElement.addEventListener('dblclick', (event) => {
+      // 双击时清除单击的定时器
+      clearTimeout(clickTimeout);
+
+      dragElement.setAttribute('selected', 'true')
+
+      // 保存原始文本
+      const originalText = dragElement.textContent;
+      // 创建输入框
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = originalText;
+      input.style.width = 'fit-content'
+      input.style.height = dragElement.style.height
+      input.style.padding = '0 5px'
+
+      // 清空元素内容并添加输入框
+      dragElement.innerHTML = '';
+
+      dragElement.appendChild(input);
+
+      // 自动聚焦并全选文本
+      input.focus();
+      input.select();
+
+      // 绑定保存事件
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          input.blur()
+        }
+      });
+
+      // 失去焦点时保存
+      input.addEventListener('blur', function () {
+        const newValue = input.value;
+        const dragElement = input.parentNode
+        input.remove()
+        dragElement.innerHTML = newValue ? newValue : ' '
+        dragElement.setAttribute('selected', 'false')
+        const containerRect = images.value.get(selectedElement.value.path).getTargetElement().getBoundingClientRect()
+        const dragElementRect = dragElement.getBoundingClientRect();
+        const textLabel = image.settings.texts.get(dragElement);
+        textLabel.options.fontWidthRatio = dragElementRect.width / containerRect.width
+        textLabel.options.fontHeightRatio = dragElementRect.height / containerRect.height
+        textLabel.content = newValue
+      });
+
+    })
+
+  }
+}
 
 
 </script>
