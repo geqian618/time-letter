@@ -814,21 +814,21 @@ const saveTemplates = () => {
 
 const useTemplate = (template) => {
 
-  const metadata = images.value.get(selectedElement.value.path);
-
-  const previewImage = metadata.getTargetElement();
-
-  const {left, right, top, bottom, width, height} = previewImage.getBoundingClientRect();
-
-  const parentNode = previewImage.parentNode;
-
   template = _.cloneDeep(template)
+
+  const metadata = images.value.get(selectedElement.value.path);
 
   metadata.settings.border = template.settings.border
 
   settings.value.border = template.settings.border
 
   handleBorders()
+
+  const previewImage = metadata.getTargetElement();
+
+  const parentNode = previewImage.parentNode;
+
+  const {left, right, top, bottom, width, height} = previewImage.getBoundingClientRect();
 
   for (let image of template.settings.images) {
     const img = document.createElement('img');
