@@ -884,7 +884,7 @@ const useTemplate = (template) => {
     } else if (type === 'datetime') {
       div.innerHTML = getDateTime();
     } else {
-      div.innerHTML = '文本';
+      div.innerHTML = text.content;
     }
     div.style.outline = 'none';
     div.style.cursor = 'move';
@@ -920,7 +920,7 @@ const useTemplate = (template) => {
 
     parentNode.appendChild(div)
 
-    metadata.settings.text.set(div, text)
+    metadata.settings.texts.set(div, text)
 
     makeDraggable(div)
   }
@@ -1308,6 +1308,15 @@ const bindDragEvent = (previewImage, image) => {
 // 使形状可拖动
 function makeDraggable(dragElement) {
 
+  const image = images.value.get(selectedElement.value.path);
+
+  const previewImage = image.getTargetElement();
+
+  // 限制在画布范围内
+  const containerRect = previewImage.getBoundingClientRect();
+
+  const elementRect = dragElement.getBoundingClientRect();
+
   let offsetX, offsetY
 
   let clickTimeout = null;
@@ -1317,15 +1326,6 @@ function makeDraggable(dragElement) {
   dragElement.onmousedown = function dragMouseDown(event) {
 
     event.preventDefault();
-
-    const image = images.value.get(selectedElement.value.path);
-
-    const previewImage = image.getTargetElement();
-
-    // 限制在画布范围内
-    const containerRect = previewImage.getBoundingClientRect();
-
-    const elementRect = dragElement.getBoundingClientRect();
 
     // 获取鼠标位置
     offsetX = event.clientX - elementRect.left;
