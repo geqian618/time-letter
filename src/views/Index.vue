@@ -879,6 +879,7 @@ const useTemplate = (template) => {
     div.style.height = 'fit-content'
     div.style.lineHeight = '1'
     div.style.fontSize = text.options.fontSize + 'px'
+    div.style.whiteSpace = 'nowrap'
     div.className = 'text-mark'
     const type = text.type;
     if (type === 'date') {
@@ -1168,6 +1169,7 @@ const bindDragEvent = (previewImage, image) => {
       dragElement.style.height = 'fit-content'
       dragElement.style.fontSize = '14px'
       dragElement.style.lineHeight = '1'
+      dragElement.style.whiteSpace = 'nowrap'
       const id = dragElement.getAttribute('id');
       dragElement.firstChild.remove()
       if (id === 'date') {
