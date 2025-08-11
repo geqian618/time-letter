@@ -1311,11 +1311,6 @@ function makeDraggable(dragElement) {
 
   const previewImage = image.getTargetElement();
 
-  // 限制在画布范围内
-  const containerRect = previewImage.getBoundingClientRect();
-
-  const elementRect = dragElement.getBoundingClientRect();
-
   let offsetX, offsetY
 
   let clickTimeout = null;
@@ -1323,6 +1318,11 @@ function makeDraggable(dragElement) {
   let mouseSetupX, mouseSetupY
 
   dragElement.onmousedown = function dragMouseDown(event) {
+
+    // 限制在画布范围内
+    const containerRect = previewImage.getBoundingClientRect();
+
+    const elementRect = dragElement.getBoundingClientRect();
 
     event.preventDefault();
 
