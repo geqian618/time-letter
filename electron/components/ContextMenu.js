@@ -18,6 +18,11 @@ const contextMenu = (mainWindow) => {
             click: saveFiles
         },
         {
+            label: '同步',
+            accelerator: 'ctrl+u',
+            click: synchronizeTemplate
+        },
+        {
             label: '保存为预设',
             accelerator: 'ctrl+t',
             click: saveTemplate
@@ -28,6 +33,10 @@ const contextMenu = (mainWindow) => {
 
 const saveTemplate = () => {
     window.webContents.send('watch-contextMenu', {type: 2})
+}
+
+const synchronizeTemplate = () => {
+    window.webContents.send('watch-contextMenu', {type: 3})
 }
 
 

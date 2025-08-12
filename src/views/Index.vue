@@ -25,9 +25,9 @@
                 </template>
                 <div class="templates">
                   <el-menu-item
-                      @contextmenu="openTemplateContextMenu(template.id)"
+                      @contextmenu="openTemplateContextMenu(template)"
                       class="template" v-for="template in templates" :key="template.id"
-                      @click="useTemplate(template)">
+                      @click="useTemplate(template.settings, selectedElement.path)">
                     {{ template.name }}
                   </el-menu-item>
                 </div>
@@ -333,15 +333,32 @@
 
 
   <el-dialog v-model="dialogVisible" title="保存预设模版" top="30vh" width="300" draggable>
-    <el-form :model="template" class="demo-form-inline">
+    <el-form :model="newTemplate" class="demo-form-inline">
       <el-form-item label="预设名称">
-        <el-input v-model="template.desc" placeholder="" clearable/>
+        <el-input v-model="newTemplate.desc" placeholder="" clearable/>
       </el-form-item>
     </el-form>
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="saveTemplates">
+          确认
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
+
+
+  <el-dialog v-model="renameDialogVisible" title="重命名" top="30vh" width="300" draggable>
+    <el-form :model="oldTemplate" class="demo-form-inline">
+      <el-form-item label="预设名称">
+        <el-input v-model="oldTemplate.rename" placeholder="" clearable/>
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="renameDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="renameTemplate">
           确认
         </el-button>
       </div>
@@ -424,8 +441,13 @@ const metadata = ref([]);
 
 const selectedImages = ref(new Map())
 
-const template = ref({
+const newTemplate = ref({
   desc: ''
+})
+
+const oldTemplate = ref({
+  templateId: 0,
+  rename: ''
 })
 
 const templates = ref([])
@@ -486,7 +508,7 @@ const settings = ref({
     }
   },
   border: {
-    borderType: 0,
+    borderType: 1,
     borderLeft: 3,
     borderRight: 3,
     borderTop: 3,
@@ -503,7 +525,7 @@ const imageLabels = ref([])
 
 const dialogVisible = ref(false)
 
-const deleteTemplateId = ref(0)
+const renameDialogVisible = ref(false)
 
 const watchInputImages = () => {
   window.electronAPI.watchInputImage((event, data) => {
@@ -514,6 +536,7 @@ const watchInputImages = () => {
             visible: false,
             element: null,
             render: false,
+            isUpdate: false,
             settings: {
               border: {
                 borderLeft: 0,
@@ -563,26 +586,24 @@ const openContextMenu = () => {
   }
 }
 
-const openTemplateContextMenu = (id) => {
+const openTemplateContextMenu = ({id, name}) => {
   if (templates.value.length) {
-    deleteTemplateId.value = id
+    oldTemplate.value.templateId = id
+    oldTemplate.value.rename = name
     window.electronAPI.openTemplateContextMenu()
   }
 }
 
 const watchTemplateContextMenu = () => {
-  window.electronAPI.watchTemplateContextMenu((event, data) => {
-    if (templates.value && templates.value.length) {
-      for (let i = 0; i < templates.value.length; i++) {
-        if (templates.value[i].id === deleteTemplateId.value) {
-          templates.value.splice(i, 1)
-          window.localStorage.setItem('templates', JSON.stringify(templates.value))
-          return
-        }
-      }
+  window.electronAPI.watchTemplateContextMenu((event, {type}) => {
+    if (type === 0) {
+      deleteTemplate()
+    } else if (type === 1) {
+      renameDialogVisible.value = true
     }
   })
 }
+
 
 const watchContextMenu = () => {
   window.electronAPI.watchContextMenu((event, data) => {
@@ -611,6 +632,8 @@ const watchContextMenu = () => {
         window.electronAPI.requestSaveFiles(JSON.parse(JSON.stringify(newSettings)))
       } else if (type === 2) {
         openDialog()
+      } else if (type === 3) {
+        synchronizeTemplate()
       }
     }
   });
@@ -625,7 +648,7 @@ const watchCtrlA = () => {
         const elements = document.querySelectorAll('img.imageItem');
         elements.forEach(element => {
           element.classList.add('active');
-          selectedImages.value.set(element.getAttribute('path', element))
+          selectedImages.value.set(element.getAttribute('path'), element)
         })
       }
     }
@@ -677,6 +700,7 @@ const handleResize = () => {
         }
         if (textLabels.size) {
           textLabels.forEach((items, element) => {
+
             let {positionX, positionY, references} = items
 
             let newPositionX, newPositionY
@@ -792,13 +816,59 @@ const openDialog = () => {
   dialogVisible.value = true
 }
 
+
+const renameTemplate = () => {
+  if (templates.value && templates.value.length) {
+    for (let i = 0; i < templates.value.length; i++) {
+      if (templates.value[i].id === oldTemplate.value.templateId) {
+        templates.value[i].name = oldTemplate.value.rename
+        window.localStorage.setItem('templates', JSON.stringify(templates.value))
+        renameDialogVisible.value = false
+        return
+      }
+    }
+  }
+}
+
+const deleteTemplate = () => {
+  if (templates.value && templates.value.length) {
+    for (let i = 0; i < templates.value.length; i++) {
+      if (templates.value[i].id === oldTemplate.value.templateId) {
+        templates.value.splice(i, 1)
+        window.localStorage.setItem('templates', JSON.stringify(templates.value))
+        return
+      }
+    }
+  }
+}
+
+const synchronizeTemplate = () => {
+
+  if (selectedElement.value) {
+    const targetPath = selectedElement.value.path;
+    const targetSettings = images.value.get(targetPath).settings;
+
+    const options = {
+      border: targetSettings.border,
+      images: Array.from(targetSettings.images.values()),
+      texts: Array.from(targetSettings.texts.values())
+    }
+
+    selectedImages.value.forEach((image, path) => {
+      if (targetPath !== path) {
+        useTemplate(_.cloneDeep(options), path)
+      }
+    })
+  }
+}
+
 const saveTemplates = () => {
   const {settings} = images.value.get(selectedElement.value.path);
   const json = window.localStorage.getItem('templates');
   const templateList = json ? JSON.parse(json) : []
   templateList.push({
     id: Date.now(),
-    name: template.value.desc,
+    name: newTemplate.value.desc,
     settings: {
       border: settings.border,
       images: Array.from(settings.images.values()),
@@ -810,16 +880,18 @@ const saveTemplates = () => {
   dialogVisible.value = false
 }
 
-const useTemplate = (template) => {
 
+const useTemplate = (options, path) => {
 
-  template = _.cloneDeep(template)
+  options = _.cloneDeep(options)
 
-  const metadata = images.value.get(selectedElement.value.path);
+  const metadata = images.value.get(path);
 
-  metadata.settings.border = template.settings.border
+  metadata.isUpdate = true
 
-  settings.value.border = template.settings.border
+  metadata.settings.border = options.border
+
+  settings.value.border = options.border
 
   handleBorders()
 
@@ -829,7 +901,8 @@ const useTemplate = (template) => {
 
   const {left, right, top, bottom, width, height} = previewImage.getBoundingClientRect();
 
-  for (let image of template.settings.images) {
+  for (let image of options.images) {
+
     const img = document.createElement('img');
     img.style.width = '50px'
     img.style.outline = 'none';
@@ -869,10 +942,10 @@ const useTemplate = (template) => {
 
     metadata.settings.images.set(img, image)
 
-    makeDraggable(img)
+    makeDraggable(img, path)
   }
 
-  for (let text of template.settings.texts) {
+  for (let text of options.texts) {
     const div = document.createElement('div');
     div.style.width = 'fit-content'
     div.style.height = 'fit-content'
@@ -924,9 +997,88 @@ const useTemplate = (template) => {
 
     metadata.settings.texts.set(div, text)
 
-    makeDraggable(div)
+    makeDraggable(div, path)
   }
 
+}
+
+
+const refreshTemplate = (path) => {
+
+  const image = images.value.get(path);
+
+  settings.value.border = image.settings.border
+
+  handleBorders()
+
+  const previewImage = image.getTargetElement();
+
+  const {left, right, top, bottom, width, height} = previewImage.getBoundingClientRect();
+
+  image.settings.texts.forEach((text, element) => {
+
+    const type = element.type;
+
+    if (type === 'date') {
+      element.innerHTML = getDate();
+    } else if (type === 'datetime') {
+      element.innerHTML = getDateTime();
+    } else {
+      element.innerHTML = text.content;
+    }
+
+    let {positionX, positionY} = text
+
+    let newPositionX, newPositionY
+
+    if (text.references.includes('left')) {
+      newPositionX = left + positionX * width
+      element.style.left = `${newPositionX}px`;
+    }
+    if (text.references.includes('right')) {
+      newPositionX = window.innerWidth - right + positionX * width
+      element.style.right = `${newPositionX}px`;
+    }
+    if (text.references.includes('top')) {
+      newPositionY = top + positionY * height
+      element.style.top = `${newPositionY}px`;
+    }
+    if (text.references.includes('bottom')) {
+      newPositionY = window.innerHeight - bottom + positionY * height
+      element.style.bottom = `${newPositionY}px`;
+    }
+
+  })
+
+  image.settings.images.forEach((image, element) => {
+
+    let {positionX, positionY} = data
+
+    let newPositionX, newPositionY
+
+    if (image.references.includes('left')) {
+      newPositionX = left + positionX * width
+      element.style.left = `${newPositionX}px`;
+    }
+
+    if (image.references.includes('right')) {
+      newPositionX = window.innerWidth - right + positionX * width
+      element.style.right = `${newPositionX}px`;
+    }
+
+    if (image.references.includes('top')) {
+      newPositionY = top + positionY * height
+      element.style.top = `${newPositionY}px`;
+    }
+
+    if (image.references.includes('bottom')) {
+      newPositionY = window.innerHeight - bottom + positionY * height
+      element.style.bottom = `${newPositionY}px`;
+    }
+  })
+
+
+  image.isUpdate = false
 
 }
 
@@ -986,16 +1138,17 @@ async function handlePreview(event, image) {
     }
 
     image.visible = true;
-    settings.value.border = image.settings.border
+
+    if (image.isUpdate) {
+      await nextTick(() => {
+        refreshTemplate(image.path)
+      })
+    }
 
     const data = await window.electronAPI.parsePhotoMetadata(image.path);
     metadata.value = data.details;
     settings.value.base = data.base
-
-    handleBorders()
-
   }
-
 }
 
 
@@ -1076,6 +1229,7 @@ const handleShiftClick = (event: object, image: object) => {
 
 
 const handleBorders = () => {
+
   const image = images.value.get(selectedElement.value.path)
   const targetElement = image.getTargetElement();
   if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
@@ -1292,7 +1446,9 @@ const bindDragEvent = (previewImage, image) => {
 
           image.settings.images.set(dragElement, _.cloneDeep(settings.value.image))
         }
-        makeDraggable(dragElement)
+
+        makeDraggable(dragElement, selectedElement.value.path)
+
       }
     }
 
@@ -1307,9 +1463,9 @@ const bindDragEvent = (previewImage, image) => {
 
 
 // 使形状可拖动
-function makeDraggable(dragElement) {
+function makeDraggable(dragElement, path) {
 
-  const image = images.value.get(selectedElement.value.path);
+  const image = images.value.get(path);
 
   const previewImage = image.getTargetElement();
 
