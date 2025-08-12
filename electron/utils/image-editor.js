@@ -79,7 +79,7 @@ async function addBorderAndText(options) {
 
 
         for (let text of texts) {
-            const fontSize = (text.options.fontWidthRatio * newWidth) / text.content.length;
+            const fontSize = text.options.fontSizeRatio * newWidth;
             const fontFamily = text.options.fontFamily;
             // 6. 添加文字
             ctx.font = `normal ${fontSize + 'px'} ${fontFamily}`;
