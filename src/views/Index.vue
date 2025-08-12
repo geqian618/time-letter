@@ -536,6 +536,10 @@ const watchInputImages = () => {
                 borderRight: 0,
                 borderTop: 0,
                 borderBottom: 0,
+                borderLeftRatio: 0,
+                borderRightRatio: 0,
+                borderTopRatio: 0,
+                borderBottomRatio: 0,
                 borderColor: 'rgba(255, 255, 255, 1)',
               },
               texts: new Map(),
@@ -599,7 +603,7 @@ const watchTemplateContextMenu = () => {
 
 
 const watchContextMenu = () => {
-  window.electronAPI.watchContextMenu((event, data) => {
+  window.electronAPI.watchContextMenu(async (event, data) => {
     if (data) {
       const {type} = data;
       if (type === 0) {
@@ -613,15 +617,57 @@ const watchContextMenu = () => {
         //   images.value.get(beforePath).visible = false
         // }
       } else if (type === 1) {
+
         const newSettings = []
-        images.value.forEach((image, key) => {
-          const {settings: {border, texts, images}} = image
+
+        const paths = Array.from(selectedImages.value.keys());
+
+        const currentSelectedElement = images.value.get(selectedElement.value.path);
+
+        let beforeElement = currentSelectedElement;
+
+        for (let i = 0; i < paths.length; i++) {
+
+          const nextElement = images.value.get(paths[i]);
+
+          beforeElement.visible = false
+
+          await nextTick()
+
+          nextElement.visible = true
+
+          await nextTick()
+
+          if (nextElement.isUpdate) {
+            refreshTemplate(paths[i])
+          } else {
+            renderBorders(paths[i])
+          }
+
+          await nextTick()
+
+          const {settings} = images.value.get(paths[i]);
+
           newSettings.push({
-            path: key,
+            path: paths[i],
             outputDirectory: data.outputDirectory,
-            settings: {border, texts: Array.from(texts.values()), images: Array.from(images.values())}
+            settings: {
+              border: settings.border,
+              texts: Array.from(settings.texts.values()),
+              images: Array.from(settings.images.values())
+            }
           })
-        })
+
+          if (i === paths.length - 1) {
+            nextElement.visible = false
+            await nextTick();
+          } else {
+            beforeElement = nextElement;
+          }
+        }
+
+        currentSelectedElement.visible = true
+
         window.electronAPI.requestSaveFiles(JSON.parse(JSON.stringify(newSettings)))
       } else if (type === 2) {
         openDialog()
@@ -875,6 +921,7 @@ const saveTemplates = () => {
 
 
 const enableTemplate = ({settings}) => {
+
   for (let path of selectedImages.value.keys()) {
 
     const image = images.value.get(path);
@@ -1023,7 +1070,7 @@ const refreshTemplate = (path) => {
 
   settings.value.border = image.settings.border
 
-  handleBorders()
+  renderBorders(path)
 
   const previewImage = image.getTargetElement();
 
@@ -1275,6 +1322,40 @@ const handleBorders = () => {
     image.settings.border.borderTopRatio = borderTopHeight / clientHeight
     image.settings.border.borderBottomRatio = borderBottomHeight / clientHeight
 
+  }
+}
+
+
+const renderBorders = (path) => {
+
+  const image = images.value.get(path)
+
+  const targetElement = image.getTargetElement();
+
+  if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
+
+    const {offsetWidth, offsetHeight} = targetElement;
+
+    const baseLength = Math.max(offsetWidth, offsetHeight);
+
+    const {borderLeft, borderRight, borderTop, borderBottom, borderColor} = image.settings.border;
+
+    const borderLeftWidth = baseLength * borderLeft / 100;
+    const borderRightWidth = baseLength * borderRight / 100;
+    const borderTopHeight = baseLength * borderTop / 100;
+    const borderBottomHeight = baseLength * borderBottom / 100;
+
+    targetElement.style.borderLeft = `${borderLeftWidth}px solid ${borderColor}`
+    targetElement.style.borderRight = `${borderRightWidth}px solid ${borderColor}`
+    targetElement.style.borderTop = `${borderTopHeight}px solid ${borderColor}`
+    targetElement.style.borderBottom = `${borderBottomHeight}px solid ${borderColor}`
+
+    const {clientWidth, clientHeight} = targetElement;
+
+    image.settings.border.borderLeftRatio = borderLeftWidth / clientWidth
+    image.settings.border.borderRightRatio = borderRightWidth / clientWidth
+    image.settings.border.borderTopRatio = borderTopHeight / clientHeight
+    image.settings.border.borderBottomRatio = borderBottomHeight / clientHeight
 
   }
 }

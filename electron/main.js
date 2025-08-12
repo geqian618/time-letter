@@ -85,7 +85,7 @@ ipcMain.on('open-template-contextMenu', () => {
     templateContextMenu(window).popup()
 })
 
-ipcMain.on('request-save-files', (event, images) => {
+ipcMain.on('request-save-files', async (event, images) => {
     imageExporter.exportImages(images);
 })
 

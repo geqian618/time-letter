@@ -31,15 +31,22 @@ async function findFilePaths(dirPath, extensions, deepSearch = false) {
 }
 
 async function addBorderAndText(options) {
-    let {
-        inputPath,      // 原始图片路径
-        outputDirectory,     // 输出目录
-        border: {borderLeftRatio, borderRightRatio, borderTopRatio, borderBottomRatio, borderColor, percentage = false},
-        texts,
-        images
-    } = options;
-
     try {
+
+        let {
+            inputPath,      // 原始图片路径
+            outputDirectory,     // 输出目录
+            border: {
+                borderLeftRatio,
+                borderRightRatio,
+                borderTopRatio,
+                borderBottomRatio,
+                borderColor,
+                percentage = false
+            },
+            texts,
+            images
+        } = options;
 
         const outputPath = path.join(outputDirectory, path.basename(inputPath))
 
