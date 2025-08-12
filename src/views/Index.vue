@@ -26,8 +26,10 @@
                 <div class="templates">
                   <el-menu-item
                       @contextmenu="openTemplateContextMenu(template)"
-                      class="template" v-for="template in templates" :key="template.id"
-                      @click="enableTemplate(template.settings)">
+                      class="template" v-for="template in templates"
+                      :key="template.id"
+                      :index="template.id"
+                      @click="enableTemplate(template)">
                     {{ template.name }}
                   </el-menu-item>
                 </div>
@@ -37,17 +39,8 @@
                   <span>图片标签</span>
                 </template>
                 <div class="image-marks" ref="imageMarks">
-                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
-                  <img class="image-mark" draggable="true" src=" ../assets/icon/visible.svg">
+                  <img class="image-mark" draggable="true" src="../assets/icon/visible.svg">
+                  <img class="image-mark" draggable="true" src="../assets/icon/visible.svg">
                 </div>
               </el-sub-menu>
               <el-sub-menu index="3" class="text-marks-options">
@@ -881,11 +874,23 @@ const saveTemplates = () => {
 }
 
 
-const enableTemplate = (settings) => {
+const enableTemplate = ({settings}) => {
   for (let path of selectedImages.value.keys()) {
+
+    const image = images.value.get(path);
+
+    for (let element of image.settings.images.keys()) {
+      element.remove()
+    }
+    for (let element of image.settings.texts.keys()) {
+      element.remove()
+    }
+
+    image.settings.border = {}
+    image.settings.texts.clear()
+    image.settings.images.clear()
     useTemplate(settings, path)
   }
-
 }
 
 
@@ -962,6 +967,7 @@ const useTemplate = (options, path) => {
     div.style.whiteSpace = 'nowrap'
     div.className = 'text-mark'
     const type = text.type;
+
     if (type === 'date') {
       div.innerHTML = getDate();
     } else if (type === 'datetime') {
@@ -1025,7 +1031,7 @@ const refreshTemplate = (path) => {
 
   image.settings.texts.forEach((text, element) => {
 
-    const type = element.type;
+    const type = text.type;
 
     if (type === 'date') {
       element.innerHTML = getDate();
@@ -1337,6 +1343,8 @@ const bindDragEvent = (previewImage, image) => {
         dragElement.innerHTML = getDate();
       } else if (id === 'datetime') {
         dragElement.innerHTML = getDateTime();
+      } else if (id === 'script') {
+
       } else {
         dragElement.innerHTML = '文本';
       }
@@ -1748,6 +1756,11 @@ function makeDraggable(dragElement, path) {
       border-right: none;
       border-bottom: none;
       background-color: #484949;
+
+      .el-menu-item.is-active {
+        background-color: #B2B2B2 !important;
+        color: black;
+      }
 
       .text-marks-options {
         height: 50%;

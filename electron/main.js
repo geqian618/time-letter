@@ -60,7 +60,7 @@ const createWindow = () => {
 
     createTray(app, window)
 
-    Menu.setApplicationMenu(mainMenu({window}))
+    Menu.setApplicationMenu(mainMenu(window))
 
     // window.webContents.on('context-menu', () => {
     //     contextMenu(window).popup()

@@ -14,7 +14,7 @@ function getSafeImagePath(absolutePath) {
 /**
  * 图片导入
  */
-const selectFile = async (window) => {
+const selectFile = async () => {
     const {filePaths} = await dialog.showOpenDialog({
         buttonLabel: '导入',
         properties: ['openFile', 'multiSelections'],
@@ -64,22 +64,28 @@ const selectImageLabels = async () => {
 /**
  * 图片导出
  */
-const saveFiles = () => {
-    dialog.showOpenDialog({
+const saveFiles = async () => {
+    const {canceled, filePaths} = await dialog.showOpenDialog({
         buttonLabel: '导出',
-        defaultPath: app.getPath('desktop'),
+        // defaultPath: app.getPath('desktop'),
         properties: ['multiSelections', 'createDirectory', 'openFile', "openDirectory"]
-    }).then(res => {
-        console.log(res.filePaths)
     })
+    if (!canceled && filePaths) {
+        window.webContents.send('watch-contextMenu', {type: 1, outputDirectory: filePaths[0]})
+    }
 }
+
 
 /**
  * mainMenu 定义为函数，主进程可以传参到菜单中
  * @settings args
  * @returns {Electron.Menu}
  */
-const mainMenu = (args) => {
+
+let window;
+
+const mainMenu = (mainWindow) => {
+    window = mainWindow;
     return Menu.buildFromTemplate([
         {
             label: '文件',
@@ -87,14 +93,14 @@ const mainMenu = (args) => {
                 {
                     label: '导入图片',
                     // 无传参
-                    click: () => selectFile(args.window),
+                    click: selectFile,
                     accelerator: 'ctrl+i'
 
                 },
                 {
                     label: '导出图片',
                     // 有传参，如何这样写 saveFile(args)函数会立即执行，而不是作为回调函数
-                    click: () => saveFiles(args.window),
+                    click: saveFiles,
                     accelerator: 'ctrl+o'
                 }
             ]
