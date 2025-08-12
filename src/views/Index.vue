@@ -27,7 +27,7 @@
                   <el-menu-item
                       @contextmenu="openTemplateContextMenu(template)"
                       class="template" v-for="template in templates" :key="template.id"
-                      @click="useTemplate(template.settings, selectedElement.path)">
+                      @click="enableTemplate(template.settings)">
                     {{ template.name }}
                   </el-menu-item>
                 </div>
@@ -878,6 +878,14 @@ const saveTemplates = () => {
   templates.value = templateList
   window.localStorage.setItem('templates', JSON.stringify(templateList))
   dialogVisible.value = false
+}
+
+
+const enableTemplate = (settings) => {
+  for (let path of selectedImages.value.keys()) {
+    useTemplate(settings, path)
+  }
+
 }
 
 
