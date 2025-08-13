@@ -6,6 +6,8 @@ const imageParser = require('./utils/image-parser')
 
 const imageExporter = require('./thread/image-exporter');
 
+const loadImageLabel = require('./hook/load-image-label');
+
 const environment = process.env.NODE_ENV
 
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
@@ -66,6 +68,11 @@ const createWindow = () => {
     //     contextMenu(window).popup()
     // })
 
+    window.webContents.on('did-finish-load', () => {
+        // 发送消息到渲染进程
+        loadImageLabel(window)
+    })
+
     window.on('ready-to-show', () => {
         window.show()
     })
@@ -89,7 +96,6 @@ ipcMain.on('request-save-files', async (event, images) => {
     imageExporter.exportImages(images);
 })
 
-
 app.whenReady().then(() => {
     // 注册安全协议
     protocol.registerFileProtocol('app', (request, callback) => {
@@ -98,6 +104,7 @@ app.whenReady().then(() => {
     });
 
     createWindow()
+
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
             createWindow()

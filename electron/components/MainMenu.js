@@ -1,5 +1,10 @@
 const {app, dialog, Menu} = require('electron');
+
 const path = require('path')
+
+const fs = require('fs')
+
+const resourcesPath = path.join(process.cwd(), 'resources')
 
 function getSafeImagePath(absolutePath) {
     if (process.platform === 'win32') {
@@ -47,6 +52,11 @@ const selectImageLabels = async () => {
     if (filePaths && filePaths.length) {
         const files = await Promise.all(
             filePaths.map(async (filePath) => {
+                // 读取文件
+                const buffer = fs.readFileSync(filePath);
+                // 写入文件
+                fs.writeFileSync(path.join(resourcesPath, path.basename(filePath)), buffer);
+
                 const extname = path.extname(filePath).slice(1);
                 return {
                     filename: path.basename(filePath),
@@ -57,8 +67,13 @@ const selectImageLabels = async () => {
             })
         );
         const data = new Map(files.map(item => [item.path, item]));
-        window.webContents.send('watch-image-label', data)
+        window.webContents.send('watch-editor-label', {type: 0, data})
     }
+}
+
+
+const customTextLabels = () => {
+    window.webContents.send('watch-editor-label', {type: 1})
 }
 
 /**
@@ -118,8 +133,28 @@ const mainMenu = (mainWindow) => {
             label: '资源',
             submenu: [
                 {
-                    label: '导入图片标签',
-                    click: selectImageLabels
+                    label: '图片标签',
+                    submenu: [
+                        {
+                            label: '导入',
+                            click: selectImageLabels
+                        },
+                        {
+                            label: '移除'
+                        }
+                    ]
+                },
+                {
+                    label: '文本标签',
+                    submenu: [
+                        {
+                            label: '自定义',
+                            click: customTextLabels
+                        },
+                        {
+                            label: '移除'
+                        }
+                    ]
                 }
             ]
         },

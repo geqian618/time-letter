@@ -39,8 +39,8 @@
                   <span>图片标签</span>
                 </template>
                 <div class="image-marks" ref="imageMarks">
-                  <img class="image-mark" draggable="true" src="../assets/icon/visible.svg">
-                  <img class="image-mark" draggable="true" src="../assets/icon/visible.svg">
+                  <img class="image-mark" v-for="([key, label]) in imageLabels" :key="label.path" draggable="true"
+                       :src="label.url">
                 </div>
               </el-sub-menu>
               <el-sub-menu index="3" class="text-marks-options">
@@ -502,10 +502,10 @@ const settings = ref({
   },
   border: {
     borderType: 1,
-    borderLeft: 3,
-    borderRight: 3,
-    borderTop: 3,
-    borderBottom: 6,
+    borderLeft: 0,
+    borderRight: 0,
+    borderTop: 0,
+    borderBottom: 0,
     borderColor: 'rgba(255, 255, 255, 1)',
   },
 })
@@ -514,7 +514,7 @@ const textMarks = ref([])
 
 const imageMarks = ref([])
 
-const imageLabels = ref([])
+const imageLabels = ref(new Map())
 
 const dialogVisible = ref(false)
 
@@ -569,13 +569,6 @@ const watchInputImages = () => {
   });
 }
 
-const watchImageLabel = () => {
-  window.electronAPI.watchImageLabel((event, data) => {
-    if (data && data.length) {
-      imageLabels.value = data;
-    }
-  })
-}
 
 const openContextMenu = () => {
   if (images.value.size) {
@@ -601,6 +594,24 @@ const watchTemplateContextMenu = () => {
   })
 }
 
+const watchEditorLabel = () => {
+  window.electronAPI.watchEditorLabel((envent, {data, type}) => {
+    if (type === 0) {
+      if (!imageLabels.value.size) {
+        imageLabels.value = data;
+      } else {
+        data.forEach((item, key) => imageLabels.value.set(key, item))
+      }
+    } else if (type === 1) {
+      openTextLabelDialog()
+    }
+  })
+}
+
+
+const openTextLabelDialog = () => {
+
+}
 
 const watchContextMenu = () => {
   window.electronAPI.watchContextMenu(async (event, data) => {
@@ -1138,7 +1149,6 @@ const refreshTemplate = (path) => {
     }
   })
 
-
   image.isUpdate = false
 
 }
@@ -1152,9 +1162,9 @@ const loadTemplates = () => {
 onMounted(() => {
   loadTemplates()
   watchInputImages()
-  watchImageLabel()
   watchContextMenu()
   watchTemplateContextMenu()
+  watchEditorLabel()
   watchCtrlA()
   handleResize()
 })
@@ -1292,7 +1302,9 @@ const handleShiftClick = (event: object, image: object) => {
 const handleBorders = () => {
 
   const image = images.value.get(selectedElement.value.path)
+
   const targetElement = image.getTargetElement();
+
   if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
 
     const {offsetWidth, offsetHeight} = targetElement;
@@ -1300,7 +1312,6 @@ const handleBorders = () => {
     const baseLength = Math.max(offsetWidth, offsetHeight);
 
     const {borderLeft, borderRight, borderTop, borderBottom, borderColor} = settings.value.border;
-
 
     const borderLeftWidth = baseLength * borderLeft / 100;
     const borderRightWidth = baseLength * borderRight / 100;
@@ -1314,9 +1325,7 @@ const handleBorders = () => {
 
     const {clientWidth, clientHeight} = targetElement;
 
-
     image.settings.border = _.cloneDeep(settings.value.border)
-
     image.settings.border.borderLeftRatio = borderLeftWidth / clientWidth
     image.settings.border.borderRightRatio = borderRightWidth / clientWidth
     image.settings.border.borderTopRatio = borderTopHeight / clientHeight
@@ -1391,6 +1400,7 @@ const bindDragEvent = (previewImage, image) => {
       // 元素与鼠标箭头之间的垂直方向偏移量差
       offsetY = event.clientY - componentRect.top;
       originalElement = component
+
       dragElement = component.cloneNode(true);
 
       // 将计算样式复制到克隆元素的内联样式中
@@ -1404,14 +1414,29 @@ const bindDragEvent = (previewImage, image) => {
 
       setDefaultStyle(dragElement);
 
-      // 关键：设置拖拽数据传输
-      event.dataTransfer.setData('text/plain', 'drag-element');
+      if (dragElement.src) {
+        const dragPreview = dragElement.cloneNode(true);
+        dragPreview.style.position = 'fixed';
+        document.body.appendChild(dragPreview);
+        // 关键：设置自定义拖拽图像
+        event.dataTransfer.setDragImage(dragPreview, offsetX, offsetY);
+        // 拖拽结束后清理
+        const cleanUp = () => {
+          document.body.removeChild(dragPreview);
+          component.removeEventListener('dragend', cleanUp);
+        };
+        component.addEventListener('dragend', cleanUp);
+      } else {
+        // 关键：设置拖拽数据传输
+        event.dataTransfer.setData('text/plain', 'drag-element');
+      }
     });
   });
 
   const setDefaultStyle = (dragElement) => {
     if (dragElement.src) {
       dragElement.style.width = '50px'
+      dragElement.style.height = 'auto'; // 保持宽高比
     } else {
       dragElement.style.width = 'fit-content'
       dragElement.style.height = 'fit-content'
@@ -1885,17 +1910,18 @@ function makeDraggable(dragElement, path) {
         border-bottom: 1px solid #a2a4a6;
 
         .image-marks {
-          padding: 10px 10px;
-          display: grid;
-          gap: 5px;
-          grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+          padding: 10px;
+          column-count: 3; /* 列数 */
+          column-gap: 10px; /* 列间距 */
           background-color: #919090;
 
           .image-mark {
-            padding: 0;
+            display: block;
+            width: 100%;
             cursor: move;
             user-select: none;
-            max-width: 50px;
+            margin-bottom: 10px; /* 项目间距 */
+            break-inside: avoid; /* 防止项目被截断 */
           }
 
           .image-mark:hover {
