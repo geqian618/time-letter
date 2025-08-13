@@ -52,18 +52,26 @@
                 <el-scrollbar class="scrollBar">
                   <div class="text-marks" ref="textMarks">
                     <el-tooltip class="box-item" effect="dark" content="文本" placement="top">
-                      <div class="text-mark" draggable="true" id="text">
+                      <div class="text-mark" draggable="true" text="文本" type="text">
                         <img src="../assets/icon/text.svg">
                       </div>
                     </el-tooltip>
                     <el-tooltip class="box-item" effect="dark" content="日期" placement="top">
-                      <div class="text-mark" draggable="true" id="date">
+                      <div class="text-mark" draggable="true" type="date">
                         <img src="../assets/icon/date.svg">
                       </div>
                     </el-tooltip>
                     <el-tooltip class="box-item" effect="dark" content="日期时间" placement="top">
-                      <div class="text-mark" draggable="true" id="datetime">
+                      <div class="text-mark" draggable="true" type="datetime">
                         <img src="../assets/icon/datetime.svg">
+                      </div>
+                    </el-tooltip>
+                    <el-tooltip v-for="(textLabel) in textLabels" class="box-item" effect="dark"
+                                :content="textLabel.tips" placement="top">
+                      <div class="text-mark" draggable="true"
+                           :text="textLabel.content"
+                           :type="textLabel.type ==='text'?'text':'script'">
+                        <img src="../assets/icon/custom.svg">
                       </div>
                     </el-tooltip>
                   </div>
@@ -326,8 +334,35 @@
     </div>
   </div>
 
+  <el-dialog align-center v-model="customTextLabelDialogVisible" title="新增文本标签" width="500" draggable>
+    <el-form :model="textLabel" label-width="auto" style="max-width: 90%">
+      <el-form-item label="文本类型">
+        <el-select @change="handleChangeTextType" v-model="textLabel.type" placeholder="文本类型">
+          <el-option
+              v-for="(item,index) in [{label:'普通文本', value:'text'}, {label:'JavaScript脚本', value:'script'}]"
+              :key="index"
+              :label="item.label"
+              :value="item.value"/>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="提示">
+        <el-input v-model="textLabel.tips"/>
+      </el-form-item>
+      <el-form-item label="文本">
+        <el-input v-model="textLabel.content" :rows="6" type="textarea"/>
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="customTextLabelDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveNewTextLabel">
+          确认
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 
-  <el-dialog v-model="dialogVisible" title="保存预设模版" top="30vh" width="300" draggable>
+  <el-dialog v-model="dialogVisible" title="保存预设模版" align-center width="300" draggable>
     <el-form :model="newTemplate" class="demo-form-inline">
       <el-form-item label="预设名称">
         <el-input v-model="newTemplate.desc" placeholder="" clearable/>
@@ -344,7 +379,7 @@
   </el-dialog>
 
 
-  <el-dialog v-model="renameDialogVisible" title="重命名" top="30vh" width="300" draggable>
+  <el-dialog v-model="renameDialogVisible" title="重命名" align-center width="300" draggable>
     <el-form :model="oldTemplate" class="demo-form-inline">
       <el-form-item label="预设名称">
         <el-input v-model="oldTemplate.rename" placeholder="" clearable/>
@@ -361,6 +396,35 @@
   </el-dialog>
 
 
+  <el-dialog v-model="editorTextLabelDialogVisible" title="编辑文本标签" width="60%" draggable>
+    <el-table :data="textLabels" border style="width: 100%">
+      <el-table-column prop="type" label="标签类型" show-overflow-tooltip/>
+      <el-table-column prop="tips" label="提示信息" show-overflow-tooltip/>
+      <el-table-column prop="content" label="文本内容" min-width="150" show-overflow-tooltip/>
+      <el-table-column fixed="right" label="操作" min-width="100">
+        <template #default="scope">
+          <el-button link type="primary" size="small" @click="openEditorTextLabel(scope.row)">
+            编辑
+          </el-button>
+          <el-button link type="primary" size="small" @click="deleteTextLabel(scope.row)">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+  </el-dialog>
+
+
+  <el-dialog v-model="editorImageLabelDialogVisible" title="编辑图片标签" width="500" draggable>
+    <span>It's a draggable Dialog</span>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="editorImageLabelDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="editorImageLabelDialogVisible = false">
+          确认
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
+
 </template>
 
 <script setup lang="ts">
@@ -368,6 +432,8 @@
 import {nextTick, onBeforeMount, onMounted, ref, watch} from "vue";
 
 import {getDate, getDateTime} from '../utils/datetime'
+
+import {executeFunctionScript} from '../utils/script-helper'
 
 import _ from 'lodash';
 
@@ -523,6 +589,21 @@ const dialogVisible = ref(false)
 
 const renameDialogVisible = ref(false)
 
+const customTextLabelDialogVisible = ref(false)
+
+const editorImageLabelDialogVisible = ref(false)
+
+const editorTextLabelDialogVisible = ref(false)
+
+const textLabel = ref({
+  id: '',
+  tips: '',
+  type: 'text',
+  content: ''
+})
+
+const textLabels = ref([])
+
 const watchInputImages = () => {
   window.electronAPI.watchInputImage((event, data) => {
     if (data) {
@@ -607,13 +688,49 @@ const watchEditorLabel = () => {
       }
     } else if (type === 1) {
       openTextLabelDialog()
+    } else if (type === 2) {
+      editorImageLabelDialogVisible.value = true
+    } else if (type === 3) {
+      editorTextLabelDialogVisible.value = true
     }
   })
 }
 
 
 const openTextLabelDialog = () => {
+  customTextLabelDialogVisible.value = true
+}
 
+
+const openEditorTextLabel = (row) => {
+  textLabel.value = row
+  customTextLabelDialogVisible.value = true
+}
+
+const deleteTextLabel = (row) => {
+  console.log(row)
+  for (let i = 0; i < textLabels.value.length; i++) {
+    if (textLabels.value[i].id === row.id) {
+      textLabels.value.splice(i, 1)
+      window.localStorage.setItem('textLabels', JSON.stringify(textLabels.value))
+      return
+    }
+  }
+}
+
+const saveNewTextLabel = () => {
+  customTextLabelDialogVisible.value = false;
+  if (!textLabel.value.id) {
+    textLabel.value.id = Date.now()
+    textLabels.value.push(_.cloneDeep(textLabel.value))
+  }
+  window.localStorage.setItem('textLabels', JSON.stringify(textLabels.value))
+  textLabel.value = {
+    id: '',
+    type: 'text',
+    tips: '',
+    content: '',
+  }
 }
 
 const watchContextMenu = () => {
@@ -1029,11 +1146,13 @@ const useTemplate = (options, path) => {
     div.style.whiteSpace = 'nowrap'
     div.className = 'text-mark'
     const type = text.type;
-
+    console.log(text)
     if (type === 'date') {
       div.innerHTML = getDate();
     } else if (type === 'datetime') {
       div.innerHTML = getDateTime();
+    } else if (type === 'script') {
+      div.innerHTML = executeFunctionScript(text.content)
     } else {
       div.innerHTML = text.content;
     }
@@ -1099,10 +1218,13 @@ const refreshTemplate = (path) => {
       element.innerHTML = getDate();
     } else if (type === 'datetime') {
       element.innerHTML = getDateTime();
+    } else if (type === 'text') {
+      element.innerHTML = text.content
+    } else if (type === 'script') {
+      element.innerHTML = executeFunctionScript(text.content)
     } else {
       element.innerHTML = text.content;
     }
-
     let {positionX, positionY} = text
 
     let newPositionX, newPositionY
@@ -1163,8 +1285,22 @@ const loadTemplates = () => {
   templates.value = jsonStr ? JSON.parse(jsonStr) : []
 }
 
+const loadTextLabels = () => {
+  const jsonStr = window.localStorage.getItem('textLabels');
+  textLabels.value = jsonStr ? JSON.parse(jsonStr) : []
+}
+
+const handleChangeTextType = () => {
+  textLabel.value.content = textLabel.value.type === 'text'
+      ? ''
+      : 'function extendScript() {\n' +
+      '  return Date.now();\n' +
+      '}'
+}
+
 onMounted(() => {
   loadTemplates()
+  loadTextLabels()
   watchInputImages()
   watchContextMenu()
   watchTemplateContextMenu()
@@ -1447,16 +1583,19 @@ const bindDragEvent = (previewImage, image) => {
       dragElement.style.fontSize = '14px'
       dragElement.style.lineHeight = '1'
       dragElement.style.whiteSpace = 'nowrap'
-      const id = dragElement.getAttribute('id');
-      dragElement.firstChild.remove()
-      if (id === 'date') {
-        dragElement.innerHTML = getDate();
-      } else if (id === 'datetime') {
-        dragElement.innerHTML = getDateTime();
-      } else if (id === 'script') {
+      const type = dragElement.getAttribute('type');
 
-      } else {
-        dragElement.innerHTML = '文本';
+      console.log(type)
+      dragElement.firstChild.remove()
+      if (type === 'date') {
+        dragElement.innerHTML = getDate();
+      } else if (type === 'datetime') {
+        dragElement.innerHTML = getDateTime();
+      } else if (type === 'script') {
+        const text = dragElement.getAttribute('text');
+        dragElement.innerHTML = executeFunctionScript(text)
+      } else if (type === 'text') {
+        dragElement.innerHTML = dragElement.getAttribute('text');
       }
     }
     dragElement.style.outline = 'none';
@@ -1544,9 +1683,12 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.text.positionY = positionY
           settings.value.text.offsetX = positionOffsetX
           settings.value.text.offsetY = positionOffsetY
-          settings.value.text.content = dragElement.innerText
-          settings.value.text.type = dragElement.getAttribute('id')
-
+          if (dragElement.getAttribute('type') === 'script') {
+            settings.value.text.content = dragElement.getAttribute('text')
+          } else {
+            settings.value.text.content = dragElement.innerText
+          }
+          settings.value.text.type = dragElement.getAttribute('type')
           const dragElementStyle = window.getComputedStyle(dragElement);
           const fontSize = Number.parseFloat(dragElementStyle.fontSize.replace('px', ''));
           settings.value.text.options.fontSize = fontSize

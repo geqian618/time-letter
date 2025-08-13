@@ -56,8 +56,8 @@ const selectImageLabels = async () => {
                 const buffer = fs.readFileSync(filePath);
                 // 写入文件
                 fs.writeFileSync(path.join(resourcesPath, path.basename(filePath)), buffer);
-
                 const extname = path.extname(filePath).slice(1);
+                filePath = path.join(resourcesPath, path.basename(filePath));
                 return {
                     filename: path.basename(filePath),
                     url: getSafeImagePath(filePath),
@@ -140,7 +140,10 @@ const mainMenu = (mainWindow) => {
                             click: selectImageLabels
                         },
                         {
-                            label: '移除'
+                            label: '管理',
+                            click: () => {
+                                window.webContents.send('watch-editor-label', {type: 2})
+                            }
                         }
                     ]
                 },
@@ -148,11 +151,14 @@ const mainMenu = (mainWindow) => {
                     label: '文本标签',
                     submenu: [
                         {
-                            label: '自定义',
+                            label: '新增',
                             click: customTextLabels
                         },
                         {
-                            label: '移除'
+                            label: '管理',
+                            click: () => {
+                                window.webContents.send('watch-editor-label', {type: 3})
+                            }
                         }
                     ]
                 }
