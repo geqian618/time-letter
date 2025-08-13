@@ -161,6 +161,7 @@
                       <div class="label">边框数值</div>
                       <div class="value">
                         <el-select
+                            @change="switchSliderRange"
                             v-model="settings.border.borderType"
                             :options="borderOptions"
                             size="small"
@@ -172,8 +173,8 @@
                       <div class="value">
                         <el-slider @change="handleBorders"
                                    size="small"
-                                   :min="0"
-                                   :max="20"
+                                   :min="sliderRange.min"
+                                   :max="sliderRange.max"
                                    v-model="settings.border.borderTop"
                                    placement="top"/>
                       </div>
@@ -183,8 +184,8 @@
                       <div class="value">
                         <el-slider @change="handleBorders"
                                    size="small"
-                                   :min="0"
-                                   :max="20"
+                                   :min="sliderRange.min"
+                                   :max="sliderRange.max"
                                    v-model="settings.border.borderLeft"
                                    placement="top"/>
                       </div>
@@ -194,8 +195,8 @@
                       <div class="value">
                         <el-slider @change="handleBorders"
                                    size="small"
-                                   :min="0"
-                                   :max="20"
+                                   :min="sliderRange.min"
+                                   :max="sliderRange.max"
                                    v-model="settings.border.borderRight"
                                    placement="top"/>
                       </div>
@@ -205,8 +206,8 @@
                       <div class="value">
                         <el-slider @change="handleBorders"
                                    size="small"
-                                   :min="0"
-                                   :max="20"
+                                   :min="sliderRange.min"
+                                   :max="sliderRange.max"
                                    v-model="settings.border.borderBottom"
                                    placement="top"/>
                       </div>
@@ -570,13 +571,18 @@ const settings = ref({
     }
   },
   border: {
-    borderType: 1,
+    borderType: 0,
     borderLeft: 0,
     borderRight: 0,
     borderTop: 0,
     borderBottom: 0,
     borderColor: 'rgba(255, 255, 255, 1)',
   },
+})
+
+const sliderRange = ref({
+  min: 0,
+  max: 200
 })
 
 const textMarks = ref([])
@@ -653,6 +659,13 @@ const watchInputImages = () => {
   });
 }
 
+const switchSliderRange = () => {
+  if (settings.value.border.borderType === 0) {
+    sliderRange.value.max = 200
+  } else {
+    sliderRange.value.max = 25
+  }
+}
 
 const openContextMenu = () => {
   if (images.value.size) {
@@ -1447,16 +1460,23 @@ const handleBorders = () => {
 
   if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
 
-    const {offsetWidth, offsetHeight} = targetElement;
+    const {borderLeft, borderRight, borderTop, borderBottom, borderColor, borderType} = settings.value.border;
 
-    const baseLength = Math.max(offsetWidth, offsetHeight);
+    let borderLeftWidth, borderRightWidth, borderTopHeight, borderBottomHeight;
 
-    const {borderLeft, borderRight, borderTop, borderBottom, borderColor} = settings.value.border;
-
-    const borderLeftWidth = baseLength * borderLeft / 100;
-    const borderRightWidth = baseLength * borderRight / 100;
-    const borderTopHeight = baseLength * borderTop / 100;
-    const borderBottomHeight = baseLength * borderBottom / 100;
+    if (borderType === 0) {
+      borderLeftWidth = borderLeft
+      borderRightWidth = borderRight
+      borderTopHeight = borderTop
+      borderBottomHeight = borderBottom
+    } else {
+      const {offsetWidth, offsetHeight} = targetElement;
+      const baseLength = Math.max(offsetWidth, offsetHeight);
+      borderLeftWidth = baseLength * borderLeft / 100;
+      borderRightWidth = baseLength * borderRight / 100;
+      borderTopHeight = baseLength * borderTop / 100;
+      borderBottomHeight = baseLength * borderBottom / 100;
+    }
 
     targetElement.style.borderLeft = `${borderLeftWidth}px solid ${borderColor}`
     targetElement.style.borderRight = `${borderRightWidth}px solid ${borderColor}`
@@ -1483,16 +1503,23 @@ const renderBorders = (path) => {
 
   if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
 
-    const {offsetWidth, offsetHeight} = targetElement;
+    const {borderLeft, borderRight, borderTop, borderBottom, borderColor, borderType} = image.settings.border;
 
-    const baseLength = Math.max(offsetWidth, offsetHeight);
+    let borderLeftWidth, borderRightWidth, borderTopHeight, borderBottomHeight;
 
-    const {borderLeft, borderRight, borderTop, borderBottom, borderColor} = image.settings.border;
-
-    const borderLeftWidth = baseLength * borderLeft / 100;
-    const borderRightWidth = baseLength * borderRight / 100;
-    const borderTopHeight = baseLength * borderTop / 100;
-    const borderBottomHeight = baseLength * borderBottom / 100;
+    if (borderType === 0) {
+      borderLeftWidth = borderLeft
+      borderRightWidth = borderRight
+      borderTopHeight = borderTop
+      borderBottomHeight = borderBottom
+    } else {
+      const {offsetWidth, offsetHeight} = targetElement;
+      const baseLength = Math.max(offsetWidth, offsetHeight);
+      borderLeftWidth = baseLength * borderLeft / 100;
+      borderRightWidth = baseLength * borderRight / 100;
+      borderTopHeight = baseLength * borderTop / 100;
+      borderBottomHeight = baseLength * borderBottom / 100;
+    }
 
     targetElement.style.borderLeft = `${borderLeftWidth}px solid ${borderColor}`
     targetElement.style.borderRight = `${borderRightWidth}px solid ${borderColor}`
@@ -1501,6 +1528,7 @@ const renderBorders = (path) => {
 
     const {clientWidth, clientHeight} = targetElement;
 
+    image.settings.border = _.cloneDeep(settings.value.border)
     image.settings.border.borderLeftRatio = borderLeftWidth / clientWidth
     image.settings.border.borderRightRatio = borderRightWidth / clientWidth
     image.settings.border.borderTopRatio = borderTopHeight / clientHeight
