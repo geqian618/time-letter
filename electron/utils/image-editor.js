@@ -1,4 +1,5 @@
 const path = require('path');
+const pathToFileURL = require('url').pathToFileURL;
 const {createCanvas, loadImage} = require('canvas');
 // 使用 promises API
 const fs = require('fs').promises;
@@ -121,7 +122,7 @@ async function addBorderAndText(options) {
 
         for (let imageItem of images) {
 
-            const url = imageItem.path;
+            const path = imageItem.path;
 
             const height = imageItem.options.imageHeightRatio * newHeight;
 
@@ -131,8 +132,10 @@ async function addBorderAndText(options) {
 
             let imageY = imageItem.positionY * newHeight;
 
-            const overlay = await loadImage(url);
+            // 1. 读取图片为 Buffer
+            const imageBuffer = await fs.readFile(path);
 
+            const overlay = await loadImage(imageBuffer);
 
             if (imageItem.references.includes('right')) {
                 imageX = (1 - imageItem.positionX) * newWidth - width

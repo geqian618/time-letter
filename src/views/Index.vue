@@ -39,7 +39,9 @@
                   <span>图片标签</span>
                 </template>
                 <div class="image-marks" ref="imageMarks">
-                  <img class="image-mark" v-for="([key, label]) in imageLabels" :key="label.path" draggable="true"
+                  <img class="image-mark" v-for="([key, label]) in imageLabels"
+                       :path="label.path"
+                       :key="label.path" draggable="true"
                        :src="label.url">
                 </div>
               </el-sub-menu>
@@ -474,6 +476,7 @@ const settings = ref({
   },
   image: {
     path: '',
+    url: '',
     positionX: 0,
     positionY: 0,
     offsetX: 0,
@@ -980,7 +983,8 @@ const useTemplate = (options, path) => {
     img.style.cursor = 'move';
     img.style.userSelect = 'none';
     img.setAttribute('tabindex', '0')
-    img.src = image.path
+    img.src = image.url
+    img.setAttribute('path', image.path)
     img.className = 'image-mark'
     // 关键：必须设为绝对定位
     img.style.position = 'absolute';
@@ -1557,7 +1561,8 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.image.positionY = positionY
           settings.value.image.offsetX = positionOffsetX
           settings.value.image.offsetY = positionOffsetY
-          settings.value.image.path = dragElement.src
+          settings.value.image.path = dragElement.getAttribute('path')
+          settings.value.image.url = dragElement.src
 
           const dragElementStyle = window.getComputedStyle(dragElement);
           const imageHeight = Number.parseFloat(dragElementStyle.height.replace('px', ''));
@@ -1899,7 +1904,6 @@ function makeDraggable(dragElement, path) {
             background: #e3f2fd;
           }
         }
-
       }
 
       .image-mark-options {
