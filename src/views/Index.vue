@@ -364,9 +364,10 @@
   </el-dialog>
 
   <el-dialog v-model="dialogVisible" title="保存预设模版" align-center width="300" draggable>
-    <el-form :model="newTemplate" class="demo-form-inline">
+    <el-form :model="newTemplate" class="demo-form-inline" @submit.native.prevent>
       <el-form-item label="预设名称">
-        <el-input v-model="newTemplate.desc" placeholder="" clearable/>
+        <el-input v-model="newTemplate.desc" placeholder="请输入预设名称" clearable
+                  @keyup.enter.native="saveTemplates"/>
       </el-form-item>
     </el-form>
     <template #footer>
@@ -456,7 +457,6 @@ const predefineColors = ref([
   'hsla(209, 100%, 56%, 0.73)',
   '#c7158577',
 ])
-
 
 
 const borderOptions = [
@@ -727,7 +727,7 @@ const deleteTextLabel = (row) => {
 const saveNewTextLabel = () => {
   customTextLabelDialogVisible.value = false;
   if (!textLabel.value.id) {
-    textLabel.value.id = Date.now()
+    textLabel.value.id = Date.now() + ''
     textLabels.value.push(_.cloneDeep(textLabel.value))
   }
   window.localStorage.setItem('textLabels', JSON.stringify(textLabels.value))
