@@ -436,6 +436,8 @@ import {getDate, getDateTime} from '../utils/datetime'
 
 import {executeFunctionScript} from '../utils/script-helper'
 
+import {fontOptions} from '../hook/font-options'
+
 import _ from 'lodash';
 
 const predefineColors = ref([
@@ -456,28 +458,6 @@ const predefineColors = ref([
 ])
 
 
-const fontOptions = [
-  {
-    value: 'Microsoft YaHei',
-    label: '微软雅黑',
-  },
-  {
-    value: 'SimSun',
-    label: '宋体',
-  },
-  {
-    value: 'KaiTi',
-    label: '楷体',
-  },
-  {
-    value: 'FangSong',
-    label: '仿宋',
-  },
-  {
-    value: 'SimHei',
-    label: '黑体',
-  },
-]
 
 const borderOptions = [
   {
