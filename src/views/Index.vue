@@ -336,7 +336,7 @@
   </div>
 
   <el-dialog align-center v-model="customTextLabelDialogVisible" title="新增文本标签" width="500" draggable>
-    <el-form :model="textLabel" label-width="auto" style="max-width: 90%">
+    <el-form :model="textLabel" label-width="auto" style="max-width: 90%" @submit.native.prevent>
       <el-form-item label="文本类型">
         <el-select @change="handleChangeTextType" v-model="textLabel.type" placeholder="文本类型">
           <el-option
@@ -350,7 +350,7 @@
         <el-input v-model="textLabel.tips"/>
       </el-form-item>
       <el-form-item label="文本">
-        <el-input v-model="textLabel.content" :rows="6" type="textarea"/>
+        <el-input v-model="textLabel.content" :rows="4" type="textarea"/>
       </el-form-item>
     </el-form>
     <template #footer>
