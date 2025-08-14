@@ -398,7 +398,7 @@
 
 
   <el-dialog v-model="editorTextLabelDialogVisible" title="编辑文本标签" width="60%" draggable>
-    <el-table :data="textLabels" border style="width: 100%">
+    <el-table size="small" :data="textLabels" border style="width: 100%">
       <el-table-column prop="type" label="标签类型" show-overflow-tooltip/>
       <el-table-column prop="tips" label="提示信息" show-overflow-tooltip/>
       <el-table-column prop="content" label="文本内容" min-width="150" show-overflow-tooltip/>
@@ -968,29 +968,70 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
   const {path} = selectedElement.value;
   const image = images.value.get(path);
   const parentNode = image.getTargetElement().parentNode;
-  const previewImageHeight = image.getTargetElement().getBoundingClientRect().height;
-  const previewImageWidth = image.getTargetElement().getBoundingClientRect().width;
+  const containerRect = image.getTargetElement().getBoundingClientRect();
   const elements = parentNode.querySelectorAll('.image-mark');
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
 
-      let width = Number.parseFloat(element.style.width.replace('px', ''))
-      let height = Number.parseFloat(element.style.height.replace('px', ''))
-      if (isNaN(width) || isNaN(height)) {
-        width = Number.parseFloat(window.getComputedStyle(element).width.replace('px', ''))
-        height = Number.parseFloat(window.getComputedStyle(element).height.replace('px', ''))
-      }
-      let left = Number.parseFloat(element.style.left.replace('px', ''))
-      let top = Number.parseFloat(element.style.top.replace('px', ''))
-      const scale = (newVal - oldVal) / 10;
-      element.style.width = width + width * scale + 'px'
-      element.style.height = height + height * scale + 'px'
-      element.style.left = left - width * scale / 2 + 'px'
-      element.style.top = top - height * scale / 2 + 'px'
+      const {width, height, left, top} = element.getBoundingClientRect();
 
-      image.settings.images.get(element).options.scale = newVal
-      image.settings.images.get(element).options.imageHeightRatio = height * scale / previewImageHeight
-      image.settings.images.get(element).options.imageWidthRatio = width * scale / previewImageWidth
+      const scale = (newVal - oldVal) / 10;
+
+      const newWidth = width + width * scale
+      const newHeight = height + height * scale
+      const newLeft = left - width * scale / 2
+      const newTop = top - height * scale / 2
+
+      element.style.width = newWidth + 'px'
+      element.style.height = newHeight + 'px'
+      element.style.left = newLeft + 'px'
+      element.style.top = newTop + 'px'
+
+      const heightCutLine = containerRect.top + containerRect.height / 2;
+
+      const widthCutLine = containerRect.left + containerRect.width / 2;
+
+      let positionX;
+
+      let positionY;
+
+      let positionOffsetX;
+
+      let positionOffsetY;
+
+      let references = []
+
+      const dragElementRect = element.getBoundingClientRect();
+
+      if (dragElementRect.left > widthCutLine) {
+        references.push('right')
+        positionOffsetX = containerRect.right - dragElementRect.left - dragElementRect.width
+        positionX = positionOffsetX / containerRect.width
+      } else {
+        references.push('left')
+        positionOffsetX = dragElementRect.left - containerRect.left
+        positionX = positionOffsetX / containerRect.width;
+      }
+
+      if (dragElementRect.top > heightCutLine) {
+        references.push('bottom')
+        positionOffsetY = containerRect.bottom - dragElementRect.top - dragElementRect.height
+        positionY = positionOffsetY / containerRect.height;
+      } else {
+        references.push('top')
+        positionOffsetY = dragElementRect.top - containerRect.top
+        positionY = positionOffsetY / containerRect.height;
+      }
+
+      image.settings.images.get(element).scale = newVal
+      image.settings.images.get(element).positionX = positionX
+      image.settings.images.get(element).positionY = positionY
+      image.settings.images.get(element).offsetX = positionOffsetX
+      image.settings.images.get(element).offsetY = positionOffsetY
+      image.settings.images.get(element).references = references
+      image.settings.images.get(element).options.imageWidthRatio = newWidth / containerRect.width
+      image.settings.images.get(element).options.imageHeightRatio = newHeight / containerRect.height
+
     }
   }
 });
@@ -1685,7 +1726,7 @@ const bindDragEvent = (previewImage, image) => {
 
         const dragElementRect = dragElement.getBoundingClientRect();
 
-        if (dragElement.offsetLeft > widthCutLine) {
+        if (dragElementRect.left > widthCutLine) {
           references.push('right')
           positionOffsetX = containerRect.right - dragElementRect.left - dragElementRect.width
           positionX = positionOffsetX / containerRect.width
