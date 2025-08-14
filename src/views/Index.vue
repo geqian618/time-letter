@@ -554,6 +554,7 @@ const settings = ref({
   },
   text: {
     type: 'text',
+    expression: '',
     content: '',
     positionX: 0,
     positionY: 0,
@@ -650,9 +651,9 @@ const watchInputImages = () => {
               return this.element
             }
           }
-          const {base} = await window.electronAPI.parsePhotoMetadata(path);
-          if (base) {
-            image.metadata = base
+          const photoMetadata = await window.electronAPI.parsePhotoMetadata(path);
+          if (photoMetadata && photoMetadata.base) {
+            image.metadata = photoMetadata.base
           }
           images.value.set(path, {...image, ...item})
         }
@@ -1234,9 +1235,13 @@ const useTemplate = (options, path) => {
     } else if (type === 'datetime') {
       div.innerHTML = getDateTime();
     } else if (type === 'script') {
-      div.innerHTML = executeFunctionScript(text.content)
+      div.innerHTML = executeFunctionScript(text.expression)
     } else if (type === 'metadata') {
-      div.innerHTML = imageDetails.metadata[text.content]
+      const content = imageDetails.metadata[text.expression];
+      if (!content) {
+        return
+      }
+      div.innerHTML = content
     } else {
       div.innerHTML = text.content;
     }
@@ -1305,9 +1310,13 @@ const refreshTemplate = (path) => {
     } else if (type === 'text') {
       element.innerHTML = text.content
     } else if (type === 'script') {
-      element.innerHTML = executeFunctionScript(text.content)
+      element.innerHTML = executeFunctionScript(text.expression)
     } else if (type === 'metadata') {
-      element.innerHTML = image.metadata[text.content]
+      const content = image.metadata[text.expression];
+      if (!content) {
+        return
+      }
+      element.innerHTML = image.metadata[text.expression]
     } else {
       element.innerHTML = text.content;
     }
@@ -1336,7 +1345,7 @@ const refreshTemplate = (path) => {
 
   image.settings.images.forEach((image, element) => {
 
-    let {positionX, positionY} = data
+    let {positionX, positionY} = image
 
     let newPositionX, newPositionY
 
@@ -1786,10 +1795,9 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.text.offsetY = positionOffsetY
           const type = dragElement.getAttribute('type');
           if (type === 'script' || type === 'metadata') {
-            settings.value.text.content = dragElement.getAttribute('text')
-          } else {
-            settings.value.text.content = dragElement.innerText
+            settings.value.text.expression = dragElement.getAttribute('text')
           }
+          settings.value.text.content = dragElement.innerText
           settings.value.text.type = dragElement.getAttribute('type')
           const dragElementStyle = window.getComputedStyle(dragElement);
           const fontSize = Number.parseFloat(dragElementStyle.fontSize.replace('px', ''));
