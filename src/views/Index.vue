@@ -101,53 +101,53 @@
                   <template #title>
                     <span>基本</span>
                   </template>
-                  <ul class="options">
+                  <ul class="options metadata">
                     <li class="option">
-                      <div class="label">相机品牌</div>
+                      <div class="label text-mark" draggable="true" type="metadata" text="cameraBrand">相机品牌</div>
                       <div class="value">
-                        <el-input v-model="settings.base.cameraBrand" size="small"/>
+                        <el-input v-model="settings.metadata.cameraBrand" size="small"/>
                       </div>
                     </li>
                     <li class="option">
-                      <div class="label">相机型号</div>
+                      <div class="label text-mark" draggable="true" type="metadata" text="cameraModel">相机型号</div>
                       <div class="value">
-                        <el-input v-model="settings.base.cameraModel" size="small"/>
+                        <el-input v-model="settings.metadata.cameraModel" size="small"/>
                       </div>
                     </li>
                     <li class="option">
-                      <div class="label">镜头型号</div>
+                      <div class="label text-mark" draggable="true" type="metadata" text="lensModel">镜头型号</div>
                       <div class="value">
-                        <el-input v-model="settings.base.lensModel" size="small"/>
+                        <el-input v-model="settings.metadata.lensModel" size="small"/>
                       </div>
                     </li>
                     <li class="option">
-                      <div class="label">焦段</div>
+                      <div class="label text-mark" draggable="true" type="metadata" text="focalLength">焦段</div>
                       <div class="value">
-                        <el-input v-model="settings.base.focalLength" size="small"/>
+                        <el-input v-model="settings.metadata.focalLength" size="small"/>
                       </div>
                     </li>
                     <li class="option">
-                      <div class="label">IOS</div>
+                      <div class="label text-mark" draggable="true" type="metadata" text="iso">IOS</div>
                       <div class="value">
-                        <el-input v-model="settings.base.iso" size="small"/>
+                        <el-input v-model="settings.metadata.iso" size="small"/>
                       </div>
                     </li>
                     <li class="option">
-                      <div class="label">快门</div>
+                      <div class="label text-mark" draggable="true" type="metadata" text="shutter">快门</div>
                       <div class="value">
-                        <el-input v-model="settings.base.shutter" size="small"/>
+                        <el-input v-model="settings.metadata.shutter" size="small"/>
                       </div>
                     </li>
                     <li class="option">
-                      <div class="label">光圈</div>
+                      <div class="label text-mark" draggable="true" type="metadata" text="aperture">光圈</div>
                       <div class="value">
-                        <el-input v-model="settings.base.aperture" size="small"/>
+                        <el-input v-model="settings.metadata.aperture" size="small"/>
                       </div>
                     </li>
                     <li class="option">
-                      <div class="label">拍摄日期</div>
+                      <div class="label text-mark" draggable="true" type="metadata" text="shootingTime">拍摄日期</div>
                       <div class="value">
-                        <el-input v-model="settings.base.shootingTime" size="small"/>
+                        <el-input v-model="settings.metadata.shootingTime" size="small"/>
                       </div>
                     </li>
                   </ul>
@@ -499,8 +499,6 @@ const selectedElement = ref({
   path: ''
 });
 
-const metadata = ref([]);
-
 const selectedImages = ref(new Map())
 
 const newTemplate = ref({
@@ -531,7 +529,7 @@ const imageOptions = ref({
 const settings = ref({
   outputDirectory: '',
   files: [],
-  base: {
+  metadata: {
     cameraBrand: '',
     cameraModel: '',
     lensModel: '',
@@ -611,11 +609,21 @@ const textLabel = ref({
 const textLabels = ref([])
 
 const watchInputImages = () => {
-  window.electronAPI.watchInputImage((event, data) => {
+  window.electronAPI.watchInputImage(async (event, data) => {
     if (data) {
-      data.forEach((item: object, path: string) => {
+      for (let [path, item] of data) {
         if (!images.value.has(path)) {
           const image = {
+            metadata: {
+              cameraBrand: '',
+              cameraModel: '',
+              lensModel: '',
+              focalLength: '',
+              iso: '',
+              shutter: '',
+              aperture: '',
+              shootingTime: ''
+            },
             visible: false,
             element: null,
             render: false,
@@ -642,9 +650,13 @@ const watchInputImages = () => {
               return this.element
             }
           }
+          const {base} = await window.electronAPI.parsePhotoMetadata(path);
+          if (base) {
+            image.metadata = base
+          }
           images.value.set(path, {...image, ...item})
         }
-      });
+      }
 
       nextTick(() => {
         images.value.forEach((image: object, path: string) => {
@@ -809,9 +821,7 @@ const watchContextMenu = () => {
             beforeElement = nextElement;
           }
         }
-
         currentSelectedElement.visible = true
-
         window.electronAPI.requestSaveFiles(JSON.parse(JSON.stringify(newSettings)))
       } else if (type === 2) {
         openDialog()
@@ -1036,6 +1046,16 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
   }
 });
 
+
+const stopWatchPhotoMetadata = watch(() => settings.value.metadata, (newVal, oldVal) => {
+  const path = selectedElement.value.path;
+  images.value.get(path).metadata = _.cloneDeep(newVal)
+}, {
+  //深度监视（监视属性变化）
+  deep: true,
+})
+
+
 const openDialog = () => {
   dialogVisible.value = true
 }
@@ -1067,7 +1087,6 @@ const deleteTemplate = () => {
 }
 
 const synchronizeTemplate = () => {
-
   if (selectedElement.value) {
     const targetPath = selectedElement.value.path;
     const targetSettings = images.value.get(targetPath).settings;
@@ -1080,6 +1099,16 @@ const synchronizeTemplate = () => {
 
     selectedImages.value.forEach((image, path) => {
       if (targetPath !== path) {
+        const image = images.value.get(path);
+        for (let element of image.settings.images.keys()) {
+          element.remove()
+        }
+        for (let element of image.settings.texts.keys()) {
+          element.remove()
+        }
+        image.settings.border = {}
+        image.settings.texts.clear()
+        image.settings.images.clear()
         useTemplate(_.cloneDeep(options), path)
       }
     })
@@ -1130,17 +1159,17 @@ const useTemplate = (options, path) => {
 
   options = _.cloneDeep(options)
 
-  const metadata = images.value.get(path);
+  const imageDetails = images.value.get(path);
 
-  metadata.isUpdate = true
+  imageDetails.isUpdate = true
 
-  metadata.settings.border = options.border
+  imageDetails.settings.border = options.border
 
   settings.value.border = options.border
 
   handleBorders()
 
-  const previewImage = metadata.getTargetElement();
+  const previewImage = imageDetails.getTargetElement();
 
   const parentNode = previewImage.parentNode;
 
@@ -1186,7 +1215,7 @@ const useTemplate = (options, path) => {
 
     parentNode.appendChild(img)
 
-    metadata.settings.images.set(img, image)
+    imageDetails.settings.images.set(img, image)
 
     makeDraggable(img, path)
   }
@@ -1200,13 +1229,14 @@ const useTemplate = (options, path) => {
     div.style.whiteSpace = 'nowrap'
     div.className = 'text-mark'
     const type = text.type;
-    console.log(text)
     if (type === 'date') {
       div.innerHTML = getDate();
     } else if (type === 'datetime') {
       div.innerHTML = getDateTime();
     } else if (type === 'script') {
       div.innerHTML = executeFunctionScript(text.content)
+    } else if (type === 'metadata') {
+      div.innerHTML = imageDetails.metadata[text.content]
     } else {
       div.innerHTML = text.content;
     }
@@ -1244,7 +1274,7 @@ const useTemplate = (options, path) => {
 
     parentNode.appendChild(div)
 
-    metadata.settings.texts.set(div, text)
+    imageDetails.settings.texts.set(div, text)
 
     makeDraggable(div, path)
   }
@@ -1276,6 +1306,8 @@ const refreshTemplate = (path) => {
       element.innerHTML = text.content
     } else if (type === 'script') {
       element.innerHTML = executeFunctionScript(text.content)
+    } else if (type === 'metadata') {
+      element.innerHTML = image.metadata[text.content]
     } else {
       element.innerHTML = text.content;
     }
@@ -1410,9 +1442,7 @@ async function handlePreview(event, image) {
       })
     }
 
-    const data = await window.electronAPI.parsePhotoMetadata(image.path);
-    metadata.value = data.details;
-    settings.value.base = data.base
+    settings.value.metadata = image.metadata
   }
 }
 
@@ -1601,7 +1631,7 @@ const bindDragEvent = (previewImage, image) => {
   let offsetX;
   let offsetY;
   // 设置拖拽事件
-  document.querySelectorAll('.image-marks .image-mark, .text-marks .text-mark').forEach(component => {
+  document.querySelectorAll('.image-marks .image-mark, .text-marks .text-mark, .metadata .text-mark').forEach(component => {
 
     component.addEventListener('dragstart', function (event) {
       const componentRect = component.getBoundingClientRect();
@@ -1654,7 +1684,6 @@ const bindDragEvent = (previewImage, image) => {
       dragElement.style.whiteSpace = 'nowrap'
       const type = dragElement.getAttribute('type');
 
-      console.log(type)
       dragElement.firstChild.remove()
       if (type === 'date') {
         dragElement.innerHTML = getDate();
@@ -1665,6 +1694,9 @@ const bindDragEvent = (previewImage, image) => {
         dragElement.innerHTML = executeFunctionScript(text)
       } else if (type === 'text') {
         dragElement.innerHTML = dragElement.getAttribute('text');
+      } else if (type === 'metadata') {
+        const attribute = dragElement.getAttribute('text');
+        dragElement.innerHTML = settings.value.metadata[attribute];
       }
     }
     dragElement.style.outline = 'none';
@@ -1752,7 +1784,8 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.text.positionY = positionY
           settings.value.text.offsetX = positionOffsetX
           settings.value.text.offsetY = positionOffsetY
-          if (dragElement.getAttribute('type') === 'script') {
+          const type = dragElement.getAttribute('type');
+          if (type === 'script' || type === 'metadata') {
             settings.value.text.content = dragElement.getAttribute('text')
           } else {
             settings.value.text.content = dragElement.innerText
@@ -2157,17 +2190,6 @@ function makeDraggable(dragElement, path) {
 
   }
 
-
-  .metadata {
-    height: 40px;
-    border-bottom: 2px solid #484949;
-    padding-left: 10px;
-    font-size: 16px;
-    display: flex;
-    justify-content: start;
-    align-items: center;
-  }
-
   .details {
     height: calc(100% - 40px);
     width: 100%;
@@ -2274,6 +2296,13 @@ function makeDraggable(dragElement, path) {
               align-items: center;
               padding: 10px 0;
               margin-top: 5px;
+
+              .text-mark {
+                width: fit-content;
+                height: fit-content;
+                cursor: move;
+                user-select: none;
+              }
 
               .label {
                 display: flex;
