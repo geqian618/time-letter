@@ -322,7 +322,7 @@
       </div>
     </div>
 
-    <div class="page-images" ref="imageList" @wheel="handleWheel" @contextmenu="openContextMenu">
+    <div class="page-images" id="image-list" ref="imageList" @wheel="handleWheel" @contextmenu="openContextMenu">
       <img class="imageItem"
            :key="key"
            :path="key"

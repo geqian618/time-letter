@@ -5,11 +5,15 @@ import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import App from './App.vue'
 import router from './router'
 
+import loadErrorIcon from './assets/images/load-error.jpeg';
+import loadingIcon from './assets/images/loading.jpeg';
+
+
 import ElementPlus from 'element-plus'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import 'element-plus/dist/index.css'
 
-import VueLazyload from 'vue-lazyload'
+import VueLazyload from 'vue3-lazyload'
 
 import draggable from "./directive/draggable.js";
 
@@ -28,9 +32,14 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 app.use(ElementPlus)
 
 app.use(VueLazyload, {
+    // 错误图片
+    error: loadErrorIcon,
+    // 加载中图片
+    loading: loadingIcon,
+    preLoad: 2, // 横向预加载比例（1.5表示左右各多加载0.25屏）
+    attempt: 3,
     observerOptions: {
-        rootMargin: '0px 1000px', // 左右侧预加载1000px
-        threshold: 0.1
+        rootMargin: '0px 50% 0px 50%' // 横向扩展触发区域
     }
 })
 
