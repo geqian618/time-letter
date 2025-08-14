@@ -2218,8 +2218,8 @@ function makeDraggable(dragElement, path) {
     align-items: center;
 
     img {
-      max-width: 95%;
-      max-height: 95%;
+      max-width: 90%;
+      max-height: 90%;
       width: auto; /* 保持原始宽高比 */
       height: auto; /* 保持原始宽高比 */
       transition: background-color 0.3s; /* 可选，添加过渡效果 */
