@@ -96,7 +96,7 @@
         <div class="settings-details">
           <el-aside>
             <el-scrollbar>
-              <el-menu :default-openeds="['1', '2']">
+              <el-menu :default-openeds="['1']">
                 <el-sub-menu index="1">
                   <template #title>
                     <span>基本</span>
