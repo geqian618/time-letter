@@ -685,12 +685,17 @@ const watchTemplateContextMenu = () => {
 }
 
 const watchEditorLabel = () => {
-  window.electronAPI.watchEditorLabel((envent, {data, type}) => {
+  window.electronAPI.watchEditorLabel((envent, result) => {
+    const {data, type} = result
     if (type === 0) {
-      if (!imageLabels.value.size) {
-        imageLabels.value = data;
-      } else {
-        data.forEach((item, key) => imageLabels.value.set(key, item))
+      if (result.event === 0) {
+        if (!imageLabels.value.size) {
+          imageLabels.value = data;
+        } else {
+          data.forEach((item, key) => imageLabels.value.set(key, item))
+        }
+      } else if (result.event === 1) {
+        imageLabels.value.delete(result.path)
       }
     } else if (type === 1) {
       openTextLabelDialog()

@@ -1,4 +1,4 @@
-const {app, dialog, Menu} = require('electron');
+const {app, dialog, Menu, shell} = require('electron');
 
 const path = require('path')
 
@@ -67,7 +67,7 @@ const selectImageLabels = async () => {
             })
         );
         const data = new Map(files.map(item => [item.path, item]));
-        window.webContents.send('watch-editor-label', {type: 0, data})
+        window.webContents.send('watch-editor-label', {type: 0, data, event: 0})
     }
 }
 
@@ -140,9 +140,10 @@ const mainMenu = (mainWindow) => {
                             click: selectImageLabels
                         },
                         {
-                            label: '管理',
+                            label: '打开资源管理器',
                             click: () => {
-                                window.webContents.send('watch-editor-label', {type: 2})
+                                // 尝试打开文件夹
+                                shell.openPath(resourcesPath);
                             }
                         }
                     ]

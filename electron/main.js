@@ -22,6 +22,10 @@ const contextMenu = require('./components/ContextMenu')
 
 const templateContextMenu = require('./components/TemplateContextMenu')
 
+const {fileWatcher, closeWatcher} = require('./hook/file-watcher')
+
+const resourcesPath = path.join(process.cwd(), 'resources')
+
 let window;
 
 const createWindow = () => {
@@ -76,6 +80,7 @@ const createWindow = () => {
     window.on('ready-to-show', () => {
         window.show()
     })
+
 }
 
 
@@ -96,6 +101,7 @@ ipcMain.on('request-save-files', async (event, images) => {
     imageExporter.exportImages(images);
 })
 
+
 app.whenReady().then(() => {
     // 注册安全协议
     protocol.registerFileProtocol('app', (request, callback) => {
@@ -105,12 +111,19 @@ app.whenReady().then(() => {
 
     createWindow()
 
+    fileWatcher(window, resourcesPath)
+
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
             createWindow()
         }
     })
 })
+
+
+app.on('before-quit', () => {
+    closeWatcher()
+});
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
