@@ -85,40 +85,63 @@ async function addBorderAndText(options) {
         // 5. 绘制原始图片（居中）
         ctx.drawImage(image, borderLeft, borderTop, image.width, image.height);
 
-
         for (let text of texts) {
             const fontSize = text.options.fontSizeRatio * newWidth;
             const fontFamily = text.options.fontFamily;
-            // 6. 添加文字
+            // 添加文字样式
             ctx.font = `normal ${fontSize + 'px'} ${fontFamily}`;
             ctx.fillStyle = text.options.fontColor;
 
-            ctx.textAlign = text.references[0]
-            ctx.textBaseline = 'top';
-            // ctx.textAlign = text.options.textAlign;
-            // ctx.textBaseline = text.options.textBaseline;
+            // 设置对齐基准点
+            ctx.textAlign = text.references[0]; // 水平对齐
+            ctx.textBaseline = 'top';           // 垂直基线
 
-
-            // 测量文本高度
+            // 测量文本尺寸
             const metrics = ctx.measureText(text.content);
+            const textWidth = metrics.width;
             const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
+            // 计算初始位置（相对坐标）
             let textX = text.positionX * newWidth;
-
             let textY = text.positionY * newHeight - 0.15 * textHeight;
 
+            // 处理右/底对齐
             if (text.references.includes('right')) {
-                textX = (1 - text.positionX) * newWidth
+                textX = (1 - text.positionX) * newWidth;
             }
-
-
             if (text.references.includes('bottom')) {
-                textY = (1 - text.positionY) * newHeight - 1.15 * textHeight
+                textY = (1 - text.positionY) * newHeight - 1.15 * textHeight;
             }
 
-            ctx.fillText(text.content, textX, textY);
-        }
+            // 1. 计算文字中心点
+            let centerX, centerY;
 
+            switch (ctx.textAlign) {
+                case 'left':
+                    centerX = textX + textWidth / 2;
+                    break;
+                case 'right':
+                    centerX = textX - textWidth / 2;
+                    break;
+                case 'center':
+                default:
+                    centerX = textX;
+            }
+
+            // 根据 top 基线计算垂直中心
+            centerY = textY + textHeight / 2;
+
+            // 2. 执行旋转绘制
+            ctx.save();  // 保存当前画布状态
+            ctx.translate(centerX, centerY);  // 平移到中心点
+            ctx.rotate(text.options.angle * Math.PI / 180);  // 旋转（角度转弧度）
+            ctx.translate(-centerX, -centerY);  // 平移回原始坐标系
+
+            // 3. 绘制旋转后的文字
+            ctx.fillText(text.content, textX, textY);
+            // 恢复画布状态
+            ctx.restore();
+        }
 
         for (let imageItem of images) {
 
@@ -145,7 +168,27 @@ async function addBorderAndText(options) {
                 imageY = (1 - imageItem.positionY) * newHeight - height
             }
 
-            ctx.drawImage(overlay, imageX, imageY, width, height);
+            // 添加旋转功能 =================================================
+            // 获取旋转角度（默认0度），并转换为弧度
+            const rotation = imageItem.options.angle || 0;
+            const rotationRadians = rotation * Math.PI / 180;
+
+            // 保存当前画布状态
+            ctx.save();
+
+            // 将画布原点移动到图片中心点
+            const centerX = imageX + width / 2;
+            const centerY = imageY + height / 2;
+            ctx.translate(centerX, centerY);
+
+            // 旋转画布
+            ctx.rotate(rotationRadians);
+
+            // 绘制图片（注意坐标已偏移到中心点）
+            ctx.drawImage(overlay, -width / 2, -height / 2, width, height);
+
+            // 恢复画布到之前保存的状态
+            ctx.restore();
         }
 
 

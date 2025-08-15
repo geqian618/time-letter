@@ -273,17 +273,17 @@
                             :predefine="predefineColors"/>
                       </div>
                     </li>
-                    <li class="option">
-                      <div class="label">背景颜色</div>
-                      <div class="value">
-                        <el-color-picker
-                            @change=""
-                            v-model="textOptions.tagBackground"
-                            show-alpha
-                            size="small"
-                            :predefine="predefineColors"/>
-                      </div>
-                    </li>
+                    <!--                    <li class="option">-->
+                    <!--                      <div class="label">背景颜色</div>-->
+                    <!--                      <div class="value">-->
+                    <!--                        <el-color-picker-->
+                    <!--                            @change=""-->
+                    <!--                            v-model="textOptions.tagBackground"-->
+                    <!--                            show-alpha-->
+                    <!--                            size="small"-->
+                    <!--                            :predefine="predefineColors"/>-->
+                    <!--                      </div>-->
+                    <!--                    </li>-->
                   </ul>
                 </el-sub-menu>
                 <el-sub-menu index="4">
@@ -936,7 +936,7 @@ const stopTextSettingsWatch = watch(textOptions, (newVal, oldVal) => {
       element.style.color = newVal.fontColor
       element.style.background = newVal.tagBackground
       element.style.transformOrigin = 'center center'
-      element.style.transform = ` rotate(${newVal.angle}deg)`
+      element.style.transform = `rotate(${newVal.angle}deg)`
     }
   }
 }, {
@@ -1873,13 +1873,8 @@ function makeDraggable(dragElement, path) {
       if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (elementRect.width - offsetX)) {
         if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (elementRect.height - offsetY)) {
 
-          if (dragElement.src) {
-            dragElement.style.left = (mouseX - offsetX) + 'px';
-            dragElement.style.top = (mouseY - offsetY) + 'px';
-          } else {
-            dragElement.style.left = `${mouseX - offsetX}px`;
-            dragElement.style.top = `${mouseY - offsetY}px`;
-          }
+          dragElement.style.left = `${mouseX - offsetX}px`;
+          dragElement.style.top = `${mouseY - offsetY}px`;
 
           const heightCutLine = containerRect.top + containerRect.height / 2;
 
