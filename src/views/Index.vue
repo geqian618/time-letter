@@ -244,7 +244,6 @@
                       <div class="label">字体大小</div>
                       <div class="value">
                         <el-slider
-                            @change=""
                             v-model="textOptions.fontSize"
                             show-alpha
                             size="small"
@@ -1787,7 +1786,7 @@ const bindDragEvent = (previewImage, image) => {
           const dragElementStyle = window.getComputedStyle(dragElement);
           const fontSize = Number.parseFloat(dragElementStyle.fontSize.replace('px', ''));
           settings.value.text.options.fontSize = fontSize
-          settings.value.text.options.fontFamily = dragElementStyle.fontFamily
+          settings.value.text.options.fontFamily = dragElementStyle.fontFamily.replace(/"/g,'')
           settings.value.text.options.fontColor = dragElementStyle.color
 
           settings.value.text.options.fontSizeRatio = fontSize / containerRect.width
@@ -1959,6 +1958,14 @@ function makeDraggable(dragElement, path) {
         dragElement.focus()
         dragElement.style.border = '1px dashed #f00'
         dragElement.setAttribute('selected', 'true')
+        const image = images.value.get(selectedElement.value.path);
+        if (dragElement.src) {
+          const settings = image.settings.images.get(dragElement);
+          imageOptions.value = settings.options
+        } else {
+          const settings = image.settings.texts.get(dragElement);
+          textOptions.value = settings.options
+        }
       }, 200); // 300毫秒内没有再次点击，则视为单击
     }
   })
