@@ -293,11 +293,20 @@
                     <li class="option">
                       <div class="label">缩放</div>
                       <div class="value">
-                        <el-slider @change=""
-                                   :min="1"
+                        <el-slider :min="1"
                                    :max="100"
                                    size="small"
                                    v-model="imageOptions.scale"
+                                   placement="top"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">透明度</div>
+                      <div class="value">
+                        <el-slider :min="0"
+                                   :max="10"
+                                   size="small"
+                                   v-model="imageOptions.alpha"
                                    placement="top"/>
                       </div>
                     </li>
@@ -503,6 +512,7 @@ const textOptions = ref({
 const imageOptions = ref({
   scale: 10,
   angle: 0,
+  alpha: 10
 })
 
 const settings = ref({
@@ -529,6 +539,7 @@ const settings = ref({
     options: {
       scale: 10,
       angle: 0,
+      alpha: 10
     }
   },
   text: {
@@ -1786,7 +1797,7 @@ const bindDragEvent = (previewImage, image) => {
           const dragElementStyle = window.getComputedStyle(dragElement);
           const fontSize = Number.parseFloat(dragElementStyle.fontSize.replace('px', ''));
           settings.value.text.options.fontSize = fontSize
-          settings.value.text.options.fontFamily = dragElementStyle.fontFamily.replace(/"/g,'')
+          settings.value.text.options.fontFamily = dragElementStyle.fontFamily.replace(/"/g, '')
           settings.value.text.options.fontColor = dragElementStyle.color
 
           settings.value.text.options.fontSizeRatio = fontSize / containerRect.width

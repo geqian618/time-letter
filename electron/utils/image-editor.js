@@ -147,6 +147,8 @@ async function addBorderAndText(options) {
 
             const path = imageItem.path;
 
+            const alpha = imageItem.options.alpha ? imageItem.options.alpha / 10 : 1;
+
             const height = imageItem.options.imageHeightRatio * newHeight;
 
             const width = imageItem.options.imageWidthRatio * newWidth;
@@ -175,6 +177,8 @@ async function addBorderAndText(options) {
 
             // 保存当前画布状态
             ctx.save();
+
+            ctx.globalAlpha = alpha
 
             // 将画布原点移动到图片中心点
             const centerX = imageX + width / 2;
