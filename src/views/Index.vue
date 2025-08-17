@@ -1263,9 +1263,9 @@ const useTemplate = (options, path) => {
     div.style.height = 'fit-content'
     div.style.lineHeight = '1'
     div.style.fontSize = text.options.fontSize + 'px'
+    div.style.color = text.options.fontColor
     div.style.whiteSpace = 'nowrap'
     div.className = 'text-mark'
-    div.color = text.options.fontColor
     const type = text.type;
     if (type === 'date') {
       div.innerHTML = getDate();
