@@ -423,16 +423,19 @@
   </el-dialog>
 
 
-  <el-dialog v-model="editorImageLabelDialogVisible" title="编辑图片标签" width="500" draggable>
-    <span>It's a draggable Dialog</span>
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="editorImageLabelDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="editorImageLabelDialogVisible = false">
-          确认
-        </el-button>
-      </div>
-    </template>
+  <el-dialog v-model="downloadProgressVisible" align-center title="下载进度" :close="handleDownloadProgressClose"
+             :close-on-click-modal="false"
+             width="500">
+    <el-progress :percentage="downloadProgressPercentage"/>
+    <div class="fill"></div>
+    <!--    <template #footer>-->
+    <!--      <div class="dialog-footer">-->
+    <!--        <el-button @click="dialogVisible = false">Cancel</el-button>-->
+    <!--        <el-button type="primary" @click="dialogVisible = false">-->
+    <!--          Confirm-->
+    <!--        </el-button>-->
+    <!--      </div>-->
+    <!--    </template>-->
   </el-dialog>
 
 </template>
@@ -590,6 +593,10 @@ const editorImageLabelDialogVisible = ref(false)
 
 const editorTextLabelDialogVisible = ref(false)
 
+const downloadProgressVisible = ref(false)
+
+const downloadProgressPercentage = ref(0)
+
 const textLabel = ref({
   id: '',
   tips: '',
@@ -692,6 +699,17 @@ const watchTemplateContextMenu = () => {
       renameDialogVisible.value = true
     }
   })
+}
+
+
+const watchDownloadProgress = () => {
+  window.electronAPI.downloadProgress((event, data) => {
+    downloadProgressPercentage.value = data.percentage
+  })
+}
+
+const handleDownloadProgressClose = () => {
+  downloadProgressPercentage.value = 0
 }
 
 const watchEditorLabel = () => {
@@ -819,6 +837,7 @@ const watchContextMenu = () => {
         }
         currentSelectedElement.visible = true
         window.electronAPI.requestSaveFiles(JSON.parse(JSON.stringify(newSettings)))
+        downloadProgressVisible.value = true
       } else if (type === 2) {
         openDialog()
       } else if (type === 3) {
@@ -1396,6 +1415,7 @@ onMounted(() => {
   watchTemplateContextMenu()
   watchEditorLabel()
   watchCtrlA()
+  watchDownloadProgress()
   handleResize()
 })
 
@@ -2370,6 +2390,12 @@ function makeDraggable(dragElement, path) {
     margin: 0; /* 移除默认的margin */
   }
 
+}
+
+
+.fill {
+  height: 15px;
+  width: 100%;
 }
 
 </style>

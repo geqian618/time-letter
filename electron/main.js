@@ -80,6 +80,8 @@ const createWindow = () => {
     })
 
     window.on('ready-to-show', () => {
+        // 最大化窗口
+        window.maximize();
         window.show()
     })
 
@@ -100,7 +102,10 @@ ipcMain.on('open-template-contextMenu', () => {
 })
 
 ipcMain.on('request-save-files', async (event, images) => {
-    imageExporter.exportImages(images);
+    imageExporter.exportImages(images, (progress) => {
+        console.log(`[进度] ${progress.percentage}% | 完成: ${progress.completed}/${progress.total} | 错误: ${progress.errors}`);
+        window.webContents.send('download-progress', {percentage: progress.percentage})
+    });
 })
 
 

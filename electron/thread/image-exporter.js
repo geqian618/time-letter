@@ -9,20 +9,48 @@ const threadPool = new Piscina({
 });
 
 
-const exportImages = (dataList) => {
+const exportImages = (dataList, progressCallback) => {
+    const total = dataList.length;
+    let completed = 0;
+    let errors = 0;
+
+    // 如果没有回调则使用默认的进度打印函数
+    progressCallback = progressCallback || ((progress) => {
+        console.log(`进度: ${progress.completed}/${progress.total} 错误: ${progress.errors}`);
+    });
+
     for (let data of dataList) {
-        const {outputDirectory, path, settings: {border, texts, images}} = data;
+        const { outputDirectory, path, settings: { border, texts, images } } = data;
         const options = {
-            inputPath: path,      // 原始图片路径
-            outputDirectory: outputDirectory,     // 输出图片路径
-            border: {...border, percentage: true},
+            inputPath: path,
+            outputDirectory,
+            border: { ...border, percentage: true },
             texts,
             images
-        }
-        threadPool.run(options).catch(err => {
-            console.error(`处理图片 ${path} 失败:`, err);
+        };
+
+        // 执行任务并更新进度
+        threadPool.run(options)
+            .then(() => {
+                completed++;
+                updateProgress();
+            }).catch(err => {
+                console.error(`处理图片 ${path} 失败:`, err);
+                completed++;
+                errors++;
+                updateProgress();
+            });
+    }
+
+    // 进度更新函数
+    function updateProgress() {
+        progressCallback({
+            total,
+            completed,
+            errors,
+            percentage: Math.round((completed / total) * 100)
         });
     }
-}
+};
 
 module.exports = {exportImages}
