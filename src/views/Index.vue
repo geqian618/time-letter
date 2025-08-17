@@ -630,6 +630,7 @@ const watchInputImages = () => {
             isUpdate: false,
             settings: {
               border: {
+                borderType: 0,
                 borderLeft: 0,
                 borderRight: 0,
                 borderTop: 0,
@@ -818,15 +819,30 @@ const watchContextMenu = () => {
 
           await nextTick()
 
-          const {settings} = images.value.get(paths[i]);
+          const image = images.value.get(paths[i]);
+
+          const {settings} = image
+
+          const {height, width} = image.getTargetElement().getBoundingClientRect();
+
+          const textList = Array.from(settings.texts.values()).map(item => {
+            item.options.fontSizeRatio = item.options.fontSize / width
+            return item
+          });
+
+          const imageList = Array.from(settings.images.values()).map(item => {
+            item.options.imageWidthRatio = item.width / width
+            item.options.imageHeightRatio = item.height / height
+            return item
+          });
 
           newSettings.push({
             path: paths[i],
             outputDirectory: data.outputDirectory,
             settings: {
               border: settings.border,
-              texts: Array.from(settings.texts.values()),
-              images: Array.from(settings.images.values())
+              texts: textList,
+              images: imageList
             }
           })
 
@@ -1235,7 +1251,7 @@ const useTemplate = (options, path) => {
     parentNode.appendChild(img)
 
     image.options.imageWidthRatio = image.width / width;
-    image.options.imageHeighthRatio = image.height / height;
+    image.options.imageHeightRatio = image.height / height;
     imageDetails.settings.images.set(img, image)
 
     makeDraggable(img, path)
@@ -1473,8 +1489,9 @@ async function handlePreview(event, image) {
       await nextTick(() => {
         refreshTemplate(image.path)
       })
+    } else {
+      settings.value.border = image.settings.border
     }
-
     settings.value.metadata = image.metadata
   }
 }
