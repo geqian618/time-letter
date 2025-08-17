@@ -1265,6 +1265,7 @@ const useTemplate = (options, path) => {
     div.style.fontSize = text.options.fontSize + 'px'
     div.style.whiteSpace = 'nowrap'
     div.className = 'text-mark'
+    div.color = text.options.fontColor
     const type = text.type;
     if (type === 'date') {
       div.innerHTML = getDate();
