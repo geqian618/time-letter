@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
-const resourcesPath = path.join(process.cwd(), 'resources')
+const {getResourcePath} = require('../utils/resource-path')
+const resourcesPath = getResourcePath()
 
 function getSafeImagePath(absolutePath) {
     if (process.platform === 'win32') {

@@ -24,7 +24,9 @@ const templateContextMenu = require('./components/TemplateContextMenu')
 
 const {fileWatcher, closeWatcher} = require('./hook/file-watcher')
 
-const resourcesPath = path.join(process.cwd(), 'resources')
+const {getResourcePath} = require('./utils/resource-path')
+
+const resourcesPath = getResourcePath()
 
 let window;
 

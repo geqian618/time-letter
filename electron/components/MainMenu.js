@@ -1,10 +1,9 @@
 const {app, dialog, Menu, shell} = require('electron');
-
 const path = require('path')
-
 const fs = require('fs')
+const {getResourcePath} = require('../utils/resource-path')
 
-const resourcesPath = path.join(process.cwd(), 'resources')
+const resourcesPath = getResourcePath()
 
 function getSafeImagePath(absolutePath) {
     if (process.platform === 'win32') {

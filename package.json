@@ -1,6 +1,6 @@
 {
   "name": "photo-editor",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "main": "electron/main.js",
   "scripts": {
@@ -71,6 +71,10 @@
     "files": [
       "dist/**/*",
       "electron/**/*"
-    ]
+    ],
+    "extraResources":  {
+      "from": "resources/",
+      "to": "./resources"
+    }
   }
 }
