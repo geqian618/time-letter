@@ -437,15 +437,15 @@
 
 </template>
 
-<script setup lang="ts">
+<script setup lang="js">
 
 import {nextTick, onBeforeMount, onMounted, ref, watch} from "vue";
 
-import {getDate, getDateTime} from '../utils/datetime'
+import {getDate, getDateTime} from '@/utils/datetime'
 
-import {executeFunctionScript} from '../utils/script-helper'
+import {executeFunctionScript} from '@/utils/script-helper'
 
-import {fontOptions} from '../hook/font-options'
+import {fontOptions} from '@/hook/font-options'
 
 import _ from 'lodash';
 
@@ -478,7 +478,7 @@ const borderOptions = [
   }
 ]
 
-const images = ref(new Map<string, object>())
+const images = ref(new Map())
 
 const imageList = ref(null);
 
@@ -650,7 +650,7 @@ const watchInputImages = () => {
       }
 
       nextTick(() => {
-        images.value.forEach((image: object, path: string) => {
+        images.value.forEach((image, path) => {
           if (!image.render) {
             const element = image.getTargetElement();
             bindDragEvent(element, image);
@@ -695,7 +695,7 @@ const watchTemplateContextMenu = () => {
 }
 
 const watchEditorLabel = () => {
-  window.electronAPI.watchEditorLabel((envent, result) => {
+  window.electronAPI.watchEditorLabel((event, result) => {
     const {data, type} = result
     if (type === 0) {
       if (result.event === 0) {
@@ -1451,7 +1451,7 @@ async function handlePreview(event, image) {
 }
 
 
-const handleMultipleSelect = (event: object, image: object) => {
+const handleMultipleSelect = (event, image) => {
   const element = event.target;
   if (element.classList.contains('active')) {
     element.classList.remove('active');
@@ -1463,7 +1463,7 @@ const handleMultipleSelect = (event: object, image: object) => {
 }
 
 
-const handleShiftClick = (event: object, image: object) => {
+const handleShiftClick = (event, image) => {
   if (selectedImages.value.size) {
     const elements = document.documentElement.querySelectorAll('img.imageItem');
     const path = image.path;
@@ -1613,7 +1613,7 @@ const renderBorders = (path) => {
 }
 
 
-const handleWheel = (e: Event) => {
+const handleWheel = (e) => {
   // 1. 阻止默认的垂直滚动行为
   e.preventDefault();
   // 2. 获取滚轮滚动方向（deltaY > 0 向下滚，< 0 向上滚）
