@@ -1315,8 +1315,6 @@ const useTemplate = (options, path) => {
 
     parentNode.appendChild(div)
 
-    text.options.fontSizeRatio = text.options.fontSize / width
-
     imageDetails.settings.texts.set(div, text)
 
     makeDraggable(div, path)
@@ -1359,6 +1357,7 @@ const refreshTemplate = (path) => {
     } else {
       element.innerHTML = text.content;
     }
+
     let {positionX, positionY} = text
 
     let newPositionX, newPositionY
@@ -1380,6 +1379,7 @@ const refreshTemplate = (path) => {
       element.style.bottom = `${newPositionY}px`;
     }
 
+    element.style.fontSize = text.fontSize + 'px'
   })
 
   image.settings.images.forEach((image, element) => {
@@ -1407,10 +1407,13 @@ const refreshTemplate = (path) => {
       newPositionY = window.innerHeight - bottom + positionY * height
       element.style.bottom = `${newPositionY}px`;
     }
+
+    element.style.width = image.width + 'px'
+
+    element.style.height = image.height + 'px'
+
   })
-
   image.isUpdate = false
-
 }
 
 
