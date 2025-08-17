@@ -423,7 +423,7 @@
   </el-dialog>
 
 
-  <el-dialog v-model="downloadProgressVisible" align-center title="下载进度" :close="handleDownloadProgressClose"
+  <el-dialog v-model="downloadProgressVisible" align-center title="导出进度" :close="handleDownloadProgressClose"
              :close-on-click-modal="false"
              width="500">
     <el-progress :percentage="downloadProgressPercentage"/>
