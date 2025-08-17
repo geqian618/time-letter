@@ -1264,6 +1264,7 @@ const useTemplate = (options, path) => {
     div.style.lineHeight = '1'
     div.style.fontSize = text.options.fontSize + 'px'
     div.style.color = text.options.fontColor
+    div.style.fontFamily = text.options.fontFamily
     div.style.whiteSpace = 'nowrap'
     div.className = 'text-mark'
     const type = text.type;
