@@ -538,6 +538,8 @@ const settings = ref({
     positionY: 0,
     offsetX: 0,
     offsetY: 0,
+    width: 0,
+    height: 0,
     references: [],
     options: {
       scale: 10,
@@ -1054,6 +1056,8 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
       image.settings.images.get(element).offsetX = positionOffsetX
       image.settings.images.get(element).offsetY = positionOffsetY
       image.settings.images.get(element).references = references
+      image.settings.images.get(element).width = newWidth
+      image.settings.images.get(element).height = newHeight
       image.settings.images.get(element).options.imageWidthRatio = newWidth / containerRect.width
       image.settings.images.get(element).options.imageHeightRatio = newHeight / containerRect.height
 
@@ -1230,6 +1234,8 @@ const useTemplate = (options, path) => {
 
     parentNode.appendChild(img)
 
+    image.options.imageWidthRatio = image.width / width;
+    image.options.imageHeighthRatio = image.height / height;
     imageDetails.settings.images.set(img, image)
 
     makeDraggable(img, path)
@@ -1293,9 +1299,12 @@ const useTemplate = (options, path) => {
 
     parentNode.appendChild(div)
 
+    text.options.fontSizeRatio = text.options.fontSize / width
+
     imageDetails.settings.texts.set(div, text)
 
     makeDraggable(div, path)
+
   }
 
 }
@@ -1835,6 +1844,8 @@ const bindDragEvent = (previewImage, image) => {
           const imageHeight = Number.parseFloat(dragElementStyle.height.replace('px', ''));
           const imageWidth = Number.parseFloat(dragElementStyle.width.replace('px', ''));
 
+          settings.value.image.width = imageWidth
+          settings.value.image.height = imageHeight
           settings.value.image.options.imageHeightRatio = imageHeight / containerRect.height
           settings.value.image.options.imageWidthRatio = imageWidth / containerRect.width
 
