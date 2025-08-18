@@ -1982,6 +1982,8 @@ const bindDragEvent = (previewImage, image) => {
 
     const mouseY = event.clientY;
 
+    const parentRect = previewImage.parentNode.getBoundingClientRect();
+
     const containerRect = previewImage.getBoundingClientRect();
 
     const originalElementRect = dragElement.getBoundingClientRect();
@@ -1992,8 +1994,8 @@ const bindDragEvent = (previewImage, image) => {
         // 关键：必须设为绝对定位
         dragElement.style.position = 'absolute';
         // 设置元素定位
-        dragElement.style.left = `${mouseX - offsetX}px`;
-        dragElement.style.top = `${mouseY - offsetY}px`;
+        dragElement.style.left = `${mouseX - parentRect.left - offsetX}px`;
+        dragElement.style.top = `${mouseY - parentRect.top - offsetY}px`;
 
         // 关键：将元素添加到容器
         previewImage.parentNode.appendChild(dragElement);
@@ -2105,6 +2107,8 @@ function makeDraggable(dragElement, path) {
 
   dragElement.onmousedown = function dragMouseDown(event) {
 
+    const parentRect = previewImage.parentNode.getBoundingClientRect();
+
     // 限制在画布范围内
     const containerRect = previewImage.getBoundingClientRect();
 
@@ -2137,8 +2141,8 @@ function makeDraggable(dragElement, path) {
       if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (elementRect.width - offsetX)) {
         if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (elementRect.height - offsetY)) {
 
-          dragElement.style.left = `${mouseX - offsetX}px`;
-          dragElement.style.top = `${mouseY - offsetY}px`;
+          dragElement.style.left = `${mouseX - parentRect.left - offsetX}px`;
+          dragElement.style.top = `${mouseY - parentRect.top - offsetY}px`;
 
           const heightCutLine = containerRect.top + containerRect.height / 2;
 
