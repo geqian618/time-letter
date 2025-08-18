@@ -1055,6 +1055,7 @@ const handleResize = () => {
       images.value.forEach((image, path) => {
         const imageLabels = image.settings.images;
         const textLabels = image.settings.texts;
+        const parentRect = image.getTargetElement().parentNode.getBoundingClientRect();
         const {width, left, right, bottom, top, height} = image.getTargetElement().getBoundingClientRect();
         if (imageLabels.size) {
           imageLabels.forEach((items, element) => {
@@ -1064,25 +1065,25 @@ const handleResize = () => {
             let newPositionX, newPositionY
 
             if (references.includes('left')) {
-              newPositionX = left + width * positionX;
+              newPositionX = left - parentRect.left + width * positionX;
               element.style.removeProperty('right')
               element.style.left = newPositionX + 'px'
             }
 
             if (references.includes('right')) {
-              newPositionX = window.innerWidth - right + width * positionX;
+              newPositionX = parentRect.right - right + width * positionX;
               element.style.removeProperty('left')
               element.style.right = newPositionX + 'px'
             }
 
             if (references.includes('top')) {
-              newPositionY = top + height * positionY;
+              newPositionY = top - parentRect.top + height * positionY;
               element.style.removeProperty('bottom')
               element.style.top = newPositionY + 'px'
             }
 
             if (references.includes('bottom')) {
-              newPositionY = window.innerHeight - bottom + height * positionY;
+              newPositionY = parentRect.bottom - bottom + height * positionY;
               element.style.removeProperty('top')
               element.style.bottom = newPositionY + 'px';
             }
@@ -1096,25 +1097,25 @@ const handleResize = () => {
             let newPositionX, newPositionY
 
             if (references.includes('left')) {
-              newPositionX = left + width * positionX;
+              newPositionX = left - parentRect.left + width * positionX;
               element.style.removeProperty('right')
               element.style.left = newPositionX + 'px'
             }
 
             if (references.includes('right')) {
-              newPositionX = window.innerWidth - right + width * positionX;
+              newPositionX = parentRect.right - right + width * positionX;
               element.style.removeProperty('left')
               element.style.right = newPositionX + 'px'
             }
 
             if (references.includes('top')) {
-              newPositionY = top + height * positionY;
+              newPositionY = top - parentRect.top + height * positionY;
               element.style.removeProperty('bottom')
               element.style.top = newPositionY + 'px'
             }
 
             if (references.includes('bottom')) {
-              newPositionY = window.innerHeight - bottom + height * positionY;
+              newPositionY = parentRect.bottom - bottom + height * positionY;
               element.style.removeProperty('top')
               element.style.bottom = newPositionY + 'px';
             }
