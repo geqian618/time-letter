@@ -204,11 +204,7 @@ async function addBorderAndText(options) {
                 // 设置阴影偏移（像素）
                 ctx.shadowOffsetX = boxShadow.offsetXRatio * width || 0;
                 ctx.shadowOffsetY = boxShadow.offsetYRatio * width || 0;
-            } else {
-                // 禁用阴影
-                ctx.shadowColor = 'rgba(0,0,0,0)';
             }
-
             // 将画布原点移动到图片中心点
             const centerX = imageX + width / 2;
             const centerY = imageY + height / 2;
