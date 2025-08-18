@@ -6,19 +6,33 @@ const contextMenu = (mainWindow) => {
     window = mainWindow;
     return Menu.buildFromTemplate([
         {
-            label: '删除',
+            label: '删除图片',
             accelerator: 'ctrl+d',
             click: () => {
                 window.webContents.send('watch-contextMenu', {type: 0});
             }
         },
         {
-            label: '导出',
+            label: '清空标签',
+            accelerator: 'ctrl+l',
+            click: () => {
+                window.webContents.send('watch-contextMenu', {type: 4});
+            }
+        },
+        {
+            label: '重置配置',
+            accelerator: 'ctrl+r',
+            click: () => {
+                window.webContents.send('watch-contextMenu', {type: 5});
+            }
+        },
+        {
+            label: '导出图片',
             accelerator: 'ctrl+o',
             click: saveFiles
         },
         {
-            label: '同步',
+            label: '同步配置',
             accelerator: 'ctrl+u',
             click: synchronizeTemplate
         },

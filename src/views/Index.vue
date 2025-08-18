@@ -862,11 +862,41 @@ const watchContextMenu = () => {
         openDialog()
       } else if (type === 3) {
         synchronizeTemplate()
+      } else if (type === 4) {
+        clearAllLabels(selectedElement.value.path)
+      } else if (type === 5) {
+        reset(selectedElement.value.path)
       }
     }
   });
 }
 
+const reset = (path) => {
+  const image = clearAllLabels(path);
+  image.settings.border = {
+    borderType: 0,
+    borderLeft: 0,
+    borderRight: 0,
+    borderTop: 0,
+    borderBottom: 0,
+    borderColor: 'rgba(255, 255, 255, 1)'
+  }
+  renderBorders(path)
+}
+
+
+const clearAllLabels = (path) => {
+  const image = images.value.get(path);
+  for (let element of image.settings.images.keys()) {
+    element.remove()
+  }
+  for (let element of image.settings.texts.keys()) {
+    element.remove()
+  }
+  image.settings.texts.clear()
+  image.settings.images.clear()
+  return image
+}
 
 const watchCtrlA = () => {
   window.addEventListener('keydown', event => {
