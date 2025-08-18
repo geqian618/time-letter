@@ -1172,16 +1172,13 @@ const saveTemplates = () => {
 const enableTemplate = ({settings}) => {
 
   for (let path of selectedImages.value.keys()) {
-
     const image = images.value.get(path);
-
     for (let element of image.settings.images.keys()) {
       element.remove()
     }
     for (let element of image.settings.texts.keys()) {
       element.remove()
     }
-
     image.settings.border = {}
     image.settings.texts.clear()
     image.settings.images.clear()
@@ -1200,9 +1197,9 @@ const useTemplate = (options, path) => {
 
   imageDetails.settings.border = options.border
 
-  settings.value.border = options.border
-
-  handleBorders()
+  if (path === selectedElement.value.path) {
+    renderBorders(path)
+  }
 
   const previewImage = imageDetails.getTargetElement();
 
@@ -1223,35 +1220,40 @@ const useTemplate = (options, path) => {
     img.className = 'image-mark'
     // 关键：必须设为绝对定位
     img.style.position = 'absolute';
+    img.style.width = image.width + 'px';
+    img.style.height = image.height + 'px'
 
-    let {positionX, positionY} = image
+    if (path === selectedElement.value.path) {
 
-    let newPositionX, newPositionY
+      let {positionX, positionY} = image
 
-    if (image.references.includes('left')) {
-      newPositionX = left + positionX * width
-      img.style.left = `${newPositionX}px`;
-    }
+      let newPositionX, newPositionY
 
-    if (image.references.includes('right')) {
-      newPositionX = window.innerWidth - right + positionX * width
-      img.style.right = `${newPositionX}px`;
-    }
+      if (image.references.includes('left')) {
+        newPositionX = left + positionX * width
+        img.style.left = `${newPositionX}px`;
+      }
 
-    if (image.references.includes('top')) {
-      newPositionY = top + positionY * height
-      img.style.top = `${newPositionY}px`;
-    }
+      if (image.references.includes('right')) {
+        newPositionX = window.innerWidth - right + positionX * width
+        img.style.right = `${newPositionX}px`;
+      }
 
-    if (image.references.includes('bottom')) {
-      newPositionY = window.innerHeight - bottom + positionY * height
-      img.style.bottom = `${newPositionY}px`;
+      if (image.references.includes('top')) {
+        newPositionY = top + positionY * height
+        img.style.top = `${newPositionY}px`;
+      }
+
+      if (image.references.includes('bottom')) {
+        newPositionY = window.innerHeight - bottom + positionY * height
+        img.style.bottom = `${newPositionY}px`;
+      }
     }
 
     parentNode.appendChild(img)
 
-    image.options.imageWidthRatio = image.width / width;
-    image.options.imageHeightRatio = image.height / height;
+    console.log(image)
+
     imageDetails.settings.images.set(img, image)
 
     makeDraggable(img, path)
@@ -1291,31 +1293,36 @@ const useTemplate = (options, path) => {
     // 关键：必须设为绝对定位
     div.style.position = 'absolute';
 
-    let {positionX, positionY} = text
+    if (path === selectedElement.value.path) {
 
-    let newPositionX, newPositionY
+      let {positionX, positionY} = text
 
-    if (text.references.includes('left')) {
-      newPositionX = left + positionX * width
-      div.style.left = `${newPositionX}px`;
+      let newPositionX, newPositionY
+
+      if (text.references.includes('left')) {
+        newPositionX = left + positionX * width
+        div.style.left = `${newPositionX}px`;
+      }
+
+      if (text.references.includes('right')) {
+        newPositionX = window.innerWidth - right + positionX * width
+        div.style.right = `${newPositionX}px`;
+      }
+
+      if (text.references.includes('top')) {
+        newPositionY = top + positionY * height
+        div.style.top = `${newPositionY}px`;
+      }
+
+      if (text.references.includes('bottom')) {
+        newPositionY = window.innerHeight - bottom + positionY * height
+        div.style.bottom = `${newPositionY}px`;
+      }
+
     }
-
-    if (text.references.includes('right')) {
-      newPositionX = window.innerWidth - right + positionX * width
-      div.style.right = `${newPositionX}px`;
-    }
-
-    if (text.references.includes('top')) {
-      newPositionY = top + positionY * height
-      div.style.top = `${newPositionY}px`;
-    }
-
-    if (text.references.includes('bottom')) {
-      newPositionY = window.innerHeight - bottom + positionY * height
-      div.style.bottom = `${newPositionY}px`;
-    }
-
     parentNode.appendChild(div)
+
+    console.log(text)
 
     imageDetails.settings.texts.set(div, text)
 
@@ -1340,26 +1347,6 @@ const refreshTemplate = (path) => {
 
   image.settings.texts.forEach((text, element) => {
 
-    const type = text.type;
-
-    if (type === 'date') {
-      element.innerHTML = getDate();
-    } else if (type === 'datetime') {
-      element.innerHTML = getDateTime();
-    } else if (type === 'text') {
-      element.innerHTML = text.content
-    } else if (type === 'script') {
-      element.innerHTML = executeFunctionScript(text.expression)
-    } else if (type === 'metadata') {
-      const content = image.metadata[text.expression];
-      if (!content) {
-        return
-      }
-      element.innerHTML = image.metadata[text.expression]
-    } else {
-      element.innerHTML = text.content;
-    }
-
     let {positionX, positionY} = text
 
     let newPositionX, newPositionY
@@ -1381,7 +1368,6 @@ const refreshTemplate = (path) => {
       element.style.bottom = `${newPositionY}px`;
     }
 
-    element.style.fontSize = text.fontSize + 'px'
   })
 
   image.settings.images.forEach((image, element) => {
@@ -1409,10 +1395,6 @@ const refreshTemplate = (path) => {
       newPositionY = window.innerHeight - bottom + positionY * height
       element.style.bottom = `${newPositionY}px`;
     }
-
-    element.style.width = image.width + 'px'
-
-    element.style.height = image.height + 'px'
 
   })
   image.isUpdate = false
@@ -1627,6 +1609,10 @@ const renderBorders = (path) => {
 
   const targetElement = image.getTargetElement();
 
+  if (image.path === selectedElement.value.path) {
+    settings.value.border = image.settings.border
+  }
+
   if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
 
     const {borderLeft, borderRight, borderTop, borderBottom, borderColor, borderType} = image.settings.border;
@@ -1654,7 +1640,7 @@ const renderBorders = (path) => {
 
     const {clientWidth, clientHeight} = targetElement;
 
-    image.settings.border = _.cloneDeep(settings.value.border)
+    // image.settings.border = _.cloneDeep(settings.value.border)
     image.settings.border.borderLeftRatio = borderLeftWidth / clientWidth
     image.settings.border.borderRightRatio = borderRightWidth / clientWidth
     image.settings.border.borderTopRatio = borderTopHeight / clientHeight
