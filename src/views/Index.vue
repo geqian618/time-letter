@@ -1216,7 +1216,6 @@ const useTemplate = (options, path) => {
   for (let image of options.images) {
 
     const img = document.createElement('img');
-    img.style.width = '50px'
     img.style.outline = 'none';
     img.style.cursor = 'move';
     img.style.userSelect = 'none';
@@ -1258,8 +1257,6 @@ const useTemplate = (options, path) => {
 
     parentNode.appendChild(img)
 
-    console.log(image)
-
     imageDetails.settings.images.set(img, image)
 
     makeDraggable(img, path)
@@ -1269,11 +1266,11 @@ const useTemplate = (options, path) => {
     const div = document.createElement('div');
     div.style.width = 'fit-content'
     div.style.height = 'fit-content'
-    div.style.lineHeight = '1'
+    div.style.lineHeight = '1em'
+    div.style.whiteSpace = 'nowrap'
     div.style.fontSize = text.options.fontSize + 'px'
     div.style.color = text.options.fontColor
     div.style.fontFamily = text.options.fontFamily
-    div.style.whiteSpace = 'nowrap'
     div.className = 'text-mark'
     const type = text.type;
     if (type === 'date') {
@@ -1727,7 +1724,7 @@ const bindDragEvent = (previewImage, image) => {
       dragElement.style.width = 'fit-content'
       dragElement.style.height = 'fit-content'
       dragElement.style.fontSize = '14px'
-      dragElement.style.lineHeight = '1'
+      dragElement.style.lineHeight = '1em'
       dragElement.style.whiteSpace = 'nowrap'
       const type = dragElement.getAttribute('type');
 
