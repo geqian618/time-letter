@@ -131,8 +131,22 @@ async function addBorderAndText(options) {
             // 根据 top 基线计算垂直中心
             centerY = textY + textHeight / 2;
 
-            // 2. 执行旋转绘制
-            ctx.save();  // 保存当前画布状态
+            // 保存当前画布状态
+            ctx.save();
+
+            // =========== 新增：设置文字阴影属性 ===========
+            if (text.options.textShadow) {
+                // 默认不透明黑色
+                ctx.shadowColor = text.options.textShadow.shadowColor || 'rgba(0,0,0,1)';
+                // 默认模糊0像素
+                ctx.shadowBlur = text.options.textShadow.blurRatio * fontSize || 0;
+                // 默认X偏移
+                ctx.shadowOffsetX = text.options.textShadow.offsetXRatio * fontSize || 0;
+                // 默认Y偏移
+                ctx.shadowOffsetY = text.options.textShadow.offsetYRatio * fontSize || 0;
+            }
+
+            // 执行旋转绘制
             ctx.translate(centerX, centerY);  // 平移到中心点
             ctx.rotate(text.options.angle * Math.PI / 180);  // 旋转（角度转弧度）
             ctx.translate(-centerX, -centerY);  // 平移回原始坐标系
@@ -179,6 +193,21 @@ async function addBorderAndText(options) {
             ctx.save();
 
             ctx.globalAlpha = alpha
+
+            // ============== 新增阴影设置 ==============
+            if (imageItem.options.boxShadow) {
+                const boxShadow = imageItem.options.boxShadow;
+                // 设置阴影颜色（支持RGBA格式）
+                ctx.shadowColor = boxShadow.shadowColor || 'rgba(0, 0, 0, 1)';
+                // 设置阴影模糊度（像素）
+                ctx.shadowBlur = boxShadow.blurRatio * width || 0;
+                // 设置阴影偏移（像素）
+                ctx.shadowOffsetX = boxShadow.offsetXRatio * width || 0;
+                ctx.shadowOffsetY = boxShadow.offsetYRatio * width || 0;
+            } else {
+                // 禁用阴影
+                ctx.shadowColor = 'rgba(0,0,0,0)';
+            }
 
             // 将画布原点移动到图片中心点
             const centerX = imageX + width / 2;

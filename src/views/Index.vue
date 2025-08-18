@@ -229,6 +229,7 @@
                   <template #title>
                     <span>文本</span>
                   </template>
+                  <div class="group-title">基本</div>
                   <ul class="options">
                     <li class="option">
                       <div class="label">字体类型</div>
@@ -284,11 +285,59 @@
                     <!--                      </div>-->
                     <!--                    </li>-->
                   </ul>
+                  <div class="group-title">文本阴影</div>
+                  <ul class="options">
+                    <li class="option">
+                      <div class="label">X轴偏移</div>
+                      <div class="value">
+                        <el-slider @change=""
+                                   size="small"
+                                   :min="-50"
+                                   :max="50"
+                                   v-model="textOptions.textShadow.offsetX"
+                                   placement="top"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">Y轴偏移</div>
+                      <div class="value">
+                        <el-slider
+                            v-model="textOptions.textShadow.offsetY"
+                            :min="-50"
+                            :max="50"
+                            show-alpha
+                            size="small"
+                            :predefine="predefineColors"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">模糊程度</div>
+                      <div class="value">
+                        <el-slider
+                            v-model="textOptions.textShadow.blur"
+                            show-alpha
+                            size="small"
+                            :predefine="predefineColors"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">阴影颜色</div>
+                      <div class="value">
+                        <el-color-picker
+                            @change=""
+                            v-model="textOptions.textShadow.shadowColor"
+                            show-alpha
+                            size="small"
+                            :predefine="predefineColors"/>
+                      </div>
+                    </li>
+                  </ul>
                 </el-sub-menu>
                 <el-sub-menu index="4">
                   <template #title>
                     <span>图片</span>
                   </template>
+                  <div class="group-title">基本</div>
                   <ul class="options">
                     <li class="option">
                       <div class="label">缩放</div>
@@ -319,6 +368,53 @@
                                    :max="360"
                                    v-model="imageOptions.angle"
                                    placement="top"/>
+                      </div>
+                    </li>
+                  </ul>
+
+                  <div class="group-title">图片阴影</div>
+                  <ul class="options">
+                    <li class="option">
+                      <div class="label">X轴偏移</div>
+                      <div class="value">
+                        <el-slider size="small"
+                                   :min="-50"
+                                   :max="50"
+                                   v-model="imageOptions.boxShadow.offsetX"
+                                   placement="top"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">Y轴偏移</div>
+                      <div class="value">
+                        <el-slider
+                            v-model="imageOptions.boxShadow.offsetY"
+                            :min="-50"
+                            :max="50"
+                            show-alpha
+                            size="small"
+                            :predefine="predefineColors"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">模糊程度</div>
+                      <div class="value">
+                        <el-slider
+                            v-model="imageOptions.boxShadow.blur"
+                            show-alpha
+                            size="small"
+                            :predefine="predefineColors"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">阴影颜色</div>
+                      <div class="value">
+                        <el-color-picker
+                            @change=""
+                            v-model="imageOptions.boxShadow.shadowColor"
+                            show-alpha
+                            size="small"
+                            :predefine="predefineColors"/>
                       </div>
                     </li>
                   </ul>
@@ -510,12 +606,30 @@ const textOptions = ref({
   fontColor: 'rgb(0,0,0,1)',
   tagBackground: 'rgb(255,255,255,0)',
   angle: 0,
+  textShadow: {
+    offsetX: 0,
+    offsetY: 0,
+    blur: 0,
+    offsetXRatio: 0,
+    offsetYRatio: 0,
+    blurRatio: 0,
+    shadowColor: 'rgb(0,0,0,1)'
+  }
 })
 
 const imageOptions = ref({
   scale: 10,
   angle: 0,
-  alpha: 10
+  alpha: 10,
+  boxShadow: {
+    offsetX: 0,
+    offsetY: 0,
+    blur: 0,
+    offsetXRatio: 0,
+    offsetYRatio: 0,
+    blurRatio: 0,
+    shadowColor: 'rgb(0,0,0,1)',
+  }
 })
 
 const settings = ref({
@@ -544,7 +658,16 @@ const settings = ref({
     options: {
       scale: 10,
       angle: 0,
-      alpha: 10
+      alpha: 10,
+      boxShadow: {
+        offsetX: 0,
+        offsetY: 0,
+        blur: 0,
+        offsetXRatio: 0,
+        offsetYRatio: 0,
+        blurRatio: 0,
+        shadowColor: 'rgb(0,0,0,1)'
+      }
     }
   },
   text: {
@@ -562,6 +685,15 @@ const settings = ref({
       fontColor: 'rgb(0,0,0,1)',
       tagBackground: 'rgb(255,255,255,0)',
       angle: 0,
+      textShadow: {
+        offsetX: 0,
+        offsetY: 0,
+        blur: 0,
+        offsetXRatio: 0,
+        offsetYRatio: 0,
+        blurRatio: 0,
+        shadowColor: 'rgb(0,0,0,1)'
+      }
     }
   },
   border: {
@@ -1010,12 +1142,19 @@ const stopTextSettingsWatch = watch(textOptions, (newVal, oldVal) => {
     if (element.getAttribute('selected') === 'true') {
       image.settings.texts.get(element).options = _.cloneDeep(newVal)
       image.settings.texts.get(element).options.fontSizeRatio = newVal.fontSize / width
+      image.settings.texts.get(element).options.textShadow.offsetXRatio = newVal.textShadow.offsetX / newVal.fontSize
+      image.settings.texts.get(element).options.textShadow.offsetYRatio = newVal.textShadow.offsetY / newVal.fontSize
+      image.settings.texts.get(element).options.textShadow.blurRatio = newVal.textShadow.blur / newVal.fontSize
       element.style.fontFamily = newVal.fontFamily
       element.style.fontSize = newVal.fontSize + 'px'
       element.style.color = newVal.fontColor
       element.style.background = newVal.tagBackground
       element.style.transformOrigin = 'center center'
       element.style.transform = `rotate(${newVal.angle}deg)`
+
+      const {textShadow: {offsetX, offsetY, blur, shadowColor}} = newVal;
+
+      element.style.textShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
     }
   }
 }, {
@@ -1038,6 +1177,29 @@ const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVa
     }
   }
 });
+
+const stopImageBoxShadowWatch = watch(() => imageOptions.value.boxShadow, (newVal, oldVal) => {
+  const {path} = selectedElement.value;
+  const image = images.value.get(path);
+  const elements = Array.from(image.settings.images.keys());
+  for (let element of elements) {
+    if (element.getAttribute('selected') === 'true') {
+      const {offsetX, offsetY, blur, shadowColor} = newVal;
+      element.style.boxShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
+      const {width} = element.getBoundingClientRect();
+      image.settings.images.get(element).options.boxShadow = _.cloneDeep(newVal)
+      image.settings.images.get(element).options.boxShadow.offsetXRatio = offsetX / width
+      image.settings.images.get(element).options.boxShadow.offsetYRatio = offsetY / width
+      image.settings.images.get(element).options.boxShadow.blurRatio = blur / width
+    }
+  }
+}, {
+  //深度监视（监视属性变化）
+  deep: true,
+  //immediate 立即触发一次监视
+  //immediate: true
+})
+
 
 const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVal) => {
   if (switchElement.value) {
@@ -1257,11 +1419,11 @@ const useTemplate = (options, path) => {
     img.style.position = 'absolute';
     img.style.width = image.width + 'px';
     img.style.height = image.height + 'px'
+    const {boxShadow: {offsetX, offsetY, blur, shadowColor}} = image.options;
+    img.style.textShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
 
     if (path === selectedElement.value.path) {
-
       let {positionX, positionY} = image
-
       let newPositionX, newPositionY
 
       if (image.references.includes('left')) {
@@ -1301,6 +1463,8 @@ const useTemplate = (options, path) => {
     div.style.fontSize = text.options.fontSize + 'px'
     div.style.color = text.options.fontColor
     div.style.fontFamily = text.options.fontFamily
+    const {textShadow: {offsetX, offsetY, blur, shadowColor}} = text.options;
+    div.style.textShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
     div.className = 'text-mark'
     const type = text.type;
     if (type === 'date') {
@@ -1890,8 +2054,6 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.image.options.imageHeightRatio = imageHeight / containerRect.height
           settings.value.image.options.imageWidthRatio = imageWidth / containerRect.width
 
-          console.log(settings.value.image)
-
           image.settings.images.set(dragElement, _.cloneDeep(settings.value.image))
         }
 
@@ -2029,7 +2191,6 @@ function makeDraggable(dragElement, path) {
           image.settings.images.delete(dragElement)
           dragElement.remove()
         }
-
       }
     }
   })
@@ -2047,10 +2208,10 @@ function makeDraggable(dragElement, path) {
         if (dragElement.src) {
           const settings = image.settings.images.get(dragElement);
           switchElement.value = true
-          imageOptions.value = settings.options
+          imageOptions.value = _.cloneDeep(settings.options)
         } else {
           const settings = image.settings.texts.get(dragElement);
-          textOptions.value = settings.options
+          textOptions.value = _.cloneDeep(settings.options)
         }
       }, 200); // 300毫秒内没有再次点击，则视为单击
     }
@@ -2363,10 +2524,25 @@ function makeDraggable(dragElement, path) {
             padding-left: 20px;
           }
 
+          .group-title {
+            width: 100%;
+            height: 40px;
+            font-size: 13px;
+            background-color: #919090;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-top: 1px solid #b4b3b3;
+          }
+
+          .group-title:first-child {
+            border-top: none;
+          }
+
           .options {
             width: 100%;
             list-style: none;
-            padding: 10px 0 10px 10px;
+            padding: 0 0 10px 10px;
             background-color: #919090;
 
             .option {
@@ -2414,6 +2590,10 @@ function makeDraggable(dragElement, path) {
                   width: 100%;
                 }
               }
+            }
+
+            .option:first-child {
+              margin-top: 0;
             }
           }
         }
