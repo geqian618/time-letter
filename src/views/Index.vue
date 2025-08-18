@@ -599,6 +599,8 @@ const downloadProgressVisible = ref(false)
 
 const downloadProgressPercentage = ref(0)
 
+const switchElement = ref(true)
+
 const textLabel = ref({
   id: '',
   tips: '',
@@ -1008,6 +1010,10 @@ const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVa
 });
 
 const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVal) => {
+  if (switchElement.value) {
+    switchElement.value = false;
+    return
+  }
   const {path} = selectedElement.value;
   const image = images.value.get(path);
   const parentNode = image.getTargetElement().parentNode;
@@ -1857,6 +1863,8 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.image.options.imageHeightRatio = imageHeight / containerRect.height
           settings.value.image.options.imageWidthRatio = imageWidth / containerRect.width
 
+          console.log(settings.value.image)
+
           image.settings.images.set(dragElement, _.cloneDeep(settings.value.image))
         }
 
@@ -2011,6 +2019,7 @@ function makeDraggable(dragElement, path) {
         const image = images.value.get(selectedElement.value.path);
         if (dragElement.src) {
           const settings = image.settings.images.get(dragElement);
+          switchElement.value = true
           imageOptions.value = settings.options
         } else {
           const settings = image.settings.texts.get(dragElement);
