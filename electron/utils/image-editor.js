@@ -205,6 +205,7 @@ async function addBorderAndText(options) {
                 ctx.shadowOffsetX = boxShadow.offsetXRatio * width || 0;
                 ctx.shadowOffsetY = boxShadow.offsetYRatio * width || 0;
             }
+
             // 将画布原点移动到图片中心点
             const centerX = imageX + width / 2;
             const centerY = imageY + height / 2;
