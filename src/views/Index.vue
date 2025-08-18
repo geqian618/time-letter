@@ -350,7 +350,7 @@
                       </div>
                     </li>
                     <li class="option">
-                      <div class="label">透明度</div>
+                      <div class="label">不透明度</div>
                       <div class="value">
                         <el-slider :min="0"
                                    :max="10"

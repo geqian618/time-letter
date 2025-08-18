@@ -60,9 +60,12 @@
     "nsis": {
       "oneClick": false,
       "language": "2052",
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "electron/resources/favicon.ico",
+      "uninstallerIcon": "electron/resources/favicon.ico"
     },
     "win": {
+      "icon": "electron/resources/favicon.ico",
       "target": [
         "nsis",
         "zip"
