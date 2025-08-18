@@ -1414,6 +1414,8 @@ const useTemplate = (options, path) => {
 
   const parentNode = previewImage.parentNode;
 
+  const parentRect = parentNode.getBoundingClientRect();
+
   const {left, right, top, bottom, width, height} = previewImage.getBoundingClientRect();
 
   for (let image of options.images) {
@@ -1437,24 +1439,23 @@ const useTemplate = (options, path) => {
     if (path === selectedElement.value.path) {
       let {positionX, positionY} = image
       let newPositionX, newPositionY
-
       if (image.references.includes('left')) {
-        newPositionX = left + positionX * width
+        newPositionX = left - parentRect.left + positionX * width
         img.style.left = `${newPositionX}px`;
       }
 
       if (image.references.includes('right')) {
-        newPositionX = window.innerWidth - right + positionX * width
+        newPositionX = parentRect.right - right + positionX * width
         img.style.right = `${newPositionX}px`;
       }
 
       if (image.references.includes('top')) {
-        newPositionY = top + positionY * height
+        newPositionY = top - parentRect.top + positionY * height
         img.style.top = `${newPositionY}px`;
       }
 
       if (image.references.includes('bottom')) {
-        newPositionY = window.innerHeight - bottom + positionY * height
+        newPositionY = parentRect.bottom - bottom + positionY * height
         img.style.bottom = `${newPositionY}px`;
       }
     }
@@ -1509,22 +1510,22 @@ const useTemplate = (options, path) => {
       let newPositionX, newPositionY
 
       if (text.references.includes('left')) {
-        newPositionX = left + positionX * width
+        newPositionX = left - parentRect.left + positionX * width
         div.style.left = `${newPositionX}px`;
       }
 
       if (text.references.includes('right')) {
-        newPositionX = window.innerWidth - right + positionX * width
+        newPositionX = parentRect.right - right + positionX * width
         div.style.right = `${newPositionX}px`;
       }
 
       if (text.references.includes('top')) {
-        newPositionY = top + positionY * height
+        newPositionY = top - parentRect.top + positionY * height
         div.style.top = `${newPositionY}px`;
       }
 
       if (text.references.includes('bottom')) {
-        newPositionY = window.innerHeight - bottom + positionY * height
+        newPositionY = parentRect.bottom - bottom + positionY * height
         div.style.bottom = `${newPositionY}px`;
       }
 
@@ -1552,6 +1553,8 @@ const refreshTemplate = (path) => {
 
   const previewImage = image.getTargetElement();
 
+  const parentRect = previewImage.parentNode.getBoundingClientRect();
+
   const {left, right, top, bottom, width, height} = previewImage.getBoundingClientRect();
 
   image.settings.texts.forEach((text, element) => {
@@ -1561,19 +1564,22 @@ const refreshTemplate = (path) => {
     let newPositionX, newPositionY
 
     if (text.references.includes('left')) {
-      newPositionX = left + positionX * width
+      newPositionX = left - parentRect.left + positionX * width
       element.style.left = `${newPositionX}px`;
     }
+
     if (text.references.includes('right')) {
-      newPositionX = window.innerWidth - right + positionX * width
+      newPositionX = parentRect.right - right + positionX * width
       element.style.right = `${newPositionX}px`;
     }
+
     if (text.references.includes('top')) {
-      newPositionY = top + positionY * height
+      newPositionY = top - parentRect.top + positionY * height
       element.style.top = `${newPositionY}px`;
     }
+
     if (text.references.includes('bottom')) {
-      newPositionY = window.innerHeight - bottom + positionY * height
+      newPositionY = parentRect.bottom - bottom + positionY * height
       element.style.bottom = `${newPositionY}px`;
     }
 
@@ -1586,22 +1592,22 @@ const refreshTemplate = (path) => {
     let newPositionX, newPositionY
 
     if (image.references.includes('left')) {
-      newPositionX = left + positionX * width
+      newPositionX = left - parentRect.left + positionX * width
       element.style.left = `${newPositionX}px`;
     }
 
     if (image.references.includes('right')) {
-      newPositionX = window.innerWidth - right + positionX * width
+      newPositionX = parentRect.right - right + positionX * width
       element.style.right = `${newPositionX}px`;
     }
 
     if (image.references.includes('top')) {
-      newPositionY = top + positionY * height
+      newPositionY = top - parentRect.top + positionY * height
       element.style.top = `${newPositionY}px`;
     }
 
     if (image.references.includes('bottom')) {
-      newPositionY = window.innerHeight - bottom + positionY * height
+      newPositionY = parentRect.bottom - bottom + positionY * height
       element.style.bottom = `${newPositionY}px`;
     }
 
@@ -2299,10 +2305,12 @@ function makeDraggable(dragElement, path) {
 .page-layout {
   width: 100vw;
   height: 100vh;
+
   .page-top {
     height: 1%;
     background: #484949;
   }
+
   .page-main {
     width: 100%;
     height: 80%;
@@ -2439,12 +2447,15 @@ function makeDraggable(dragElement, path) {
       display: flex;
       justify-content: center;
       align-items: center;
+
       .preview-item {
         width: 90%;
         height: 90%;
         display: flex;
         justify-content: center;
         align-items: center;
+        position: relative;
+
         img {
           max-width: 100%;
           max-height: 100%;
