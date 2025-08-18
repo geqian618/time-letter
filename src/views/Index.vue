@@ -2299,350 +2299,347 @@ function makeDraggable(dragElement, path) {
 .page-layout {
   width: 100vw;
   height: 100vh;
-
   .page-top {
     height: 1%;
     background: #484949;
   }
-}
-
-.page-images {
-  box-sizing: border-box;
-  width: 100%;
-  height: 19%;
-  display: flex;
-  justify-content: start;
-  background: #5c5d5e;
-  padding: 5px;
-  overflow-x: auto;
-  border-top: 2px solid #484949;
-  scroll-behavior: smooth; /* 可选，使滚动更平滑 */
-  white-space: nowrap; /* 防止内容换行 */
-
-  img {
+  .page-main {
+    width: 100%;
+    height: 80%;
+    display: flex;
     box-sizing: border-box;
-    background: grey;
-    padding: 15px;
-    height: 100%;
-    border-right: 2px solid #a2a4a6;
-  }
 
-  img:last-child {
-    border: none;
-  }
-
-  .active {
-    background: #dedcdc;
-  }
-
-  image:last-child {
-    margin-right: 0;
-  }
-
-}
-
-.page-main {
-  width: 100%;
-  height: 80%;
-  display: flex;
-  box-sizing: border-box;
-}
-
-.page-main .page-left {
-  width: 20%;
-  height: 100%;
-  background: #817e7e;
-  box-sizing: border-box;
-  flex-shrink: 0;
-
-  .el-aside {
-    color: var(--el-text-color-primary);
-    background: #817e7e;
-    width: 100%;
-    height: 100%;
-
-    .el-menu {
-      border-right: none;
-      border-bottom: none;
-      background-color: #484949;
-
-      .el-menu-item.is-active {
-        background-color: #B2B2B2 !important;
-        color: black;
-      }
-
-      .text-marks-options {
-        height: 50%;
-        width: 100%;
-        box-sizing: border-box;
-        background-color: #838282;
-
-        .text-marks {
-          padding: 20px 10px;
-          display: grid;
-          gap: 20px;
-          grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
-          font-size: 12px;
-          background-color: #919090;
-          border-bottom: 1px solid #a2a4a6;
-
-          .text-mark {
-            width: fit-content;
-            height: fit-content;
-            cursor: move;
-            user-select: none;
-
-            img {
-              width: 25px;
-            }
-          }
-
-          .text-mark:hover {
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            background: #e3f2fd;
-          }
-        }
-      }
-
-      .image-mark-options {
-        height: 50%;
-        width: 100%;
-        box-sizing: border-box;
-        background-color: #838282;
-        border-bottom: 1px solid #a2a4a6;
-
-        .image-marks {
-          padding: 10px;
-          column-count: 3; /* 列数 */
-          column-gap: 10px; /* 列间距 */
-          background-color: #919090;
-
-          .image-mark {
-            display: block;
-            width: 100%;
-            cursor: move;
-            user-select: none;
-            margin-bottom: 10px; /* 项目间距 */
-            break-inside: avoid; /* 防止项目被截断 */
-          }
-
-          .image-mark:hover {
-            background: #e3f2fd;
-          }
-        }
-      }
-
-      .templates-options {
-        background-color: #838282;
-        border-bottom: 1px solid #a2a4a6;
-
-        .templates {
-          background-color: #919090;
-        }
-      }
-    }
-
-  }
-
-  .details {
-    height: calc(100% - 40px);
-    width: 100%;
-    font-size: 10px;
-
-    ul {
-      display: block;
-      box-sizing: border-box;
-      width: 100%;
+    .page-left {
+      width: 20%;
       height: 100%;
-      overflow: auto;
-      margin: 0;
-      padding: 15px 20px;
-      white-space: nowrap;
-      list-style: none;
-
-      li {
-        padding: 5px 0;
-      }
-    }
-  }
-
-}
-
-.page-main .page-center {
-  background: #a2a4a6;
-  width: 60%;
-  height: 100%;
-  border-left: 2px solid #484949;
-  border-right: 2px solid #484949;
-  box-sizing: border-box;
-
-  .preview-item {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    img {
-      max-width: 90%;
-      max-height: 90%;
-      width: auto; /* 保持原始宽高比 */
-      height: auto; /* 保持原始宽高比 */
-      transition: background-color 0.3s; /* 可选，添加过渡效果 */
-    }
-  }
-
-}
-
-.page-main .page-right {
-  width: 20%;
-  height: 100%;
-  background: #817e7e;
-
-  .settings {
-    height: 40px;
-    border-bottom: 2px solid #484949;
-    padding-left: 10px;
-    font-size: 16px;
-    display: flex;
-    justify-content: start;
-    align-items: center;
-  }
-
-  .settings-details {
-    width: 100%;
-    height: calc(100% - 40px);
-    box-sizing: border-box;
-
-    .el-aside {
-      color: var(--el-text-color-primary);
       background: #817e7e;
-      width: 100%;
-      height: 100%;
+      box-sizing: border-box;
+      flex-shrink: 0;
 
-      .el-menu {
-        border-right: none;
-        background-color: #484949;
+      .el-aside {
+        color: var(--el-text-color-primary);
+        background: #817e7e;
+        width: 100%;
+        height: 100%;
 
-        .el-sub-menu {
-          background-color: #838282;
-          border-bottom: 1px solid #a2a4a6;
+        .el-menu {
+          border-right: none;
+          border-bottom: none;
+          background-color: #484949;
 
-          .control-option {
-            background-color: #919090;
-            display: flex;
-            align-items: center;
-            height: 50px;
-            padding-left: 20px;
+          .el-menu-item.is-active {
+            background-color: #B2B2B2 !important;
+            color: black;
           }
 
-          .group-title {
+          .text-marks-options {
+            height: 50%;
             width: 100%;
-            height: 30px;
-            font-size: 14px;
-            background-color: #919090;
-            display: flex;
-            justify-content: center;
-            align-items: end;
-            border-top: 1px dashed #a2a4a6;
-          }
+            box-sizing: border-box;
+            background-color: #838282;
 
-          .group-title:first-child {
-            border-top: none;
-          }
-
-          .options {
-            width: 100%;
-            list-style: none;
-            padding: 10px 0 10px 10px;
-            background-color: #919090;
-
-            .option {
-              height: 35px;
-              width: 100%;
-              display: flex;
-              justify-content: start;
-              align-items: center;
-              padding: 10px 0;
-              margin-top: 5px;
+            .text-marks {
+              padding: 20px 10px;
+              display: grid;
+              gap: 20px;
+              grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+              font-size: 12px;
+              background-color: #919090;
+              border-bottom: 1px solid #a2a4a6;
 
               .text-mark {
                 width: fit-content;
                 height: fit-content;
                 cursor: move;
                 user-select: none;
+
+                img {
+                  width: 25px;
+                }
               }
 
-              .label {
-                display: flex;
-                align-items: center;
-                justify-content: end;
-                width: 50px;
-                font-size: 12px;
-              }
-
-              .value {
-                display: flex;
-                align-items: center;
-                width: calc(100% - 55px);
-                padding: 0 15px;
-
-                .el-icon {
-                  margin-left: 5px;
-                }
-
-                :deep(.el-color-picker) {
-                  .el-icon {
-                    font-size: 12px;
-                    margin: 0;
-                  }
-                }
-
-                .el-slider {
-                  width: 100%;
-                }
+              .text-mark:hover {
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+                background: #e3f2fd;
               }
             }
+          }
 
-            .option:first-child {
-              margin-top: 0;
+          .image-mark-options {
+            height: 50%;
+            width: 100%;
+            box-sizing: border-box;
+            background-color: #838282;
+            border-bottom: 1px solid #a2a4a6;
+
+            .image-marks {
+              padding: 10px;
+              column-count: 3; /* 列数 */
+              column-gap: 10px; /* 列间距 */
+              background-color: #919090;
+
+              .image-mark {
+                display: block;
+                width: 100%;
+                cursor: move;
+                user-select: none;
+                margin-bottom: 10px; /* 项目间距 */
+                break-inside: avoid; /* 防止项目被截断 */
+              }
+
+              .image-mark:hover {
+                background: #e3f2fd;
+              }
+            }
+          }
+
+          .templates-options {
+            background-color: #838282;
+            border-bottom: 1px solid #a2a4a6;
+
+            .templates {
+              background-color: #919090;
             }
           }
         }
 
-        .el-sub-menu:first-child {
-          border-top: none;
-        }
+      }
 
-        .el-sub-menu:last-child {
-          border-bottom: 1px solid #a2a4a6;
+      .details {
+        height: calc(100% - 40px);
+        width: 100%;
+        font-size: 10px;
+
+        ul {
+          display: block;
+          box-sizing: border-box;
+          width: 100%;
+          height: 100%;
+          overflow: auto;
+          margin: 0;
+          padding: 15px 20px;
+          white-space: nowrap;
+          list-style: none;
+
+          li {
+            padding: 5px 0;
+          }
+        }
+      }
+
+    }
+
+    .page-center {
+      background: #a2a4a6;
+      width: 60%;
+      height: 100%;
+      border-left: 2px solid #484949;
+      border-right: 2px solid #484949;
+      box-sizing: border-box;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      .preview-item {
+        width: 90%;
+        height: 90%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        img {
+          max-width: 100%;
+          max-height: 100%;
+          width: auto;
+          height: auto;
         }
       }
     }
+
+    .page-right {
+      width: 20%;
+      height: 100%;
+      background: #817e7e;
+
+      .settings {
+        height: 40px;
+        border-bottom: 2px solid #484949;
+        padding-left: 10px;
+        font-size: 16px;
+        display: flex;
+        justify-content: start;
+        align-items: center;
+      }
+
+      .settings-details {
+        width: 100%;
+        height: calc(100% - 40px);
+        box-sizing: border-box;
+
+        .el-aside {
+          color: var(--el-text-color-primary);
+          background: #817e7e;
+          width: 100%;
+          height: 100%;
+
+          .el-menu {
+            border-right: none;
+            background-color: #484949;
+
+            .el-sub-menu {
+              background-color: #838282;
+              border-bottom: 1px solid #a2a4a6;
+
+              .control-option {
+                background-color: #919090;
+                display: flex;
+                align-items: center;
+                height: 50px;
+                padding-left: 20px;
+              }
+
+              .group-title {
+                width: 100%;
+                height: 30px;
+                font-size: 14px;
+                background-color: #919090;
+                display: flex;
+                justify-content: center;
+                align-items: end;
+                border-top: 1px dashed #a2a4a6;
+              }
+
+              .group-title:first-child {
+                border-top: none;
+              }
+
+              .options {
+                width: 100%;
+                list-style: none;
+                padding: 10px 0 10px 10px;
+                background-color: #919090;
+
+                .option {
+                  height: 35px;
+                  width: 100%;
+                  display: flex;
+                  justify-content: start;
+                  align-items: center;
+                  padding: 10px 0;
+                  margin-top: 5px;
+
+                  .text-mark {
+                    width: fit-content;
+                    height: fit-content;
+                    cursor: move;
+                    user-select: none;
+                  }
+
+                  .label {
+                    display: flex;
+                    align-items: center;
+                    justify-content: end;
+                    width: 50px;
+                    font-size: 12px;
+                  }
+
+                  .value {
+                    display: flex;
+                    align-items: center;
+                    width: calc(100% - 55px);
+                    padding: 0 15px;
+
+                    .el-icon {
+                      margin-left: 5px;
+                    }
+
+                    :deep(.el-color-picker) {
+                      .el-icon {
+                        font-size: 12px;
+                        margin: 0;
+                      }
+                    }
+
+                    .el-slider {
+                      width: 100%;
+                    }
+                  }
+                }
+
+                .option:first-child {
+                  margin-top: 0;
+                }
+              }
+            }
+
+            .el-sub-menu:first-child {
+              border-top: none;
+            }
+
+            .el-sub-menu:last-child {
+              border-bottom: 1px solid #a2a4a6;
+            }
+          }
+        }
+      }
+
+      .element-clone {
+        position: absolute;
+        z-index: 1000;
+        pointer-events: none; /* 防止副本拦截点击事件 */
+        opacity: 0.7; /* 添加透明度以示区别 */
+      }
+
+
+      .edit-text {
+        box-sizing: border-box;
+        width: 100%;
+        height: 100%;
+        border: 1px solid #ccc; /* 边框也不会导致超出 */
+        margin: 0; /* 移除默认的margin */
+      }
+
+    }
   }
 
-  .element-clone {
-    position: absolute;
-    z-index: 1000;
-    pointer-events: none; /* 防止副本拦截点击事件 */
-    opacity: 0.7; /* 添加透明度以示区别 */
-  }
-
-
-  .edit-text {
+  .page-images {
     box-sizing: border-box;
     width: 100%;
-    height: 100%;
-    border: 1px solid #ccc; /* 边框也不会导致超出 */
-    margin: 0; /* 移除默认的margin */
+    height: 19%;
+    display: flex;
+    justify-content: start;
+    background: #5c5d5e;
+    padding: 5px;
+    overflow-x: auto;
+    border-top: 2px solid #484949;
+    scroll-behavior: smooth; /* 可选，使滚动更平滑 */
+    white-space: nowrap; /* 防止内容换行 */
+
+    img {
+      box-sizing: border-box;
+      background: grey;
+      padding: 15px;
+      height: 100%;
+      border-right: 2px solid #a2a4a6;
+    }
+
+    img:last-child {
+      border: none;
+    }
+
+    .active {
+      background: #dedcdc;
+    }
+
+    image:last-child {
+      margin-right: 0;
+    }
+
   }
 
+  .fill {
+    height: 15px;
+    width: 100%;
+  }
 }
 
-
-.fill {
-  height: 15px;
-  width: 100%;
-}
 
 </style>
