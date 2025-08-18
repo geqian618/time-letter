@@ -1167,13 +1167,24 @@ const stopTextSettingsWatch = watch(textOptions, (newVal, oldVal) => {
 const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVal) => {
   const {path} = selectedElement.value;
   const image = images.value.get(path);
-  const parentNode = image.getTargetElement().parentNode;
-  const elements = parentNode.querySelectorAll('.image-mark');
+  const elements = Array.from(image.settings.images.keys());
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
       image.settings.images.get(element).options.angle = newVal
       element.style.transformOrigin = 'center center'
       element.style.transform = `rotate(${newVal}deg)`;
+    }
+  }
+});
+
+const stopImageAlphaWatch = watch(() => imageOptions.value.alpha, (newVal, oldVal) => {
+  const {path} = selectedElement.value;
+  const image = images.value.get(path);
+  const elements = Array.from(image.settings.images.keys());
+  for (let element of elements) {
+    if (element.getAttribute('selected') === 'true') {
+      image.settings.images.get(element).options.alpha = newVal
+      element.style.opacity = newVal / 10
     }
   }
 });
@@ -1419,8 +1430,9 @@ const useTemplate = (options, path) => {
     img.style.position = 'absolute';
     img.style.width = image.width + 'px';
     img.style.height = image.height + 'px'
+    img.style.opacity = image.alpha / 10
     const {boxShadow: {offsetX, offsetY, blur, shadowColor}} = image.options;
-    img.style.textShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
+    img.style.boxShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
 
     if (path === selectedElement.value.path) {
       let {positionX, positionY} = image
@@ -2526,13 +2538,13 @@ function makeDraggable(dragElement, path) {
 
           .group-title {
             width: 100%;
-            height: 40px;
-            font-size: 13px;
+            height: 30px;
+            font-size: 14px;
             background-color: #919090;
             display: flex;
             justify-content: center;
-            align-items: center;
-            border-top: 1px solid #b4b3b3;
+            align-items: end;
+            border-top: 1px dashed #a2a4a6;
           }
 
           .group-title:first-child {
@@ -2542,7 +2554,7 @@ function makeDraggable(dragElement, path) {
           .options {
             width: 100%;
             list-style: none;
-            padding: 0 0 10px 10px;
+            padding: 10px 0 10px 10px;
             background-color: #919090;
 
             .option {
