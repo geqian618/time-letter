@@ -36,8 +36,15 @@ function getFileSize(filePath) {
     return size ? (size / 1000 / 1000).toFixed(2) + 'MB' : size
 }
 
+function formatDateTime(DateTimeOriginal) {
+    let parts = DateTimeOriginal.split(' ');
+    let datePart = parts[0].replace(/:/g, '-');
+    let timePart = parts[1];
+    return datePart + ' ' + timePart;
+}
 
 async function parsePhotoMetadata(filePath) {
+
     try {
         const {
             image: {Make, Model},
@@ -48,7 +55,7 @@ async function parsePhotoMetadata(filePath) {
                 {label: '文件名称', value: path.basename(filePath)},
                 {label: '文件大小', value: getFileSize(filePath)},
                 {label: '分辨率', value: await getImageResolution(filePath)},
-                {label: '拍摄日期', value: DateTimeOriginal},
+                {label: '拍摄日期', value: formatDateTime(DateTimeOriginal)},
                 {label: '修改日期', value: CreateDate},
                 {label: '设备厂商', value: Make},
                 {label: '设备型号', value: Model},
@@ -67,7 +74,7 @@ async function parsePhotoMetadata(filePath) {
                 focalLength: FocalLength ? Math.trunc(FocalLength * 1.5) + 'mm' : '',
                 shutter: shutterSpeed.formatShutterSpeed(ExposureTime),
                 aperture: FNumber ? FNumber + 'f' : '',
-                shootingTime: DateTimeOriginal
+                shootingTime: formatDateTime(DateTimeOriginal)
             }
         }
     } catch (err) {

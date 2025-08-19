@@ -1523,17 +1523,20 @@ const useTemplate = (options, path) => {
     div.className = 'text-mark'
     const type = text.type;
     if (type === 'date') {
-      div.innerHTML = getDate();
+      const content = getDate()
+      div.innerHTML = text.content = content
     } else if (type === 'datetime') {
-      div.innerHTML = getDateTime();
+      const content = getDateTime();
+      div.innerHTML = text.content = content
     } else if (type === 'script') {
-      div.innerHTML = executeFunctionScript(text.expression)
+      const content = executeFunctionScript(text.expression)
+      div.innerHTML = text.content = content
     } else if (type === 'metadata') {
       const content = imageDetails.metadata[text.expression];
       if (!content) {
         return
       }
-      div.innerHTML = content
+      div.innerHTML = text.content = content;
     } else {
       div.innerHTML = text.content;
     }
