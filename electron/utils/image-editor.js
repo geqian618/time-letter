@@ -103,14 +103,14 @@ async function addBorderAndText(options) {
 
             // 计算初始位置（相对坐标）
             let textX = text.positionX * newWidth;
-            let textY = text.positionY * newHeight - 0.15 * textHeight;
+            let textY = text.positionY * newHeight - 0.2 * fontSize;
 
             // 处理右/底对齐
             if (text.references.includes('right')) {
                 textX = (1 - text.positionX) * newWidth;
             }
             if (text.references.includes('bottom')) {
-                textY = (1 - text.positionY) * newHeight - 1.15 * textHeight;
+                textY = (1 - text.positionY) * newHeight - 1.2 * fontSize;
             }
 
             // 1. 计算文字中心点

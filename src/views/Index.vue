@@ -2113,14 +2113,14 @@ function makeDraggable(dragElement, path) {
     // 限制在画布范围内
     const containerRect = previewImage.getBoundingClientRect();
 
-    const elementRect = dragElement.getBoundingClientRect();
+    const originalDragElementRect = dragElement.getBoundingClientRect();
 
     event.preventDefault();
 
     // 获取鼠标位置
-    offsetX = event.clientX - elementRect.left;
+    offsetX = event.clientX - originalDragElementRect.left;
 
-    offsetY = event.clientY - elementRect.top
+    offsetY = event.clientY - originalDragElementRect.top
 
     mouseSetupX = event.clientX
 
@@ -2128,19 +2128,20 @@ function makeDraggable(dragElement, path) {
 
     document.onmousemove = function elementDrag(event) {
 
+      event.preventDefault();
+
       if (dragElement.getAttribute('selected') === 'true') {
         return
       }
 
-      event.preventDefault();
+      const dragElementRect = dragElement.getBoundingClientRect();
 
       const mouseX = event.clientX;
 
       const mouseY = event.clientY;
 
-
-      if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (elementRect.width - offsetX)) {
-        if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (elementRect.height - offsetY)) {
+      if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (dragElementRect.width - offsetX)) {
+        if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (dragElementRect.height - offsetY)) {
 
           dragElement.style.left = `${mouseX - parentRect.left - offsetX}px`;
           dragElement.style.top = `${mouseY - parentRect.top - offsetY}px`;
@@ -2157,23 +2158,23 @@ function makeDraggable(dragElement, path) {
 
           let references = []
 
-          if (elementRect.left > widthCutLine) {
+          if (dragElementRect.left > widthCutLine) {
             references.push('right')
-            positionOffsetX = containerRect.right - dragElement.offsetLeft - dragElement.offsetWidth
+            positionOffsetX = containerRect.right - dragElementRect.left - dragElementRect.width
             positionX = positionOffsetX / containerRect.width
           } else {
             references.push('left')
-            positionOffsetX = dragElement.offsetLeft - containerRect.left
+            positionOffsetX = dragElementRect.left - containerRect.left
             positionX = positionOffsetX / containerRect.width;
           }
 
-          if (elementRect.top > heightCutLine) {
+          if (dragElementRect.top > heightCutLine) {
             references.push('bottom')
-            positionOffsetY = containerRect.bottom - dragElement.offsetTop - dragElement.offsetHeight
+            positionOffsetY = containerRect.bottom - dragElementRect.top - dragElementRect.height
             positionY = positionOffsetY / containerRect.height;
           } else {
             references.push('top')
-            positionOffsetY = dragElement.offsetTop - containerRect.top
+            positionOffsetY = dragElementRect.top - containerRect.top
             positionY = positionOffsetY / containerRect.height;
           }
 
@@ -2182,15 +2183,15 @@ function makeDraggable(dragElement, path) {
             textMark.references = references
             textMark.positionX = positionX
             textMark.positionY = positionY
-            textMark.offsetX = offsetX
-            textMark.offsetY = offsetY
+            textMark.offsetX = positionOffsetX
+            textMark.offsetY = positionOffsetY
           } else {
             const imageMark = image.settings.images.get(dragElement);
             imageMark.references = references
             imageMark.positionX = positionX
             imageMark.positionY = positionY
-            imageMark.offsetX = offsetX
-            imageMark.offsetY = offsetY
+            imageMark.offsetX = positionOffsetX
+            imageMark.offsetY = positionOffsetY
           }
         }
       }
