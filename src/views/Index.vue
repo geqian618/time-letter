@@ -270,6 +270,17 @@
                             :predefine="predefineColors"/>
                       </div>
                     </li>
+
+                    <li class="option">
+                      <div class="label">层级</div>
+                      <div class="value">
+                        <el-slider :min="0"
+                                   :max="100"
+                                   size="small"
+                                   v-model="textOptions.zIndex"
+                                   placement="top"/>
+                      </div>
+                    </li>
                     <!--                    <li class="option">-->
                     <!--                      <div class="label">背景颜色</div>-->
                     <!--                      <div class="value">-->
@@ -364,6 +375,16 @@
                                    :min="0"
                                    :max="360"
                                    v-model="imageOptions.angle"
+                                   placement="top"/>
+                      </div>
+                    </li>
+                    <li class="option">
+                      <div class="label">层级</div>
+                      <div class="value">
+                        <el-slider :min="0"
+                                   :max="100"
+                                   size="small"
+                                   v-model="imageOptions.zIndex"
                                    placement="top"/>
                       </div>
                     </li>
@@ -603,6 +624,7 @@ const textOptions = ref({
   fontColor: 'rgb(0,0,0,1)',
   tagBackground: 'rgb(255,255,255,0)',
   angle: 0,
+  zIndex: 0,
   textShadow: {
     offsetX: 0,
     offsetY: 0,
@@ -618,6 +640,7 @@ const imageOptions = ref({
   scale: 10,
   angle: 0,
   alpha: 10,
+  zIndex: 0,
   boxShadow: {
     offsetX: 0,
     offsetY: 0,
@@ -656,6 +679,7 @@ const settings = ref({
       scale: 10,
       angle: 0,
       alpha: 10,
+      zIndex: 0,
       boxShadow: {
         offsetX: 0,
         offsetY: 0,
@@ -682,6 +706,7 @@ const settings = ref({
       fontColor: 'rgb(0,0,0,1)',
       tagBackground: 'rgb(255,255,255,0)',
       angle: 0,
+      zIndex: 0,
       textShadow: {
         offsetX: 0,
         offsetY: 0,
@@ -840,9 +865,9 @@ const watchDownloadProgress = () => {
   window.electronAPI.downloadProgress((event, data) => {
     downloadProgressPercentage.value = data.percentage
     if (downloadProgressPercentage.value === 100) {
-      setTimeout(()=>{
+      setTimeout(() => {
         downloadProgressVisible.value = false
-      },1000)
+      }, 1000)
     }
   })
 }
@@ -1262,9 +1287,8 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
   }
   const {path} = selectedElement.value;
   const image = images.value.get(path);
-  const parentNode = image.getTargetElement().parentNode;
   const containerRect = image.getTargetElement().getBoundingClientRect();
-  const elements = parentNode.querySelectorAll('.image-mark');
+  const elements = Array.from(image.settings.images.keys());
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
 
@@ -1333,6 +1357,17 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
   }
 });
 
+
+const stopWatchImageZIndex = watch(() => imageOptions.value.zIndex, (newVal, oldVal) => {
+  const {path} = selectedElement.value;
+  const image = images.value.get(path);
+  const elements = Array.from(image.settings.images.keys());
+  for (let element of elements) {
+    if (element.getAttribute('selected') === 'true') {
+      image.settings.images.get(element).options.zIndex = newVal;
+    }
+  }
+})
 
 const stopWatchPhotoMetadata = watch(() => settings.value.metadata, (newVal, oldVal) => {
   const path = selectedElement.value.path;
