@@ -90,9 +90,6 @@
         </template>
       </div>
       <div class="page-right">
-        <div class="settings">
-          配置选项
-        </div>
         <div class="settings-details">
           <el-aside>
             <el-scrollbar>
@@ -2370,31 +2367,31 @@ function makeDraggable(dragElement, path) {
     .page-left {
       width: 20%;
       height: 100%;
-      background: #817e7e;
+      background: #474747;
       box-sizing: border-box;
       flex-shrink: 0;
 
       .el-aside {
         color: var(--el-text-color-primary);
-        background: #817e7e;
+        background: #474747;
         width: 100%;
         height: 100%;
 
         .el-menu {
           border-right: none;
           border-bottom: none;
-          background-color: #484949;
+          background-color: #474747;
 
           .el-menu-item.is-active {
-            background-color: #B2B2B2 !important;
-            color: black;
+            background-color: #757575 !important;
+            color: #faf8f8;
           }
 
           .text-marks-options {
             height: 50%;
             width: 100%;
             box-sizing: border-box;
-            background-color: #838282;
+            background-color: #343434;
 
             .text-marks {
               padding: 20px 10px;
@@ -2402,20 +2399,20 @@ function makeDraggable(dragElement, path) {
               gap: 20px;
               grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
               font-size: 12px;
-              background-color: #919090;
-              border-bottom: 1px solid #a2a4a6;
+              background-color: #474747;
 
               .text-mark {
                 width: fit-content;
                 height: fit-content;
                 cursor: move;
                 user-select: none;
-
                 img {
                   width: 25px;
                 }
+                :deep(img){
+                  color: white;
+                }
               }
-
               .text-mark:hover {
                 box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
                 background: #e3f2fd;
@@ -2423,18 +2420,28 @@ function makeDraggable(dragElement, path) {
             }
           }
 
+          :deep(.el-sub-menu) {
+            span,svg {
+              color: #A9A9A9;
+            }
+          }
+
+          :deep(.el-sub-menu .is-opened ) {
+            background: #343434;
+          }
+
           .image-mark-options {
             height: 50%;
             width: 100%;
             box-sizing: border-box;
-            background-color: #838282;
+            background-color: #343434;
             border-bottom: 1px solid #a2a4a6;
 
             .image-marks {
               padding: 10px;
               column-count: 3; /* 列数 */
               column-gap: 10px; /* 列间距 */
-              background-color: #919090;
+              background-color: #474747;
 
               .image-mark {
                 display: block;
@@ -2452,11 +2459,20 @@ function makeDraggable(dragElement, path) {
           }
 
           .templates-options {
-            background-color: #838282;
+            background-color: #343434;
             border-bottom: 1px solid #a2a4a6;
 
             .templates {
-              background-color: #919090;
+              background-color: #474747;
+
+              .el-menu-item {
+                color: #A9A9A9;
+                border-bottom: 1px solid #868686;
+              }
+
+              .el-menu-item:last-child {
+                border-bottom: none;
+              }
             }
           }
         }
@@ -2488,7 +2504,7 @@ function makeDraggable(dragElement, path) {
     }
 
     .page-center {
-      background: #a2a4a6;
+      background: #838485;
       width: 60%;
       height: 100%;
       border-left: 2px solid #484949;
@@ -2518,35 +2534,31 @@ function makeDraggable(dragElement, path) {
     .page-right {
       width: 20%;
       height: 100%;
-      background: #817e7e;
-
-      .settings {
-        height: 40px;
-        border-bottom: 2px solid #484949;
-        padding-left: 10px;
-        font-size: 16px;
-        display: flex;
-        justify-content: start;
-        align-items: center;
-      }
+      background: #474747;
 
       .settings-details {
         width: 100%;
-        height: calc(100% - 40px);
+        height: 100%;
         box-sizing: border-box;
 
         .el-aside {
           color: var(--el-text-color-primary);
-          background: #817e7e;
+          background: #474747;
           width: 100%;
           height: 100%;
 
           .el-menu {
             border-right: none;
-            background-color: #484949;
+            background-color: #474747;
+
+            :deep(.el-sub-menu) {
+              span, svg {
+                color: #A9A9A9;
+              }
+            }
 
             .el-sub-menu {
-              background-color: #838282;
+              background-color: #343434;
               border-bottom: 1px solid #a2a4a6;
 
               .control-option {
@@ -2558,10 +2570,11 @@ function makeDraggable(dragElement, path) {
               }
 
               .group-title {
+                color: #A9A9A9;
                 width: 100%;
                 height: 30px;
                 font-size: 14px;
-                background-color: #919090;
+                background-color: #474747;
                 display: flex;
                 justify-content: center;
                 align-items: end;
@@ -2576,7 +2589,7 @@ function makeDraggable(dragElement, path) {
                 width: 100%;
                 list-style: none;
                 padding: 10px 0 10px 10px;
-                background-color: #919090;
+                background-color: #474747;
 
                 .option {
                   height: 35px;
@@ -2600,6 +2613,7 @@ function makeDraggable(dragElement, path) {
                     justify-content: end;
                     width: 50px;
                     font-size: 12px;
+                    color: #A9A9A9;
                   }
 
                   .value {
@@ -2636,7 +2650,7 @@ function makeDraggable(dragElement, path) {
             }
 
             .el-sub-menu:last-child {
-              border-bottom: 1px solid #a2a4a6;
+              border-bottom: none;
             }
           }
         }
