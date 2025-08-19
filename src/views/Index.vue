@@ -1364,6 +1364,7 @@ const stopWatchImageZIndex = watch(() => imageOptions.value.zIndex, (newVal, old
   const elements = Array.from(image.settings.images.keys());
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
+      element.style.zIndex = newVal
       image.settings.images.get(element).options.zIndex = newVal;
     }
   }
