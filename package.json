@@ -65,7 +65,7 @@
       "uninstallerIcon": "electron/resources/favicon.ico"
     },
     "win": {
-      "icon": "electron/resources/favicon.ico",
+      "icon": "electron/resources/favicon.png",
       "target": [
         "nsis",
         "zip"
