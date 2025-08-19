@@ -1132,30 +1132,71 @@ const handleResize = () => {
 }
 
 
-const stopTextSettingsWatch = watch(textOptions, (newVal, oldVal) => {
+const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
   //停止监听 stopWatch();
   const {path} = selectedElement.value;
   const image = images.value.get(path);
   const parentNode = image.getTargetElement().parentNode;
-  const {height, width} = image.getTargetElement().getBoundingClientRect();
+  const containerRect = image.getTargetElement().getBoundingClientRect();
   const elements = parentNode.querySelectorAll('.text-mark');
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
-      image.settings.texts.get(element).options = _.cloneDeep(newVal)
-      image.settings.texts.get(element).options.fontSizeRatio = newVal.fontSize / width
-      image.settings.texts.get(element).options.textShadow.offsetXRatio = newVal.textShadow.offsetX / newVal.fontSize
-      image.settings.texts.get(element).options.textShadow.offsetYRatio = newVal.textShadow.offsetY / newVal.fontSize
-      image.settings.texts.get(element).options.textShadow.blurRatio = newVal.textShadow.blur / newVal.fontSize
+
       element.style.fontFamily = newVal.fontFamily
       element.style.fontSize = newVal.fontSize + 'px'
       element.style.color = newVal.fontColor
       element.style.background = newVal.tagBackground
       element.style.transformOrigin = 'center center'
       element.style.transform = `rotate(${newVal.angle}deg)`
-
       const {textShadow: {offsetX, offsetY, blur, shadowColor}} = newVal;
-
       element.style.textShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
+
+      await nextTick()
+
+      const dragElementRect = element.getBoundingClientRect();
+
+      const heightCutLine = containerRect.top + containerRect.height / 2;
+
+      const widthCutLine = containerRect.left + containerRect.width / 2;
+
+      let positionX;
+
+      let positionY;
+
+      let positionOffsetX;
+
+      let positionOffsetY;
+
+      let references = []
+
+      if (dragElementRect.left > widthCutLine) {
+        references.push('right')
+        positionOffsetX = containerRect.right - dragElementRect.left - dragElementRect.width
+        positionX = positionOffsetX / containerRect.width
+      } else {
+        references.push('left')
+        positionOffsetX = dragElementRect.left - containerRect.left
+        positionX = positionOffsetX / containerRect.width;
+      }
+
+      if (dragElementRect.top > heightCutLine) {
+        references.push('bottom')
+        positionOffsetY = containerRect.bottom - dragElementRect.top - dragElementRect.height
+        positionY = positionOffsetY / containerRect.height;
+      } else {
+        references.push('top')
+        positionOffsetY = dragElementRect.top - containerRect.top
+        positionY = positionOffsetY / containerRect.height;
+      }
+
+      image.settings.texts.get(element).options = _.cloneDeep(newVal)
+      image.settings.texts.get(element).references = references
+      image.settings.texts.get(element).positionX = positionX
+      image.settings.texts.get(element).positionY = positionY
+      image.settings.texts.get(element).options.fontSizeRatio = newVal.fontSize / containerRect.width
+      image.settings.texts.get(element).options.textShadow.offsetXRatio = newVal.textShadow.offsetX / newVal.fontSize
+      image.settings.texts.get(element).options.textShadow.offsetYRatio = newVal.textShadow.offsetY / newVal.fontSize
+      image.settings.texts.get(element).options.textShadow.blurRatio = newVal.textShadow.blur / newVal.fontSize
     }
   }
 }, {
