@@ -18,7 +18,7 @@
 
         <el-aside>
           <el-scrollbar>
-            <el-menu :default-openeds="['1', '2']">
+            <el-menu :default-openeds="['1']">
               <el-sub-menu index="1" class="templates-options">
                 <template #title>
                   <span>模版预设</span>
@@ -516,7 +516,7 @@
   </el-dialog>
 
 
-  <el-dialog v-model="downloadProgressVisible" align-center title="导出进度" :close="handleDownloadProgressClose"
+  <el-dialog v-model="downloadProgressVisible" align-center title="导出进度" @close="handleDownloadProgressClose"
              :close-on-click-modal="false"
              width="500">
     <el-progress :percentage="downloadProgressPercentage"/>
@@ -839,6 +839,11 @@ const watchTemplateContextMenu = () => {
 const watchDownloadProgress = () => {
   window.electronAPI.downloadProgress((event, data) => {
     downloadProgressPercentage.value = data.percentage
+    if (downloadProgressPercentage.value === 100) {
+      setTimeout(()=>{
+        downloadProgressVisible.value = false
+      },1000)
+    }
   })
 }
 
@@ -881,7 +886,6 @@ const openEditorTextLabel = (row) => {
 }
 
 const deleteTextLabel = (row) => {
-  console.log(row)
   for (let i = 0; i < textLabels.value.length; i++) {
     if (textLabels.value[i].id === row.id) {
       textLabels.value.splice(i, 1)
@@ -1531,7 +1535,7 @@ const useTemplate = (options, path) => {
     } else if (type === 'metadata') {
       const content = imageDetails.metadata[text.expression];
       if (!content) {
-        return
+        continue
       }
       div.innerHTML = text.content = content;
     } else {
@@ -1573,8 +1577,6 @@ const useTemplate = (options, path) => {
 
     }
     parentNode.appendChild(div)
-
-    console.log(text)
 
     imageDetails.settings.texts.set(div, text)
 
@@ -2406,13 +2408,12 @@ function makeDraggable(dragElement, path) {
                 height: fit-content;
                 cursor: move;
                 user-select: none;
+
                 img {
                   width: 25px;
                 }
-                :deep(img){
-                  color: white;
-                }
               }
+
               .text-mark:hover {
                 box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
                 background: #e3f2fd;
@@ -2421,13 +2422,23 @@ function makeDraggable(dragElement, path) {
           }
 
           :deep(.el-sub-menu) {
-            span,svg {
-              color: #A9A9A9;
+            span, svg {
+              color: #c2c1c1;
             }
-          }
 
-          :deep(.el-sub-menu .is-opened ) {
-            background: #343434;
+            .el-sub-menu__title:hover {
+              background-color: #343434;
+
+              span {
+                color: white;
+              }
+            }
+
+            .el-menu-item:hover {
+              background-color: #6e6e6e;
+              color: white !important;
+            }
+
           }
 
           .image-mark-options {
@@ -2507,8 +2518,8 @@ function makeDraggable(dragElement, path) {
       background: #838485;
       width: 60%;
       height: 100%;
-      border-left: 2px solid #484949;
-      border-right: 2px solid #484949;
+      border: 1px solid #8d8d8d;
+      border-bottom: none;
       box-sizing: border-box;
       display: flex;
       justify-content: center;
@@ -2553,7 +2564,7 @@ function makeDraggable(dragElement, path) {
 
             :deep(.el-sub-menu) {
               span, svg {
-                color: #A9A9A9;
+                color: #c2c1c1;
               }
             }
 
@@ -2633,6 +2644,12 @@ function makeDraggable(dragElement, path) {
                       }
                     }
 
+                    :deep(.el-select) {
+                      span {
+                        color: #4d4c4c;
+                      }
+                    }
+
                     .el-slider {
                       width: 100%;
                     }
@@ -2651,6 +2668,21 @@ function makeDraggable(dragElement, path) {
 
             .el-sub-menu:last-child {
               border-bottom: none;
+            }
+
+            :deep(.el-sub-menu) {
+
+              span, svg {
+                color: #c2c1c1;
+              }
+
+              .el-sub-menu__title:hover {
+                background-color: #343434;
+
+                span {
+                  color: white;
+                }
+              }
             }
           }
         }
@@ -2710,11 +2742,11 @@ function makeDraggable(dragElement, path) {
 
   }
 
-  .fill {
-    height: 15px;
-    width: 100%;
-  }
 }
 
+.el-dialog .fill {
+  height: 15px;
+  width: 100%;
+}
 
 </style>
