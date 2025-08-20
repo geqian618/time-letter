@@ -15,7 +15,6 @@
         <!--          </ul>-->
         <!--        </div>-->
 
-
         <el-aside>
           <el-scrollbar>
             <el-menu :default-openeds="['1']">
@@ -552,6 +551,92 @@
     <!--    </template>-->
   </el-dialog>
 
+  <el-dialog v-model="outputSettingsVisible" title="项目设置" @close=""
+             :close-on-click-modal="false"
+             width="800">
+    <el-tabs type="border-card" class="demo-tabs">
+      <el-tab-pane label="导出">
+        <div class="border-box">
+          <span class="border-label">图片尺寸</span>
+          <div class="options">
+            <div class="option">
+              <span>调整方式：</span>
+              <el-select v-model="projectSettings.outputSettings.outputSize.type" placeholder="Select" size="small"
+                         style="width: 240px">
+                <el-option
+                    v-for="item in outputSizeOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"/>
+              </el-select>
+            </div>
+            <!--            <div class="option" v-show="[6,7].includes(projectSettings.outputSettings.outputSize.type)">-->
+            <!--              <span>宽度：</span>-->
+            <!--              <el-input v-model="projectSettings.outputSettings.outputSize.width" size="small"-->
+            <!--                        placeholder="宽度"/>-->
+            <!--              <span>px</span>-->
+            <!--            </div>-->
+            <!--            <div class="option" v-show="[6,7].includes(projectSettings.outputSettings.outputSize.type)">-->
+            <!--              <span>高度：</span>-->
+            <!--              <el-input v-model="projectSettings.outputSettings.outputSize.height" size="small"-->
+            <!--                        placeholder="高度"/>-->
+            <!--              <span>px</span>-->
+            <!--            </div>-->
+            <div class="option" v-show="[2,3].includes(projectSettings.outputSettings.outputSize.type)">
+              <span>长边尺寸：</span>
+              <el-input v-model.number="projectSettings.outputSettings.outputSize.longSide" size="small"
+                        placeholder="长边"/>
+              <span>px</span>
+            </div>
+            <div class="option" v-show="[4,5].includes(projectSettings.outputSettings.outputSize.type)">
+              <span>短边尺寸：</span>
+              <el-input v-model.number="projectSettings.outputSettings.outputSize.shortSide" size="small"
+
+                        placeholder="短边"/>
+              <span>px</span>
+            </div>
+          </div>
+        </div>
+        <div class="border-box">
+          <span class="border-label">图片设置</span>
+          <div class="options">
+            <div class="option">
+              <span>输出格式：</span>
+              <el-select v-model="projectSettings.outputSettings.extname" placeholder="Select" size="small"
+                         style="width: 240px">
+                <el-option
+                    v-for="item in [{label:'原格式', value: 0},{label:'jpeg', value:1}, {label:'png', value: 2},{label:'webp', value: 3}]"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"/>
+              </el-select>
+            </div>
+            <div class="option" v-show="projectSettings.outputSettings.extname !== 2">
+              <span>图片品质：</span>
+              <div class="slider-demo-block">
+                <el-slider v-model="projectSettings.outputSettings.quality" :min="1" :max="10" size="small" show-input/>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!--        <div class="border-box">-->
+        <!--          <span class="border-label">输出位置</span>-->
+        <!--          <div class="options">-->
+        <!--            <div class="option">-->
+        <!--              <span>文件夹：{{ projectSettings.outputSettings.outputDirectory }}</span>-->
+        <!--              <el-button size="small" type="info" @click="selectDirectory">选择</el-button>-->
+        <!--            </div>-->
+        <!--          </div>-->
+        <!--        </div>-->
+      </el-tab-pane>
+      <el-tab-pane label="边框"></el-tab-pane>
+      <el-tab-pane label="文本"></el-tab-pane>
+      <el-tab-pane label="图片"></el-tab-pane>
+    </el-tabs>
+  </el-dialog>
+
+
 </template>
 
 <script setup lang="js">
@@ -565,6 +650,8 @@ import {executeFunctionScript} from '@/utils/script-helper'
 import {fontOptions} from '@/hook/font-options'
 
 import _ from 'lodash';
+
+import {projectSettings, outputSizeOptions} from '@/config/project-settings'
 
 const predefineColors = ref([
   '#ff4500',
@@ -751,6 +838,8 @@ const editorTextLabelDialogVisible = ref(false)
 
 const downloadProgressVisible = ref(false)
 
+const outputSettingsVisible = ref(false)
+
 const downloadProgressPercentage = ref(0)
 
 const switchElement = ref(true)
@@ -836,6 +925,10 @@ const switchSliderRange = () => {
   }
 }
 
+const selectDirectory = async () => {
+  projectSettings.value.outputSettings.outputPath = await window.electronAPI.selectDirectory()
+}
+
 const openContextMenu = () => {
   if (images.value.size) {
     window.electronAPI.openContextMenu()
@@ -857,6 +950,12 @@ const watchTemplateContextMenu = () => {
     } else if (type === 1) {
       renameDialogVisible.value = true
     }
+  })
+}
+
+const editorOutputSettings = () => {
+  window.electronAPI.editorOutputSettings((event) => {
+    outputSettingsVisible.value = true
   })
 }
 
@@ -998,6 +1097,7 @@ const watchContextMenu = () => {
 
           newSettings.push({
             path: paths[i],
+            projectSettings: projectSettings.value,
             outputDirectory: data.outputDirectory,
             settings: {
               border: settings.border,
@@ -1155,6 +1255,23 @@ const handleResize = () => {
     }, 0); // 200ms 防抖间隔
   });
 
+}
+
+
+const stopTextProjectSettingsWatch = watch(projectSettings, (newVal, oldVal) => {
+  localStorage.setItem('projectSettings', JSON.stringify(newVal))
+}, {
+  //深度监视（监视属性变化）
+  deep: true,
+  //immediate 立即触发一次监视
+  //immediate: true
+});
+
+const loadProjectSettings = () => {
+  const jsonStr = localStorage.getItem('projectSettings');
+  if (jsonStr) {
+    projectSettings.value = JSON.parse(jsonStr)
+  }
 }
 
 
@@ -1723,7 +1840,9 @@ onMounted(() => {
   watchEditorLabel()
   watchCtrlA()
   watchDownloadProgress()
+  editorOutputSettings()
   handleResize()
+  loadProjectSettings()
 })
 
 onBeforeMount(() => {
@@ -2508,6 +2627,7 @@ function makeDraggable(dragElement, path) {
           .templates-options {
             background-color: #343434;
             border-bottom: 1px solid #a2a4a6;
+            padding: 0 1px;
 
             .templates {
               background-color: #474747;
@@ -2784,5 +2904,91 @@ function makeDraggable(dragElement, path) {
   height: 15px;
   width: 100%;
 }
+
+
+.el-dialog {
+
+
+  .demo-tabs > .el-tabs__content {
+    padding: 32px;
+    color: #6b778c;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .demo-tabs .custom-tabs-label .el-icon {
+    vertical-align: middle;
+  }
+
+  .demo-tabs .custom-tabs-label span {
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+
+  .el-tabs {
+    /* 基础样式 */
+    .border-box {
+      position: relative;
+      border: 1px solid #c8c8c9;
+      border-radius: 2px;
+      padding: 25px 20px 20px;
+      margin: 30px 0;
+      background: white;
+
+      .border-label {
+        position: absolute;
+        top: -12px;
+        left: 15px;
+        background: white;
+        padding: 0 12px;
+        font-size: 14px;
+        color: #979798;
+      }
+
+      .options {
+        width: 100%;
+
+        .option {
+          font-size: 13px;
+          width: 100%;
+          display: flex;
+          align-items: center;
+          height: 40px;
+
+          .el-select {
+            width: 160px !important;
+          }
+
+          .slider-demo-block {
+            width: 250px;
+            display: flex;
+            align-items: center;
+
+            :deep(.el-slider) {
+              margin-top: 0;
+              margin-left: 10px;
+
+              .el-slider__input {
+                margin-right: 20px;
+                width: 85px !important;
+              }
+            }
+          }
+
+          .el-input {
+            width: 100px;
+          }
+
+          span, .el-button {
+            margin-left: 5px;
+          }
+        }
+      }
+
+    }
+  }
+
+}
+
 
 </style>

@@ -167,12 +167,31 @@ async function drawImage(ctx, imageItem, newWidth, newHeight) {
     ctx.restore();
 }
 
+
+const getExtname = (inputPath, extnameType) => {
+    let extname;
+    if (extnameType === 0) {
+        extname = path.extname(inputPath).slice(1)
+        if (extname === 'jpg') {
+            extname = 'jpeg'
+        }
+    } else if (extnameType === 1) {
+        extname = 'jpeg'
+    } else if (extnameType === 2) {
+        extname = 'png'
+    } else {
+        extname = 'webp'
+    }
+    return extname;
+}
+
 async function addBorderAndText(options) {
     try {
 
         let {
             inputPath,      // 原始图片路径
             outputDirectory,     // 输出目录
+            projectSettings,
             border: {
                 borderLeftRatio,
                 borderRightRatio,
@@ -185,11 +204,22 @@ async function addBorderAndText(options) {
             images
         } = options;
 
-        const outputPath = path.join(outputDirectory, path.basename(inputPath))
 
-        let extname = path.extname(inputPath).slice(1);
+        const outputSettings = projectSettings.outputSettings;
 
-        extname = extname === 'jpg' ? 'jpeg' : extname
+        let {
+            quality,
+            // outputPath,
+            extname: extnameType,
+            outputSize: {longSide, shortSide, type}
+        } = outputSettings;
+
+
+        quality = quality / 10;
+
+        const extname = getExtname(inputPath, extnameType)
+
+        const outputPath = path.join(outputDirectory, path.parse(inputPath).name + "." + extname)
 
         // 1. 读取图片为 Buffer
         const imageBuffer = await fs.readFile(inputPath);
@@ -198,28 +228,81 @@ async function addBorderAndText(options) {
 
         let borderLeft, borderRight, borderTop, borderBottom
 
+        let newWidth, newHeight, imageWidth, imageHeight;
+
+        const widthRatio = 1 + borderLeftRatio + borderRightRatio
+
+        const heightRatio = 1 + borderTopRatio + borderBottomRatio
+
+        // 原始尺寸，不含边框
+        if (type === 0) {
+            imageWidth = image.width;
+            imageHeight = image.height;
+        } else if (type === 1) {//原始尺寸，含边框
+            imageWidth = image.width / widthRatio;
+            imageHeight = image.height / heightRatio;
+        } else if (type === 2) { // 长边固定，不包含边框
+            if (image.height > image.width) {
+                imageHeight = longSide;
+                imageWidth = longSide * image.width / image.height
+            } else {
+                imageWidth = longSide
+                imageHeight = longSide * image.height / image.width;
+            }
+        } else if (type === 3) {// 长边固定，包含边框
+            if (image.height > image.width) {
+                imageHeight = longSide / heightRatio;
+                imageWidth = longSide * image.width / image.height / widthRatio
+            } else {
+                imageWidth = longSide / widthRatio
+                imageHeight = longSide * image.height / image.width / heightRatio;
+            }
+        } else if (type === 4) { // 短边固定，不包含边框
+            if (image.height < image.width) {
+                imageHeight = shortSide;
+                imageWidth = shortSide * image.width / image.height
+            } else {
+                imageWidth = shortSide
+                imageHeight = longSide * image.height / image.width;
+            }
+        } else if (type === 5) { // 短边固定，包含边框
+            if (image.height < image.width) {
+                imageHeight = shortSide / heightRatio;
+                imageWidth = shortSide * image.width / image.height / widthRatio
+            } else {
+                imageWidth = shortSide / widthRatio
+                imageHeight = longSide * image.height / image.width / heightRatio
+            }
+        }
         // 边框值为比率
         if (percentage) {
-            borderLeft = borderLeftRatio * image.width
-            borderRight = borderRightRatio * image.width
-            borderTop = borderTopRatio * image.height
-            borderBottom = borderBottomRatio * image.height
+            borderLeft = borderLeftRatio * imageWidth
+            borderRight = borderRightRatio * imageWidth
+            borderTop = borderTopRatio * imageHeight
+            borderBottom = borderBottomRatio * imageHeight
         }
 
         // 2. 计算新画布尺寸
-        const newWidth = image.width + borderLeft + borderRight;
-        const newHeight = image.height + borderTop + borderBottom;
+        newWidth = imageWidth + borderLeft + borderRight;
+        newHeight = imageHeight + borderTop + borderBottom;
 
         // 3. 创建画布
         const canvas = createCanvas(newWidth, newHeight);
         const ctx = canvas.getContext('2d');
+
+        //设置高质量渲染选项
+        ctx.patternQuality = 'best';
+        ctx.quality = 'best'
+        ctx.antialias = 'subpixel'
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high'
 
         // 4. 绘制边框背景
         ctx.fillStyle = borderColor;
         ctx.fillRect(0, 0, newWidth, newHeight);
 
         // 5. 绘制原始图片（居中）
-        ctx.drawImage(image, borderLeft, borderTop, image.width, image.height);
+        ctx.drawImage(image, borderLeft, borderTop, imageWidth, imageHeight);
 
         let elements = [...texts, ...images];
 
@@ -235,7 +318,14 @@ async function addBorderAndText(options) {
         }
 
         // 7. 保存图片 (使用 Buffer 写入)
-        const buffer = canvas.toBuffer(`image/${extname}`, {quality: 1}); // 或 'image/png'
+        const buffer = canvas.toBuffer(`image/${extname}`, {
+            // 图片质量
+            quality: quality,
+            // 非渐进式
+            progressive: false,
+            // 禁用色度子采样以保持颜色精度
+            chromaSubsampling: false
+        }); // 或 'image/png'
         await fs.writeFile(outputPath, buffer);
         console.log(`处理完成！图片已保存至: ${outputPath}`);
     } catch (error) {

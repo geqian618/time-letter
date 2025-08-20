@@ -90,6 +90,10 @@ const saveFiles = async () => {
 }
 
 
+const outputSettings = () => {
+    window.webContents.send('editor-output-settings')
+}
+
 /**
  * mainMenu 定义为函数，主进程可以传参到菜单中
  * @settings args
@@ -123,8 +127,8 @@ const mainMenu = (mainWindow) => {
             label: '设置',
             submenu: [
                 {
-                    label: '导出设置',
-                    role: '',
+                    label: '项目设置',
+                    click: outputSettings,
                 },
             ]
         },

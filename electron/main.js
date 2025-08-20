@@ -1,4 +1,4 @@
-const {app, ipcMain, protocol, BrowserWindow, Menu} = require('electron')
+const {app, ipcMain, protocol, BrowserWindow, Menu, dialog} = require('electron')
 const WinState = require('electron-win-state').default
 const path = require('path')
 
@@ -95,6 +95,18 @@ ipcMain.handle('parse-photo-metadata', async (event, filePath) => {
 
 ipcMain.on('open-contextMenu', () => {
     contextMenu(window).popup()
+})
+
+ipcMain.handle('select-directory', async (event, args) => {
+    const {canceled, filePaths} = await dialog.showOpenDialog({
+        buttonLabel: '选择',
+        // defaultPath: app.getPath('desktop'),
+        properties: ['multiSelections', 'createDirectory', 'openFile', "openDirectory"]
+    })
+
+    if (!canceled && filePaths && filePaths.length) {
+        return filePaths[0]
+    }
 })
 
 ipcMain.on('open-template-contextMenu', () => {
