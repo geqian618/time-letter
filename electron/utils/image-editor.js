@@ -209,7 +209,6 @@ async function addBorderAndText(options) {
 
         let {
             quality,
-            // outputPath,
             extname: extnameType,
             outputSize: {longSide, shortSide, type}
         } = outputSettings;

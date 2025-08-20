@@ -4,12 +4,9 @@ const projectSettings = ref({
     outputSettings: {
         outputSize: {
             type: 0,
-            // width: 0,
-            // height: 0,
             longSide: 0,
             shortSide: 0
         },
-        outputDirectory: "",
         extname: 0,
         quality: 10
     }
