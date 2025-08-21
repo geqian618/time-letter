@@ -2914,16 +2914,29 @@ function makeDraggable(dragElement, path) {
 :deep(.el-dialog) {
   background: #F0F0F0;
 
+  .el-dialog__title {
+    font-size: 16px;
+  }
+
   .el-tabs, .el-select {
     background: #F0F0F0;
   }
 
   .el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active {
-    color: #817e7e;
+    color: black;
   }
 
   .el-tabs--border-card > .el-tabs__header .el-tabs__item:hover {
     color: #817e7e;
+  }
+
+  .el-tabs .el-tabs__nav-scroll {
+    height: 30px;
+    background: #e3e3e3;
+    .el-tabs__item {
+      height: 30px;
+      font-size: 12px;
+    }
   }
 }
 
