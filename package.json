@@ -14,7 +14,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "canvas": "^3.1.2",
+    "canvas": "^3.2.0",
     "chokidar": "^4.0.3",
     "electron-win-state": "^1.1.22",
     "element-plus": "^2.10.5",
@@ -75,7 +75,7 @@
       "dist/**/*",
       "electron/**/*"
     ],
-    "extraResources":  {
+    "extraResources": {
       "from": "resources/",
       "to": "./resources"
     }

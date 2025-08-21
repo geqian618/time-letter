@@ -37,6 +37,9 @@ function getFileSize(filePath) {
 }
 
 function formatDateTime(DateTimeOriginal) {
+    if (!DateTimeOriginal) {
+        return
+    }
     let parts = DateTimeOriginal.split(' ');
     let datePart = parts[0].replace(/:/g, '-');
     let timePart = parts[1];

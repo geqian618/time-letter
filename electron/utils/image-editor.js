@@ -179,7 +179,7 @@ const getExtname = (inputPath, extnameType) => {
         extname = 'jpeg'
     } else if (extnameType === 2) {
         extname = 'png'
-    } else {
+    } else if (extnameType === 3) {
         extname = 'webp'
     }
     return extname;
@@ -319,11 +319,7 @@ async function addBorderAndText(options) {
         // 7. 保存图片 (使用 Buffer 写入)
         const buffer = canvas.toBuffer(`image/${extname}`, {
             // 图片质量
-            quality: quality,
-            // 非渐进式
-            progressive: false,
-            // 禁用色度子采样以保持颜色精度
-            chromaSubsampling: false
+            quality: quality
         }); // 或 'image/png'
         await fs.writeFile(outputPath, buffer);
         console.log(`处理完成！图片已保存至: ${outputPath}`);

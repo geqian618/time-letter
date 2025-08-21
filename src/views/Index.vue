@@ -552,7 +552,6 @@
   </el-dialog>
 
   <el-dialog v-model="outputSettingsVisible" title="项目设置" @close=""
-             :close-on-click-modal="false"
              width="800">
     <el-tabs type="border-card" class="demo-tabs">
       <el-tab-pane label="导出">
@@ -605,7 +604,7 @@
               <el-select v-model="projectSettings.outputSettings.extname" placeholder="Select" size="small"
                          style="width: 240px">
                 <el-option
-                    v-for="item in [{label:'原格式', value: 0},{label:'jpeg', value:1}, {label:'png', value: 2},{label:'webp', value: 3}]"
+                    v-for="item in [{label:'原格式', value: 0},{label:'jpeg', value:1}, {label:'png', value: 2}]"
                     :key="item.value"
                     :label="item.label"
                     :value="item.value"/>
@@ -2908,28 +2907,11 @@ function makeDraggable(dragElement, path) {
 
 .el-dialog {
 
-
-  .demo-tabs > .el-tabs__content {
-    padding: 32px;
-    color: #6b778c;
-    font-size: 12px;
-    font-weight: 600;
-  }
-
-  .demo-tabs .custom-tabs-label .el-icon {
-    vertical-align: middle;
-  }
-
-  .demo-tabs .custom-tabs-label span {
-    vertical-align: middle;
-    margin-left: 4px;
-  }
-
   .el-tabs {
     /* 基础样式 */
     .border-box {
       position: relative;
-      border: 1px solid #c8c8c9;
+      border: 1px solid #e4e4e5;
       border-radius: 2px;
       padding: 25px 20px 20px;
       margin: 30px 0;
