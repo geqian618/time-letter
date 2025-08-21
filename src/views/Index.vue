@@ -2959,7 +2959,7 @@ function makeDraggable(dragElement, path) {
         background: #F0F0F0;
         padding: 0 12px;
         font-size: 14px;
-        color: #979798;
+        color: #7c7b7b;
       }
 
       .options {
