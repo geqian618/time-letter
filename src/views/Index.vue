@@ -1,641 +1,643 @@
 <template>
-  <div class="page-layout">
-    <div class="page-top"></div>
-    <div class="page-main">
-      <div class="page-left">
-        <!--        <div class="metadata">-->
-        <!--          图片元信息-->
-        <!--        </div>-->
-        <!--        <div class="details">-->
-        <!--          <ul ref="metadataContainer" @wheel="handleMetadataWheel">-->
-        <!--            <li v-for="(item) in metadata" :key="item.label">-->
-        <!--              <span class="label">{{ item.label + '：' }}</span>-->
-        <!--              <span class="data">{{ item.value }}</span>-->
-        <!--            </li>-->
-        <!--          </ul>-->
-        <!--        </div>-->
+  <div>
+    <div class="page-layout">
+      <div class="page-top"></div>
+      <div class="page-main">
+        <div class="page-left">
+          <!--        <div class="metadata">-->
+          <!--          图片元信息-->
+          <!--        </div>-->
+          <!--        <div class="details">-->
+          <!--          <ul ref="metadataContainer" @wheel="handleMetadataWheel">-->
+          <!--            <li v-for="(item) in metadata" :key="item.label">-->
+          <!--              <span class="label">{{ item.label + '：' }}</span>-->
+          <!--              <span class="data">{{ item.value }}</span>-->
+          <!--            </li>-->
+          <!--          </ul>-->
+          <!--        </div>-->
 
-        <el-aside>
-          <el-scrollbar>
-            <el-menu :default-openeds="['1']">
-              <el-sub-menu index="1" class="templates-options">
-                <template #title>
-                  <span>模版预设</span>
-                </template>
-                <div class="templates">
-                  <el-menu-item
-                      @contextmenu="openTemplateContextMenu(template)"
-                      class="template" v-for="template in templates"
-                      :key="template.id"
-                      :index="template.id"
-                      @click="enableTemplate(template)">
-                    {{ template.name }}
-                  </el-menu-item>
-                </div>
-              </el-sub-menu>
-              <el-sub-menu index="2" class="image-mark-options">
-                <template #title>
-                  <span>图片标签</span>
-                </template>
-                <div class="image-marks" ref="imageMarks">
-                  <img class="image-mark" v-for="([key, label]) in imageLabels"
-                       :path="label.path"
-                       :key="label.path" draggable="true"
-                       :src="label.url">
-                </div>
-              </el-sub-menu>
-              <el-sub-menu index="3" class="text-marks-options">
-                <template #title>
-                  <span>文本标签</span>
-                </template>
-                <el-scrollbar class="scrollBar">
-                  <div class="text-marks" ref="textMarks">
-                    <el-tooltip class="box-item" effect="dark" content="文本" placement="top">
-                      <div class="text-mark" draggable="true" text="文本" type="text">
-                        <img src="../assets/icon/text.svg">
-                      </div>
-                    </el-tooltip>
-                    <el-tooltip class="box-item" effect="dark" content="日期" placement="top">
-                      <div class="text-mark" draggable="true" type="date">
-                        <img src="../assets/icon/date.svg">
-                      </div>
-                    </el-tooltip>
-                    <el-tooltip class="box-item" effect="dark" content="日期时间" placement="top">
-                      <div class="text-mark" draggable="true" type="datetime">
-                        <img src="../assets/icon/datetime.svg">
-                      </div>
-                    </el-tooltip>
-                    <el-tooltip v-for="(textLabel) in textLabels" class="box-item" effect="dark"
-                                :content="textLabel.tips" placement="top">
-                      <div class="text-mark" draggable="true"
-                           :text="textLabel.content"
-                           :type="textLabel.type ==='text'?'text':'script'">
-                        <img src="../assets/icon/custom.svg">
-                      </div>
-                    </el-tooltip>
-                  </div>
-                </el-scrollbar>
-              </el-sub-menu>
-            </el-menu>
-          </el-scrollbar>
-        </el-aside>
-      </div>
-
-      <div class="page-center">
-        <template v-for="([key, image]) in images" :key="image.path">
-          <div class="preview-item" :path="image.path" v-show="image.visible" @contextmenu="openContextMenu">
-            <img :src="image.url" :id="image.path">
-          </div>
-        </template>
-      </div>
-      <div class="page-right">
-        <div class="settings-details">
           <el-aside>
             <el-scrollbar>
               <el-menu :default-openeds="['1']">
-                <el-sub-menu index="1">
+                <el-sub-menu index="1" class="templates-options">
                   <template #title>
-                    <span>基本</span>
+                    <span>模版预设</span>
                   </template>
-                  <ul class="options metadata">
-                    <li class="option">
-                      <div class="label text-mark" draggable="true" type="metadata" text="cameraBrand">相机品牌</div>
-                      <div class="value">
-                        <el-input v-model="settings.metadata.cameraBrand" size="small"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label text-mark" draggable="true" type="metadata" text="cameraModel">相机型号</div>
-                      <div class="value">
-                        <el-input v-model="settings.metadata.cameraModel" size="small"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label text-mark" draggable="true" type="metadata" text="lensModel">镜头型号</div>
-                      <div class="value">
-                        <el-input v-model="settings.metadata.lensModel" size="small"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label text-mark" draggable="true" type="metadata" text="focalLength">焦段</div>
-                      <div class="value">
-                        <el-input v-model="settings.metadata.focalLength" size="small"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label text-mark" draggable="true" type="metadata" text="iso">IOS</div>
-                      <div class="value">
-                        <el-input v-model="settings.metadata.iso" size="small"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label text-mark" draggable="true" type="metadata" text="shutter">快门</div>
-                      <div class="value">
-                        <el-input v-model="settings.metadata.shutter" size="small"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label text-mark" draggable="true" type="metadata" text="aperture">光圈</div>
-                      <div class="value">
-                        <el-input v-model="settings.metadata.aperture" size="small"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label text-mark" draggable="true" type="metadata" text="shootingTime">拍摄日期</div>
-                      <div class="value">
-                        <el-input v-model="settings.metadata.shootingTime" size="small"/>
-                      </div>
-                    </li>
-                  </ul>
+                  <div class="templates">
+                    <el-menu-item
+                        @contextmenu="openTemplateContextMenu(template)"
+                        class="template" v-for="template in templates"
+                        :key="template.id"
+                        :index="template.id"
+                        @click="enableTemplate(template)">
+                      {{ template.name }}
+                    </el-menu-item>
+                  </div>
                 </el-sub-menu>
-                <el-sub-menu index="2">
+                <el-sub-menu index="2" class="image-mark-options">
                   <template #title>
-                    <span>边框</span>
+                    <span>图片标签</span>
                   </template>
-                  <ul class="options">
-                    <li class="option">
-                      <div class="label">边框数值</div>
-                      <div class="value">
-                        <el-select
-                            @change="switchSliderRange"
-                            v-model="settings.border.borderType"
-                            :options="borderOptions"
-                            size="small"
-                            placeholder="Select"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">上边框</div>
-                      <div class="value">
-                        <el-slider @change="handleBorders"
-                                   size="small"
-                                   :min="sliderRange.min"
-                                   :max="sliderRange.max"
-                                   v-model="settings.border.borderTop"
-                                   placement="top"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">左边框</div>
-                      <div class="value">
-                        <el-slider @change="handleBorders"
-                                   size="small"
-                                   :min="sliderRange.min"
-                                   :max="sliderRange.max"
-                                   v-model="settings.border.borderLeft"
-                                   placement="top"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">右边框</div>
-                      <div class="value">
-                        <el-slider @change="handleBorders"
-                                   size="small"
-                                   :min="sliderRange.min"
-                                   :max="sliderRange.max"
-                                   v-model="settings.border.borderRight"
-                                   placement="top"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">下边框</div>
-                      <div class="value">
-                        <el-slider @change="handleBorders"
-                                   size="small"
-                                   :min="sliderRange.min"
-                                   :max="sliderRange.max"
-                                   v-model="settings.border.borderBottom"
-                                   placement="top"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">边框颜色</div>
-                      <div class="value">
-                        <el-color-picker
-                            size="small"
-                            @change="handleBorders"
-                            v-model="settings.border.borderColor"
-                            show-alpha
-                            :predefine="predefineColors"/>
-                      </div>
-                    </li>
-                  </ul>
+                  <div class="image-marks" ref="imageMarks">
+                    <img class="image-mark" v-for="([key, label]) in imageLabels"
+                         :path="label.path"
+                         :key="label.path" draggable="true"
+                         :src="label.url">
+                  </div>
                 </el-sub-menu>
-                <el-sub-menu index="3">
+                <el-sub-menu index="3" class="text-marks-options">
                   <template #title>
-                    <span>文本</span>
+                    <span>文本标签</span>
                   </template>
-                  <div class="group-title">基本</div>
-                  <ul class="options">
-                    <li class="option">
-                      <div class="label">字体类型</div>
-                      <div class="value">
-                        <el-select
-                            v-model="textOptions.fontFamily"
-                            :options="fontOptions"
-                            size="small"
-                            placeholder="Select"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">字体大小</div>
-                      <div class="value">
-                        <el-slider
-                            v-model="textOptions.fontSize"
-                            show-alpha
-                            size="small"
-                            :predefine="predefineColors"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">旋转角度</div>
-                      <div class="value">
-                        <el-slider @change=""
-                                   size="small"
-                                   :min="0"
-                                   :max="360"
-                                   v-model="textOptions.angle"
-                                   placement="top"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">字体颜色</div>
-                      <div class="value">
-                        <el-color-picker
-                            @change=""
-                            v-model="textOptions.fontColor"
-                            show-alpha
-                            size="small"
-                            :predefine="predefineColors"/>
-                      </div>
-                    </li>
-
-                    <li class="option">
-                      <div class="label">层级</div>
-                      <div class="value">
-                        <el-slider :min="0"
-                                   :max="100"
-                                   size="small"
-                                   v-model="textOptions.zIndex"
-                                   placement="top"/>
-                      </div>
-                    </li>
-                    <!--                    <li class="option">-->
-                    <!--                      <div class="label">背景颜色</div>-->
-                    <!--                      <div class="value">-->
-                    <!--                        <el-color-picker-->
-                    <!--                            @change=""-->
-                    <!--                            v-model="textOptions.tagBackground"-->
-                    <!--                            show-alpha-->
-                    <!--                            size="small"-->
-                    <!--                            :predefine="predefineColors"/>-->
-                    <!--                      </div>-->
-                    <!--                    </li>-->
-                  </ul>
-                  <div class="group-title">文本阴影</div>
-                  <ul class="options">
-                    <li class="option">
-                      <div class="label">X轴偏移</div>
-                      <div class="value">
-                        <el-slider @change=""
-                                   size="small"
-                                   :min="-50"
-                                   :max="50"
-                                   v-model="textOptions.textShadow.offsetX"
-                                   placement="top"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">Y轴偏移</div>
-                      <div class="value">
-                        <el-slider
-                            v-model="textOptions.textShadow.offsetY"
-                            :min="-50"
-                            :max="50"
-                            show-alpha
-                            size="small"
-                            :predefine="predefineColors"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">模糊程度</div>
-                      <div class="value">
-                        <el-slider
-                            v-model="textOptions.textShadow.blur"
-                            show-alpha
-                            size="small"
-                            :predefine="predefineColors"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">阴影颜色</div>
-                      <div class="value">
-                        <el-color-picker
-                            @change=""
-                            v-model="textOptions.textShadow.shadowColor"
-                            show-alpha
-                            size="small"
-                            :predefine="predefineColors"/>
-                      </div>
-                    </li>
-                  </ul>
-                </el-sub-menu>
-                <el-sub-menu index="4">
-                  <template #title>
-                    <span>图片</span>
-                  </template>
-                  <div class="group-title">基本</div>
-                  <ul class="options">
-                    <li class="option">
-                      <div class="label">缩放</div>
-                      <div class="value">
-                        <el-slider :min="1"
-                                   :max="100"
-                                   size="small"
-                                   v-model="imageOptions.scale"
-                                   placement="top"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">不透明度</div>
-                      <div class="value">
-                        <el-slider :min="0"
-                                   :max="10"
-                                   size="small"
-                                   v-model="imageOptions.alpha"
-                                   placement="top"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">旋转角度</div>
-                      <div class="value">
-                        <el-slider @change=""
-                                   size="small"
-                                   :min="0"
-                                   :max="360"
-                                   v-model="imageOptions.angle"
-                                   placement="top"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">层级</div>
-                      <div class="value">
-                        <el-slider :min="0"
-                                   :max="100"
-                                   size="small"
-                                   v-model="imageOptions.zIndex"
-                                   placement="top"/>
-                      </div>
-                    </li>
-                  </ul>
-
-                  <div class="group-title">图片阴影</div>
-                  <ul class="options">
-                    <li class="option">
-                      <div class="label">X轴偏移</div>
-                      <div class="value">
-                        <el-slider size="small"
-                                   :min="-50"
-                                   :max="50"
-                                   v-model="imageOptions.boxShadow.offsetX"
-                                   placement="top"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">Y轴偏移</div>
-                      <div class="value">
-                        <el-slider
-                            v-model="imageOptions.boxShadow.offsetY"
-                            :min="-50"
-                            :max="50"
-                            show-alpha
-                            size="small"
-                            :predefine="predefineColors"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">模糊程度</div>
-                      <div class="value">
-                        <el-slider
-                            v-model="imageOptions.boxShadow.blur"
-                            show-alpha
-                            size="small"
-                            :predefine="predefineColors"/>
-                      </div>
-                    </li>
-                    <li class="option">
-                      <div class="label">阴影颜色</div>
-                      <div class="value">
-                        <el-color-picker
-                            @change=""
-                            v-model="imageOptions.boxShadow.shadowColor"
-                            show-alpha
-                            size="small"
-                            :predefine="predefineColors"/>
-                      </div>
-                    </li>
-                  </ul>
+                  <el-scrollbar class="scrollBar">
+                    <div class="text-marks" ref="textMarks">
+                      <el-tooltip class="box-item" effect="dark" content="文本" placement="top">
+                        <div class="text-mark" draggable="true" text="文本" type="text">
+                          <img src="../assets/icon/text.svg">
+                        </div>
+                      </el-tooltip>
+                      <el-tooltip class="box-item" effect="dark" content="日期" placement="top">
+                        <div class="text-mark" draggable="true" type="date">
+                          <img src="../assets/icon/date.svg">
+                        </div>
+                      </el-tooltip>
+                      <el-tooltip class="box-item" effect="dark" content="日期时间" placement="top">
+                        <div class="text-mark" draggable="true" type="datetime">
+                          <img src="../assets/icon/datetime.svg">
+                        </div>
+                      </el-tooltip>
+                      <el-tooltip v-for="(textLabel) in textLabels" class="box-item" effect="dark"
+                                  :content="textLabel.tips" placement="top">
+                        <div class="text-mark" draggable="true"
+                             :text="textLabel.content"
+                             :type="textLabel.type ==='text'?'text':'script'">
+                          <img src="../assets/icon/custom.svg">
+                        </div>
+                      </el-tooltip>
+                    </div>
+                  </el-scrollbar>
                 </el-sub-menu>
               </el-menu>
             </el-scrollbar>
           </el-aside>
         </div>
-      </div>
-    </div>
 
-    <div class="page-images" id="image-list" ref="imageList" @wheel="handleWheel" @contextmenu="openContextMenu">
-      <img class="imageItem"
-           :key="key"
-           :path="key"
-           v-lazy="image.url"
-           v-for="([key, image]) in images"
-           @click.meta.exact="handleMultipleSelect($event,image)"
-           @click.ctrl.exact="handleMultipleSelect($event, image)"
-           @click.shift.exact="handleShiftClick($event,image)"
-           @click="handlePreview($event, image)">
-    </div>
-  </div>
-
-  <el-dialog align-center v-model="customTextLabelDialogVisible" title="新增文本标签" width="500" draggable>
-    <el-form :model="textLabel" label-width="auto" style="max-width: 90%" @submit.native.prevent>
-      <el-form-item label="文本类型">
-        <el-select @change="handleChangeTextType" v-model="textLabel.type" placeholder="文本类型">
-          <el-option
-              v-for="(item,index) in [{label:'普通文本', value:'text'}, {label:'JavaScript脚本', value:'script'}]"
-              :key="index"
-              :label="item.label"
-              :value="item.value"/>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="提示">
-        <el-input v-model="textLabel.tips"/>
-      </el-form-item>
-      <el-form-item label="文本">
-        <el-input v-model="textLabel.content" :rows="4" type="textarea"/>
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="customTextLabelDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveNewTextLabel">
-          确认
-        </el-button>
-      </div>
-    </template>
-  </el-dialog>
-
-  <el-dialog v-model="dialogVisible" title="保存预设模版" align-center width="300" draggable>
-    <el-form :model="newTemplate" class="demo-form-inline" @submit.native.prevent>
-      <el-form-item label="预设名称">
-        <el-input v-model="newTemplate.desc" placeholder="请输入预设名称" clearable
-                  @keyup.enter.native="saveTemplates"/>
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveTemplates">
-          确认
-        </el-button>
-      </div>
-    </template>
-  </el-dialog>
-
-
-  <el-dialog v-model="renameDialogVisible" title="重命名" align-center width="300" draggable>
-    <el-form :model="oldTemplate" class="demo-form-inline">
-      <el-form-item label="预设名称">
-        <el-input v-model="oldTemplate.rename" placeholder="" clearable/>
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="renameDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="renameTemplate">
-          确认
-        </el-button>
-      </div>
-    </template>
-  </el-dialog>
-
-
-  <el-dialog v-model="editorTextLabelDialogVisible" title="编辑文本标签" width="60%" draggable>
-    <el-table size="small" :data="textLabels" border style="width: 100%">
-      <el-table-column prop="type" label="标签类型" show-overflow-tooltip/>
-      <el-table-column prop="tips" label="提示信息" show-overflow-tooltip/>
-      <el-table-column prop="content" label="文本内容" min-width="150" show-overflow-tooltip/>
-      <el-table-column fixed="right" label="操作" min-width="100">
-        <template #default="scope">
-          <el-button link type="primary" size="small" @click="openEditorTextLabel(scope.row)">
-            编辑
-          </el-button>
-          <el-button link type="primary" size="small" @click="deleteTextLabel(scope.row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-  </el-dialog>
-
-
-  <el-dialog v-model="downloadProgressVisible" align-center title="导出进度" @close="handleDownloadProgressClose"
-             :close-on-click-modal="false"
-             width="500">
-    <el-progress :percentage="downloadProgressPercentage"/>
-    <div class="fill"></div>
-    <!--    <template #footer>-->
-    <!--      <div class="dialog-footer">-->
-    <!--        <el-button @click="dialogVisible = false">Cancel</el-button>-->
-    <!--        <el-button type="primary" @click="dialogVisible = false">-->
-    <!--          Confirm-->
-    <!--        </el-button>-->
-    <!--      </div>-->
-    <!--    </template>-->
-  </el-dialog>
-
-  <el-dialog v-model="outputSettingsVisible" title="项目设置" @close=""
-             width="800">
-    <el-tabs type="border-card" class="demo-tabs">
-      <el-tab-pane label="导出">
-        <div class="border-box">
-          <span class="border-label">图片尺寸</span>
-          <div class="options">
-            <div class="option">
-              <span>调整方式：</span>
-              <el-select v-model="projectSettings.outputSettings.outputSize.type" placeholder="Select" size="small"
-                         style="width: 240px">
-                <el-option
-                    v-for="item in outputSizeOptions"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"/>
-              </el-select>
+        <div class="page-center">
+          <template v-for="([key, image]) in images" :key="image.path">
+            <div class="preview-item" :path="image.path" v-show="image.visible" @contextmenu="openContextMenu">
+              <img :src="image.url" :id="image.path">
             </div>
-            <!--            <div class="option" v-show="[6,7].includes(projectSettings.outputSettings.outputSize.type)">-->
-            <!--              <span>宽度：</span>-->
-            <!--              <el-input v-model="projectSettings.outputSettings.outputSize.width" size="small"-->
-            <!--                        placeholder="宽度"/>-->
-            <!--              <span>px</span>-->
-            <!--            </div>-->
-            <!--            <div class="option" v-show="[6,7].includes(projectSettings.outputSettings.outputSize.type)">-->
-            <!--              <span>高度：</span>-->
-            <!--              <el-input v-model="projectSettings.outputSettings.outputSize.height" size="small"-->
-            <!--                        placeholder="高度"/>-->
-            <!--              <span>px</span>-->
-            <!--            </div>-->
-            <div class="option" v-show="[2,3].includes(projectSettings.outputSettings.outputSize.type)">
-              <span>长边尺寸：</span>
-              <el-input v-model.number="projectSettings.outputSettings.outputSize.longSide" size="small"
-                        placeholder="长边"/>
-              <span>px</span>
-            </div>
-            <div class="option" v-show="[4,5].includes(projectSettings.outputSettings.outputSize.type)">
-              <span>短边尺寸：</span>
-              <el-input v-model.number="projectSettings.outputSettings.outputSize.shortSide" size="small"
+          </template>
+        </div>
+        <div class="page-right">
+          <div class="settings-details">
+            <el-aside>
+              <el-scrollbar>
+                <el-menu :default-openeds="['1']">
+                  <el-sub-menu index="1">
+                    <template #title>
+                      <span>基本</span>
+                    </template>
+                    <ul class="options metadata">
+                      <li class="option">
+                        <div class="label text-mark" draggable="true" type="metadata" text="cameraBrand">相机品牌</div>
+                        <div class="value">
+                          <el-input v-model="settings.metadata.cameraBrand" size="small"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label text-mark" draggable="true" type="metadata" text="cameraModel">相机型号</div>
+                        <div class="value">
+                          <el-input v-model="settings.metadata.cameraModel" size="small"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label text-mark" draggable="true" type="metadata" text="lensModel">镜头型号</div>
+                        <div class="value">
+                          <el-input v-model="settings.metadata.lensModel" size="small"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label text-mark" draggable="true" type="metadata" text="focalLength">焦段</div>
+                        <div class="value">
+                          <el-input v-model="settings.metadata.focalLength" size="small"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label text-mark" draggable="true" type="metadata" text="iso">IOS</div>
+                        <div class="value">
+                          <el-input v-model="settings.metadata.iso" size="small"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label text-mark" draggable="true" type="metadata" text="shutter">快门</div>
+                        <div class="value">
+                          <el-input v-model="settings.metadata.shutter" size="small"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label text-mark" draggable="true" type="metadata" text="aperture">光圈</div>
+                        <div class="value">
+                          <el-input v-model="settings.metadata.aperture" size="small"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label text-mark" draggable="true" type="metadata" text="shootingTime">拍摄日期</div>
+                        <div class="value">
+                          <el-input v-model="settings.metadata.shootingTime" size="small"/>
+                        </div>
+                      </li>
+                    </ul>
+                  </el-sub-menu>
+                  <el-sub-menu index="2">
+                    <template #title>
+                      <span>边框</span>
+                    </template>
+                    <ul class="options">
+                      <li class="option">
+                        <div class="label">边框数值</div>
+                        <div class="value">
+                          <el-select
+                              @change="switchSliderRange"
+                              v-model="settings.border.borderType"
+                              :options="borderOptions"
+                              size="small"
+                              placeholder="Select"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">上边框</div>
+                        <div class="value">
+                          <el-slider @change="handleBorders"
+                                     size="small"
+                                     :min="sliderRange.min"
+                                     :max="sliderRange.max"
+                                     v-model="settings.border.borderTop"
+                                     placement="top"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">左边框</div>
+                        <div class="value">
+                          <el-slider @change="handleBorders"
+                                     size="small"
+                                     :min="sliderRange.min"
+                                     :max="sliderRange.max"
+                                     v-model="settings.border.borderLeft"
+                                     placement="top"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">右边框</div>
+                        <div class="value">
+                          <el-slider @change="handleBorders"
+                                     size="small"
+                                     :min="sliderRange.min"
+                                     :max="sliderRange.max"
+                                     v-model="settings.border.borderRight"
+                                     placement="top"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">下边框</div>
+                        <div class="value">
+                          <el-slider @change="handleBorders"
+                                     size="small"
+                                     :min="sliderRange.min"
+                                     :max="sliderRange.max"
+                                     v-model="settings.border.borderBottom"
+                                     placement="top"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">边框颜色</div>
+                        <div class="value">
+                          <el-color-picker
+                              size="small"
+                              @change="handleBorders"
+                              v-model="settings.border.borderColor"
+                              show-alpha
+                              :predefine="predefineColors"/>
+                        </div>
+                      </li>
+                    </ul>
+                  </el-sub-menu>
+                  <el-sub-menu index="3">
+                    <template #title>
+                      <span>文本</span>
+                    </template>
+                    <div class="group-title">基本</div>
+                    <ul class="options">
+                      <li class="option">
+                        <div class="label">字体类型</div>
+                        <div class="value">
+                          <el-select
+                              v-model="textOptions.fontFamily"
+                              :options="fontOptions"
+                              size="small"
+                              placeholder="Select"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">字体大小</div>
+                        <div class="value">
+                          <el-slider
+                              v-model="textOptions.fontSize"
+                              show-alpha
+                              size="small"
+                              :predefine="predefineColors"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">旋转角度</div>
+                        <div class="value">
+                          <el-slider @change=""
+                                     size="small"
+                                     :min="0"
+                                     :max="360"
+                                     v-model="textOptions.angle"
+                                     placement="top"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">字体颜色</div>
+                        <div class="value">
+                          <el-color-picker
+                              @change=""
+                              v-model="textOptions.fontColor"
+                              show-alpha
+                              size="small"
+                              :predefine="predefineColors"/>
+                        </div>
+                      </li>
 
-                        placeholder="短边"/>
-              <span>px</span>
-            </div>
+                      <li class="option">
+                        <div class="label">层级</div>
+                        <div class="value">
+                          <el-slider :min="0"
+                                     :max="100"
+                                     size="small"
+                                     v-model="textOptions.zIndex"
+                                     placement="top"/>
+                        </div>
+                      </li>
+                      <!--                    <li class="option">-->
+                      <!--                      <div class="label">背景颜色</div>-->
+                      <!--                      <div class="value">-->
+                      <!--                        <el-color-picker-->
+                      <!--                            @change=""-->
+                      <!--                            v-model="textOptions.tagBackground"-->
+                      <!--                            show-alpha-->
+                      <!--                            size="small"-->
+                      <!--                            :predefine="predefineColors"/>-->
+                      <!--                      </div>-->
+                      <!--                    </li>-->
+                    </ul>
+                    <div class="group-title">文本阴影</div>
+                    <ul class="options">
+                      <li class="option">
+                        <div class="label">X轴偏移</div>
+                        <div class="value">
+                          <el-slider @change=""
+                                     size="small"
+                                     :min="-50"
+                                     :max="50"
+                                     v-model="textOptions.textShadow.offsetX"
+                                     placement="top"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">Y轴偏移</div>
+                        <div class="value">
+                          <el-slider
+                              v-model="textOptions.textShadow.offsetY"
+                              :min="-50"
+                              :max="50"
+                              show-alpha
+                              size="small"
+                              :predefine="predefineColors"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">模糊程度</div>
+                        <div class="value">
+                          <el-slider
+                              v-model="textOptions.textShadow.blur"
+                              show-alpha
+                              size="small"
+                              :predefine="predefineColors"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">阴影颜色</div>
+                        <div class="value">
+                          <el-color-picker
+                              @change=""
+                              v-model="textOptions.textShadow.shadowColor"
+                              show-alpha
+                              size="small"
+                              :predefine="predefineColors"/>
+                        </div>
+                      </li>
+                    </ul>
+                  </el-sub-menu>
+                  <el-sub-menu index="4">
+                    <template #title>
+                      <span>图片</span>
+                    </template>
+                    <div class="group-title">基本</div>
+                    <ul class="options">
+                      <li class="option">
+                        <div class="label">缩放</div>
+                        <div class="value">
+                          <el-slider :min="1"
+                                     :max="100"
+                                     size="small"
+                                     v-model="imageOptions.scale"
+                                     placement="top"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">不透明度</div>
+                        <div class="value">
+                          <el-slider :min="0"
+                                     :max="10"
+                                     size="small"
+                                     v-model="imageOptions.alpha"
+                                     placement="top"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">旋转角度</div>
+                        <div class="value">
+                          <el-slider @change=""
+                                     size="small"
+                                     :min="0"
+                                     :max="360"
+                                     v-model="imageOptions.angle"
+                                     placement="top"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">层级</div>
+                        <div class="value">
+                          <el-slider :min="0"
+                                     :max="100"
+                                     size="small"
+                                     v-model="imageOptions.zIndex"
+                                     placement="top"/>
+                        </div>
+                      </li>
+                    </ul>
+
+                    <div class="group-title">图片阴影</div>
+                    <ul class="options">
+                      <li class="option">
+                        <div class="label">X轴偏移</div>
+                        <div class="value">
+                          <el-slider size="small"
+                                     :min="-50"
+                                     :max="50"
+                                     v-model="imageOptions.boxShadow.offsetX"
+                                     placement="top"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">Y轴偏移</div>
+                        <div class="value">
+                          <el-slider
+                              v-model="imageOptions.boxShadow.offsetY"
+                              :min="-50"
+                              :max="50"
+                              show-alpha
+                              size="small"
+                              :predefine="predefineColors"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">模糊程度</div>
+                        <div class="value">
+                          <el-slider
+                              v-model="imageOptions.boxShadow.blur"
+                              show-alpha
+                              size="small"
+                              :predefine="predefineColors"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">阴影颜色</div>
+                        <div class="value">
+                          <el-color-picker
+                              @change=""
+                              v-model="imageOptions.boxShadow.shadowColor"
+                              show-alpha
+                              size="small"
+                              :predefine="predefineColors"/>
+                        </div>
+                      </li>
+                    </ul>
+                  </el-sub-menu>
+                </el-menu>
+              </el-scrollbar>
+            </el-aside>
           </div>
         </div>
-        <div class="border-box">
-          <span class="border-label">图片设置</span>
-          <div class="options">
-            <div class="option">
-              <span>输出格式：</span>
-              <el-select v-model="projectSettings.outputSettings.extname" placeholder="Select" size="small"
-                         style="width: 240px">
-                <el-option
-                    v-for="item in [{label:'原格式', value: 0},{label:'jpeg', value:1}, {label:'png', value: 2}]"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"/>
-              </el-select>
-            </div>
-            <div class="option" v-show="projectSettings.outputSettings.extname !== 2">
-              <span>图片品质：</span>
-              <div class="slider-demo-block">
-                <el-slider v-model="projectSettings.outputSettings.quality" :min="1" :max="10" size="small" show-input/>
+      </div>
+
+      <div class="page-images" id="image-list" ref="imageList" @wheel="handleWheel" @contextmenu="openContextMenu">
+        <img class="imageItem"
+             :key="key"
+             :path="key"
+             v-lazy="image.url"
+             v-for="([key, image]) in images"
+             @click.meta.exact="handleMultipleSelect($event,image)"
+             @click.ctrl.exact="handleMultipleSelect($event, image)"
+             @click.shift.exact="handleShiftClick($event,image)"
+             @click="handlePreview($event, image)">
+      </div>
+    </div>
+
+    <el-dialog align-center v-model="customTextLabelDialogVisible" title="新增文本标签" width="500" draggable>
+      <el-form :model="textLabel" label-width="auto" style="max-width: 90%" @submit.native.prevent>
+        <el-form-item label="文本类型">
+          <el-select @change="handleChangeTextType" v-model="textLabel.type" placeholder="文本类型">
+            <el-option
+                v-for="(item,index) in [{label:'普通文本', value:'text'}, {label:'JavaScript脚本', value:'script'}]"
+                :key="index"
+                :label="item.label"
+                :value="item.value"/>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="提示">
+          <el-input v-model="textLabel.tips"/>
+        </el-form-item>
+        <el-form-item label="文本">
+          <el-input v-model="textLabel.content" :rows="4" type="textarea"/>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="customTextLabelDialogVisible = false">取消</el-button>
+          <el-button type="info" @click="saveNewTextLabel">
+            确认
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="dialogVisible" title="保存预设模版" align-center width="300" draggable>
+      <el-form :model="newTemplate" class="demo-form-inline" @submit.native.prevent>
+        <el-form-item label="预设名称">
+          <el-input v-model="newTemplate.desc" placeholder="请输入预设名称" clearable
+                    @keyup.enter.native="saveTemplates"/>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="info" @click="saveTemplates">
+            确认
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+
+    <el-dialog v-model="renameDialogVisible" title="重命名" align-center width="300" draggable>
+      <el-form :model="oldTemplate" class="demo-form-inline">
+        <el-form-item label="预设名称">
+          <el-input v-model="oldTemplate.rename" placeholder="" clearable/>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="renameDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="renameTemplate">
+            确认
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+
+    <el-dialog v-model="editorTextLabelDialogVisible" title="编辑文本标签" width="60%" draggable>
+      <el-table size="small" :data="textLabels" border style="width: 100%">
+        <el-table-column prop="type" label="标签类型" show-overflow-tooltip/>
+        <el-table-column prop="tips" label="提示信息" show-overflow-tooltip/>
+        <el-table-column prop="content" label="文本内容" min-width="150" show-overflow-tooltip/>
+        <el-table-column fixed="right" label="操作" min-width="100">
+          <template #default="scope">
+            <el-button link type="primary" size="small" @click="openEditorTextLabel(scope.row)">
+              编辑
+            </el-button>
+            <el-button link type="primary" size="small" @click="deleteTextLabel(scope.row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
+
+
+    <el-dialog v-model="downloadProgressVisible" align-center title="导出进度" @close="handleDownloadProgressClose"
+               :close-on-click-modal="false"
+               width="500">
+      <el-progress :percentage="downloadProgressPercentage"/>
+      <div class="fill"></div>
+      <!--    <template #footer>-->
+      <!--      <div class="dialog-footer">-->
+      <!--        <el-button @click="dialogVisible = false">Cancel</el-button>-->
+      <!--        <el-button type="primary" @click="dialogVisible = false">-->
+      <!--          Confirm-->
+      <!--        </el-button>-->
+      <!--      </div>-->
+      <!--    </template>-->
+    </el-dialog>
+
+    <el-dialog v-model="outputSettingsVisible" title="项目设置" @close=""
+               width="800">
+      <el-tabs type="border-card" class="demo-tabs">
+        <el-tab-pane label="导出">
+          <div class="border-box">
+            <span class="border-label">图片尺寸</span>
+            <div class="options">
+              <div class="option">
+                <span>调整方式：</span>
+                <el-select v-model="projectSettings.outputSettings.outputSize.type" placeholder="Select" size="small"
+                           style="width: 240px">
+                  <el-option
+                      v-for="item in outputSizeOptions"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"/>
+                </el-select>
+              </div>
+              <!--            <div class="option" v-show="[6,7].includes(projectSettings.outputSettings.outputSize.type)">-->
+              <!--              <span>宽度：</span>-->
+              <!--              <el-input v-model="projectSettings.outputSettings.outputSize.width" size="small"-->
+              <!--                        placeholder="宽度"/>-->
+              <!--              <span>px</span>-->
+              <!--            </div>-->
+              <!--            <div class="option" v-show="[6,7].includes(projectSettings.outputSettings.outputSize.type)">-->
+              <!--              <span>高度：</span>-->
+              <!--              <el-input v-model="projectSettings.outputSettings.outputSize.height" size="small"-->
+              <!--                        placeholder="高度"/>-->
+              <!--              <span>px</span>-->
+              <!--            </div>-->
+              <div class="option" v-show="[2,3].includes(projectSettings.outputSettings.outputSize.type)">
+                <span>长边尺寸：</span>
+                <el-input v-model.number="projectSettings.outputSettings.outputSize.longSide" size="small"
+                          placeholder="长边"/>
+                <span>px</span>
+              </div>
+              <div class="option" v-show="[4,5].includes(projectSettings.outputSettings.outputSize.type)">
+                <span>短边尺寸：</span>
+                <el-input v-model.number="projectSettings.outputSettings.outputSize.shortSide" size="small"
+
+                          placeholder="短边"/>
+                <span>px</span>
               </div>
             </div>
           </div>
-        </div>
+          <div class="border-box">
+            <span class="border-label">图片设置</span>
+            <div class="options">
+              <div class="option">
+                <span>输出格式：</span>
+                <el-select v-model="projectSettings.outputSettings.extname" placeholder="Select" size="small"
+                           style="width: 240px">
+                  <el-option
+                      v-for="item in [{label:'原格式', value: 0},{label:'jpeg', value:1}, {label:'png', value: 2}]"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"/>
+                </el-select>
+              </div>
+              <div class="option" v-show="projectSettings.outputSettings.extname !== 2">
+                <span>图片品质：</span>
+                <div class="slider-demo-block">
+                  <el-slider v-model="projectSettings.outputSettings.quality" :min="1" :max="10" size="small"
+                             show-input/>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <!--        <div class="border-box">-->
-        <!--          <span class="border-label">输出位置</span>-->
-        <!--          <div class="options">-->
-        <!--            <div class="option">-->
-        <!--              <span>文件夹：{{ projectSettings.outputSettings.outputDirectory }}</span>-->
-        <!--              <el-button size="small" type="info" @click="selectDirectory">选择</el-button>-->
-        <!--            </div>-->
-        <!--          </div>-->
-        <!--        </div>-->
-      </el-tab-pane>
-      <el-tab-pane label="边框"></el-tab-pane>
-      <el-tab-pane label="文本"></el-tab-pane>
-      <el-tab-pane label="图片"></el-tab-pane>
-    </el-tabs>
-  </el-dialog>
+          <!--        <div class="border-box">-->
+          <!--          <span class="border-label">输出位置</span>-->
+          <!--          <div class="options">-->
+          <!--            <div class="option">-->
+          <!--              <span>文件夹：{{ projectSettings.outputSettings.outputDirectory }}</span>-->
+          <!--              <el-button size="small" type="info" @click="selectDirectory">选择</el-button>-->
+          <!--            </div>-->
+          <!--          </div>-->
+          <!--        </div>-->
+        </el-tab-pane>
+        <el-tab-pane label="边框"></el-tab-pane>
+        <el-tab-pane label="文本"></el-tab-pane>
+        <el-tab-pane label="图片"></el-tab-pane>
+      </el-tabs>
+    </el-dialog>
 
-
+  </div>
 </template>
 
 <script setup lang="js">
@@ -2905,8 +2907,24 @@ function makeDraggable(dragElement, path) {
 }
 
 
-.el-dialog {
+:deep(.el-dialog) {
+  background: #F0F0F0;
 
+  .el-tabs, .el-select {
+    background: #F0F0F0;
+  }
+
+  .el-tabs--border-card>.el-tabs__header .el-tabs__item.is-active {
+    color: #817e7e;
+  }
+
+  .el-tabs--border-card>.el-tabs__header .el-tabs__item:hover {
+    color: #817e7e;
+  }
+}
+
+
+.el-dialog {
   .el-tabs {
     /* 基础样式 */
     .border-box {
@@ -2915,13 +2933,13 @@ function makeDraggable(dragElement, path) {
       border-radius: 2px;
       padding: 25px 20px 20px;
       margin: 30px 0;
-      background: white;
+      background: #F0F0F0;
 
       .border-label {
         position: absolute;
         top: -12px;
         left: 15px;
-        background: white;
+        background: #F0F0F0;
         padding: 0 12px;
         font-size: 14px;
         color: #979798;
@@ -2969,7 +2987,6 @@ function makeDraggable(dragElement, path) {
 
     }
   }
-
 }
 
 
