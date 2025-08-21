@@ -2794,6 +2794,10 @@ function makeDraggable(dragElement, path) {
                       margin-left: 5px;
                     }
 
+                    :deep(.el-input .el-input__wrapper) {
+                      background: #F0F0F0;
+                    }
+
                     :deep(.el-color-picker) {
                       .el-icon {
                         font-size: 12px;
@@ -2914,11 +2918,11 @@ function makeDraggable(dragElement, path) {
     background: #F0F0F0;
   }
 
-  .el-tabs--border-card>.el-tabs__header .el-tabs__item.is-active {
+  .el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active {
     color: #817e7e;
   }
 
-  .el-tabs--border-card>.el-tabs__header .el-tabs__item:hover {
+  .el-tabs--border-card > .el-tabs__header .el-tabs__item:hover {
     color: #817e7e;
   }
 }
