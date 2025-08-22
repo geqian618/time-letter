@@ -1781,13 +1781,107 @@ const useTemplate = (options, path) => {
 }
 
 
-const refreshTemplate = (path) => {
+const refreshPositionInformation = (path) => {
+
+  const image = images.value.get(path);
+
+  const previewImage = image.getTargetElement();
+
+  const containerRect = previewImage.getBoundingClientRect();
+
+  const heightCutLine = containerRect.top + containerRect.height / 2;
+
+  const widthCutLine = containerRect.left + containerRect.width / 2;
+
+  image.settings.texts.forEach((text, element) => {
+
+    let positionX, positionY
+
+    let positionOffsetX, positionOffsetY
+
+    const elementRect = element.getBoundingClientRect();
+
+    let references = []
+
+    if (elementRect.left > widthCutLine) {
+      references.push('right')
+      positionOffsetX = containerRect.right - elementRect.left - elementRect.width
+      positionX = positionOffsetX / containerRect.width
+    } else {
+      references.push('left')
+      positionOffsetX = elementRect.left - containerRect.left
+      positionX = positionOffsetX / containerRect.width;
+    }
+
+    if (elementRect.top > heightCutLine) {
+      references.push('bottom')
+      positionOffsetY = containerRect.bottom - elementRect.top - elementRect.height
+      positionY = positionOffsetY / containerRect.height;
+    } else {
+      references.push('top')
+      positionOffsetY = elementRect.top - containerRect.top
+      positionY = positionOffsetY / containerRect.height;
+    }
+
+    const textMark = image.settings.texts.get(element);
+    textMark.references = references
+    textMark.positionX = positionX
+    textMark.positionY = positionY
+    textMark.offsetX = positionOffsetX
+    textMark.offsetY = positionOffsetY
+
+  })
+
+  image.settings.images.forEach((image, element) => {
+
+    let positionX, positionY
+
+    let positionOffsetX, positionOffsetY
+
+    const elementRect = element.getBoundingClientRect();
+
+    let references = []
+
+    if (elementRect.left > widthCutLine) {
+      references.push('right')
+      positionOffsetX = containerRect.right - elementRect.left - elementRect.width
+      positionX = positionOffsetX / containerRect.width
+    } else {
+      references.push('left')
+      positionOffsetX = elementRect.left - containerRect.left
+      positionX = positionOffsetX / containerRect.width;
+    }
+
+    if (elementRect.top > heightCutLine) {
+      references.push('bottom')
+      positionOffsetY = containerRect.bottom - elementRect.top - elementRect.height
+      positionY = positionOffsetY / containerRect.height;
+    } else {
+      references.push('top')
+      positionOffsetY = elementRect.top - containerRect.top
+      positionY = positionOffsetY / containerRect.height;
+    }
+
+    const imageMark = image.settings.images.get(element);
+    imageMark.references = references
+    imageMark.positionX = positionX
+    imageMark.positionY = positionY
+    imageMark.offsetX = positionOffsetX
+    imageMark.offsetY = positionOffsetY
+
+  })
+}
+
+
+const refreshTemplate = async (path) => {
 
   const image = images.value.get(path);
 
   settings.value.border = image.settings.border
 
   renderBorders(path)
+
+  await nextTick()
 
   const previewImage = image.getTargetElement();
 
@@ -2015,7 +2109,7 @@ const handleShiftClick = (event, image) => {
 }
 
 
-const handleBorders = () => {
+const handleBorders = async () => {
 
   const image = images.value.get(selectedElement.value.path)
 
@@ -2053,6 +2147,10 @@ const handleBorders = () => {
     image.settings.border.borderRightRatio = borderRightWidth / clientWidth
     image.settings.border.borderTopRatio = borderTopHeight / clientHeight
     image.settings.border.borderBottomRatio = borderBottomHeight / clientHeight
+
+    await nextTick()
+
+    refreshPositionInformation(selectedElement.value.path)
 
   }
 }
