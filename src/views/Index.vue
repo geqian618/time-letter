@@ -595,6 +595,18 @@
                           placeholder="短边"/>
                 <span>px</span>
               </div>
+              <div class="option" v-show="[6,7].includes(projectSettings.outputSettings.outputSize.type)">
+                <span>宽尺寸：</span>
+                <el-input v-model.number="projectSettings.outputSettings.outputSize.width" size="small"
+                          placeholder="宽尺寸"/>
+                <span>px</span>
+              </div>
+              <div class="option" v-show="[8,9].includes(projectSettings.outputSettings.outputSize.type)">
+                <span>高尺寸：</span>
+                <el-input v-model.number="projectSettings.outputSettings.outputSize.height" size="small"
+                          placeholder="高尺寸"/>
+                <span>px</span>
+              </div>
             </div>
           </div>
           <div class="border-box">

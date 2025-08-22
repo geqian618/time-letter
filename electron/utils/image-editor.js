@@ -210,7 +210,7 @@ async function addBorderAndText(options) {
         let {
             quality,
             extname: extnameType,
-            outputSize: {longSide, shortSide, type}
+            outputSize: {longSide, shortSide, width, height, type}
         } = outputSettings;
 
 
@@ -272,6 +272,18 @@ async function addBorderAndText(options) {
                 imageWidth = shortSide / widthRatio
                 imageHeight = longSide * image.height / image.width / widthRatio
             }
+        } else if (type === 6) { // 宽固定，不包含边框
+            imageWidth = width;
+            imageHeight = image.height * width / image.width
+        } else if (type === 7) {// 宽固定，包含边框
+            imageWidth = width / widthRatio;
+            imageHeight = image.height * width / image.width / widthRatio
+        } else if (type === 8) {// 高固定，不包含边框
+            imageHeight = height;
+            imageWidth = image.width * height / image.height
+        } else if (type === 9) {// 高固定，包含边框
+            imageHeight = height / heightRatio;
+            imageWidth = image.width * height / image.height / heightRatio
         }
         // 边框值为比率
         if (percentage) {
