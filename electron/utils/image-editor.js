@@ -239,7 +239,7 @@ async function addBorderAndText(options) {
             imageHeight = image.height;
         } else if (type === 1) {//原始尺寸，含边框
             imageWidth = image.width / widthRatio;
-            imageHeight = image.height / heightRatio;
+            imageHeight = image.height / widthRatio;
         } else if (type === 2) { // 长边固定，不包含边框
             if (image.height > image.width) {
                 imageHeight = longSide;
@@ -251,10 +251,10 @@ async function addBorderAndText(options) {
         } else if (type === 3) {// 长边固定，包含边框
             if (image.height > image.width) {
                 imageHeight = longSide / heightRatio;
-                imageWidth = longSide * image.width / image.height / widthRatio
+                imageWidth = longSide * image.width / image.height / heightRatio
             } else {
                 imageWidth = longSide / widthRatio
-                imageHeight = longSide * image.height / image.width / heightRatio;
+                imageHeight = longSide * image.height / image.width / widthRatio;
             }
         } else if (type === 4) { // 短边固定，不包含边框
             if (image.height < image.width) {
@@ -267,10 +267,10 @@ async function addBorderAndText(options) {
         } else if (type === 5) { // 短边固定，包含边框
             if (image.height < image.width) {
                 imageHeight = shortSide / heightRatio;
-                imageWidth = shortSide * image.width / image.height / widthRatio
+                imageWidth = shortSide * image.width / image.height / heightRatio
             } else {
                 imageWidth = shortSide / widthRatio
-                imageHeight = longSide * image.height / image.width / heightRatio
+                imageHeight = longSide * image.height / image.width / widthRatio
             }
         }
         // 边框值为比率
@@ -282,8 +282,8 @@ async function addBorderAndText(options) {
         }
 
         // 2. 计算新画布尺寸
-        newWidth = imageWidth + borderLeft + borderRight;
-        newHeight = imageHeight + borderTop + borderBottom;
+        newWidth = Math.round(imageWidth + borderLeft + borderRight);
+        newHeight = Math.round(imageHeight + borderTop + borderBottom);
 
         // 3. 创建画布
         const canvas = createCanvas(newWidth, newHeight);
