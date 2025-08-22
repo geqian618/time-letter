@@ -2528,9 +2528,15 @@ function makeDraggable(dragElement, path) {
         const newValue = input.value;
         const dragElement = input.parentNode
         input.remove()
-        dragElement.innerHTML = newValue ? newValue : ' '
+        dragElement.innerHTML = newValue ? newValue : ''
+        const image = images.value.get(selectedElement.value.path);
+        if (!newValue) {
+          dragElement.remove();
+          image.settings.texts.delete(dragElement);
+          return
+        }
         dragElement.setAttribute('selected', 'false')
-        const containerRect = images.value.get(selectedElement.value.path).getTargetElement().getBoundingClientRect()
+        const containerRect = image.getTargetElement().getBoundingClientRect();
         const dragElementRect = dragElement.getBoundingClientRect();
         const textLabel = image.settings.texts.get(dragElement);
         textLabel.options.fontWidthRatio = dragElementRect.width / containerRect.width
