@@ -243,7 +243,7 @@
                         <div class="value">
                           <el-select
                               v-model="textOptions.fontStyle"
-                              :options="[ {label:'正常', value:'normal'}, {label:'斜体', value:'italic'},{label:'模拟倾斜', value:'oblique'} ]"
+                              :options="[ {label:'正常', value:'normal'}, {label:'斜体（首选）', value:'italic'},{label:'斜体（备用）', value:'oblique'} ]"
                               size="small"
                               placeholder="Select"/>
                         </div>
