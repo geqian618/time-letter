@@ -34,8 +34,10 @@ async function findFilePaths(dirPath, extensions, deepSearch = false) {
 function drawText(ctx, text, newWidth, newHeight) {
     const fontSize = text.options.fontSizeRatio * newWidth;
     const fontFamily = text.options.fontFamily;
+    const fontStyle = text.options.fontStyle;
+    const fontWeight = text.options.fontWeight;
     // 添加文字样式
-    ctx.font = `normal ${fontSize + 'px'} ${fontFamily}`;
+    ctx.font = `${fontStyle} ${fontWeight} ${fontSize + 'px'} ${fontFamily}`;
     ctx.fillStyle = text.options.fontColor;
 
     // 设置对齐基准点

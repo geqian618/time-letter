@@ -243,19 +243,9 @@
                         <div class="value">
                           <el-select
                               v-model="textOptions.fontStyle"
-                              :options="[ {label:'正常', value:'normal'},{label:'加粗', value:'bold'}, {label:'斜体', value:'italic'} ]"
+                              :options="[ {label:'正常', value:'normal'}, {label:'斜体', value:'italic'},{label:'模拟倾斜', value:'oblique'} ]"
                               size="small"
                               placeholder="Select"/>
-                        </div>
-                      </li>
-                      <li class="option">
-                        <div class="label">字体粗细</div>
-                        <div class="value">
-                          <el-slider
-                              v-model="textOptions.fontWeight"
-                              show-alpha
-                              size="small"
-                              :predefine="predefineColors"/>
                         </div>
                       </li>
                       <li class="option">
@@ -263,6 +253,18 @@
                         <div class="value">
                           <el-slider
                               v-model="textOptions.fontSize"
+                              show-alpha
+                              size="small"
+                              :predefine="predefineColors"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">字体粗细</div>
+                        <div class="value">
+                          <el-slider
+                              :min="100"
+                              :max="900"
+                              v-model="textOptions.fontWeight"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
@@ -742,7 +744,7 @@ const textOptions = ref({
   fontSize: 14,
   fontFamily: 'Microsoft YaHei',
   fontStyle: 'normal',
-  fontWeight: 100,
+  fontWeight: 400,
   fontColor: 'rgb(0,0,0,1)',
   tagBackground: 'rgb(255,255,255,0)',
   angle: 0,
@@ -1320,7 +1322,7 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
 
-      element.style.style = newVal.fontStyle
+      element.style.fontStyle = newVal.fontStyle
       element.style.fontWeight = newVal.fontWeight
       element.style.fontFamily = newVal.fontFamily
       element.style.fontSize = newVal.fontSize + 'px'
@@ -1709,6 +1711,8 @@ const useTemplate = (options, path) => {
     div.style.fontSize = text.options.fontSize + 'px'
     div.style.color = text.options.fontColor
     div.style.fontFamily = text.options.fontFamily
+    div.style.fontStyle = text.options.fontStyle
+    div.style.fontWeight = text.options.fontWeight
     const {textShadow: {offsetX, offsetY, blur, shadowColor}} = text.options;
     div.style.textShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
     div.className = 'text-mark'
@@ -2174,8 +2178,9 @@ const bindDragEvent = (previewImage, image) => {
       dragElement.style.fontSize = '14px'
       dragElement.style.lineHeight = '1em'
       dragElement.style.whiteSpace = 'nowrap'
+      dragElement.style.fontStyle = 'normal'
+      dragElement.style.fontWeight = '400'
       const type = dragElement.getAttribute('type');
-
       dragElement.firstChild.remove()
       if (type === 'date') {
         dragElement.innerHTML = getDate();
@@ -2289,7 +2294,8 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.text.options.fontSize = fontSize
           settings.value.text.options.fontFamily = dragElementStyle.fontFamily.replace(/"/g, '')
           settings.value.text.options.fontColor = dragElementStyle.color
-
+          settings.value.text.options.fontStyle = dragElementStyle.fontStyle
+          settings.value.text.options.fontWeight = dragElementStyle.fontWeight
           settings.value.text.options.fontSizeRatio = fontSize / containerRect.width
           image.settings.texts.set(dragElement, _.cloneDeep(settings.value.text))
         } else {
