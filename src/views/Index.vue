@@ -239,6 +239,26 @@
                         </div>
                       </li>
                       <li class="option">
+                        <div class="label">字体样式</div>
+                        <div class="value">
+                          <el-select
+                              v-model="textOptions.fontStyle"
+                              :options="[ {label:'正常', value:'normal'},{label:'加粗', value:'bold'}, {label:'斜体', value:'italic'} ]"
+                              size="small"
+                              placeholder="Select"/>
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">字体粗细</div>
+                        <div class="value">
+                          <el-slider
+                              v-model="textOptions.fontWeight"
+                              show-alpha
+                              size="small"
+                              :predefine="predefineColors"/>
+                        </div>
+                      </li>
+                      <li class="option">
                         <div class="label">字体大小</div>
                         <div class="value">
                           <el-slider
@@ -721,6 +741,8 @@ const templates = ref([])
 const textOptions = ref({
   fontSize: 14,
   fontFamily: 'Microsoft YaHei',
+  fontStyle: 'normal',
+  fontWeight: 100,
   fontColor: 'rgb(0,0,0,1)',
   tagBackground: 'rgb(255,255,255,0)',
   angle: 0,
@@ -1298,6 +1320,8 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
 
+      element.style.style = newVal.fontStyle
+      element.style.fontWeight = newVal.fontWeight
       element.style.fontFamily = newVal.fontFamily
       element.style.fontSize = newVal.fontSize + 'px'
       element.style.color = newVal.fontColor
@@ -2945,6 +2969,7 @@ function makeDraggable(dragElement, path) {
   .el-tabs .el-tabs__nav-scroll {
     height: 30px;
     background: #e3e3e3;
+
     .el-tabs__item {
       height: 30px;
       font-size: 12px;
