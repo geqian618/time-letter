@@ -1444,6 +1444,7 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
   const {path} = selectedElement.value;
   const image = images.value.get(path);
   const containerRect = image.getTargetElement().getBoundingClientRect();
+  const parentRect = image.getTargetElement().parentNode.getBoundingClientRect();
   const elements = Array.from(image.settings.images.keys());
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
@@ -1454,8 +1455,8 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
 
       const newWidth = width + width * scale
       const newHeight = height + height * scale
-      const newLeft = left - width * scale / 2
-      const newTop = top - height * scale / 2
+      const newLeft = left - parentRect.left - width * scale / 2
+      const newTop = top - parentRect.top - height * scale / 2
 
       element.style.width = newWidth + 'px'
       element.style.height = newHeight + 'px'
@@ -1665,6 +1666,7 @@ const useTemplate = (options, path) => {
     img.className = 'image-mark'
     // 关键：必须设为绝对定位
     img.style.position = 'absolute';
+    img.style.width = image.width + 'px';
     img.style.width = image.width + 'px';
     img.style.height = image.height + 'px'
     img.style.opacity = image.alpha / 10
