@@ -2,8 +2,9 @@ const {app, dialog, Menu, shell} = require('electron');
 const path = require('path')
 const fs = require('fs')
 const {getResourcePath} = require('../utils/resource-path')
-
 const resourcesPath = getResourcePath()
+
+const {createChildWindow} = require('../components/ChildWindow')
 
 function getSafeImagePath(absolutePath) {
     if (process.platform === 'win32') {
@@ -187,7 +188,7 @@ const mainMenu = (mainWindow) => {
                 },
                 {
                     label: '关于',
-                    role: ''
+                    click: createChildWindow
                 }
             ]
         }
