@@ -1177,9 +1177,11 @@ const watchContextMenu = () => {
       } else if (type === 3) {
         synchronizeTemplate()
       } else if (type === 4) {
-        clearAllLabels(selectedElement.value.path)
+        const paths = Array.from(selectedImages.value.keys());
+        paths.forEach(path => clearAllLabels(path))
       } else if (type === 5) {
-        reset(selectedElement.value.path)
+        const paths = Array.from(selectedImages.value.keys());
+        paths.forEach(path => reset(path))
       }
     }
   });
@@ -2005,7 +2007,7 @@ onBeforeMount(() => {
 })
 
 async function handlePreview(event, image) {
-  if (!event.ctrlKey) {
+  if (!event.ctrlKey && !event.shiftKey) {
     if (selectedImages.value && !selectedImages.value.size) {
       selectedElement.value.element = event.target;
       selectedElement.value.path = event.target.getAttribute('path')
