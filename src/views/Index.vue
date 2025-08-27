@@ -66,9 +66,11 @@
                           <img src="../assets/icon/datetime.svg">
                         </div>
                       </el-tooltip>
-                      <el-tooltip v-for="(textLabel) in textLabels" class="box-item" effect="dark"
+                      <el-tooltip v-for="(textLabel) in textLabels" :key="textLabel.id" class="box-item" effect="dark"
                                   :content="textLabel.tips" placement="top">
-                        <div class="text-mark" draggable="true"
+                        <div class="text-mark"
+                             :id="textLabel.id"
+                             draggable="true"
                              :text="textLabel.content"
                              :type="textLabel.type ==='text'?'text':'script'">
                           <img src="../assets/icon/custom.svg">
@@ -776,6 +778,13 @@ const imageOptions = ref({
   }
 })
 
+const dragParameters = {
+  dragElement: null,
+  originalElement: null,
+  offsetX: 0,
+  offsetY: 0
+}
+
 const settings = ref({
   outputDirectory: '',
   files: [],
@@ -857,9 +866,9 @@ const sliderRange = ref({
   max: 200
 })
 
-const textMarks = ref([])
+const textMarks = ref(null)
 
-const imageMarks = ref([])
+const imageMarks = ref(null)
 
 const imageLabels = ref(new Map())
 
@@ -1013,14 +1022,21 @@ const handleDownloadProgressClose = () => {
 }
 
 const watchEditorLabel = () => {
-  window.electronAPI.watchEditorLabel((event, result) => {
+  window.electronAPI.watchEditorLabel(async (event, result) => {
     const {data, type} = result
     if (type === 0) {
       if (result.event === 0) {
         if (!imageLabels.value.size) {
           imageLabels.value = data;
         } else {
-          data.forEach((item, key) => imageLabels.value.set(key, item))
+          for (let [key, item] of data) {
+            if (!imageLabels.value.has(key)) {
+              imageLabels.value.set(key, item)
+              await nextTick()
+              const element = imageMarks.value.querySelector(`[path="${key.replaceAll('\\', '\\\\')}"]`);
+              handleDragStart(element)
+            }
+          }
         }
       } else if (result.event === 1) {
         imageLabels.value.delete(result.path)
@@ -1056,11 +1072,14 @@ const deleteTextLabel = (row) => {
   }
 }
 
-const saveNewTextLabel = () => {
+const saveNewTextLabel = async () => {
   customTextLabelDialogVisible.value = false;
   if (!textLabel.value.id) {
     textLabel.value.id = Date.now() + ''
     textLabels.value.push(_.cloneDeep(textLabel.value))
+    await nextTick()
+    const element = textMarks.value.querySelector(`[id="${textLabel.value.id}"]`);
+    handleDragStart(element)
   }
   window.localStorage.setItem('textLabels', JSON.stringify(textLabels.value))
   textLabel.value = {
@@ -1795,7 +1814,7 @@ const refreshPositionInformation = (path) => {
 
   const widthCutLine = containerRect.left + containerRect.width / 2;
 
-  image.settings.texts.forEach((text, element) => {
+  image.settings.texts.forEach((textLabel, element) => {
 
     let positionX, positionY
 
@@ -1825,16 +1844,15 @@ const refreshPositionInformation = (path) => {
       positionY = positionOffsetY / containerRect.height;
     }
 
-    const textMark = image.settings.texts.get(element);
-    textMark.references = references
-    textMark.positionX = positionX
-    textMark.positionY = positionY
-    textMark.offsetX = positionOffsetX
-    textMark.offsetY = positionOffsetY
+    textLabel.references = references
+    textLabel.positionX = positionX
+    textLabel.positionY = positionY
+    textLabel.offsetX = positionOffsetX
+    textLabel.offsetY = positionOffsetY
 
   })
 
-  image.settings.images.forEach((image, element) => {
+  image.settings.images.forEach((imageLabel, element) => {
 
     let positionX, positionY
 
@@ -1864,12 +1882,11 @@ const refreshPositionInformation = (path) => {
       positionY = positionOffsetY / containerRect.height;
     }
 
-    const imageMark = image.settings.images.get(element);
-    imageMark.references = references
-    imageMark.positionX = positionX
-    imageMark.positionY = positionY
-    imageMark.offsetX = positionOffsetX
-    imageMark.offsetY = positionOffsetY
+    imageLabel.references = references
+    imageLabel.positionX = positionX
+    imageLabel.positionY = positionY
+    imageLabel.offsetX = positionOffsetX
+    imageLabel.offsetY = positionOffsetY
 
   })
 }
@@ -2221,87 +2238,82 @@ const handleWheel = (e) => {
 };
 
 
+const setDefaultStyle = (dragElement) => {
+  if (dragElement.src) {
+    dragElement.style.width = '50px'
+    dragElement.style.height = 'auto'; // 保持宽高比
+  } else {
+    dragElement.style.width = 'fit-content'
+    dragElement.style.height = 'fit-content'
+    dragElement.style.fontSize = '14px'
+    dragElement.style.lineHeight = '1em'
+    dragElement.style.whiteSpace = 'nowrap'
+    dragElement.style.fontStyle = 'normal'
+    dragElement.style.fontWeight = '400'
+    const type = dragElement.getAttribute('type');
+    dragElement.firstChild.remove()
+    if (type === 'date') {
+      dragElement.innerHTML = getDate();
+    } else if (type === 'datetime') {
+      dragElement.innerHTML = getDateTime();
+    } else if (type === 'script') {
+      const text = dragElement.getAttribute('text');
+      dragElement.innerHTML = executeFunctionScript(text)
+    } else if (type === 'text') {
+      dragElement.innerHTML = dragElement.getAttribute('text');
+    } else if (type === 'metadata') {
+      const attribute = dragElement.getAttribute('text');
+      dragElement.innerHTML = settings.value.metadata[attribute];
+    }
+  }
+  dragElement.style.outline = 'none';
+  dragElement.style.cursor = 'move';
+  dragElement.style.userSelect = 'none';
+  dragElement.setAttribute('tabindex', '0')
+  dragElement.setAttribute('copy', '')
+}
+
+
+const handleDragStart = (component) => {
+  component.addEventListener('dragstart', function (event) {
+    const componentRect = component.getBoundingClientRect();
+    const dragElement = component.cloneNode(true);
+    // 元素与鼠标箭头之间的垂直方向偏移量差
+    const offsetX = event.clientX - componentRect.left;
+    const offsetY = event.clientY - componentRect.top;
+
+    dragParameters.offsetX = offsetX;
+    dragParameters.offsetY = offsetY;
+    dragParameters.originalElement = component
+    dragParameters.dragElement = dragElement
+
+    setDefaultStyle(dragElement);
+
+    if (dragElement.src) {
+      const dragPreview = dragElement.cloneNode(true);
+      dragPreview.style.position = 'fixed';
+      document.body.appendChild(dragPreview);
+      // 关键：设置自定义拖拽图像
+      event.dataTransfer.setDragImage(dragPreview, offsetX, offsetY);
+      // 拖拽结束后清理
+      const cleanUp = () => {
+        document.body.removeChild(dragPreview);
+        component.removeEventListener('dragend', cleanUp);
+      };
+      component.addEventListener('dragend', cleanUp);
+    } else {
+      // 关键：设置拖拽数据传输
+      event.dataTransfer.setData('text/plain', 'drag-element');
+    }
+  });
+}
+
+
 const bindDragEvent = (previewImage, image) => {
-  let dragElement;
-  let originalElement;
-  let offsetX;
-  let offsetY;
   // 设置拖拽事件
   document.querySelectorAll('.image-marks .image-mark, .text-marks .text-mark, .metadata .text-mark').forEach(component => {
-
-    component.addEventListener('dragstart', function (event) {
-      const componentRect = component.getBoundingClientRect();
-      offsetX = event.clientX - componentRect.left;
-      // 元素与鼠标箭头之间的垂直方向偏移量差
-      offsetY = event.clientY - componentRect.top;
-      originalElement = component
-
-      dragElement = component.cloneNode(true);
-
-      // 将计算样式复制到克隆元素的内联样式中
-      // const computedStyle = window.getComputedStyle(component);
-      // for (let i = 0; i < computedStyle.length; i++) {
-      //   const property = computedStyle[i];
-      //   const value = computedStyle.getPropertyValue(property);
-      //   // 设置内联样式
-      //   dragElement.style.setProperty(property, value);
-      // }
-
-      setDefaultStyle(dragElement);
-
-      if (dragElement.src) {
-        const dragPreview = dragElement.cloneNode(true);
-        dragPreview.style.position = 'fixed';
-        document.body.appendChild(dragPreview);
-        // 关键：设置自定义拖拽图像
-        event.dataTransfer.setDragImage(dragPreview, offsetX, offsetY);
-        // 拖拽结束后清理
-        const cleanUp = () => {
-          document.body.removeChild(dragPreview);
-          component.removeEventListener('dragend', cleanUp);
-        };
-        component.addEventListener('dragend', cleanUp);
-      } else {
-        // 关键：设置拖拽数据传输
-        event.dataTransfer.setData('text/plain', 'drag-element');
-      }
-    });
+    handleDragStart(component)
   });
-
-  const setDefaultStyle = (dragElement) => {
-    if (dragElement.src) {
-      dragElement.style.width = '50px'
-      dragElement.style.height = 'auto'; // 保持宽高比
-    } else {
-      dragElement.style.width = 'fit-content'
-      dragElement.style.height = 'fit-content'
-      dragElement.style.fontSize = '14px'
-      dragElement.style.lineHeight = '1em'
-      dragElement.style.whiteSpace = 'nowrap'
-      dragElement.style.fontStyle = 'normal'
-      dragElement.style.fontWeight = '400'
-      const type = dragElement.getAttribute('type');
-      dragElement.firstChild.remove()
-      if (type === 'date') {
-        dragElement.innerHTML = getDate();
-      } else if (type === 'datetime') {
-        dragElement.innerHTML = getDateTime();
-      } else if (type === 'script') {
-        const text = dragElement.getAttribute('text');
-        dragElement.innerHTML = executeFunctionScript(text)
-      } else if (type === 'text') {
-        dragElement.innerHTML = dragElement.getAttribute('text');
-      } else if (type === 'metadata') {
-        const attribute = dragElement.getAttribute('text');
-        dragElement.innerHTML = settings.value.metadata[attribute];
-      }
-    }
-    dragElement.style.outline = 'none';
-    dragElement.style.cursor = 'move';
-    dragElement.style.userSelect = 'none';
-    dragElement.setAttribute('tabindex', '0')
-  }
-
 
   previewImage.addEventListener('dragover', event =>
       event.preventDefault()
@@ -2316,6 +2328,8 @@ const bindDragEvent = (previewImage, image) => {
   previewImage.addEventListener('drop', function (event) {
 
     event.preventDefault();
+
+    const {offsetX, offsetY, originalElement, dragElement} = dragParameters
 
     if (!dragElement) return;
 
@@ -2425,9 +2439,10 @@ const bindDragEvent = (previewImage, image) => {
     }
 
     // 重置拖拽元素引用
-    dragElement = null;
-
-    originalElement = null;
+    dragParameters.dragElement = null;
+    dragParameters.originalElement = null;
+    dragParameters.offsetX = 0;
+    dragParameters.offsetY = 0;
 
   });
 
