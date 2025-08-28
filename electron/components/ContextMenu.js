@@ -33,7 +33,6 @@ const contextMenu = (mainWindow) => {
         },
         {
             label: '同步配置',
-            accelerator: 'ctrl+u',
             submenu: [
                 {
                     label: '按固定值同步位置',
