@@ -11,9 +11,30 @@ const projectSettings = ref({
         },
         extname: 0,
         quality: 10
+    },
+    metadataFormats: {
+        iso: '${iso}',
+        cameraBrand: '${cameraBrand}',
+        cameraModel: '${cameraModel}',
+        lensModel: '${lensModel}',
+        focalLength: '${focalLength}',
+        shutter: '${shutter}',
+        aperture: '${aperture}',
+        shootingTime: '${shootingTime}'
     }
 })
 
+
+const originalMetadataFormats = {
+    iso: '${iso}',
+    cameraBrand: '${cameraBrand}',
+    cameraModel: '${cameraModel}',
+    lensModel: '${lensModel}',
+    focalLength: '${focalLength}',
+    shutter: '${shutter}',
+    aperture: '${aperture}',
+    shootingTime: '${shootingTime}'
+}
 
 const outputSizeOptions = [
     {label: '原尺寸（不含边框）', value: 0},
@@ -30,4 +51,4 @@ const outputSizeOptions = [
     // {label: '自定义（包含边框）', value: 7},
 ]
 
-export {outputSizeOptions, projectSettings}
+export {outputSizeOptions, projectSettings, originalMetadataFormats}

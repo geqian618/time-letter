@@ -667,9 +667,48 @@
           <!--          </div>-->
           <!--        </div>-->
         </el-tab-pane>
-        <el-tab-pane label="边框"></el-tab-pane>
-        <el-tab-pane label="文本"></el-tab-pane>
-        <el-tab-pane label="图片"></el-tab-pane>
+        <el-tab-pane label="元信息格式">
+          <div class="items">
+            <div class="item">
+              <span class="label">相机品牌：</span>
+              <el-input class="value" v-model="projectSettings.metadataFormats.cameraBrand"></el-input>
+            </div>
+            <div class="item">
+              <span class="label">相机型号：</span>
+              <el-input class="value" v-model="projectSettings.metadataFormats.cameraModel"></el-input>
+            </div>
+            <div class="item">
+              <span class="label">镜头型号：</span>
+              <el-input class="value" v-model="projectSettings.metadataFormats.lensModel"></el-input>
+            </div>
+            <div class="item">
+              <span class="label">焦段：</span>
+              <el-input class="value" v-model="projectSettings.metadataFormats.focalLength"></el-input>
+            </div>
+            <div class="item">
+              <span class="label">ISO：</span>
+              <el-input class="value" v-model="projectSettings.metadataFormats.iso"></el-input>
+            </div>
+            <div class="item">
+              <span class="label">快门：</span>
+              <el-input class="value" v-model="projectSettings.metadataFormats.shutter"></el-input>
+            </div>
+            <div class="item">
+              <span class="label">光圈：</span>
+              <el-input class="value" v-model="projectSettings.metadataFormats.aperture"></el-input>
+            </div>
+            <div class="item">
+              <span class="label">拍摄日期：</span>
+              <el-input class="value" v-model="projectSettings.metadataFormats.shootingTime"></el-input>
+            </div>
+          </div>
+          <div class="operation">
+            <el-button type="info" @click="resetMetadataFormats">重置</el-button>
+          </div>
+        </el-tab-pane>
+        <!--        <el-tab-pane label="边框"></el-tab-pane>-->
+        <!--        <el-tab-pane label="文本"></el-tab-pane>-->
+        <!--        <el-tab-pane label="图片"></el-tab-pane>-->
       </el-tabs>
     </el-dialog>
 
@@ -688,7 +727,8 @@ import {fontOptions} from '@/hook/font-options'
 
 import _ from 'lodash';
 
-import {projectSettings, outputSizeOptions} from '@/config/project-settings'
+import {projectSettings, outputSizeOptions, originalMetadataFormats} from '@/config/project-settings'
+
 
 const predefineColors = ref([
   '#ff4500',
@@ -827,6 +867,7 @@ const settings = ref({
   text: {
     type: 'text',
     expression: '',
+    attribute: '',
     content: '',
     positionX: 0,
     positionY: 0,
@@ -1198,6 +1239,11 @@ const reset = (path) => {
     borderColor: 'rgba(255, 255, 255, 1)'
   }
   renderBorders(path)
+}
+
+const resetMetadataFormats = () => {
+  projectSettings.value.metadataFormats = originalMetadataFormats
+  localStorage.setItem('projectSettings', JSON.stringify(projectSettings.value))
 }
 
 
@@ -1750,9 +1796,14 @@ const useTemplate = (options, path) => {
       const content = executeFunctionScript(text.expression)
       div.innerHTML = text.content = content
     } else if (type === 'metadata') {
-      const content = imageDetails.metadata[text.expression];
+      const attribute = text.attribute;
+      let content = imageDetails.metadata[attribute];
       if (!content) {
         continue
+      }
+      const format = projectSettings.value.metadataFormats[attribute]
+      if (format) {
+        content = format.replace('${' + attribute + '}', content)
       }
       div.innerHTML = text.content = content;
     } else {
@@ -2265,7 +2316,12 @@ const setDefaultStyle = (dragElement) => {
       dragElement.innerHTML = dragElement.getAttribute('text');
     } else if (type === 'metadata') {
       const attribute = dragElement.getAttribute('text');
-      dragElement.innerHTML = settings.value.metadata[attribute];
+      let value = settings.value.metadata[attribute];
+      const format = projectSettings.value.metadataFormats[attribute];
+      if (format) {
+        value = format.replace('${' + attribute + '}', value)
+      }
+      dragElement.innerHTML = value;
     }
   }
   dragElement.style.outline = 'none';
@@ -2400,7 +2456,10 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.text.offsetX = positionOffsetX
           settings.value.text.offsetY = positionOffsetY
           const type = dragElement.getAttribute('type');
-          if (type === 'script' || type === 'metadata') {
+          if (type === 'metadata') {
+            settings.value.text.attribute = dragElement.getAttribute('text')
+          }
+          if (type === 'script') {
             settings.value.text.expression = dragElement.getAttribute('text')
           }
           settings.value.text.content = dragElement.innerText
@@ -2644,6 +2703,7 @@ function makeDraggable(dragElement, path) {
       input.addEventListener('blur', function () {
         const newValue = input.value;
         const dragElement = input.parentNode
+        const type = dragElement.getAttribute('type');
         input.remove()
         dragElement.innerHTML = newValue ? newValue : ''
         const image = images.value.get(selectedElement.value.path);
@@ -3109,6 +3169,32 @@ function makeDraggable(dragElement, path) {
 
 .el-dialog {
   .el-tabs {
+    .items {
+      width: 100%;
+
+      .item {
+        display: flex;
+        align-items: center;
+        margin: 8px;
+
+        .label {
+          width: 10%;
+          text-align: right;
+        }
+
+        .value {
+          width: 90%;
+        }
+      }
+    }
+
+    .operation {
+      height: 40px;
+      display: flex;
+      justify-content: right;
+      align-items: end;
+    }
+
     /* 基础样式 */
     .border-box {
       position: relative;
