@@ -34,7 +34,16 @@ const contextMenu = (mainWindow) => {
         {
             label: '同步配置',
             accelerator: 'ctrl+u',
-            click: synchronizeTemplate
+            submenu: [
+                {
+                    label: '按固定值同步位置',
+                    click: () => synchronizeTemplate(0)
+                },
+                {
+                    label: '按比例同步位置',
+                    click: () => synchronizeTemplate(1)
+                }
+            ]
         },
         {
             label: '保存为预设',
@@ -49,8 +58,8 @@ const saveTemplate = () => {
     window.webContents.send('watch-contextMenu', {type: 2})
 }
 
-const synchronizeTemplate = () => {
-    window.webContents.send('watch-contextMenu', {type: 3})
+const synchronizeTemplate = (method) => {
+    window.webContents.send('watch-contextMenu', {type: 3, method})
 }
 
 

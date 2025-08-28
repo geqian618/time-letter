@@ -12,6 +12,9 @@ const projectSettings = ref({
         extname: 0,
         quality: 10
     },
+    templates: {
+        synchronizationMethod: 1
+    },
     metadataFormats: {
         iso: '${iso}',
         cameraBrand: '${cameraBrand}',

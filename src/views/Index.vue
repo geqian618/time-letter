@@ -515,6 +515,16 @@
           <el-input v-model="newTemplate.desc" placeholder="请输入预设名称" clearable
                     @keyup.enter.native="saveTemplates"/>
         </el-form-item>
+        <el-form-item label="同步方式">
+          <el-select v-model="newTemplate.synchronousMode" placeholder="Select"
+                     style="width: 240px">
+            <el-option
+                v-for="item in [{label:'按固定值定位位置',value:0},{label:'按比例定位位置',value:1}]"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"/>
+          </el-select>
+        </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
@@ -771,7 +781,8 @@ const selectedElement = ref({
 const selectedImages = ref(new Map())
 
 const newTemplate = ref({
-  desc: ''
+  desc: '',
+  synchronousMode: 0
 })
 
 const oldTemplate = ref({
@@ -848,6 +859,7 @@ const settings = ref({
     width: 0,
     height: 0,
     references: [],
+    synchronousMode: 0,
     options: {
       scale: 10,
       angle: 0,
@@ -874,6 +886,7 @@ const settings = ref({
     offsetX: 0,
     offsetY: 0,
     references: [],
+    synchronousMode: 0,
     options: {
       fontSize: 14,
       fontFamily: '',
@@ -930,6 +943,8 @@ const outputSettingsVisible = ref(false)
 const downloadProgressPercentage = ref(0)
 
 const switchElement = ref(true)
+
+const synchronousMode = ref(1);
 
 const textLabel = ref({
   id: '',
@@ -1216,6 +1231,7 @@ const watchContextMenu = () => {
       } else if (type === 2) {
         openDialog()
       } else if (type === 3) {
+        synchronousMode.value = data.method
         synchronizeTemplate()
       } else if (type === 4) {
         const paths = Array.from(selectedImages.value.keys());
@@ -1640,8 +1656,14 @@ const synchronizeTemplate = () => {
 
     const options = {
       border: targetSettings.border,
-      images: Array.from(targetSettings.images.values()),
-      texts: Array.from(targetSettings.texts.values())
+      images: Array.from(targetSettings.images.values()).map(item => {
+        item.synchronousMode = synchronousMode.value
+        return item
+      }),
+      texts: Array.from(targetSettings.texts.values()).map(item => {
+        item.synchronousMode = synchronousMode.value
+        return item
+      })
     }
 
     selectedImages.value.forEach((image, path) => {
@@ -1656,6 +1678,7 @@ const synchronizeTemplate = () => {
         image.settings.border = {}
         image.settings.texts.clear()
         image.settings.images.clear()
+        console.log(options)
         useTemplate(_.cloneDeep(options), path)
       }
     })
@@ -1671,13 +1694,23 @@ const saveTemplates = () => {
     name: newTemplate.value.desc,
     settings: {
       border: settings.border,
-      images: Array.from(settings.images.values()),
-      texts: Array.from(settings.texts.values())
+      images: Array.from(settings.images.values()).map(item => {
+        item.synchronousMode = newTemplate.value.synchronousMode;
+        return item
+      }),
+      texts: Array.from(settings.texts.values()).map(item => {
+        item.synchronousMode = newTemplate.value.synchronousMode;
+        return item
+      })
     }
   })
   templates.value = templateList
   window.localStorage.setItem('templates', JSON.stringify(templateList))
   dialogVisible.value = false
+  newTemplate.value = {
+    desc: '',
+    synchronousMode: 0
+  }
 }
 
 
@@ -1699,7 +1732,7 @@ const enableTemplate = ({settings}) => {
 }
 
 
-const useTemplate = (options, path) => {
+const useTemplate = async (options, path) => {
 
   options = _.cloneDeep(options)
 
@@ -1722,7 +1755,6 @@ const useTemplate = (options, path) => {
   const {left, right, top, bottom, width, height} = previewImage.getBoundingClientRect();
 
   for (let image of options.images) {
-
     const img = document.createElement('img');
     img.style.outline = 'none';
     img.style.cursor = 'move';
@@ -1741,25 +1773,28 @@ const useTemplate = (options, path) => {
     img.style.boxShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
 
     if (path === selectedElement.value.path) {
-      let {positionX, positionY} = image
-      let newPositionX, newPositionY
+      let {positionX, positionY, offsetX, offsetY, synchronousMode} = image
+      let newPositionX, newPositionY, newOffsetX, newOffsetY
+      newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
+      newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
+
       if (image.references.includes('left')) {
-        newPositionX = left - parentRect.left + positionX * width
+        newPositionX = left - parentRect.left + newOffsetX
         img.style.left = `${newPositionX}px`;
       }
 
       if (image.references.includes('right')) {
-        newPositionX = parentRect.right - right + positionX * width
+        newPositionX = parentRect.right - right + newOffsetX
         img.style.right = `${newPositionX}px`;
       }
 
       if (image.references.includes('top')) {
-        newPositionY = top - parentRect.top + positionY * height
+        newPositionY = top - parentRect.top + newOffsetY
         img.style.top = `${newPositionY}px`;
       }
 
       if (image.references.includes('bottom')) {
-        newPositionY = parentRect.bottom - bottom + positionY * height
+        newPositionY = parentRect.bottom - bottom + newOffsetY
         img.style.bottom = `${newPositionY}px`;
       }
     }
@@ -1818,28 +1853,27 @@ const useTemplate = (options, path) => {
     div.style.position = 'absolute';
 
     if (path === selectedElement.value.path) {
-
-      let {positionX, positionY} = text
-
-      let newPositionX, newPositionY
-
+      let {positionX, positionY, offsetX, offsetY, synchronousMode} = text
+      let newPositionX, newPositionY, newOffsetX, newOffsetY
+      newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
+      newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
       if (text.references.includes('left')) {
-        newPositionX = left - parentRect.left + positionX * width
+        newPositionX = left - parentRect.left + newOffsetX
         div.style.left = `${newPositionX}px`;
       }
 
       if (text.references.includes('right')) {
-        newPositionX = parentRect.right - right + positionX * width
+        newPositionX = parentRect.right - right + newOffsetX
         div.style.right = `${newPositionX}px`;
       }
 
       if (text.references.includes('top')) {
-        newPositionY = top - parentRect.top + positionY * height
+        newPositionY = top - parentRect.top + newOffsetY
         div.style.top = `${newPositionY}px`;
       }
 
       if (text.references.includes('bottom')) {
-        newPositionY = parentRect.bottom - bottom + positionY * height
+        newPositionY = parentRect.bottom - bottom + newOffsetY
         div.style.bottom = `${newPositionY}px`;
       }
 
@@ -1963,55 +1997,56 @@ const refreshTemplate = async (path) => {
 
   image.settings.texts.forEach((text, element) => {
 
-    let {positionX, positionY} = text
-
-    let newPositionX, newPositionY
+    let {positionX, positionY, offsetX, offsetY, synchronousMode} = text
+    let newPositionX, newPositionY, newOffsetX, newOffsetY
+    newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
+    newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
 
     if (text.references.includes('left')) {
-      newPositionX = left - parentRect.left + positionX * width
+      newPositionX = left - parentRect.left + newOffsetX
       element.style.left = `${newPositionX}px`;
     }
 
     if (text.references.includes('right')) {
-      newPositionX = parentRect.right - right + positionX * width
+      newPositionX = parentRect.right - right + newOffsetX
       element.style.right = `${newPositionX}px`;
     }
 
     if (text.references.includes('top')) {
-      newPositionY = top - parentRect.top + positionY * height
+      newPositionY = top - parentRect.top + newOffsetY
       element.style.top = `${newPositionY}px`;
     }
 
     if (text.references.includes('bottom')) {
-      newPositionY = parentRect.bottom - bottom + positionY * height
+      newPositionY = parentRect.bottom - bottom + newOffsetY
       element.style.bottom = `${newPositionY}px`;
     }
 
   })
 
   image.settings.images.forEach((image, element) => {
-
-    let {positionX, positionY} = image
-
-    let newPositionX, newPositionY
+    let {positionX, positionY, offsetX, offsetY, synchronousMode} = image
+    let newPositionX, newPositionY, newOffsetX, newOffsetY
+    newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
+    newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
 
     if (image.references.includes('left')) {
-      newPositionX = left - parentRect.left + positionX * width
+      newPositionX = left - parentRect.left + newOffsetX
       element.style.left = `${newPositionX}px`;
     }
 
     if (image.references.includes('right')) {
-      newPositionX = parentRect.right - right + positionX * width
+      newPositionX = parentRect.right - right + newOffsetX
       element.style.right = `${newPositionX}px`;
     }
 
     if (image.references.includes('top')) {
-      newPositionY = top - parentRect.top + positionY * height
+      newPositionY = top - parentRect.top + newOffsetY
       element.style.top = `${newPositionY}px`;
     }
 
     if (image.references.includes('bottom')) {
-      newPositionY = parentRect.bottom - bottom + positionY * height
+      newPositionY = parentRect.bottom - bottom + newOffsetY
       element.style.bottom = `${newPositionY}px`;
     }
 
