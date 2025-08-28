@@ -29,7 +29,7 @@
                         class="template" v-for="template in templates"
                         :key="template.id"
                         :index="template.id"
-                        @click="enableTemplate(template)">
+                        @click="openEnableTemplateDialog(template)">
                       {{ template.name }}
                     </el-menu-item>
                   </div>
@@ -515,16 +515,6 @@
           <el-input v-model="newTemplate.desc" placeholder="请输入预设名称" clearable
                     @keyup.enter.native="saveTemplates"/>
         </el-form-item>
-        <el-form-item label="同步方式">
-          <el-select v-model="newTemplate.synchronousMode" placeholder="Select"
-                     style="width: 240px">
-            <el-option
-                v-for="item in [{label:'按固定值定位位置',value:0},{label:'按比例定位位置',value:1}]"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"/>
-          </el-select>
-        </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
@@ -722,6 +712,21 @@
       </el-tabs>
     </el-dialog>
 
+    <el-dialog v-model="enableTemplateDialogVisible" title="应用模版" width="400" align-center draggable>
+      <el-radio-group v-model="synchronousMode">
+        <el-radio :value="0" size="large">按固定值定位位置</el-radio>
+        <el-radio :value="1" size="large">按比例定位位置</el-radio>
+      </el-radio-group>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="enableTemplateDialogVisible = false">取消</el-button>
+          <el-button type="info" @click="enableTemplate">
+            应用
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 
@@ -769,6 +774,8 @@ const borderOptions = [
   }
 ]
 
+const templateSettings = ref({})
+
 const images = ref(new Map())
 
 const imageList = ref(null);
@@ -782,7 +789,6 @@ const selectedImages = ref(new Map())
 
 const newTemplate = ref({
   desc: '',
-  synchronousMode: 0
 })
 
 const oldTemplate = ref({
@@ -938,13 +944,15 @@ const editorTextLabelDialogVisible = ref(false)
 
 const downloadProgressVisible = ref(false)
 
+const enableTemplateDialogVisible = ref(false)
+
 const outputSettingsVisible = ref(false)
 
 const downloadProgressPercentage = ref(0)
 
 const switchElement = ref(true)
 
-const synchronousMode = ref(1);
+const synchronousMode = ref(0);
 
 const textLabel = ref({
   id: '',
@@ -1694,28 +1702,24 @@ const saveTemplates = () => {
     name: newTemplate.value.desc,
     settings: {
       border: settings.border,
-      images: Array.from(settings.images.values()).map(item => {
-        item.synchronousMode = newTemplate.value.synchronousMode;
-        return item
-      }),
-      texts: Array.from(settings.texts.values()).map(item => {
-        item.synchronousMode = newTemplate.value.synchronousMode;
-        return item
-      })
+      images: Array.from(settings.images.values()),
+      texts: Array.from(settings.texts.values())
     }
   })
   templates.value = templateList
   window.localStorage.setItem('templates', JSON.stringify(templateList))
   dialogVisible.value = false
-  newTemplate.value = {
-    desc: '',
-    synchronousMode: 0
-  }
 }
 
 
-const enableTemplate = ({settings}) => {
+const openEnableTemplateDialog = ({settings}) => {
+  templateSettings.value = settings
+  enableTemplateDialogVisible.value = true
+}
 
+
+const enableTemplate = () => {
+  synchronousMode.value = 0
   for (let path of selectedImages.value.keys()) {
     const image = images.value.get(path);
     for (let element of image.settings.images.keys()) {
@@ -1727,8 +1731,11 @@ const enableTemplate = ({settings}) => {
     image.settings.border = {}
     image.settings.texts.clear()
     image.settings.images.clear()
-    useTemplate(settings, path)
+    templateSettings.value.texts.forEach(item => item.synchronousMode = synchronousMode.value)
+    templateSettings.value.images.forEach(item => item.synchronousMode = synchronousMode.value)
+    useTemplate(templateSettings.value, path)
   }
+  enableTemplateDialogVisible.value = false
 }
 
 
