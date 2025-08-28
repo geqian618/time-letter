@@ -1719,7 +1719,6 @@ const openEnableTemplateDialog = ({settings}) => {
 
 
 const enableTemplate = () => {
-  synchronousMode.value = 0
   for (let path of selectedImages.value.keys()) {
     const image = images.value.get(path);
     for (let element of image.settings.images.keys()) {
@@ -1736,6 +1735,7 @@ const enableTemplate = () => {
     useTemplate(templateSettings.value, path)
   }
   enableTemplateDialogVisible.value = false
+  synchronousMode.value = 0
 }
 
 
