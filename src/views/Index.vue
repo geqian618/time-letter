@@ -1198,6 +1198,8 @@ const watchContextMenu = () => {
 
           await nextTick()
 
+          refreshPositionInformation(paths[i])
+
           const image = images.value.get(paths[i]);
 
           const {settings} = image
