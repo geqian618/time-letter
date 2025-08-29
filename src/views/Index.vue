@@ -1590,7 +1590,8 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
         positionY = positionOffsetY / containerRect.height;
       }
 
-      image.settings.images.get(element).scale = newVal
+
+      image.settings.images.get(element).options.scale = newVal
       image.settings.images.get(element).positionX = positionX
       image.settings.images.get(element).positionY = positionY
       image.settings.images.get(element).offsetX = positionOffsetX
