@@ -470,8 +470,9 @@
     </div>
 
     <el-dialog align-center v-model="customTextLabelDialogVisible" title="新增文本标签" width="500" draggable>
-      <el-form :model="textLabel" label-width="auto" style="max-width: 90%" @submit.native.prevent>
-        <el-form-item label="文本类型">
+      <el-form :model="textLabel" ref="textLabelForm" :rules="textLabelRules" label-width="auto" style="max-width: 90%"
+               @submit.native.prevent>
+        <el-form-item label="文本类型" prop="type">
           <el-select @change="handleChangeTextType" v-model="textLabel.type" placeholder="文本类型">
             <el-option
                 v-for="(item,index) in [{label:'普通文本', value:'text'}, {label:'JavaScript脚本', value:'script'}]"
@@ -480,10 +481,10 @@
                 :value="item.value"/>
           </el-select>
         </el-form-item>
-        <el-form-item label="提示">
-          <el-input v-model="textLabel.tips"/>
+        <el-form-item label="提示" prop="tips">
+          <el-input v-model="textLabel.tips" ref="textLabelRef" v-focus="customTextLabelDialogVisible"/>
         </el-form-item>
-        <el-form-item label="文本">
+        <el-form-item label="文本" prop="content">
           <el-input v-model="textLabel.content" :rows="4" type="textarea"/>
         </el-form-item>
       </el-form>
@@ -497,10 +498,13 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="dialogVisible" title="保存预设模版" align-center width="300" draggable>
-      <el-form :model="newTemplate" class="demo-form-inline" @submit.native.prevent>
-        <el-form-item label="预设名称">
+    <el-dialog v-model="saveTemplateDialogVisible" title="保存预设模版" align-center width="300" draggable>
+      <el-form :model="newTemplate" class="demo-form-inline" :rules="saveTemplateRules" ref="saveTemplateForm"
+               @submit.native.prevent>
+        <el-form-item label="预设名称" prop="desc">
           <el-input v-model="newTemplate.desc"
+                    ref="templateRef"
+                    v-focus="saveTemplateDialogVisible"
                     placeholder="请输入预设名称"
                     clearable
                     @keyup.enter.native="saveTemplates"/>
@@ -508,7 +512,7 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button @click="saveTemplateDialogVisible = false">取消</el-button>
           <el-button type="info" @click="saveTemplates">
             确认
           </el-button>
@@ -727,7 +731,7 @@
 
 <script setup lang="js">
 
-import {nextTick, onBeforeMount, onMounted, ref, watch} from "vue";
+import {nextTick, onBeforeMount, onMounted, ref, watch, reactive} from "vue";
 
 import {getDate, getDateTime} from '@/utils/datetime'
 
@@ -774,6 +778,10 @@ const templateSettings = ref({})
 const images = ref(new Map())
 
 const imageList = ref(null);
+
+const saveTemplateForm = ref();
+
+const textLabelForm = ref();
 
 const selectedElement = ref({
   element: null,
@@ -927,7 +935,7 @@ const imageMarks = ref(null)
 
 const imageLabels = ref(new Map())
 
-const dialogVisible = ref(false)
+const saveTemplateDialogVisible = ref(false)
 
 const renameDialogVisible = ref(false)
 
@@ -957,6 +965,28 @@ const textLabel = ref({
 })
 
 const textLabels = ref([])
+
+const templateRef = ref()
+
+const textLabelRef = ref()
+
+const saveTemplateRules = {
+  desc: [
+    {required: true, message: '模板名称不能为空', trigger: 'blur'},
+  ],
+}
+
+const textLabelRules = {
+  type: [
+    {required: true, message: '文本标签类型不能为空', trigger: 'blur'},
+  ],
+  tips: [
+    {required: true, message: '提示信息不能为空', trigger: 'blur'},
+  ],
+  content: [
+    {required: true, message: '文本标签内容不能为空', trigger: 'blur'},
+  ]
+}
 
 const watchInputImages = () => {
   window.electronAPI.watchInputImage(async (event, data) => {
@@ -1113,6 +1143,12 @@ const watchEditorLabel = () => {
 
 const openTextLabelDialog = () => {
   customTextLabelDialogVisible.value = true
+  nextTick(() => {
+    if (textLabelForm.value) {
+      textLabelForm.value.clearValidate(); // 清除整个表单的校验
+      // 如果只需清除特定字段，可传入字段名数组，如：clearValidate(['username', 'email'])
+    }
+  });
 }
 
 
@@ -1132,21 +1168,26 @@ const deleteTextLabel = (row) => {
 }
 
 const saveNewTextLabel = async () => {
-  customTextLabelDialogVisible.value = false;
-  if (!textLabel.value.id) {
-    textLabel.value.id = Date.now() + ''
-    textLabels.value.push(_.cloneDeep(textLabel.value))
-    await nextTick()
-    const element = textMarks.value.querySelector(`[id="${textLabel.value.id}"]`);
-    handleDragStart(element)
-  }
-  window.localStorage.setItem('textLabels', JSON.stringify(textLabels.value))
-  textLabel.value = {
-    id: '',
-    type: 'text',
-    tips: '',
-    content: '',
-  }
+  if (!textLabelForm) return
+  await textLabelForm.value.validate(async (valid, fields) => {
+    if (valid) {
+      if (!textLabel.value.id) {
+        textLabel.value.id = Date.now() + ''
+        textLabels.value.push(_.cloneDeep(textLabel.value))
+        await nextTick()
+        const element = textMarks.value.querySelector(`[id="${textLabel.value.id}"]`);
+        handleDragStart(element)
+      }
+      window.localStorage.setItem('textLabels', JSON.stringify(textLabels.value))
+      textLabel.value = {
+        id: '',
+        type: 'text',
+        tips: '',
+        content: '',
+      }
+      customTextLabelDialogVisible.value = false;
+    }
+  })
 }
 
 const watchContextMenu = () => {
@@ -1232,7 +1273,7 @@ const watchContextMenu = () => {
         window.electronAPI.requestSaveFiles(JSON.parse(JSON.stringify(newSettings)))
         downloadProgressVisible.value = true
       } else if (type === 2) {
-        openDialog()
+        openSaveTemplateDialog()
       } else if (type === 3) {
         synchronousMode.value = data.method
         synchronizeTemplate()
@@ -1623,8 +1664,14 @@ const stopWatchPhotoMetadata = watch(() => settings.value.metadata, (newVal, old
 })
 
 
-const openDialog = () => {
-  dialogVisible.value = true
+const openSaveTemplateDialog = () => {
+  saveTemplateDialogVisible.value = true
+  nextTick(() => {
+    if (saveTemplateForm.value) {
+      saveTemplateForm.value.clearValidate(); // 清除整个表单的校验
+      // 如果只需清除特定字段，可传入字段名数组，如：clearValidate(['username', 'email'])
+    }
+  });
 }
 
 
@@ -1689,28 +1736,40 @@ const synchronizeTemplate = () => {
   }
 }
 
-const saveTemplates = () => {
-  const {settings} = images.value.get(selectedElement.value.path);
-  const json = window.localStorage.getItem('templates');
-  const templateList = json ? JSON.parse(json) : []
-  templateList.push({
-    id: Date.now(),
-    name: newTemplate.value.desc,
-    settings: {
-      border: settings.border,
-      images: Array.from(settings.images.values()),
-      texts: Array.from(settings.texts.values())
+const saveTemplates = async () => {
+  if (!saveTemplateForm) return
+  await saveTemplateForm.value.validate((valid, fields) => {
+    if (valid) {
+      const {settings} = images.value.get(selectedElement.value.path);
+      const json = window.localStorage.getItem('templates');
+      const templateList = json ? JSON.parse(json) : []
+      templateList.push({
+        id: Date.now(),
+        name: newTemplate.value.desc,
+        settings: {
+          border: settings.border,
+          images: Array.from(settings.images.values()),
+          texts: Array.from(settings.texts.values())
+        }
+      })
+      templates.value = templateList
+      window.localStorage.setItem('templates', JSON.stringify(templateList))
+
+      newTemplate.value.desc = ''
+      saveTemplateDialogVisible.value = false
     }
   })
-  templates.value = templateList
-  window.localStorage.setItem('templates', JSON.stringify(templateList))
-  dialogVisible.value = false
 }
 
 
 const openEnableTemplateDialog = ({settings}) => {
-  templateSettings.value = settings
-  enableTemplateDialogVisible.value = true
+  if (images.value.size && selectedElement.value.path) {
+    templateSettings.value = settings
+    enableTemplateDialogVisible.value = true
+    nextTick(() => {
+      templateRef.value?.focus()
+    })
+  }
 }
 
 

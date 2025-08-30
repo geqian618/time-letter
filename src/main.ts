@@ -8,14 +8,16 @@ import router from './router'
 import loadErrorIcon from './assets/images/load-error.jpeg';
 import loadingIcon from './assets/images/loading.jpeg';
 
-
 import ElementPlus from 'element-plus'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import 'element-plus/dist/index.css'
 
 import VueLazyload from 'vue3-lazyload'
 
-import draggable from "./directive/draggable.js";
+import draggable from "@/directive/draggable.js";
+
+import inputFocus from "@/directive/input-focus.js";
+
 
 const app = createApp(App)
 
@@ -44,6 +46,9 @@ app.use(VueLazyload, {
 })
 
 app.directive('draggable', draggable)
+
+// 全局应用指令
+app.directive('focus', inputFocus)
 
 app.mount('#app')
 
