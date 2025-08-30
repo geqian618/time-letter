@@ -1143,9 +1143,14 @@ const watchEditorLabel = () => {
 
 const openTextLabelDialog = () => {
   customTextLabelDialogVisible.value = true
+  clearFormValidate(textLabelForm)
+}
+
+
+const clearFormValidate = (formRef) => {
   nextTick(() => {
-    if (textLabelForm.value) {
-      textLabelForm.value.clearValidate(); // 清除整个表单的校验
+    if (formRef.value) {
+      formRef.value.clearValidate(); // 清除整个表单的校验
       // 如果只需清除特定字段，可传入字段名数组，如：clearValidate(['username', 'email'])
     }
   });
@@ -1666,12 +1671,7 @@ const stopWatchPhotoMetadata = watch(() => settings.value.metadata, (newVal, old
 
 const openSaveTemplateDialog = () => {
   saveTemplateDialogVisible.value = true
-  nextTick(() => {
-    if (saveTemplateForm.value) {
-      saveTemplateForm.value.clearValidate(); // 清除整个表单的校验
-      // 如果只需清除特定字段，可传入字段名数组，如：clearValidate(['username', 'email'])
-    }
-  });
+  clearFormValidate(saveTemplateForm)
 }
 
 
@@ -1766,9 +1766,6 @@ const openEnableTemplateDialog = ({settings}) => {
   if (images.value.size && selectedElement.value.path) {
     templateSettings.value = settings
     enableTemplateDialogVisible.value = true
-    nextTick(() => {
-      templateRef.value?.focus()
-    })
   }
 }
 
