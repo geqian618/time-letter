@@ -4,18 +4,6 @@
       <div class="page-top"></div>
       <div class="page-main">
         <div class="page-left">
-          <!--        <div class="metadata">-->
-          <!--          图片元信息-->
-          <!--        </div>-->
-          <!--        <div class="details">-->
-          <!--          <ul ref="metadataContainer" @wheel="handleMetadataWheel">-->
-          <!--            <li v-for="(item) in metadata" :key="item.label">-->
-          <!--              <span class="label">{{ item.label + '：' }}</span>-->
-          <!--              <span class="data">{{ item.value }}</span>-->
-          <!--            </li>-->
-          <!--          </ul>-->
-          <!--        </div>-->
-
           <el-aside>
             <el-scrollbar>
               <el-menu :default-openeds="['1']">
@@ -245,7 +233,7 @@
                         <div class="value">
                           <el-select
                               v-model="textOptions.fontStyle"
-                              :options="[ {label:'正常', value:'normal'}, {label:'斜体', value:'italic'},{label:'斜体（备用）', value:'oblique'} ]"
+                              :options="[ {label:'正常', value:'normal'}, {label:'斜体', value:'italic'}, {label:'斜体（备用）', value:'oblique'} ]"
                               size="small"
                               placeholder="Select"/>
                         </div>
@@ -512,7 +500,9 @@
     <el-dialog v-model="dialogVisible" title="保存预设模版" align-center width="300" draggable>
       <el-form :model="newTemplate" class="demo-form-inline" @submit.native.prevent>
         <el-form-item label="预设名称">
-          <el-input v-model="newTemplate.desc" placeholder="请输入预设名称" clearable
+          <el-input v-model="newTemplate.desc"
+                    placeholder="请输入预设名称"
+                    clearable
                     @keyup.enter.native="saveTemplates"/>
         </el-form-item>
       </el-form>
@@ -561,22 +551,18 @@
     </el-dialog>
 
 
-    <el-dialog v-model="downloadProgressVisible" align-center title="导出进度" @close="handleDownloadProgressClose"
+    <el-dialog v-model="downloadProgressVisible"
+               title="导出进度"
+               align-center
+               @close="handleDownloadProgressClose"
                :close-on-click-modal="false"
                width="500">
       <el-progress :percentage="downloadProgressPercentage"/>
       <div class="fill"></div>
-      <!--    <template #footer>-->
-      <!--      <div class="dialog-footer">-->
-      <!--        <el-button @click="dialogVisible = false">Cancel</el-button>-->
-      <!--        <el-button type="primary" @click="dialogVisible = false">-->
-      <!--          Confirm-->
-      <!--        </el-button>-->
-      <!--      </div>-->
-      <!--    </template>-->
     </el-dialog>
 
-    <el-dialog v-model="outputSettingsVisible" title="项目设置" @close=""
+    <el-dialog v-model="outputSettingsVisible"
+               title="项目设置"
                width="800">
       <el-tabs type="border-card" class="demo-tabs">
         <el-tab-pane label="导出">
@@ -585,7 +571,9 @@
             <div class="options">
               <div class="option">
                 <span>调整方式：</span>
-                <el-select v-model="projectSettings.outputSettings.outputSize.type" placeholder="Select" size="small"
+                <el-select v-model="projectSettings.outputSettings.outputSize.type"
+                           placeholder="Select"
+                           size="small"
                            style="width: 240px">
                   <el-option
                       v-for="item in outputSizeOptions"
@@ -608,26 +596,29 @@
               <!--            </div>-->
               <div class="option" v-show="[2,3].includes(projectSettings.outputSettings.outputSize.type)">
                 <span>长边尺寸：</span>
-                <el-input v-model.number="projectSettings.outputSettings.outputSize.longSide" size="small"
+                <el-input v-model.number="projectSettings.outputSettings.outputSize.longSide"
+                          size="small"
                           placeholder="长边"/>
                 <span>px</span>
               </div>
               <div class="option" v-show="[4,5].includes(projectSettings.outputSettings.outputSize.type)">
                 <span>短边尺寸：</span>
-                <el-input v-model.number="projectSettings.outputSettings.outputSize.shortSide" size="small"
-
+                <el-input v-model.number="projectSettings.outputSettings.outputSize.shortSide"
+                          size="small"
                           placeholder="短边"/>
                 <span>px</span>
               </div>
               <div class="option" v-show="[6,7].includes(projectSettings.outputSettings.outputSize.type)">
                 <span>宽尺寸：</span>
-                <el-input v-model.number="projectSettings.outputSettings.outputSize.width" size="small"
+                <el-input v-model.number="projectSettings.outputSettings.outputSize.width"
+                          size="small"
                           placeholder="宽尺寸"/>
                 <span>px</span>
               </div>
               <div class="option" v-show="[8,9].includes(projectSettings.outputSettings.outputSize.type)">
                 <span>高尺寸：</span>
-                <el-input v-model.number="projectSettings.outputSettings.outputSize.height" size="small"
+                <el-input v-model.number="projectSettings.outputSettings.outputSize.height"
+                          size="small"
                           placeholder="高尺寸"/>
                 <span>px</span>
               </div>
@@ -638,10 +629,11 @@
             <div class="options">
               <div class="option">
                 <span>输出格式：</span>
-                <el-select v-model="projectSettings.outputSettings.extname" placeholder="Select" size="small"
+                <el-select v-model="projectSettings.outputSettings.extname"
+                           size="small"
                            style="width: 240px">
                   <el-option
-                      v-for="item in [{label:'原格式', value: 0},{label:'JPEG', value:1}, {label:'PNG', value: 2}]"
+                      v-for="item in [{label:'原格式', value: 0}, {label:'JPEG', value:1}, {label:'PNG', value: 2}]"
                       :key="item.value"
                       :label="item.label"
                       :value="item.value"/>
@@ -650,7 +642,10 @@
               <div class="option" v-show="projectSettings.outputSettings.extname === 1">
                 <span>图片品质：</span>
                 <div class="slider-demo-block">
-                  <el-slider v-model="projectSettings.outputSettings.quality" :min="1" :max="10" size="small"
+                  <el-slider v-model="projectSettings.outputSettings.quality"
+                             :min="1"
+                             :max="10"
+                             size="small"
                              show-input/>
                 </div>
               </div>
