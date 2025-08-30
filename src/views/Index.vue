@@ -641,13 +641,13 @@
                 <el-select v-model="projectSettings.outputSettings.extname" placeholder="Select" size="small"
                            style="width: 240px">
                   <el-option
-                      v-for="item in [{label:'原格式', value: 0},{label:'jpeg', value:1}, {label:'png', value: 2}]"
+                      v-for="item in [{label:'原格式', value: 0},{label:'JPEG', value:1}, {label:'PNG', value: 2}]"
                       :key="item.value"
                       :label="item.label"
                       :value="item.value"/>
                 </el-select>
               </div>
-              <div class="option" v-show="projectSettings.outputSettings.extname !== 2">
+              <div class="option" v-show="projectSettings.outputSettings.extname === 1">
                 <span>图片品质：</span>
                 <div class="slider-demo-block">
                   <el-slider v-model="projectSettings.outputSettings.quality" :min="1" :max="10" size="small"
