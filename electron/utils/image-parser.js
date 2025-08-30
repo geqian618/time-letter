@@ -66,21 +66,22 @@ async function parsePhotoMetadata(filePath) {
                 {label: '镜头型号', value: LensModel},
                 {label: 'ISO', value: ISO},
                 {label: '快门速度', value: shutterSpeed.formatShutterSpeed(ExposureTime)},
-                {label: '光圈', value: FNumber ? FNumber + 'f' : ''},
-                {label: '焦段', value: FocalLength ? Math.trunc(FocalLength * 1.5) + 'mm' : ''},
+                {label: '光圈', value: FNumber ? FNumber : ''},
+                {label: '焦段', value: Math.trunc(FocalLength) || ''}
             ],
             base: {
                 iso: ISO,
                 cameraBrand: Make,
                 cameraModel: Model,
                 lensModel: LensModel,
-                focalLength: FocalLength ? Math.trunc(FocalLength * 1.5) + 'mm' : '',
+                focalLength: FocalLength ? Math.trunc(FocalLength) : '',
                 shutter: shutterSpeed.formatShutterSpeed(ExposureTime),
-                aperture: FNumber ? FNumber + 'f' : '',
+                aperture: FNumber ? FNumber : '',
                 shootingTime: formatDateTime(DateTimeOriginal)
             }
         }
-    } catch (err) {
+    } catch
+        (err) {
         console.log(err)
     }
 }
