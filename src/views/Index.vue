@@ -41,17 +41,17 @@
                     <div class="text-marks" ref="textMarks">
                       <el-tooltip class="box-item" effect="dark" content="文本" placement="top">
                         <div class="text-mark" draggable="true" text="文本" type="text">
-                          <img src="../assets/icon/text.svg">
+                          <img draggable="false" src="../assets/icon/text.svg">
                         </div>
                       </el-tooltip>
                       <el-tooltip class="box-item" effect="dark" content="日期" placement="top">
                         <div class="text-mark" draggable="true" type="date">
-                          <img src="../assets/icon/date.svg">
+                          <img draggable="false" src="../assets/icon/date.svg">
                         </div>
                       </el-tooltip>
                       <el-tooltip class="box-item" effect="dark" content="日期时间" placement="top">
                         <div class="text-mark" draggable="true" type="datetime">
-                          <img src="../assets/icon/datetime.svg">
+                          <img draggable="false" src="../assets/icon/datetime.svg">
                         </div>
                       </el-tooltip>
                       <el-tooltip v-for="(textLabel) in textLabels" :key="textLabel.id" class="box-item" effect="dark"
@@ -61,7 +61,7 @@
                              draggable="true"
                              :text="textLabel.content"
                              :type="textLabel.type ==='text'?'text':'script'">
-                          <img src="../assets/icon/custom.svg">
+                          <img draggable="false" src="../assets/icon/custom.svg">
                         </div>
                       </el-tooltip>
                     </div>
@@ -1121,9 +1121,6 @@ const watchEditorLabel = () => {
           for (let [key, item] of data) {
             if (!imageLabels.value.has(key)) {
               imageLabels.value.set(key, item)
-              await nextTick()
-              const element = imageMarks.value.querySelector(`[path="${key.replaceAll('\\', '\\\\')}"]`);
-              handleDragStart(element)
             }
           }
         }
@@ -1179,9 +1176,6 @@ const saveNewTextLabel = async () => {
       if (!textLabel.value.id) {
         textLabel.value.id = Date.now() + ''
         textLabels.value.push(_.cloneDeep(textLabel.value))
-        await nextTick()
-        const element = textMarks.value.querySelector(`[id="${textLabel.value.id}"]`);
-        handleDragStart(element)
       }
       window.localStorage.setItem('textLabels', JSON.stringify(textLabels.value))
       textLabel.value = {
@@ -2429,8 +2423,9 @@ const setDefaultStyle = (dragElement) => {
 }
 
 
-const handleDragStart = (component) => {
-  component.addEventListener('dragstart', function (event) {
+const handleDragStart = (element) => {
+  element.addEventListener('dragstart', function (event) {
+    const component = event.target;
     const componentRect = component.getBoundingClientRect();
     const dragElement = component.cloneNode(true);
     // 元素与鼠标箭头之间的垂直方向偏移量差
@@ -2466,8 +2461,8 @@ const handleDragStart = (component) => {
 
 const bindDragEvent = (previewImage, image) => {
   // 设置拖拽事件
-  document.querySelectorAll('.image-marks .image-mark, .text-marks .text-mark, .metadata .text-mark').forEach(component => {
-    handleDragStart(component)
+  document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
+    handleDragStart(element)
   });
 
   previewImage.addEventListener('dragover', event =>
@@ -2484,7 +2479,7 @@ const bindDragEvent = (previewImage, image) => {
 
     event.preventDefault();
 
-    const {offsetX, offsetY, originalElement, dragElement} = dragParameters
+    const {offsetX, offsetY, dragElement} = dragParameters
 
     if (!dragElement) return;
 
