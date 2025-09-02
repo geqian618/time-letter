@@ -2170,8 +2170,11 @@ async function handlePreview(event, image) {
         }
         selectedImages.value.clear()
       }
+
       const beforePath = selectedElement.value.path;
-      images.value.get(beforePath).visible = false
+      if (beforePath) {
+        images.value.get(beforePath).visible = false
+      }
       selectedElement.value.element = event.target;
       selectedElement.value.path = event.target.getAttribute('path')
       images.value.get(image.path).visible = true
