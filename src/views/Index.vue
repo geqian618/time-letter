@@ -233,7 +233,7 @@
                         <div class="value">
                           <el-select
                               v-model="textOptions.fontStyle"
-                              :options="[ {label:'正常', value:'normal'}, {label:'斜体', value:'italic'}, {label:'斜体（备用）', value:'oblique'} ]"
+                              :options="[ {label:'正常', value:'normal'}, {label:'斜体', value:'italic'}, {label:'倾斜', value:'oblique'} ]"
                               size="small"
                               placeholder="Select"/>
                         </div>
@@ -362,8 +362,8 @@
                       <li class="option">
                         <div class="label">缩放</div>
                         <div class="value">
-                          <el-slider :min="1"
-                                     :max="100"
+                          <el-slider :min="imageScaleRange.min"
+                                     :max="imageScaleRange.max"
                                      size="small"
                                      v-model="imageOptions.scale"
                                      placement="top"/>
@@ -821,6 +821,13 @@ const textOptions = ref({
     shadowColor: 'rgb(0,0,0,1)'
   }
 })
+
+
+const imageScaleRange = {
+  min: 1,
+  max: 100,
+  threshold: 100
+}
 
 const imageOptions = ref({
   scale: 10,
@@ -1523,6 +1530,7 @@ const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVa
       image.settings.images.get(element).options.angle = newVal
       element.style.transformOrigin = 'center center'
       element.style.transform = `rotate(${newVal}deg)`;
+      console.log(element.getBoundingClientRect())
     }
   }
 });
@@ -1572,17 +1580,24 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
   const containerRect = image.getTargetElement().getBoundingClientRect();
   const parentRect = image.getTargetElement().parentNode.getBoundingClientRect();
   const elements = Array.from(image.settings.images.keys());
+
+  const leftGap = containerRect.left - parentRect.left;
+  const rightGap = parentRect.right - containerRect.right;
+  const topGap = containerRect.top - parentRect.top;
+  const bottomGap = parentRect.bottom - containerRect.bottom;
+
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
-
       const {width, height, left, top} = element.getBoundingClientRect();
-
       const scale = (newVal - oldVal) / 10;
-
       const newWidth = width + width * scale
       const newHeight = height + height * scale
       const newLeft = left - parentRect.left - width * scale / 2
       const newTop = top - parentRect.top - height * scale / 2
+
+      if (newLeft < leftGap || newLeft + rightGap + newWidth > parentRect.width || newTop < topGap || newTop + bottomGap + newHeight > parentRect.height) {
+        return;
+      }
 
       element.style.width = newWidth + 'px'
       element.style.height = newHeight + 'px'
@@ -2482,7 +2497,7 @@ const bindDragEvent = (previewImage, image) => {
 
     event.preventDefault();
 
-    const {offsetX, offsetY, dragElement} = dragParameters
+    const {offsetX, offsetY, dragElement, originalElement} = dragParameters
 
     if (!dragElement) return;
 
@@ -2494,11 +2509,20 @@ const bindDragEvent = (previewImage, image) => {
 
     const containerRect = previewImage.getBoundingClientRect();
 
-    const originalElementRect = dragElement.getBoundingClientRect();
+    document.body.append(dragElement);
 
-    if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (originalElementRect.width - offsetX)) {
+    const computedStyle = window.getComputedStyle(dragElement);
 
-      if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (originalElementRect.height - offsetY)) {
+    let elementWidth = Number.parseFloat(computedStyle.width)
+
+    let elementHeight = Number.parseFloat(computedStyle.height)
+
+    dragElement.remove()
+
+    if (mouseX >= containerRect.left + offsetX && mouseX + (elementWidth - offsetX) <= containerRect.right) {
+
+      if (mouseY >= containerRect.top + offsetY && mouseY + (elementHeight - offsetY) <= containerRect.bottom) {
+
         // 关键：必须设为绝对定位
         dragElement.style.position = 'absolute';
         // 设置元素定位
@@ -2612,7 +2636,7 @@ function makeDraggable(dragElement, path) {
 
   const previewImage = image.getTargetElement();
 
-  let offsetX, offsetY
+  let offsetLeft, offsetRight, offsetTop, offsetBottom
 
   let clickTimeout = null;
 
@@ -2620,19 +2644,29 @@ function makeDraggable(dragElement, path) {
 
   dragElement.onmousedown = function dragMouseDown(event) {
 
+    event.preventDefault();
+
+    // 记录初始鼠标位置和元素位置
+    let startX = event.clientX;
+    let startY = event.clientY;
+    let initialLeft = parseFloat(dragElement.style.left) || 0;
+    let initialTop = parseFloat(dragElement.style.top) || 0;
+
     const parentRect = previewImage.parentNode.getBoundingClientRect();
 
     // 限制在画布范围内
     const containerRect = previewImage.getBoundingClientRect();
 
-    const originalDragElementRect = dragElement.getBoundingClientRect();
-
-    event.preventDefault();
+    const elementRect = dragElement.getBoundingClientRect();
 
     // 获取鼠标位置
-    offsetX = event.clientX - originalDragElementRect.left;
+    offsetLeft = event.clientX - elementRect.left;
 
-    offsetY = event.clientY - originalDragElementRect.top
+    offsetRight = elementRect.right - event.clientX;
+
+    offsetTop = event.clientY - elementRect.top
+
+    offsetBottom = elementRect.bottom - event.clientY
 
     mouseSetupX = event.clientX
 
@@ -2646,17 +2680,28 @@ function makeDraggable(dragElement, path) {
         return
       }
 
-      const dragElementRect = dragElement.getBoundingClientRect();
-
       const mouseX = event.clientX;
 
       const mouseY = event.clientY;
 
-      if (mouseX >= containerRect.left + offsetX && mouseX <= containerRect.right - (dragElementRect.width - offsetX)) {
-        if (mouseY >= containerRect.top + offsetY && mouseY <= containerRect.bottom - (dragElementRect.height - offsetY)) {
+      if (mouseX >= containerRect.left + offsetLeft && mouseX + offsetRight <= containerRect.right) {
+        if (mouseY >= containerRect.top + offsetTop && mouseY + offsetBottom <= containerRect.bottom) {
 
-          dragElement.style.left = `${mouseX - parentRect.left - offsetX}px`;
-          dragElement.style.top = `${mouseY - parentRect.top - offsetY}px`;
+          // 计算移动距离（考虑旋转后的坐标系）
+          const dx = mouseX - startX;
+          const dy = mouseY - startY;
+
+          // 计算新位置
+          let newLeft = initialLeft + dx;
+          let newTop = initialTop + dy;
+
+          dragElement.style.left = newLeft + 'px';
+          dragElement.style.top = newTop + 'px';
+
+          const elementWidth = Number.parseFloat(dragElement.style.width);
+          const elementHeight = Number.parseFloat(dragElement.style.height);
+          const elementLeft = newLeft;
+          const elementTop = newTop;
 
           const heightCutLine = containerRect.top + containerRect.height / 2;
 
@@ -2670,23 +2715,23 @@ function makeDraggable(dragElement, path) {
 
           let references = []
 
-          if (dragElementRect.left > widthCutLine) {
+          if (parentRect.left + elementLeft > widthCutLine) {
             references.push('right')
-            positionOffsetX = containerRect.right - dragElementRect.left - dragElementRect.width
+            positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
             positionX = positionOffsetX / containerRect.width
           } else {
             references.push('left')
-            positionOffsetX = dragElementRect.left - containerRect.left
+            positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
             positionX = positionOffsetX / containerRect.width;
           }
 
-          if (dragElementRect.top > heightCutLine) {
+          if (parentRect.top + elementTop > heightCutLine) {
             references.push('bottom')
-            positionOffsetY = containerRect.bottom - dragElementRect.top - dragElementRect.height
+            positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - elementHeight
             positionY = positionOffsetY / containerRect.height;
           } else {
             references.push('top')
-            positionOffsetY = dragElementRect.top - containerRect.top
+            positionOffsetY = elementTop - (containerRect.top - parentRect.top)
             positionY = positionOffsetY / containerRect.height;
           }
 
