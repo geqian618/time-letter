@@ -1451,10 +1451,15 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
   const image = images.value.get(path);
   const parentNode = image.getTargetElement().parentNode;
   const containerRect = image.getTargetElement().getBoundingClientRect();
+  const parentRect = parentNode.getBoundingClientRect();
   const elements = parentNode.querySelectorAll('.text-mark');
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
-
+      const computedStyle = window.getComputedStyle(element);
+      let elementWidth = Number.parseFloat(computedStyle.width);
+      let elementHeight = Number.parseFloat(computedStyle.height);
+      let elementLeft = Number.parseFloat(element.style.left);
+      let elementTop = Number.parseFloat(element.style.top);
       element.style.fontStyle = newVal.fontStyle
       element.style.fontWeight = newVal.fontWeight
       element.style.fontFamily = newVal.fontFamily
@@ -1468,7 +1473,14 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 
       await nextTick()
 
-      const dragElementRect = element.getBoundingClientRect();
+      let newElementWidth = Number.parseFloat(computedStyle.width);
+      let newElementHeight = Number.parseFloat(computedStyle.height);
+
+      elementLeft = elementLeft - (newElementWidth - elementWidth) / 2;
+      elementTop = elementTop - (newElementHeight - elementHeight) / 2;
+
+      element.style.left = elementLeft + 'px';
+      element.style.top = elementTop + 'px';
 
       const heightCutLine = containerRect.top + containerRect.height / 2;
 
@@ -1484,23 +1496,23 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 
       let references = []
 
-      if (dragElementRect.left > widthCutLine) {
+      if (parentRect.left + elementLeft > widthCutLine) {
         references.push('right')
-        positionOffsetX = containerRect.right - dragElementRect.left - dragElementRect.width
+        positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - newElementWidth
         positionX = positionOffsetX / containerRect.width
       } else {
         references.push('left')
-        positionOffsetX = dragElementRect.left - containerRect.left
+        positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
         positionX = positionOffsetX / containerRect.width;
       }
 
-      if (dragElementRect.top > heightCutLine) {
+      if (parentRect.top + elementTop > heightCutLine) {
         references.push('bottom')
-        positionOffsetY = containerRect.bottom - dragElementRect.top - dragElementRect.height
+        positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - newElementHeight
         positionY = positionOffsetY / containerRect.height;
       } else {
         references.push('top')
-        positionOffsetY = dragElementRect.top - containerRect.top
+        positionOffsetY = elementTop - (containerRect.top - parentRect.top)
         positionY = positionOffsetY / containerRect.height;
       }
 
@@ -1570,7 +1582,7 @@ const stopImageBoxShadowWatch = watch(() => imageOptions.value.boxShadow, (newVa
 })
 
 
-const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVal) => {
+const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal, oldVal) => {
   if (switchElement.value) {
     switchElement.value = false;
     return
@@ -1588,21 +1600,28 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
 
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
-      const {width, height, left, top} = element.getBoundingClientRect();
-      const scale = (newVal - oldVal) / 10;
-      const newWidth = width + width * scale
-      const newHeight = height + height * scale
-      const newLeft = left - parentRect.left - width * scale / 2
-      const newTop = top - parentRect.top - height * scale / 2
+      let elementWidth = Number.parseFloat(element.style.width);
+      let elementHeight = Number.parseFloat(element.style.height);
+      let elementLeft = Number.parseFloat(element.style.left);
+      let elementTop = Number.parseFloat(element.style.top);
 
-      if (newLeft < leftGap || newLeft + rightGap + newWidth > parentRect.width || newTop < topGap || newTop + bottomGap + newHeight > parentRect.height) {
+      let scale = (newVal - oldVal) / 10;
+
+      elementWidth = elementWidth + elementWidth * scale
+      elementHeight = elementHeight + elementHeight * scale
+      elementLeft = elementLeft - elementWidth * scale / 2
+      elementTop = elementTop - elementHeight * scale / 2
+
+      if (elementLeft < leftGap || elementLeft + rightGap + elementWidth > parentRect.width || elementTop < topGap || elementTop + bottomGap + elementHeight > parentRect.height) {
         return;
       }
 
-      element.style.width = newWidth + 'px'
-      element.style.height = newHeight + 'px'
-      element.style.left = newLeft + 'px'
-      element.style.top = newTop + 'px'
+      element.style.width = elementWidth + 'px'
+      element.style.height = elementHeight + 'px'
+      element.style.left = elementLeft + 'px'
+      element.style.top = elementTop + 'px'
+
+      await nextTick();
 
       const heightCutLine = containerRect.top + containerRect.height / 2;
 
@@ -1618,28 +1637,25 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
 
       let references = []
 
-      const dragElementRect = element.getBoundingClientRect();
-
-      if (dragElementRect.left > widthCutLine) {
+      if (parentRect.left + elementLeft > widthCutLine) {
         references.push('right')
-        positionOffsetX = containerRect.right - dragElementRect.left - dragElementRect.width
+        positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
         positionX = positionOffsetX / containerRect.width
       } else {
         references.push('left')
-        positionOffsetX = dragElementRect.left - containerRect.left
+        positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
         positionX = positionOffsetX / containerRect.width;
       }
 
-      if (dragElementRect.top > heightCutLine) {
+      if (parentRect.top + elementTop > heightCutLine) {
         references.push('bottom')
-        positionOffsetY = containerRect.bottom - dragElementRect.top - dragElementRect.height
+        positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - elementHeight
         positionY = positionOffsetY / containerRect.height;
       } else {
         references.push('top')
-        positionOffsetY = dragElementRect.top - containerRect.top
+        positionOffsetY = elementTop - (containerRect.top - parentRect.top)
         positionY = positionOffsetY / containerRect.height;
       }
-
 
       image.settings.images.get(element).options.scale = newVal
       image.settings.images.get(element).positionX = positionX
@@ -1647,10 +1663,10 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, (newVal, oldVa
       image.settings.images.get(element).offsetX = positionOffsetX
       image.settings.images.get(element).offsetY = positionOffsetY
       image.settings.images.get(element).references = references
-      image.settings.images.get(element).width = newWidth
-      image.settings.images.get(element).height = newHeight
-      image.settings.images.get(element).options.imageWidthRatio = newWidth / containerRect.width
-      image.settings.images.get(element).options.imageHeightRatio = newHeight / containerRect.height
+      image.settings.images.get(element).width = elementWidth
+      image.settings.images.get(element).height = elementHeight
+      image.settings.images.get(element).options.imageWidthRatio = elementWidth / containerRect.width
+      image.settings.images.get(element).options.imageHeightRatio = elementHeight / containerRect.height
 
     }
   }
@@ -2497,7 +2513,7 @@ const bindDragEvent = (previewImage, image) => {
 
     event.preventDefault();
 
-    const {offsetX, offsetY, dragElement, originalElement} = dragParameters
+    const {offsetX, offsetY, dragElement} = dragParameters
 
     if (!dragElement) return;
 
@@ -2516,6 +2532,11 @@ const bindDragEvent = (previewImage, image) => {
     let elementWidth = Number.parseFloat(computedStyle.width)
 
     let elementHeight = Number.parseFloat(computedStyle.height)
+
+    if (dragElement.src) {
+      dragElement.style.width = elementWidth + 'px'
+      dragElement.style.height = elementHeight + 'px'
+    }
 
     dragElement.remove()
 
@@ -2698,8 +2719,15 @@ function makeDraggable(dragElement, path) {
           dragElement.style.left = newLeft + 'px';
           dragElement.style.top = newTop + 'px';
 
-          const elementWidth = Number.parseFloat(dragElement.style.width);
-          const elementHeight = Number.parseFloat(dragElement.style.height);
+          let elementWidth = Number.parseFloat(dragElement.style.width);
+          let elementHeight = Number.parseFloat(dragElement.style.height);
+
+          if (!elementWidth || !elementHeight) {
+            const computedStyle = window.getComputedStyle(dragElement);
+            elementWidth = Number.parseFloat(computedStyle.width);
+            elementHeight = Number.parseFloat(computedStyle.height);
+          }
+
           const elementLeft = newLeft;
           const elementTop = newTop;
 
