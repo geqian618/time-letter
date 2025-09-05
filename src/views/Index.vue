@@ -2667,18 +2667,18 @@ function makeDraggable(dragElement, path) {
 
     event.preventDefault();
 
+    const parentRect = previewImage.parentNode.getBoundingClientRect();
+    // 限制在画布范围内
+    const containerRect = previewImage.getBoundingClientRect();
+    const elementRect = dragElement.getBoundingClientRect();
+
     // 记录初始鼠标位置和元素位置
     let startX = event.clientX;
     let startY = event.clientY;
-    let initialLeft = parseFloat(dragElement.style.left) || 0;
-    let initialTop = parseFloat(dragElement.style.top) || 0;
-
-    const parentRect = previewImage.parentNode.getBoundingClientRect();
-
-    // 限制在画布范围内
-    const containerRect = previewImage.getBoundingClientRect();
-
-    const elementRect = dragElement.getBoundingClientRect();
+    const elementWidth = parseFloat(dragElement.style.width) || parseFloat(window.getComputedStyle(dragElement).width);
+    const elementHeight = parseFloat(dragElement.style.width) || parseFloat(window.getComputedStyle(dragElement).height);
+    let initialLeft = parseFloat(dragElement.style.left) || parentRect.width - parseFloat(dragElement.style.right) - elementWidth;
+    let initialTop = parseFloat(dragElement.style.top) || parentRect.height - parseFloat(dragElement.style.bottom) - elementHeight;
 
     // 获取鼠标位置
     offsetLeft = event.clientX - elementRect.left;
@@ -2713,23 +2713,11 @@ function makeDraggable(dragElement, path) {
           const dy = mouseY - startY;
 
           // 计算新位置
-          let newLeft = initialLeft + dx;
-          let newTop = initialTop + dy;
+          let elementLeft = initialLeft + dx;
+          let elementTop = initialTop + dy;
 
-          dragElement.style.left = newLeft + 'px';
-          dragElement.style.top = newTop + 'px';
-
-          let elementWidth = Number.parseFloat(dragElement.style.width);
-          let elementHeight = Number.parseFloat(dragElement.style.height);
-
-          if (!elementWidth || !elementHeight) {
-            const computedStyle = window.getComputedStyle(dragElement);
-            elementWidth = Number.parseFloat(computedStyle.width);
-            elementHeight = Number.parseFloat(computedStyle.height);
-          }
-
-          const elementLeft = newLeft;
-          const elementTop = newTop;
+          dragElement.style.left = elementLeft + 'px';
+          dragElement.style.top = elementTop + 'px';
 
           const heightCutLine = containerRect.top + containerRect.height / 2;
 
