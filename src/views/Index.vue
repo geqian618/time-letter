@@ -1853,6 +1853,8 @@ const useTemplate = async (options, path) => {
     img.style.width = image.width + 'px';
     img.style.height = image.height + 'px'
     img.style.opacity = image.alpha / 10
+    img.style.transformOrigin = 'center center'
+    img.style.transform = `rotate(${text.options.angle}deg)`
     const {boxShadow: {offsetX, offsetY, blur, shadowColor}} = image.options;
     img.style.boxShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
 
@@ -1901,6 +1903,8 @@ const useTemplate = async (options, path) => {
     div.style.fontFamily = text.options.fontFamily
     div.style.fontStyle = text.options.fontStyle
     div.style.fontWeight = text.options.fontWeight
+    div.style.transformOrigin = 'center center'
+    div.style.transform = `rotate(${text.options.angle}deg)`
     const {textShadow: {offsetX, offsetY, blur, shadowColor}} = text.options;
     div.style.textShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
     div.className = 'text-mark'
@@ -1979,6 +1983,8 @@ const refreshPositionInformation = (path) => {
 
   const previewImage = image.getTargetElement();
 
+  const parentRect = previewImage.parentNode.getBoundingClientRect();
+
   const containerRect = previewImage.getBoundingClientRect();
 
   const heightCutLine = containerRect.top + containerRect.height / 2;
@@ -1991,27 +1997,30 @@ const refreshPositionInformation = (path) => {
 
     let positionOffsetX, positionOffsetY
 
-    const elementRect = element.getBoundingClientRect();
+    const elementWidth = parseFloat(element.style.width) || parseFloat(window.getComputedStyle(element).width);
+    const elementHeight = parseFloat(element.style.width) || parseFloat(window.getComputedStyle(element).height);
+    let elementLeft = parseFloat(element.style.left) || parentRect.width - parseFloat(element.style.right) - elementWidth;
+    let elementTop = parseFloat(element.style.top) || parentRect.height - parseFloat(element.style.bottom) - elementHeight;
 
     let references = []
 
-    if (elementRect.left > widthCutLine) {
+    if (parentRect.left + elementLeft > widthCutLine) {
       references.push('right')
-      positionOffsetX = containerRect.right - elementRect.left - elementRect.width
+      positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
       positionX = positionOffsetX / containerRect.width
     } else {
       references.push('left')
-      positionOffsetX = elementRect.left - containerRect.left
+      positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
       positionX = positionOffsetX / containerRect.width;
     }
 
-    if (elementRect.top > heightCutLine) {
+    if (parentRect.top + elementTop > heightCutLine) {
       references.push('bottom')
-      positionOffsetY = containerRect.bottom - elementRect.top - elementRect.height
+      positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - elementHeight
       positionY = positionOffsetY / containerRect.height;
     } else {
       references.push('top')
-      positionOffsetY = elementRect.top - containerRect.top
+      positionOffsetY = elementTop - (containerRect.top - parentRect.top)
       positionY = positionOffsetY / containerRect.height;
     }
 
