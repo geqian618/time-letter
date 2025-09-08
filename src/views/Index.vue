@@ -1234,8 +1234,6 @@ const watchContextMenu = () => {
 
           if (nextElement.isUpdate) {
             refreshTemplate(paths[i])
-          } else {
-            renderBorders(paths[i])
           }
 
           await nextTick()
@@ -1358,7 +1356,6 @@ const handleResize = () => {
       const previewImage = image.getTargetElement();
       const parentRect = previewImage.parentNode.getBoundingClientRect();
       const {width, left, right, bottom, top, height} = previewImage.getBoundingClientRect();
-
       if (imageLabels.size) {
         imageLabels.forEach((imageLabel, element) => {
           let {positionX, positionY, offsetX, offsetY, synchronousMode} = imageLabel
@@ -1414,7 +1411,6 @@ const handleResize = () => {
             newPositionY = parentRect.bottom - bottom + newOffsetY
             element.style.bottom = `${newPositionY}px`;
           }
-
         })
       }
 
@@ -2154,11 +2150,12 @@ const refreshTemplate = async (path) => {
 
   })
 
-  await nextTick()
+  if (image.isUpdate){
+    await nextTick()
+    refreshPositionInformation(path)
+    image.isUpdate = false
+  }
 
-  refreshPositionInformation(path)
-
-  image.isUpdate = false
 }
 
 
@@ -2263,13 +2260,10 @@ async function handlePreview(event, image) {
 
     image.visible = true;
 
-    if (image.isUpdate) {
-      await nextTick(() => {
-        refreshTemplate(image.path)
-      })
-    } else {
-      settings.value.border = image.settings.border
-    }
+    await nextTick()
+
+    refreshTemplate(image.path)
+
     settings.value.metadata = image.metadata
   }
 }
