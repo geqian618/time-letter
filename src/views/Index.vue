@@ -1348,75 +1348,81 @@ const handleResize = () => {
   window.addEventListener("resize", () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      images.value.forEach((image, path) => {
-        const imageLabels = image.settings.images;
-        const textLabels = image.settings.texts;
-        const parentRect = image.getTargetElement().parentNode.getBoundingClientRect();
-        const {width, left, right, bottom, top, height} = image.getTargetElement().getBoundingClientRect();
-        if (imageLabels.size) {
-          image.settings.images.forEach((image, element) => {
-            let {positionX, positionY, offsetX, offsetY, synchronousMode} = image
-            let newPositionX, newPositionY, newOffsetX, newOffsetY
-            newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
-            newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
+      const path = selectedElement.value.path;
+      if (!path) {
+        return
+      }
+      const image = images.value.get(path);
+      const imageLabels = image.settings.images;
+      const textLabels = image.settings.texts;
+      const previewImage = image.getTargetElement();
+      const parentRect = previewImage.parentNode.getBoundingClientRect();
+      const {width, left, right, bottom, top, height} = previewImage.getBoundingClientRect();
 
-            if (image.references.includes('left')) {
-              newPositionX = left - parentRect.left + newOffsetX
-              element.style.left = `${newPositionX}px`;
-            }
+      if (imageLabels.size) {
+        imageLabels.forEach((imageLabel, element) => {
+          let {positionX, positionY, offsetX, offsetY, synchronousMode} = imageLabel
+          let newPositionX, newPositionY, newOffsetX, newOffsetY
+          newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
+          newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
 
-            if (image.references.includes('right')) {
-              newPositionX = parentRect.right - right + newOffsetX
-              element.style.right = `${newPositionX}px`;
-            }
+          if (imageLabel.references.includes('left')) {
+            newPositionX = left - parentRect.left + newOffsetX
+            element.style.left = `${newPositionX}px`;
+          }
 
-            if (image.references.includes('top')) {
-              newPositionY = top - parentRect.top + newOffsetY
-              element.style.top = `${newPositionY}px`;
-            }
+          if (imageLabel.references.includes('right')) {
+            newPositionX = parentRect.right - right + newOffsetX
+            element.style.right = `${newPositionX}px`;
+          }
 
-            if (image.references.includes('bottom')) {
-              newPositionY = parentRect.bottom - bottom + newOffsetY
-              element.style.bottom = `${newPositionY}px`;
-            }
+          if (imageLabel.references.includes('top')) {
+            newPositionY = top - parentRect.top + newOffsetY
+            element.style.top = `${newPositionY}px`;
+          }
 
-          })
-        }
-        if (textLabels.size) {
-          image.settings.texts.forEach((text, element) => {
-            let {positionX, positionY, offsetX, offsetY, synchronousMode} = text
-            let newPositionX, newPositionY, newOffsetX, newOffsetY
-            newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
-            newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
+          if (imageLabel.references.includes('bottom')) {
+            newPositionY = parentRect.bottom - bottom + newOffsetY
+            element.style.bottom = `${newPositionY}px`;
+          }
+        })
+      }
 
-            if (text.references.includes('left')) {
-              newPositionX = left - parentRect.left + newOffsetX
-              element.style.left = `${newPositionX}px`;
-            }
+      if (textLabels.size) {
+        textLabels.forEach((textLabel, element) => {
+          let {positionX, positionY, offsetX, offsetY, synchronousMode} = textLabel
+          let newPositionX, newPositionY, newOffsetX, newOffsetY
+          newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
+          newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
 
-            if (text.references.includes('right')) {
-              newPositionX = parentRect.right - right + newOffsetX
-              element.style.right = `${newPositionX}px`;
-            }
+          if (textLabel.references.includes('left')) {
+            newPositionX = left - parentRect.left + newOffsetX
+            element.style.left = `${newPositionX}px`;
+          }
 
-            if (text.references.includes('top')) {
-              newPositionY = top - parentRect.top + newOffsetY
-              element.style.top = `${newPositionY}px`;
-            }
+          if (textLabel.references.includes('right')) {
+            newPositionX = parentRect.right - right + newOffsetX
+            element.style.right = `${newPositionX}px`;
+          }
 
-            if (text.references.includes('bottom')) {
-              newPositionY = parentRect.bottom - bottom + newOffsetY
-              element.style.bottom = `${newPositionY}px`;
-            }
+          if (textLabel.references.includes('top')) {
+            newPositionY = top - parentRect.top + newOffsetY
+            element.style.top = `${newPositionY}px`;
+          }
 
-          })
-        }
+          if (textLabel.references.includes('bottom')) {
+            newPositionY = parentRect.bottom - bottom + newOffsetY
+            element.style.bottom = `${newPositionY}px`;
+          }
 
-        if (textLabels.size || imageLabels.size) {
-          handleBorders()
-        }
-      })
-    }, 0); // 200ms 防抖间隔
+        })
+      }
+
+      if (textLabels.size || imageLabels.size) {
+        handleBorders()
+      }
+
+    }, 100); // 200ms 防抖间隔
   });
 
 }
@@ -2093,6 +2099,7 @@ const refreshTemplate = async (path) => {
   image.settings.texts.forEach((text, element) => {
 
     let {positionX, positionY, offsetX, offsetY, synchronousMode} = text
+
     let newPositionX, newPositionY, newOffsetX, newOffsetY
     newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
     newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
