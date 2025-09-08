@@ -1347,77 +1347,14 @@ const handleResize = () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
       const path = selectedElement.value.path;
-      if (!path) {
-        return
-      }
-      const image = images.value.get(path);
-      const imageLabels = image.settings.images;
-      const textLabels = image.settings.texts;
-      const previewImage = image.getTargetElement();
-      const parentRect = previewImage.parentNode.getBoundingClientRect();
-      const {width, left, right, bottom, top, height} = previewImage.getBoundingClientRect();
-      if (imageLabels.size) {
-        imageLabels.forEach((imageLabel, element) => {
-          let {positionX, positionY, offsetX, offsetY, synchronousMode} = imageLabel
-          let newPositionX, newPositionY, newOffsetX, newOffsetY
-          newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
-          newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
-
-          if (imageLabel.references.includes('left')) {
-            newPositionX = left - parentRect.left + newOffsetX
-            element.style.left = `${newPositionX}px`;
-          }
-
-          if (imageLabel.references.includes('right')) {
-            newPositionX = parentRect.right - right + newOffsetX
-            element.style.right = `${newPositionX}px`;
-          }
-
-          if (imageLabel.references.includes('top')) {
-            newPositionY = top - parentRect.top + newOffsetY
-            element.style.top = `${newPositionY}px`;
-          }
-
-          if (imageLabel.references.includes('bottom')) {
-            newPositionY = parentRect.bottom - bottom + newOffsetY
-            element.style.bottom = `${newPositionY}px`;
+      if (path) {
+        refreshTemplate(path)
+        images.value.forEach((item, path) => {
+          if (path !== selectedElement.value.path) {
+            item.isUpdate = true
           }
         })
       }
-
-      if (textLabels.size) {
-        textLabels.forEach((textLabel, element) => {
-          let {positionX, positionY, offsetX, offsetY, synchronousMode} = textLabel
-          let newPositionX, newPositionY, newOffsetX, newOffsetY
-          newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
-          newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
-
-          if (textLabel.references.includes('left')) {
-            newPositionX = left - parentRect.left + newOffsetX
-            element.style.left = `${newPositionX}px`;
-          }
-
-          if (textLabel.references.includes('right')) {
-            newPositionX = parentRect.right - right + newOffsetX
-            element.style.right = `${newPositionX}px`;
-          }
-
-          if (textLabel.references.includes('top')) {
-            newPositionY = top - parentRect.top + newOffsetY
-            element.style.top = `${newPositionY}px`;
-          }
-
-          if (textLabel.references.includes('bottom')) {
-            newPositionY = parentRect.bottom - bottom + newOffsetY
-            element.style.bottom = `${newPositionY}px`;
-          }
-        })
-      }
-
-      if (textLabels.size || imageLabels.size) {
-        handleBorders()
-      }
-
     }, 100); // 200ms 防抖间隔
   });
 
@@ -2150,11 +2087,9 @@ const refreshTemplate = async (path) => {
 
   })
 
-  if (image.isUpdate){
-    await nextTick()
-    refreshPositionInformation(path)
-    image.isUpdate = false
-  }
+  await nextTick()
+  refreshPositionInformation(path)
+  image.isUpdate = false
 
 }
 
@@ -2262,7 +2197,9 @@ async function handlePreview(event, image) {
 
     await nextTick()
 
-    refreshTemplate(image.path)
+    if (image.isUpdate) {
+      refreshTemplate(image.path)
+    }
 
     settings.value.metadata = image.metadata
   }
