@@ -1411,13 +1411,11 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 
       elementLeft = elementLeft - (newElementWidth - elementWidth) / 2;
       elementTop = elementTop - (newElementHeight - elementHeight) / 2;
+      const elementRight = parentRect.width - elementLeft - newElementWidth;
+      const elementBottom = parentRect.height - elementTop - newElementHeight
 
       element.style.left = elementLeft + 'px';
       element.style.top = elementTop + 'px';
-
-      const heightCutLine = containerRect.top + containerRect.height / 2;
-
-      const widthCutLine = containerRect.left + containerRect.width / 2;
 
       let positionX;
 
@@ -1429,7 +1427,7 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 
       let references = []
 
-      if (parentRect.left + elementLeft > widthCutLine) {
+      if (elementLeft > elementRight) {
         references.push('right')
         positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - newElementWidth
         positionX = positionOffsetX / containerRect.width
@@ -1439,7 +1437,7 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
         positionX = positionOffsetX / containerRect.width;
       }
 
-      if (parentRect.top + elementTop > heightCutLine) {
+      if (elementTop > elementBottom) {
         references.push('bottom')
         positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - newElementHeight
         positionY = positionOffsetY / containerRect.height;
@@ -1544,6 +1542,8 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
       elementHeight = elementHeight + elementHeight * scale
       elementLeft = elementLeft - elementWidth * scale / 2
       elementTop = elementTop - elementHeight * scale / 2
+      const elementRight = parentRect.width - elementLeft - elementWidth;
+      const elementBottom = parentRect.height - elementTop - elementHeight
 
       if (elementLeft < leftGap || elementLeft + rightGap + elementWidth > parentRect.width || elementTop < topGap || elementTop + bottomGap + elementHeight > parentRect.height) {
         return;
@@ -1556,10 +1556,6 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
 
       await nextTick();
 
-      const heightCutLine = containerRect.top + containerRect.height / 2;
-
-      const widthCutLine = containerRect.left + containerRect.width / 2;
-
       let positionX;
 
       let positionY;
@@ -1570,7 +1566,7 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
 
       let references = []
 
-      if (parentRect.left + elementLeft > widthCutLine) {
+      if (elementLeft > elementRight) {
         references.push('right')
         positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
         positionX = positionOffsetX / containerRect.width
@@ -1580,7 +1576,7 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
         positionX = positionOffsetX / containerRect.width;
       }
 
-      if (parentRect.top + elementTop > heightCutLine) {
+      if (elementTop > elementBottom) {
         references.push('bottom')
         positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - elementHeight
         positionY = positionOffsetY / containerRect.height;
@@ -1925,10 +1921,6 @@ const refreshPositionInformation = (path) => {
 
   const parentRect = previewImage.parentNode.getBoundingClientRect();
 
-  const heightCutLine = containerRect.top + containerRect.height / 2;
-
-  const widthCutLine = containerRect.left + containerRect.width / 2;
-
   image.settings.texts.forEach((textLabel, element) => {
 
     let positionX, positionY
@@ -1937,12 +1929,15 @@ const refreshPositionInformation = (path) => {
 
     const elementWidth = parseFloat(element.style.width) || parseFloat(window.getComputedStyle(element).width);
     const elementHeight = parseFloat(element.style.height) || parseFloat(window.getComputedStyle(element).height);
+
     const elementLeft = parseFloat(element.style.left) || parentRect.width - parseFloat(element.style.right) - elementWidth;
     const elementTop = parseFloat(element.style.top) || parentRect.height - parseFloat(element.style.bottom) - elementHeight;
+    const elementRight = parentRect.width - elementLeft - elementWidth;
+    const elementBottom = parentRect.height - elementTop - elementHeight
 
     let references = []
 
-    if (parentRect.left + elementLeft > widthCutLine) {
+    if (elementLeft > elementRight) {
       references.push('right')
       positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
       positionX = positionOffsetX / containerRect.width
@@ -1952,7 +1947,7 @@ const refreshPositionInformation = (path) => {
       positionX = positionOffsetX / containerRect.width;
     }
 
-    if (parentRect.top + elementTop > heightCutLine) {
+    if (elementTop > elementBottom) {
       references.push('bottom')
       positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - elementHeight
       positionY = positionOffsetY / containerRect.height;
@@ -1978,12 +1973,14 @@ const refreshPositionInformation = (path) => {
 
     const elementWidth = parseFloat(element.style.width) || parseFloat(window.getComputedStyle(element).width);
     const elementHeight = parseFloat(element.style.height) || parseFloat(window.getComputedStyle(element).height);
+
     const elementLeft = parseFloat(element.style.left) || parentRect.width - parseFloat(element.style.right) - elementWidth;
     const elementTop = parseFloat(element.style.top) || parentRect.height - parseFloat(element.style.bottom) - elementHeight;
-
+    const elementRight = parentRect.width - elementLeft - elementWidth;
+    const elementBottom = parentRect.height - elementTop - elementHeight
     let references = []
 
-    if (parentRect.left + elementLeft > widthCutLine) {
+    if (elementLeft > elementRight) {
       references.push('right')
       positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
       positionX = positionOffsetX / containerRect.width
@@ -1993,7 +1990,7 @@ const refreshPositionInformation = (path) => {
       positionX = positionOffsetX / containerRect.width;
     }
 
-    if (parentRect.top + elementTop > heightCutLine) {
+    if (elementTop > elementBottom) {
       references.push('bottom')
       positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - elementHeight
       positionY = positionOffsetY / containerRect.height;
@@ -2202,7 +2199,7 @@ async function handlePreview(event, image) {
     await nextTick()
 
     if (image.isUpdate) {
-      await refreshTemplate(paths[i])
+      await refreshTemplate(image.path)
     }
 
     settings.value.metadata = image.metadata
@@ -2523,17 +2520,21 @@ const bindDragEvent = (previewImage, image) => {
       if (mouseY >= containerRect.top + offsetY && mouseY + (elementHeight - offsetY) <= containerRect.bottom) {
 
         // 关键：必须设为绝对定位
-        dragElement.style.position = 'absolute';
+        dragElement.style.position = 'absolute'
+
+        const elementLeft = mouseX - parentRect.left - offsetX;
+        const elementTop = mouseY - parentRect.top - offsetY;
+        const elementRight = parentRect.width - elementLeft - elementWidth;
+        const elementBottom = parentRect.height - elementTop - elementHeight
+
+
         // 设置元素定位
-        dragElement.style.left = `${mouseX - parentRect.left - offsetX}px`;
-        dragElement.style.top = `${mouseY - parentRect.top - offsetY}px`;
+        dragElement.style.left = `${elementLeft}px`;
+        dragElement.style.top = `${elementTop}px`;
 
         // 关键：将元素添加到容器
         previewImage.parentNode.appendChild(dragElement);
 
-        const heightCutLine = containerRect.top + containerRect.height / 2;
-
-        const widthCutLine = containerRect.left + containerRect.width / 2;
 
         let positionX;
 
@@ -2547,7 +2548,7 @@ const bindDragEvent = (previewImage, image) => {
 
         const dragElementRect = dragElement.getBoundingClientRect();
 
-        if (dragElementRect.left > widthCutLine) {
+        if (elementLeft > elementRight) {
           references.push('right')
           positionOffsetX = containerRect.right - dragElementRect.left - dragElementRect.width
           positionX = positionOffsetX / containerRect.width
@@ -2557,7 +2558,7 @@ const bindDragEvent = (previewImage, image) => {
           positionX = positionOffsetX / containerRect.width;
         }
 
-        if (dragElementRect.top > heightCutLine) {
+        if (elementTop > elementBottom) {
           references.push('bottom')
           positionOffsetY = containerRect.bottom - dragElementRect.top - dragElementRect.height
           positionY = positionOffsetY / containerRect.height;
@@ -2691,15 +2692,14 @@ function makeDraggable(dragElement, path) {
           const dy = mouseY - startY;
 
           // 计算新位置
-          let elementLeft = initialLeft + dx;
-          let elementTop = initialTop + dy;
+          const elementLeft = initialLeft + dx;
+          const elementTop = initialTop + dy;
+          const elementRight = parentRect.width - elementLeft - elementWidth;
+          const elementBottom = parentRect.height - elementTop - elementHeight
 
           dragElement.style.left = elementLeft + 'px';
           dragElement.style.top = elementTop + 'px';
 
-          const heightCutLine = containerRect.top + containerRect.height / 2;
-
-          const widthCutLine = containerRect.left + containerRect.width / 2;
 
           let positionX;
 
@@ -2709,7 +2709,7 @@ function makeDraggable(dragElement, path) {
 
           let references = []
 
-          if (parentRect.left + elementLeft > widthCutLine) {
+          if (elementLeft > elementRight) {
             references.push('right')
             positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
             positionX = positionOffsetX / containerRect.width
@@ -2719,9 +2719,10 @@ function makeDraggable(dragElement, path) {
             positionX = positionOffsetX / containerRect.width;
           }
 
-          if (parentRect.top + elementTop > heightCutLine) {
+          if (elementTop > elementBottom) {
             references.push('bottom')
             positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - elementHeight
+            positionY = positionOffsetY / containerRect.height;
             positionY = positionOffsetY / containerRect.height;
           } else {
             references.push('top')
