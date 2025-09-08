@@ -1354,67 +1354,61 @@ const handleResize = () => {
         const parentRect = image.getTargetElement().parentNode.getBoundingClientRect();
         const {width, left, right, bottom, top, height} = image.getTargetElement().getBoundingClientRect();
         if (imageLabels.size) {
-          imageLabels.forEach((items, element) => {
+          image.settings.images.forEach((image, element) => {
+            let {positionX, positionY, offsetX, offsetY, synchronousMode} = image
+            let newPositionX, newPositionY, newOffsetX, newOffsetY
+            newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
+            newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
 
-            let {positionX, positionY, references} = items
-
-            let newPositionX, newPositionY
-
-            if (references.includes('left')) {
-              newPositionX = left - parentRect.left + width * positionX;
-              element.style.removeProperty('right')
-              element.style.left = newPositionX + 'px'
+            if (image.references.includes('left')) {
+              newPositionX = left - parentRect.left + newOffsetX
+              element.style.left = `${newPositionX}px`;
             }
 
-            if (references.includes('right')) {
-              newPositionX = parentRect.right - right + width * positionX;
-              element.style.removeProperty('left')
-              element.style.right = newPositionX + 'px'
+            if (image.references.includes('right')) {
+              newPositionX = parentRect.right - right + newOffsetX
+              element.style.right = `${newPositionX}px`;
             }
 
-            if (references.includes('top')) {
-              newPositionY = top - parentRect.top + height * positionY;
-              element.style.removeProperty('bottom')
-              element.style.top = newPositionY + 'px'
+            if (image.references.includes('top')) {
+              newPositionY = top - parentRect.top + newOffsetY
+              element.style.top = `${newPositionY}px`;
             }
 
-            if (references.includes('bottom')) {
-              newPositionY = parentRect.bottom - bottom + height * positionY;
-              element.style.removeProperty('top')
-              element.style.bottom = newPositionY + 'px';
+            if (image.references.includes('bottom')) {
+              newPositionY = parentRect.bottom - bottom + newOffsetY
+              element.style.bottom = `${newPositionY}px`;
             }
+
           })
         }
         if (textLabels.size) {
-          textLabels.forEach((items, element) => {
+          image.settings.texts.forEach((text, element) => {
+            let {positionX, positionY, offsetX, offsetY, synchronousMode} = text
+            let newPositionX, newPositionY, newOffsetX, newOffsetY
+            newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
+            newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
 
-            let {positionX, positionY, references} = items
-
-            let newPositionX, newPositionY
-
-            if (references.includes('left')) {
-              newPositionX = left - parentRect.left + width * positionX;
-              element.style.removeProperty('right')
-              element.style.left = newPositionX + 'px'
+            if (text.references.includes('left')) {
+              newPositionX = left - parentRect.left + newOffsetX
+              element.style.left = `${newPositionX}px`;
             }
 
-            if (references.includes('right')) {
-              newPositionX = parentRect.right - right + width * positionX;
-              element.style.removeProperty('left')
-              element.style.right = newPositionX + 'px'
+            if (text.references.includes('right')) {
+              newPositionX = parentRect.right - right + newOffsetX
+              element.style.right = `${newPositionX}px`;
             }
 
-            if (references.includes('top')) {
-              newPositionY = top - parentRect.top + height * positionY;
-              element.style.removeProperty('bottom')
-              element.style.top = newPositionY + 'px'
+            if (text.references.includes('top')) {
+              newPositionY = top - parentRect.top + newOffsetY
+              element.style.top = `${newPositionY}px`;
             }
 
-            if (references.includes('bottom')) {
-              newPositionY = parentRect.bottom - bottom + height * positionY;
-              element.style.removeProperty('top')
-              element.style.bottom = newPositionY + 'px';
+            if (text.references.includes('bottom')) {
+              newPositionY = parentRect.bottom - bottom + newOffsetY
+              element.style.bottom = `${newPositionY}px`;
             }
+
           })
         }
 
