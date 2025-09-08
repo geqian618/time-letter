@@ -731,7 +731,7 @@
 
 <script setup lang="js">
 
-import {nextTick, onBeforeMount, onMounted, ref, watch, reactive} from "vue";
+import {nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
 
 import {getDate, getDateTime} from '@/utils/datetime'
 
@@ -2193,10 +2193,35 @@ onMounted(() => {
   loadProjectSettings()
 })
 
-onBeforeMount(() => {
+
+const clearAllEventListener = () => {
+
   // 组件销毁前移除监听，避免内存泄漏
   window.removeEventListener("resize", handleResize);
+
+  document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
+    element.removeEventListener('dragstart', handleDragStart)
+  });
+
+}
+
+
+onBeforeUnmount(() => {
+
+  clearAllEventListener()
+
+
+  stopWatchPhotoMetadata()
+  stopTextSettingsWatch()
+  stopTextProjectSettingsWatch()
+
+  stopImageBoxShadowWatch()
+  stopImageAlphaWatch()
+  stopImageScaleWatch()
+  stopImageAngleWatch()
+
 })
+
 
 async function handlePreview(event, image) {
   if (!event.ctrlKey && !event.shiftKey) {
@@ -2476,46 +2501,44 @@ const setDefaultStyle = (dragElement) => {
 }
 
 
-const handleDragStart = (element) => {
-  element.addEventListener('dragstart', function (event) {
-    const component = event.target;
-    const componentRect = component.getBoundingClientRect();
-    const dragElement = component.cloneNode(true);
-    // 元素与鼠标箭头之间的垂直方向偏移量差
-    const offsetX = event.clientX - componentRect.left;
-    const offsetY = event.clientY - componentRect.top;
+const handleDragStart = function (event) {
+  const component = event.target;
+  const componentRect = component.getBoundingClientRect();
+  const dragElement = component.cloneNode(true);
+  // 元素与鼠标箭头之间的垂直方向偏移量差
+  const offsetX = event.clientX - componentRect.left;
+  const offsetY = event.clientY - componentRect.top;
 
-    dragParameters.offsetX = offsetX;
-    dragParameters.offsetY = offsetY;
-    dragParameters.originalElement = component
-    dragParameters.dragElement = dragElement
+  dragParameters.offsetX = offsetX;
+  dragParameters.offsetY = offsetY;
+  dragParameters.originalElement = component
+  dragParameters.dragElement = dragElement
 
-    setDefaultStyle(dragElement);
+  setDefaultStyle(dragElement);
 
-    if (dragElement.src) {
-      const dragPreview = dragElement.cloneNode(true);
-      dragPreview.style.position = 'fixed';
-      document.body.appendChild(dragPreview);
-      // 关键：设置自定义拖拽图像
-      event.dataTransfer.setDragImage(dragPreview, offsetX, offsetY);
-      // 拖拽结束后清理
-      const cleanUp = () => {
-        document.body.removeChild(dragPreview);
-        component.removeEventListener('dragend', cleanUp);
-      };
-      component.addEventListener('dragend', cleanUp);
-    } else {
-      // 关键：设置拖拽数据传输
-      event.dataTransfer.setData('text/plain', 'drag-element');
-    }
-  });
+  if (dragElement.src) {
+    const dragPreview = dragElement.cloneNode(true);
+    dragPreview.style.position = 'fixed';
+    document.body.appendChild(dragPreview);
+    // 关键：设置自定义拖拽图像
+    event.dataTransfer.setDragImage(dragPreview, offsetX, offsetY);
+    // 拖拽结束后清理
+    const cleanUp = () => {
+      document.body.removeChild(dragPreview);
+      component.removeEventListener('dragend', cleanUp);
+    };
+    component.addEventListener('dragend', cleanUp);
+  } else {
+    // 关键：设置拖拽数据传输
+    event.dataTransfer.setData('text/plain', 'drag-element');
+  }
 }
 
 
 const bindDragEvent = (previewImage, image) => {
   // 设置拖拽事件
   document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
-    handleDragStart(element)
+    element.addEventListener('dragstart', handleDragStart);
   });
 
   previewImage.addEventListener('dragover', event =>
