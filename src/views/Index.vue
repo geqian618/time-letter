@@ -1233,7 +1233,7 @@ const watchContextMenu = () => {
           await nextTick()
 
           if (nextElement.isUpdate) {
-            refreshTemplate(paths[i])
+            await refreshTemplate(paths[i])
           }
 
           await nextTick()
@@ -1345,10 +1345,10 @@ const handleResize = () => {
   // 添加 resize 事件监听
   window.addEventListener("resize", () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
+    resizeTimer = setTimeout(async () => {
       const path = selectedElement.value.path;
       if (path) {
-        refreshTemplate(path)
+        await refreshTemplate(path)
         images.value.forEach((item, path) => {
           if (path !== selectedElement.value.path) {
             item.isUpdate = true
@@ -2038,21 +2038,25 @@ const refreshTemplate = async (path) => {
     newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
 
     if (text.references.includes('left')) {
+      element.style.right = ''
       newPositionX = left - parentRect.left + newOffsetX
       element.style.left = `${newPositionX}px`;
     }
 
     if (text.references.includes('right')) {
+      element.style.left = ''
       newPositionX = parentRect.right - right + newOffsetX
       element.style.right = `${newPositionX}px`;
     }
 
     if (text.references.includes('top')) {
+      element.style.bottom = ''
       newPositionY = top - parentRect.top + newOffsetY
       element.style.top = `${newPositionY}px`;
     }
 
     if (text.references.includes('bottom')) {
+      element.style.top = ''
       newPositionY = parentRect.bottom - bottom + newOffsetY
       element.style.bottom = `${newPositionY}px`;
     }
@@ -2198,7 +2202,7 @@ async function handlePreview(event, image) {
     await nextTick()
 
     if (image.isUpdate) {
-      refreshTemplate(image.path)
+      await refreshTemplate(paths[i])
     }
 
     settings.value.metadata = image.metadata
