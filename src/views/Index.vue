@@ -1114,7 +1114,9 @@ const watchDownloadProgress = () => {
 }
 
 const handleDownloadProgressClose = () => {
-  downloadProgressPercentage.value = 0
+  setTimeout(() => {
+    downloadProgressPercentage.value = 0
+  }, 200)
 }
 
 const watchEditorLabel = () => {
@@ -2406,7 +2408,6 @@ const setDefaultStyle = (dragElement) => {
     dragElement.style.fontStyle = 'normal'
     dragElement.style.fontWeight = '400'
     const type = dragElement.getAttribute('type');
-    dragElement.firstChild.remove()
     if (type === 'date') {
       dragElement.innerHTML = getDate();
     } else if (type === 'datetime') {
@@ -2534,7 +2535,6 @@ const bindDragEvent = (previewImage, image) => {
 
         // 关键：将元素添加到容器
         previewImage.parentNode.appendChild(dragElement);
-
 
         let positionX;
 
