@@ -456,17 +456,29 @@
         </div>
       </div>
 
-      <div class="page-images" id="image-list" ref="imageList" @wheel="handleWheel" @contextmenu="openContextMenu">
-        <img class="imageItem"
-             :key="key"
-             :path="key"
-             v-lazy="image.url"
-             v-for="([key, image]) in images"
-             @click.meta.exact="handleMultipleSelect($event,image)"
-             @click.ctrl.exact="handleMultipleSelect($event, image)"
-             @click.shift.exact="handleShiftClick($event,image)"
-             @click="handlePreview($event, image)">
+
+      <div class="page-bottom">
+        <div class="function-tabs">
+          <el-tooltip class="box-item" effect="dark" content="上一张" placement="top">
+            <img src="../assets/icon/左箭头.svg" class="tab" @click="handleBeforeOne" alt="上一张">
+          </el-tooltip>
+          <el-tooltip class="box-item" effect="dark" content="下一张" placement="top">
+            <img src="../assets/icon/右箭头.svg" class="tab" @click="handleNextOne" alt="下一张">
+          </el-tooltip>
+        </div>
+        <div class="page-images" id="image-list" ref="imageList" @wheel="handleWheel" @contextmenu="openContextMenu">
+          <img class="imageItem"
+               :key="key"
+               :path="key"
+               v-lazy="image.url"
+               v-for="([key, image]) in images"
+               @click.meta.exact="handleMultipleSelect($event,image)"
+               @click.ctrl.exact="handleMultipleSelect($event, image)"
+               @click.shift.exact="handleShiftClick($event,image)"
+               @click="handlePreview($event, image)">
+        </div>
       </div>
+
     </div>
 
     <el-dialog align-center v-model="customTextLabelDialogVisible" title="新增文本标签" width="500" draggable>
@@ -740,6 +752,8 @@ import {executeFunctionScript} from '@/utils/script-helper'
 import {fontOptions} from '@/hook/font-options'
 
 import _ from 'lodash';
+
+import MapHelper from "@/utils/map-helper";
 
 import {projectSettings, outputSizeOptions, originalMetadataFormats} from '@/config/project-settings'
 
@@ -1015,6 +1029,7 @@ const watchInputImages = () => {
             element: null,
             render: false,
             isUpdate: false,
+            path,
             settings: {
               border: {
                 borderType: 0,
@@ -2395,6 +2410,68 @@ const handleWheel = (e) => {
 };
 
 
+const handleBeforeOne = async () => {
+  const currentPath = selectedElement.value.path;
+  const currentElement = selectedElement.value.element;
+  const currentImage = images.value.get(currentPath);
+  const beforeImage = MapHelper.getBeforeValue(images.value, currentPath);
+  if (currentImage && beforeImage) {
+    currentImage.visible = false
+    if (currentElement) {
+      currentElement.setAttribute('selected', 'false')
+      currentElement.classList.remove('active')
+      selectedImages.value.delete(currentPath)
+    }
+
+    await nextTick()
+
+    const beforeElement = currentElement.previousElementSibling || currentElement.parentNode.lastElementChild;
+    if (beforeElement) {
+      beforeImage.visible = true
+      if (beforeImage.isUpdate) {
+        await refreshTemplate(beforeImage.path)
+      }
+      beforeElement.classList.add('active')
+      beforeElement.setAttribute('selected', 'true')
+      selectedElement.value.path = beforeImage.path
+      selectedElement.value.element = beforeElement
+      selectedImages.value.set(beforeImage.path, beforeElement)
+    }
+    await nextTick()
+  }
+}
+
+const handleNextOne = async () => {
+  const currentPath = selectedElement.value.path;
+  const currentElement = selectedElement.value.element;
+  const currentImage = images.value.get(currentPath);
+  const nextImage = MapHelper.getNextValue(images.value, currentPath);
+  if (currentImage && nextImage) {
+    currentImage.visible = false
+    if (currentElement) {
+      currentElement.setAttribute('selected', 'false')
+      currentElement.classList.remove('active')
+      selectedImages.value.delete(currentPath)
+    }
+
+    await nextTick()
+
+    const nextElement = currentElement.nextElementSibling || currentElement.parentNode.firstElementChild;
+    if (nextElement) {
+      nextImage.visible = true
+      if (nextImage.isUpdate) {
+        await refreshTemplate(nextImage.path)
+      }
+      nextElement.classList.add('active')
+      nextElement.setAttribute('selected', 'true')
+      selectedElement.value.path = nextImage.path
+      selectedElement.value.element = nextElement
+      selectedImages.value.set(nextImage.path, nextElement)
+    }
+    await nextTick()
+  }
+}
+
 const setDefaultStyle = (dragElement) => {
   if (dragElement.src) {
     dragElement.style.width = '50px'
@@ -2878,7 +2955,7 @@ function makeDraggable(dragElement, path) {
 
   .page-main {
     width: 100%;
-    height: 80%;
+    height: 75%;
     display: flex;
     box-sizing: border-box;
 
@@ -3228,40 +3305,62 @@ function makeDraggable(dragElement, path) {
     }
   }
 
-  .page-images {
-    box-sizing: border-box;
+
+  .page-bottom {
     width: 100%;
-    height: 19%;
-    display: flex;
-    justify-content: start;
-    background: #5c5d5e;
-    padding: 5px;
-    overflow-x: auto;
-    border-top: 2px solid #484949;
-    scroll-behavior: smooth; /* 可选，使滚动更平滑 */
-    white-space: nowrap; /* 防止内容换行 */
+    height: 24%;
 
-    img {
+    .function-tabs {
+      border-top: 1px solid #2d2c2c;
+      border-bottom: 1px solid #2d2c2c;
+      width: 100%;
+      height: 25%;
+      background: #474747;
+      display: flex;
+      justify-content: left;
+      align-items: center;
+
+      .tab {
+        height: 80%;
+        margin-left: 15px;
+      }
+    }
+
+    .page-images {
       box-sizing: border-box;
-      background: grey;
-      padding: 15px;
-      height: 100%;
-      border-right: 2px solid #a2a4a6;
-    }
+      width: 100%;
+      height: 75%;
+      display: flex;
+      justify-content: start;
+      background: #5c5d5e;
+      padding: 5px;
+      overflow-x: auto;
+      scroll-behavior: smooth; /* 可选，使滚动更平滑 */
+      white-space: nowrap; /* 防止内容换行 */
 
-    img:last-child {
-      border: none;
-    }
+      img {
+        box-sizing: border-box;
+        background: grey;
+        padding: 15px;
+        height: 100%;
+        border-right: 2px solid #a2a4a6;
+      }
 
-    .active {
-      background: #dedcdc;
-    }
+      img:last-child {
+        border: none;
+      }
 
-    image:last-child {
-      margin-right: 0;
-    }
+      .active {
+        background: #dedcdc;
+      }
 
+      image:last-child {
+        margin-right: 0;
+      }
+
+    }
   }
+
 
 }
 

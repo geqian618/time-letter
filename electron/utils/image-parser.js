@@ -80,8 +80,7 @@ async function parsePhotoMetadata(filePath) {
                 shootingTime: formatDateTime(DateTimeOriginal)
             }
         }
-    } catch
-        (err) {
+    } catch (err) {
         console.log(err)
     }
 }
