@@ -1073,18 +1073,7 @@ const watchInputImages = () => {
       for (let [path, item] of data) {
         if (!images.value.has(path)) {
           let image = {
-            metadata: {
-              cameraBrand: '',
-              cameraModel: '',
-              lensModel: '',
-              focalLength: '',
-              iso: '',
-              shutter: '',
-              aperture: '',
-              shootingTime: '',
-              width: null,
-              height: null
-            },
+            metadata: null,
             visible: false,
             previewElement: null,
             render: false,
@@ -1111,6 +1100,12 @@ const watchInputImages = () => {
                 this.previewElement = document.getElementById(this.path)
               }
               return this.previewElement
+            },
+            getTriggerElement() {
+              if (!this.triggerElement) {
+                this.triggerElement = imageList.value.querySelector(`[path="${path.replace(/\\/g, '\\\\')}"]`)
+              }
+              return this.triggerElement
             }
           }
           const photoMetadata = await window.electronAPI.parsePhotoMetadata(path);
