@@ -31,6 +31,7 @@ async function getImageResolution(imagePath) {
     return width + ' x ' + height
 }
 
+
 function getFileSize(filePath) {
     const size = fs.statSync(filePath)?.size;
     return size ? (size / 1000 / 1000).toFixed(2) + 'MB' : size
@@ -53,6 +54,7 @@ async function parsePhotoMetadata(filePath) {
             image: {Make, Model},
             exif: {ISO, ExposureTime, FNumber, FocalLength, LensMake, LensModel, CreateDate, DateTimeOriginal}
         } = await parseMetadata(filePath);
+        const {width, height} = await createSharp(filePath).metadata();
         return {
             details: [
                 {label: '文件名称', value: path.basename(filePath)},
@@ -77,7 +79,9 @@ async function parsePhotoMetadata(filePath) {
                 focalLength: FocalLength ? Math.trunc(FocalLength) : '',
                 shutter: shutterSpeed.formatShutterSpeed(ExposureTime),
                 aperture: FNumber ? FNumber : '',
-                shootingTime: formatDateTime(DateTimeOriginal)
+                shootingTime: formatDateTime(DateTimeOriginal),
+                width,
+                height
             }
         }
     } catch (err) {

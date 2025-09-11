@@ -459,12 +459,38 @@
 
       <div class="page-bottom">
         <div class="function-tabs">
-          <el-tooltip class="box-item" effect="dark" content="上一张" placement="top">
-            <img src="../assets/icon/左箭头.svg" class="tab" @click="handleBeforeOne" alt="上一张">
-          </el-tooltip>
-          <el-tooltip class="box-item" effect="dark" content="下一张" placement="top">
-            <img src="../assets/icon/右箭头.svg" class="tab" @click="handleNextOne" alt="下一张">
-          </el-tooltip>
+          <div class="tab-wrapper">
+            <el-tooltip effect="dark" content="上一张" placement="top">
+              <img src="../assets/images/左箭头-未激活.png" class="inactive" alt="上一张">
+            </el-tooltip>
+            <el-tooltip effect="dark" content="上一张" placement="top">
+              <img src="../assets/images/左箭头-激活.png" class="active" @click="handleBeforeOne" alt="上一张">
+            </el-tooltip>
+          </div>
+
+          <div class="tab-wrapper">
+            <el-tooltip effect="dark" content="下一张" placement="top">
+              <img src="../assets/images/右箭头-未激活.png" class="inactive" alt="下一张">
+            </el-tooltip>
+            <el-tooltip effect="dark" content="下一张" placement="top">
+              <img src="../assets/images/右箭头-激活.png" class="active" @click="handleNextOne" alt="下一张">
+            </el-tooltip>
+          </div>
+
+          <div class="filter">
+            <div class="filter-label">筛选：</div>
+            <div class="filter-select">
+
+              <el-select v-model="filterType" size="small" @change="handleFilterImages" placeholder="Select"
+                         style="width: 240px">
+                <el-option
+                    v-for="item in [{label:'无',value:0},{label:'横图',value:1},{label:'竖图',value:2}]"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"/>
+              </el-select>
+            </div>
+          </div>
         </div>
         <div class="page-images" id="image-list" ref="imageList" @wheel="handleWheel" @contextmenu="openContextMenu">
           <img class="imageItem"
@@ -743,7 +769,7 @@
 
 <script setup lang="js">
 
-import {nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
+import {nextTick, onBeforeUnmount, onMounted, ref, watch, computed} from "vue";
 
 import {getDate, getDateTime} from '@/utils/datetime'
 
@@ -756,7 +782,6 @@ import _ from 'lodash';
 import MapHelper from "@/utils/map-helper";
 
 import {projectSettings, outputSizeOptions, originalMetadataFormats} from '@/config/project-settings'
-
 
 const predefineColors = ref([
   '#ff4500',
@@ -775,6 +800,7 @@ const predefineColors = ref([
   '#c7158577',
 ])
 
+const filterType = ref(0)
 
 const borderOptions = [
   {
@@ -877,7 +903,9 @@ const settings = ref({
     iso: '',
     shutter: '',
     aperture: '',
-    shootingTime: ''
+    shootingTime: '',
+    width: null,
+    height: null
   },
   image: {
     path: '',
@@ -1009,6 +1037,45 @@ const textLabelRules = {
   ]
 }
 
+const handleFilterImages = () => {
+  clearSelectedImages()
+  const imageList = Array.from(images.value.values());
+  if (filterType.value === 0) {
+    imageList.forEach(image => {
+      const triggerElement = image.getTriggerElement();
+      triggerElement.style.display = 'block'
+    })
+  } else if (filterType.value === 1) {
+    imageList.forEach(image => {
+      const triggerElement = image.getTriggerElement();
+      if (image.metadata.width < image.metadata.height) {
+        triggerElement.style.display = 'none'
+      } else {
+        triggerElement.style.display = 'block'
+      }
+    })
+  } else {
+    imageList.forEach(image => {
+      const triggerElement = image.getTriggerElement();
+      if (image.metadata.width >= image.metadata.height) {
+        triggerElement.style.display = 'none'
+      } else {
+        triggerElement.style.display = 'block'
+      }
+    })
+  }
+}
+
+const clearSelectedImages = () => {
+  selectedImages.value.forEach((element, path) => {
+    if (path !== selectedElement.value.path) {
+      selectedImages.value.delete(path)
+      element.classList.remove('active');
+      element.setAttribute('selected', 'false')
+    }
+  })
+}
+
 const watchInputImages = () => {
   window.electronAPI.watchInputImage(async (event, data) => {
     if (data) {
@@ -1023,12 +1090,15 @@ const watchInputImages = () => {
               iso: '',
               shutter: '',
               aperture: '',
-              shootingTime: ''
+              shootingTime: '',
+              width: null,
+              height: null
             },
             visible: false,
-            element: null,
+            previewElement: null,
             render: false,
             isUpdate: false,
+            triggerElement: null,
             path,
             settings: {
               border: {
@@ -1047,10 +1117,17 @@ const watchInputImages = () => {
               images: new Map(),
             },
             getTargetElement() {
-              if (!this.element) {
-                this.element = document.getElementById(this.path)
+              if (!this.previewElement) {
+                this.previewElement = document.getElementById(this.path)
               }
-              return this.element
+              return this.previewElement
+            },
+            getTriggerElement() {
+              if (!this.triggerElement) {
+                const formatPath = path.replace(/\\/g, '\\\\');
+                this.triggerElement = imageList.value.querySelector(`[path="${formatPath}"]`)
+              }
+              return this.triggerElement
             }
           }
           const photoMetadata = await window.electronAPI.parsePhotoMetadata(path);
@@ -2167,6 +2244,7 @@ onBeforeUnmount(() => {
   stopTextProjectSettingsWatch()
 
   stopImageBoxShadowWatch()
+  stopWatchImageZIndex()
   stopImageAlphaWatch()
   stopImageScaleWatch()
   stopImageAngleWatch()
@@ -2218,7 +2296,6 @@ async function handlePreview(event, image) {
     if (image.isUpdate) {
       await refreshTemplate(image.path)
     }
-
     settings.value.metadata = image.metadata
   }
 }
@@ -2409,6 +2486,21 @@ const handleWheel = (e) => {
   }
 };
 
+async function scrollLeft(gotoEnd, width) {
+  if (gotoEnd) {
+    imageList.value.scrollLeft = imageList.value.scrollWidth
+  } else {
+    imageList.value.scrollLeft -= width
+  }
+}
+
+async function scrollRight(gotoFirst, width) {
+  if (gotoFirst) {
+    imageList.value.scrollLeft = 0
+  } else {
+    imageList.value.scrollLeft += width
+  }
+}
 
 const handleBeforeOne = async () => {
   const currentPath = selectedElement.value.path;
@@ -2431,11 +2523,13 @@ const handleBeforeOne = async () => {
       if (beforeImage.isUpdate) {
         await refreshTemplate(beforeImage.path)
       }
+      settings.value.metadata = beforeImage.metadata
       beforeElement.classList.add('active')
       beforeElement.setAttribute('selected', 'true')
       selectedElement.value.path = beforeImage.path
       selectedElement.value.element = beforeElement
       selectedImages.value.set(beforeImage.path, beforeElement)
+      scrollLeft(currentElement.previousElementSibling === null, beforeElement.getBoundingClientRect().width)
     }
     await nextTick()
   }
@@ -2462,11 +2556,13 @@ const handleNextOne = async () => {
       if (nextImage.isUpdate) {
         await refreshTemplate(nextImage.path)
       }
+      settings.value.metadata = nextImage.metadata
       nextElement.classList.add('active')
       nextElement.setAttribute('selected', 'true')
       selectedElement.value.path = nextImage.path
       selectedElement.value.element = nextElement
       selectedImages.value.set(nextImage.path, nextElement)
+      scrollRight(currentElement.nextElementSibling === null, nextElement.getBoundingClientRect().width)
     }
     await nextTick()
   }
@@ -2661,7 +2757,7 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.text.content = dragElement.innerText
           settings.value.text.type = dragElement.getAttribute('type')
           const dragElementStyle = window.getComputedStyle(dragElement);
-          const fontSize = Number.parseFloat(dragElementStyle.fontSize.replace('px', ''));
+          const fontSize = Number.parseFloat(dragElementStyle.fontSize);
           settings.value.text.options.fontSize = fontSize
           settings.value.text.options.fontFamily = dragElementStyle.fontFamily.replace(/"/g, '')
           settings.value.text.options.fontColor = dragElementStyle.color
@@ -2679,8 +2775,8 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.image.url = dragElement.src
 
           const dragElementStyle = window.getComputedStyle(dragElement);
-          const imageHeight = Number.parseFloat(dragElementStyle.height.replace('px', ''));
-          const imageWidth = Number.parseFloat(dragElementStyle.width.replace('px', ''));
+          const imageHeight = Number.parseFloat(dragElementStyle.height);
+          const imageWidth = Number.parseFloat(dragElementStyle.width);
 
           settings.value.image.width = imageWidth
           settings.value.image.height = imageHeight
@@ -3320,9 +3416,54 @@ function makeDraggable(dragElement, path) {
       justify-content: left;
       align-items: center;
 
-      .tab {
-        height: 80%;
-        margin-left: 15px;
+      .filter {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+
+        .filter-label {
+          color: #faf8f8;
+          font-size: 14px;
+        }
+
+        .filter-select {
+          margin-right: 20px;
+
+          .el-select {
+            width: 100px !important;
+          }
+        }
+      }
+
+      .tab-wrapper {
+        position: relative;
+        height: 70%;
+
+        img {
+          height: 100%;
+          width: auto;
+          margin-left: 15px;
+          transition: opacity 0.4s ease;
+        }
+
+        .inactive {
+          opacity: 1;
+        }
+
+        .active {
+          position: absolute;
+          top: 0;
+          left: 0;
+          opacity: 0;
+        }
+
+        .inactive:hover {
+          opacity: 0;
+        }
+
+        .active:hover {
+          opacity: 1;
+        }
       }
     }
 
