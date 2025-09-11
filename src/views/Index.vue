@@ -480,9 +480,7 @@
           <div class="filter">
             <div class="filter-label">筛选：</div>
             <div class="filter-select">
-
-              <el-select v-model="filterType" size="small" @change="handleFilterImages" placeholder="Select"
-                         style="width: 240px">
+              <el-select v-model="filterType" size="small" placeholder="Select">
                 <el-option
                     v-for="item in [{label:'无',value:0},{label:'横图',value:1},{label:'竖图',value:2}]"
                     :key="item.value"
@@ -497,7 +495,7 @@
                :key="key"
                :path="key"
                v-lazy="image.url"
-               v-for="([key, image]) in images"
+               v-for="([key, image]) in filterImages"
                @click.meta.exact="handleMultipleSelect($event,image)"
                @click.ctrl.exact="handleMultipleSelect($event, image)"
                @click.shift.exact="handleShiftClick($event,image)"
@@ -817,6 +815,8 @@ const templateSettings = ref({})
 
 const images = ref(new Map())
 
+const filterImages = ref(new Map())
+
 const imageList = ref(null);
 
 const saveTemplateForm = ref();
@@ -1037,43 +1037,34 @@ const textLabelRules = {
   ]
 }
 
-const handleFilterImages = () => {
-  clearSelectedImages()
-  const imageList = Array.from(images.value.values());
+const stopWatchFilterImages = watch(filterType, async () => {
+  await clearSelectedImages()
   if (filterType.value === 0) {
-    imageList.forEach(image => {
-      const triggerElement = image.getTriggerElement();
-      triggerElement.style.display = 'block'
-    })
+    filterImages.value = images.value
   } else if (filterType.value === 1) {
-    imageList.forEach(image => {
-      const triggerElement = image.getTriggerElement();
-      if (image.metadata.width < image.metadata.height) {
-        triggerElement.style.display = 'none'
-      } else {
-        triggerElement.style.display = 'block'
-      }
-    })
+    filterImages.value = new Map(Array.from(images.value).filter(([path, {metadata}]) => metadata.width > metadata.height))
   } else {
-    imageList.forEach(image => {
-      const triggerElement = image.getTriggerElement();
-      if (image.metadata.width >= image.metadata.height) {
-        triggerElement.style.display = 'none'
-      } else {
-        triggerElement.style.display = 'block'
-      }
-    })
+    filterImages.value = new Map(Array.from(images.value).filter(([path, {metadata}]) => metadata.width <= metadata.height))
   }
-}
+})
 
-const clearSelectedImages = () => {
+const clearSelectedImages = async () => {
+  const path = selectedElement.value.path;
+  if (!path) {
+    return
+  }
   selectedImages.value.forEach((element, path) => {
-    if (path !== selectedElement.value.path) {
-      selectedImages.value.delete(path)
-      element.classList.remove('active');
-      element.setAttribute('selected', 'false')
-    }
+    element.classList.remove('active')
+    element.setAttribute('selected', 'false')
   })
+  selectedImages.value.clear()
+  selectedElement.value = {
+    path: '',
+    element: null
+  }
+  await nextTick()
+  images.value.get(path).visible = false
+  await nextTick()
 }
 
 const watchInputImages = () => {
@@ -1081,7 +1072,7 @@ const watchInputImages = () => {
     if (data) {
       for (let [path, item] of data) {
         if (!images.value.has(path)) {
-          const image = {
+          let image = {
             metadata: {
               cameraBrand: '',
               cameraModel: '',
@@ -1098,7 +1089,6 @@ const watchInputImages = () => {
             previewElement: null,
             render: false,
             isUpdate: false,
-            triggerElement: null,
             path,
             settings: {
               border: {
@@ -1121,23 +1111,26 @@ const watchInputImages = () => {
                 this.previewElement = document.getElementById(this.path)
               }
               return this.previewElement
-            },
-            getTriggerElement() {
-              if (!this.triggerElement) {
-                const formatPath = path.replace(/\\/g, '\\\\');
-                this.triggerElement = imageList.value.querySelector(`[path="${formatPath}"]`)
-              }
-              return this.triggerElement
             }
           }
           const photoMetadata = await window.electronAPI.parsePhotoMetadata(path);
           if (photoMetadata && photoMetadata.base) {
             image.metadata = photoMetadata.base
           }
-          images.value.set(path, {...image, ...item})
+
+          image = {...image, ...item}
+
+          images.value.set(path, image)
+
+          if (filterType.value === 0) {
+            filterImages.value.set(path, image)
+          } else if (filterType.value === 1 && image.metadata.width > image.metadata.height) {
+            filterImages.value.set(path, image)
+          } else if (filterType.value === 2 && image.metadata.width <= image.metadata.height) {
+            filterImages.value.set(path, image)
+          }
         }
       }
-
       nextTick(() => {
         images.value.forEach((image, path) => {
           if (!image.render) {
@@ -1710,7 +1703,9 @@ const stopWatchImageZIndex = watch(() => imageOptions.value.zIndex, (newVal, old
 
 const stopWatchPhotoMetadata = watch(() => settings.value.metadata, (newVal, oldVal) => {
   const path = selectedElement.value.path;
-  images.value.get(path).metadata = _.cloneDeep(newVal)
+  if (path) {
+    images.value.get(path).metadata = _.cloneDeep(newVal)
+  }
 }, {
   //深度监视（监视属性变化）
   deep: true,
@@ -2238,6 +2233,7 @@ onBeforeUnmount(() => {
 
   clearAllEventListener()
 
+  stopWatchFilterImages()
 
   stopWatchPhotoMetadata()
   stopTextSettingsWatch()
@@ -2254,19 +2250,18 @@ onBeforeUnmount(() => {
 
 async function handlePreview(event, image) {
   if (!event.ctrlKey && !event.shiftKey) {
-    if (selectedImages.value && !selectedImages.value.size) {
-      selectedElement.value.element = event.target;
-      selectedElement.value.path = event.target.getAttribute('path')
-    } else if (selectedImages.value && selectedImages.value.size === 1) {
+    //有一个被选中元素
+    if (selectedImages.value && selectedImages.value.size === 1) {
       if (selectedElement.value.path) {
         const beforePath = selectedElement.value.path;
         selectedImages.value.delete(beforePath);
         selectedElement.value.element.classList.remove('active')
         images.value.get(beforePath).visible = false
-        selectedElement.value.element = event.target;
-        selectedElement.value.path = event.target.getAttribute('path');
+        await nextTick()
       }
-    } else {
+    }
+    // 有多个被选中元素
+    if (selectedImages.value && selectedImages.value.size > 1) {
       if (!selectedImages.value.has(image.path)) {
         const selectedElements = selectedImages.value.values();
         for (let element of selectedElements) {
@@ -2278,10 +2273,8 @@ async function handlePreview(event, image) {
       const beforePath = selectedElement.value.path;
       if (beforePath) {
         images.value.get(beforePath).visible = false
+        await nextTick()
       }
-      selectedElement.value.element = event.target;
-      selectedElement.value.path = event.target.getAttribute('path')
-      images.value.get(image.path).visible = true
     }
 
     if (!selectedImages.value.has(image.path)) {
@@ -2296,6 +2289,10 @@ async function handlePreview(event, image) {
     if (image.isUpdate) {
       await refreshTemplate(image.path)
     }
+
+    selectedElement.value.element = event.target;
+    selectedElement.value.path = event.target.getAttribute('path')
+
     settings.value.metadata = image.metadata
   }
 }
@@ -2505,8 +2502,9 @@ async function scrollRight(gotoFirst, width) {
 const handleBeforeOne = async () => {
   const currentPath = selectedElement.value.path;
   const currentElement = selectedElement.value.element;
-  const currentImage = images.value.get(currentPath);
-  const beforeImage = MapHelper.getBeforeValue(images.value, currentPath);
+  if (!currentPath) return
+  const currentImage = filterImages.value.get(currentPath);
+  const beforeImage = MapHelper.getBeforeValue(filterImages.value, currentPath);
   if (currentImage && beforeImage) {
     currentImage.visible = false
     if (currentElement) {
@@ -2517,12 +2515,16 @@ const handleBeforeOne = async () => {
 
     await nextTick()
 
+    beforeImage.visible = true
+
+    await nextTick()
+
+    if (beforeImage.isUpdate) {
+      await refreshTemplate(beforeImage.path)
+    }
+
     const beforeElement = currentElement.previousElementSibling || currentElement.parentNode.lastElementChild;
     if (beforeElement) {
-      beforeImage.visible = true
-      if (beforeImage.isUpdate) {
-        await refreshTemplate(beforeImage.path)
-      }
       settings.value.metadata = beforeImage.metadata
       beforeElement.classList.add('active')
       beforeElement.setAttribute('selected', 'true')
@@ -2531,31 +2533,37 @@ const handleBeforeOne = async () => {
       selectedImages.value.set(beforeImage.path, beforeElement)
       scrollLeft(currentElement.previousElementSibling === null, beforeElement.getBoundingClientRect().width)
     }
-    await nextTick()
+
   }
 }
 
 const handleNextOne = async () => {
   const currentPath = selectedElement.value.path;
   const currentElement = selectedElement.value.element;
-  const currentImage = images.value.get(currentPath);
-  const nextImage = MapHelper.getNextValue(images.value, currentPath);
+  if (!currentPath) return
+  const currentImage = filterImages.value.get(currentPath);
+  const nextImage = MapHelper.getNextValue(filterImages.value, currentPath);
   if (currentImage && nextImage) {
-    currentImage.visible = false
     if (currentElement) {
       currentElement.setAttribute('selected', 'false')
       currentElement.classList.remove('active')
       selectedImages.value.delete(currentPath)
     }
 
+    currentImage.visible = false
+
     await nextTick()
+
+    nextImage.visible = true
+
+    await nextTick()
+
+    if (nextImage.isUpdate) {
+      await refreshTemplate(nextImage.path)
+    }
 
     const nextElement = currentElement.nextElementSibling || currentElement.parentNode.firstElementChild;
     if (nextElement) {
-      nextImage.visible = true
-      if (nextImage.isUpdate) {
-        await refreshTemplate(nextImage.path)
-      }
       settings.value.metadata = nextImage.metadata
       nextElement.classList.add('active')
       nextElement.setAttribute('selected', 'true')
@@ -2564,7 +2572,6 @@ const handleNextOne = async () => {
       selectedImages.value.set(nextImage.path, nextElement)
       scrollRight(currentElement.nextElementSibling === null, nextElement.getBoundingClientRect().width)
     }
-    await nextTick()
   }
 }
 
