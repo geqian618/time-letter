@@ -3513,8 +3513,8 @@ function makeDraggable(dragElement, path) {
       height: 75%;
       display: flex;
       justify-content: start;
-      background: #5c5d5e;
-      padding: 5px;
+      background: var(--expand-area-background-color);
+      padding: 8px;
       overflow-x: auto;
       scroll-behavior: smooth; /* 可选，使滚动更平滑 */
       white-space: nowrap; /* 防止内容换行 */
@@ -3524,7 +3524,7 @@ function makeDraggable(dragElement, path) {
         background: grey;
         padding: 15px;
         height: 100%;
-        border-right: 2px solid #a2a4a6;
+        border-right: 1px solid #a2a4a6;
       }
 
       img:last-child {
