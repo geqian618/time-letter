@@ -1,7 +1,6 @@
 <template>
   <div>
     <div class="page-layout">
-      <div class="page-top"></div>
       <div class="page-main">
         <div class="page-left">
           <el-aside>
@@ -3102,11 +3101,6 @@ function makeDraggable(dragElement, path) {
   width: 100vw;
   height: 100vh;
 
-  .page-top {
-    height: var(--page-top-height);
-    background: var(--expand-area-background-color);
-  }
-
   .page-main {
     width: 100%;
     height: var(--page-main-height);
@@ -3119,6 +3113,8 @@ function makeDraggable(dragElement, path) {
       background: var(--expand-area-background-color);
       box-sizing: border-box;
       flex-shrink: 0;
+      border: 1px solid var(--border-color);
+      border-bottom: none;
 
       .el-aside {
         color: var(--el-text-color-primary);
@@ -3293,6 +3289,8 @@ function makeDraggable(dragElement, path) {
       width: var(--page-right-width);
       height: 100%;
       background: var(--expand-area-background-color);
+      border: 1px solid var(--border-color);
+      border-bottom: none;
 
       .settings-details {
         width: 100%;
@@ -3445,16 +3443,16 @@ function makeDraggable(dragElement, path) {
   .page-bottom {
     width: 100%;
     height: var(--page-bootom-height);
+    border: 1px solid var(--border-color);
 
     .function-tabs {
-      border-top: 1px solid #2d2c2c;
-      border-bottom: 1px solid #2d2c2c;
       width: 100%;
       height: 25%;
       background: var(--expand-area-background-color);
       display: flex;
       justify-content: left;
       align-items: center;
+      border-bottom: 1px solid var(--border-color);
 
       .filter {
         margin-left: auto;
@@ -3514,7 +3512,6 @@ function makeDraggable(dragElement, path) {
       display: flex;
       justify-content: start;
       background: var(--expand-area-background-color);
-      padding: 8px;
       overflow-x: auto;
       scroll-behavior: smooth; /* 可选，使滚动更平滑 */
       white-space: nowrap; /* 防止内容换行 */

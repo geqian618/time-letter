@@ -19,7 +19,7 @@ import {RouterView} from 'vue-router'
 }
 
 :root {
-  --page-top-height: 1%;
+  --border-color: #6c6c6c;
   --page-main-height: 75%;
   --page-bootom-height: 24%;
   --page-left-width: 20%;
