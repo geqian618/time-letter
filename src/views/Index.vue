@@ -1013,6 +1013,11 @@ const textLabel = ref({
   content: ''
 })
 
+let timerId;
+
+let scrollEvents = []
+
+
 const textLabels = ref([])
 
 const templateRef = ref()
@@ -2508,22 +2513,28 @@ const handleWheel = (e) => {
       behavior: 'smooth' // 平滑滚动效果
     });
   }
-};
-
-async function scrollLeft(gotoEnd, width) {
-  if (gotoEnd) {
-    imageList.value.scrollLeft = imageList.value.scrollWidth
-  } else {
-    imageList.value.scrollLeft -= width
-  }
 }
 
-async function scrollRight(gotoFirst, width) {
-  if (gotoFirst) {
-    imageList.value.scrollLeft = 0
-  } else {
-    imageList.value.scrollLeft += width
-  }
+
+async function trySlidingScrollbar() {
+  if (timerId) clearTimeout(timerId)
+  timerId = setTimeout(() => {
+    let offsetX = imageList.value.scrollLeft;
+    for (let item of scrollEvents) {
+      const {width, isEdge, position} = item;
+      if (isEdge) {
+        if (position === 0) {
+          offsetX = imageList.value.scrollWidth
+        } else {
+          offsetX = 0
+        }
+      } else {
+        offsetX = position === 0 ? offsetX - width : offsetX + width
+      }
+    }
+    imageList.value.scrollLeft = offsetX
+    scrollEvents = []
+  }, 500)
 }
 
 const handleBeforeOne = async () => {
@@ -2558,9 +2569,15 @@ const handleBeforeOne = async () => {
       selectedElement.value.path = beforeImage.path
       selectedElement.value.element = beforeElement
       selectedImages.value.set(beforeImage.path, beforeElement)
-      scrollLeft(currentElement.previousElementSibling === null, beforeElement.getBoundingClientRect().width)
-    }
 
+      scrollEvents.push({
+        position: 0,
+        isEdge: currentElement.previousElementSibling === null,
+        width: currentElement.getBoundingClientRect().width
+      })
+      trySlidingScrollbar()
+
+    }
   }
 }
 
@@ -2597,7 +2614,14 @@ const handleNextOne = async () => {
       selectedElement.value.path = nextImage.path
       selectedElement.value.element = nextElement
       selectedImages.value.set(nextImage.path, nextElement)
-      scrollRight(currentElement.nextElementSibling === null, nextElement.getBoundingClientRect().width)
+
+      scrollEvents.push({
+        position: 1,
+        isEdge: currentElement.nextElementSibling === null,
+        width: currentElement.getBoundingClientRect().width
+      })
+      trySlidingScrollbar()
+
     }
   }
 }
