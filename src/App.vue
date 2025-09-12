@@ -18,4 +18,18 @@ import {RouterView} from 'vue-router'
   user-select: none;
 }
 
+:root {
+  --page-top-height: 1%;
+  --page-main-height: 75%;
+  --page-bootom-height: 24%;
+  --page-left-width: 20%;
+  --page-center-width: 60%;
+  --page-right-width: 20%;
+  --expand-area-background-color: #474747;
+  --menu-background-color: #343434;
+  --menu-icon-color: #c2c1c1;
+  --main-font-color: #A9A9A9;
+  --preview-background-color: #838485;
+}
+
 </style>

@@ -1046,7 +1046,42 @@ const stopWatchFilterImages = watch(filterType, async () => {
   } else {
     filterImages.value = new Map(Array.from(images.value).filter(([path, {metadata}]) => metadata.width <= metadata.height))
   }
+
+  await nextTick()
+
+  setDefaultSelectedElement()
 })
+
+
+const setDefaultSelectedElement = async () => {
+  const path = selectedElement.value.path;
+  const paths = Array.from(filterImages.value.keys());
+  if (!paths.length || !path) return
+  let image
+  let triggerElement
+  if (paths.includes(path)) {
+    image = filterImages.value.get(selectedElement.value.path);
+    triggerElement = image.getTriggerElement();
+  } else {
+    image = filterImages.value.get(paths[0]);
+    triggerElement = image.getTriggerElement();
+    await nextTick()
+    images.value.get(path).visible = false
+    await nextTick()
+    image.visible = true
+    await nextTick()
+    if (image.isUpdate) {
+      refreshTemplate(image.path)
+    }
+    await nextTick()
+  }
+  triggerElement.classList.add('active')
+  triggerElement.setAttribute('selected', 'true')
+  selectedElement.value.path = image.path
+  selectedElement.value.element = triggerElement
+  selectedImages.value.set(image.path, triggerElement)
+}
+
 
 const clearSelectedImages = async () => {
   const path = selectedElement.value.path;
@@ -1058,13 +1093,13 @@ const clearSelectedImages = async () => {
     element.setAttribute('selected', 'false')
   })
   selectedImages.value.clear()
+}
+
+const resetSelectedElement = () => {
   selectedElement.value = {
     path: '',
     element: null
   }
-  await nextTick()
-  images.value.get(path).visible = false
-  await nextTick()
 }
 
 const watchInputImages = () => {
@@ -1102,10 +1137,7 @@ const watchInputImages = () => {
               return this.previewElement
             },
             getTriggerElement() {
-              if (!this.triggerElement) {
-                this.triggerElement = imageList.value.querySelector(`[path="${path.replace(/\\/g, '\\\\')}"]`)
-              }
-              return this.triggerElement
+              return imageList.value.querySelector(`[path="${path.replace(/\\/g, '\\\\')}"]`)
             }
           }
           const photoMetadata = await window.electronAPI.parsePhotoMetadata(path);
@@ -3047,33 +3079,33 @@ function makeDraggable(dragElement, path) {
   height: 100vh;
 
   .page-top {
-    height: 1%;
-    background: #484949;
+    height: var(--page-top-height);
+    background: var(--expand-area-background-color);
   }
 
   .page-main {
     width: 100%;
-    height: 75%;
+    height: var(--page-main-height);
     display: flex;
     box-sizing: border-box;
 
     .page-left {
-      width: 20%;
+      width: var(--page-left-width);
       height: 100%;
-      background: #474747;
+      background: var(--expand-area-background-color);
       box-sizing: border-box;
       flex-shrink: 0;
 
       .el-aside {
         color: var(--el-text-color-primary);
-        background: #474747;
+        background: var(--expand-area-background-color);
         width: 100%;
         height: 100%;
 
         .el-menu {
           border-right: none;
           border-bottom: none;
-          background-color: #474747;
+          background-color: var(--expand-area-background-color);
 
           .el-menu-item.is-active {
             background-color: #757575 !important;
@@ -3084,7 +3116,7 @@ function makeDraggable(dragElement, path) {
             height: 50%;
             width: 100%;
             box-sizing: border-box;
-            background-color: #343434;
+            background-color: var(--menu-background-color);
 
             .text-marks {
               padding: 20px 10px;
@@ -3092,7 +3124,7 @@ function makeDraggable(dragElement, path) {
               gap: 20px;
               grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
               font-size: 12px;
-              background-color: #474747;
+              background-color: var(--expand-area-background-color);
 
               .text-mark {
                 width: fit-content;
@@ -3114,11 +3146,11 @@ function makeDraggable(dragElement, path) {
 
           :deep(.el-sub-menu) {
             span, svg {
-              color: #c2c1c1;
+              color: var(--menu-icon-color);
             }
 
             .el-sub-menu__title:hover {
-              background-color: #343434;
+              background-color: var(--menu-background-color);
 
               span {
                 color: white;
@@ -3136,14 +3168,14 @@ function makeDraggable(dragElement, path) {
             height: 50%;
             width: 100%;
             box-sizing: border-box;
-            background-color: #343434;
+            background-color: var(--menu-background-color);
             border-bottom: 1px solid #a2a4a6;
 
             .image-marks {
               padding: 10px;
               column-count: 3; /* 列数 */
               column-gap: 10px; /* 列间距 */
-              background-color: #474747;
+              background-color: var(--expand-area-background-color);
 
               .image-mark {
                 display: block;
@@ -3161,15 +3193,15 @@ function makeDraggable(dragElement, path) {
           }
 
           .templates-options {
-            background-color: #343434;
+            background-color: var(--menu-background-color);
             border-bottom: 1px solid #a2a4a6;
             padding: 0 1px;
 
             .templates {
-              background-color: #474747;
+              background-color: var(--expand-area-background-color);
 
               .el-menu-item {
-                color: #A9A9A9;
+                color: var(--main-font-color);
                 border-bottom: 1px solid #868686;
               }
 
@@ -3179,7 +3211,6 @@ function makeDraggable(dragElement, path) {
             }
           }
         }
-
       }
 
       .details {
@@ -3207,8 +3238,8 @@ function makeDraggable(dragElement, path) {
     }
 
     .page-center {
-      background: #838485;
-      width: 60%;
+      background: var(--preview-background-color);
+      width: var(--page-center-width);
       height: 100%;
       border: 1px solid #8d8d8d;
       border-bottom: none;
@@ -3235,9 +3266,9 @@ function makeDraggable(dragElement, path) {
     }
 
     .page-right {
-      width: 20%;
+      width: var(--page-right-width);
       height: 100%;
-      background: #474747;
+      background: var(--expand-area-background-color);
 
       .settings-details {
         width: 100%;
@@ -3246,22 +3277,22 @@ function makeDraggable(dragElement, path) {
 
         .el-aside {
           color: var(--el-text-color-primary);
-          background: #474747;
+          background: var(--expand-area-background-color);
           width: 100%;
           height: 100%;
 
           .el-menu {
             border-right: none;
-            background-color: #474747;
+            background-color: var(--expand-area-background-color);
 
             :deep(.el-sub-menu) {
               span, svg {
-                color: #c2c1c1;
+                color: var(--menu-icon-color);
               }
             }
 
             .el-sub-menu {
-              background-color: #343434;
+              background-color: var(--menu-background-color);
               border-bottom: 1px solid #a2a4a6;
 
               .control-option {
@@ -3273,11 +3304,11 @@ function makeDraggable(dragElement, path) {
               }
 
               .group-title {
-                color: #A9A9A9;
+                color: var(--main-font-color);
                 width: 100%;
                 height: 30px;
                 font-size: 14px;
-                background-color: #474747;
+                background-color: var(--expand-area-background-color);
                 display: flex;
                 justify-content: center;
                 align-items: end;
@@ -3292,7 +3323,7 @@ function makeDraggable(dragElement, path) {
                 width: 100%;
                 list-style: none;
                 padding: 10px 0 10px 10px;
-                background-color: #474747;
+                background-color: var(--expand-area-background-color);
 
                 .option {
                   height: 35px;
@@ -3316,7 +3347,7 @@ function makeDraggable(dragElement, path) {
                     justify-content: end;
                     width: 50px;
                     font-size: 12px;
-                    color: #A9A9A9;
+                    color: var(--main-font-color);
                   }
 
                   .value {
@@ -3369,11 +3400,11 @@ function makeDraggable(dragElement, path) {
             :deep(.el-sub-menu) {
 
               span, svg {
-                color: #c2c1c1;
+                color: var(--menu-icon-color);
               }
 
               .el-sub-menu__title:hover {
-                background-color: #343434;
+                background-color: var(--menu-background-color);
 
                 span {
                   color: white;
@@ -3383,37 +3414,20 @@ function makeDraggable(dragElement, path) {
           }
         }
       }
-
-      .element-clone {
-        position: absolute;
-        z-index: 1000;
-        pointer-events: none; /* 防止副本拦截点击事件 */
-        opacity: 0.7; /* 添加透明度以示区别 */
-      }
-
-
-      .edit-text {
-        box-sizing: border-box;
-        width: 100%;
-        height: 100%;
-        border: 1px solid #ccc; /* 边框也不会导致超出 */
-        margin: 0; /* 移除默认的margin */
-      }
-
     }
   }
 
 
   .page-bottom {
     width: 100%;
-    height: 24%;
+    height: var(--page-bootom-height);
 
     .function-tabs {
       border-top: 1px solid #2d2c2c;
       border-bottom: 1px solid #2d2c2c;
       width: 100%;
       height: 25%;
-      background: #474747;
+      background: var(--expand-area-background-color);
       display: flex;
       justify-content: left;
       align-items: center;
