@@ -3100,21 +3100,18 @@ function makeDraggable(dragElement, path) {
 .page-layout {
   width: 100vw;
   height: 100vh;
-
+  border: 1px solid var(--border-color);
   .page-main {
     width: 100%;
     height: var(--page-main-height);
     display: flex;
     box-sizing: border-box;
-
     .page-left {
       width: var(--page-left-width);
       height: 100%;
       background: var(--expand-area-background-color);
       box-sizing: border-box;
       flex-shrink: 0;
-      border: 1px solid var(--border-color);
-      border-bottom: none;
 
       .el-aside {
         color: var(--el-text-color-primary);
@@ -3261,7 +3258,6 @@ function makeDraggable(dragElement, path) {
       background: var(--preview-background-color);
       width: var(--page-center-width);
       height: 100%;
-      border: 1px solid #8d8d8d;
       border-bottom: none;
       box-sizing: border-box;
       display: flex;
@@ -3289,8 +3285,6 @@ function makeDraggable(dragElement, path) {
       width: var(--page-right-width);
       height: 100%;
       background: var(--expand-area-background-color);
-      border: 1px solid var(--border-color);
-      border-bottom: none;
 
       .settings-details {
         width: 100%;
@@ -3443,8 +3437,7 @@ function makeDraggable(dragElement, path) {
   .page-bottom {
     width: 100%;
     height: var(--page-bootom-height);
-    border: 1px solid var(--border-color);
-
+    border-top: 1px solid var(--border-color);
     .function-tabs {
       width: 100%;
       height: 25%;
