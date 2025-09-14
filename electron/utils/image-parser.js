@@ -8,16 +8,44 @@ const shutterSpeed = require("./shutter-speed");
 async function parseMetadata(imagePath) {
     try {
         const data = await fs.promises.readFile(imagePath);
-        // 将 ExifImage 转换为 Promise
+
         return await new Promise((resolve, reject) => {
-            new Exif.ExifImage({image: data}, (error, data) => {
-                if (error) reject(error);
-                else resolve(data);
+            new Exif.ExifImage({image: data}, (error, exifData) => {
+                if (error) {
+                    // 我们可以检查错误信息，对特定错误进行不同处理
+                    if (error.message.includes("No Exif segment") || error.message.includes("Not a JPEG")) {
+                        // 这个文件可能不是JPEG或者根本没有Exif数据，不一定是个“错误”
+                        // 我们可以选择resolve一个空对象，或者带有提示的对象，而不是reject
+                        resolve({
+                            warning: `该文件不包含或不是支持的Exif格式: ${error.message}`,
+                            rawError: error.message // 可选，记录原始错误
+                        });
+                    } else if (error.message.includes("Corrupt data")) {
+                        // 可能是损坏的数据
+                        resolve({
+                            warning: `Exif数据可能已损坏: ${error.message}`,
+                            partialData: null // 可以尝试其他方式提取部分数据吗？
+                        });
+                    } else {
+                        // 其他未知错误，真正地reject
+                        reject(error);
+                    }
+                } else {
+                    // 成功解析
+                    resolve(exifData);
+                }
             });
         });
     } catch (err) {
-        // 统一处理所有错误，避免暴露文件路径
-        throw new Error(`解析元数据失败: ${err.message}`);
+        // 区分是文件读取错误还是Exif解析错误
+        if (err.code === 'ENOENT') {
+            throw new Error(`文件不存在: ${imagePath}`);
+        } else if (err.code === 'EACCES') {
+            throw new Error(`没有权限读取文件: ${imagePath}`);
+        } else {
+            // 其他未知的读取错误或最终的Exif解析错误
+            throw new Error(`处理文件时发生未知错误: ${err.message}`);
+        }
     }
 }
 
@@ -48,12 +76,12 @@ function formatDateTime(DateTimeOriginal) {
 }
 
 async function parsePhotoMetadata(filePath) {
-
     try {
+        const metadata = await parseMetadata(filePath);
         const {
-            image: {Make, Model},
-            exif: {ISO, ExposureTime, FNumber, FocalLength, LensMake, LensModel, CreateDate, DateTimeOriginal}
-        } = await parseMetadata(filePath);
+            image: {Make, Model} = {},
+            exif: {ISO, ExposureTime, FNumber, FocalLength, LensMake, LensModel, CreateDate, DateTimeOriginal} = {}
+        } = metadata;
         const {width, height} = await createSharp(filePath).metadata();
         return {
             details: [
@@ -85,6 +113,7 @@ async function parsePhotoMetadata(filePath) {
             }
         }
     } catch (err) {
+
         console.log(err)
     }
 }
