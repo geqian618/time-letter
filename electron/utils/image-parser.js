@@ -79,8 +79,17 @@ async function parsePhotoMetadata(filePath) {
     try {
         const metadata = await parseMetadata(filePath);
         const {
-            image: {Make, Model} = {},
-            exif: {ISO, ExposureTime, FNumber, FocalLength, LensMake, LensModel, CreateDate, DateTimeOriginal} = {}
+            image: {Make = '', Model = ''} = {},
+            exif: {
+                ISO = '',
+                ExposureTime = '',
+                FNumber = '',
+                FocalLength = '',
+                LensMake = '',
+                LensModel = '',
+                CreateDate = '',
+                DateTimeOriginal = ''
+            } = {}
         } = metadata;
         const {width, height} = await createSharp(filePath).metadata();
         return {
@@ -95,9 +104,9 @@ async function parsePhotoMetadata(filePath) {
                 {label: '镜头厂商', value: LensMake},
                 {label: '镜头型号', value: LensModel},
                 {label: 'ISO', value: ISO},
-                {label: '快门速度', value: shutterSpeed.formatShutterSpeed(ExposureTime)},
-                {label: '光圈', value: FNumber ? FNumber : ''},
-                {label: '焦段', value: Math.trunc(FocalLength) || ''}
+                {label: '快门速度', value: ExposureTime ? shutterSpeed.formatShutterSpeed(ExposureTime) : ''},
+                {label: '光圈', value: FNumber},
+                {label: '焦段', value: FocalLength ? Math.trunc(FocalLength) : ''}
             ],
             base: {
                 iso: ISO,
@@ -105,16 +114,16 @@ async function parsePhotoMetadata(filePath) {
                 cameraModel: Model,
                 lensModel: LensModel,
                 focalLength: FocalLength ? Math.trunc(FocalLength) : '',
-                shutter: shutterSpeed.formatShutterSpeed(ExposureTime),
-                aperture: FNumber ? FNumber : '',
-                shootingTime: formatDateTime(DateTimeOriginal),
+                shutter: FocalLength ? shutterSpeed.formatShutterSpeed(ExposureTime) : '',
+                aperture: FNumber,
+                shootingTime: DateTimeOriginal ? formatDateTime(DateTimeOriginal) : '',
                 width,
                 height
             }
         }
     } catch (err) {
-
         console.log(err)
+        return {details: {}, base: {}}
     }
 }
 
