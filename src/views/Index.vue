@@ -218,6 +218,16 @@
                     <div class="group-title">基本</div>
                     <ul class="options">
                       <li class="option">
+                        <div class="label">排列方向</div>
+                        <div class="value">
+                          <el-select
+                              v-model="textOptions.textDirection"
+                              :options="[{label:'水平', value:0}, {label:'垂直', value:1}]"
+                              size="small"
+                              placeholder="Select"/>
+                        </div>
+                      </li>
+                      <li class="option">
                         <div class="label">字体类型</div>
                         <div class="value">
                           <el-select
@@ -262,10 +272,9 @@
                       <li class="option">
                         <div class="label">旋转角度</div>
                         <div class="value">
-                          <el-slider @change=""
-                                     size="small"
-                                     :min="0"
-                                     :max="360"
+                          <el-slider size="small"
+                                     :min="-180"
+                                     :max="180"
                                      v-model="textOptions.angle"
                                      placement="top"/>
                         </div>
@@ -383,8 +392,8 @@
                         <div class="value">
                           <el-slider @change=""
                                      size="small"
-                                     :min="0"
-                                     :max="360"
+                                     :min="-180"
+                                     :max="180"
                                      v-model="imageOptions.angle"
                                      placement="top"/>
                         </div>
@@ -847,6 +856,7 @@ const textOptions = ref({
   fontStyle: 'normal',
   fontWeight: 400,
   fontColor: 'rgb(0,0,0,1)',
+  textDirection: 0,
   tagBackground: 'rgb(255,255,255,0)',
   angle: 0,
   zIndex: 0,
@@ -945,6 +955,7 @@ const settings = ref({
     references: [],
     synchronousMode: 0,
     options: {
+      textDirection: 0,
       fontSize: 14,
       fontFamily: '',
       fontColor: 'rgb(0,0,0,1)',
@@ -1521,6 +1532,12 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
       element.style.transform = `rotate(${newVal.angle}deg)`
       const {textShadow: {offsetX, offsetY, blur, shadowColor}} = newVal;
       element.style.textShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
+
+      if (newVal.textDirection === 0) {
+        element.style.writingMode = 'horizontal-tb'
+      } else if (newVal.textDirection === 1) {
+        element.style.writingMode = 'vertical-lr'
+      }
 
       await nextTick()
 
@@ -2821,6 +2838,7 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.text.options.fontStyle = dragElementStyle.fontStyle
           settings.value.text.options.fontWeight = dragElementStyle.fontWeight
           settings.value.text.options.fontSizeRatio = fontSize / containerRect.width
+          settings.value.text.options.textDirection = 0
           image.settings.texts.set(dragElement, _.cloneDeep(settings.value.text))
         } else {
           settings.value.image.references = references
@@ -3101,11 +3119,13 @@ function makeDraggable(dragElement, path) {
   width: 100vw;
   height: 100vh;
   border: 1px solid var(--border-color);
+
   .page-main {
     width: 100%;
     height: var(--page-main-height);
     display: flex;
     box-sizing: border-box;
+
     .page-left {
       width: var(--page-left-width);
       height: 100%;
@@ -3438,6 +3458,7 @@ function makeDraggable(dragElement, path) {
     width: 100%;
     height: var(--page-bootom-height);
     border-top: 1px solid var(--border-color);
+
     .function-tabs {
       width: 100%;
       height: 25%;

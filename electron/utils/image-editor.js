@@ -36,6 +36,9 @@ function drawText(ctx, text, newWidth, newHeight) {
     const fontFamily = text.options.fontFamily;
     const fontStyle = text.options.fontStyle;
     const fontWeight = text.options.fontWeight;
+    const textDirection = text.options.textDirection;
+    const angle = text.options.angle;
+
     // 添加文字样式
     ctx.font = `${fontStyle} ${fontWeight} ${fontSize + 'px'} ${fontFamily}`;
     ctx.fillStyle = text.options.fontColor;
@@ -50,16 +53,23 @@ function drawText(ctx, text, newWidth, newHeight) {
     const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
     // 计算初始位置（相对坐标）
-    let textX = text.positionX * newWidth;
-    let textY = text.positionY * newHeight - 0.2 * fontSize;
+    let textX = textDirection === 0 ? text.positionX * newWidth : text.positionX * newWidth + textHeight / 2;
+    let textY = textDirection === 0 ? text.positionY * newHeight - 0.2 * fontSize : text.positionY * newHeight + textHeight / 2;
+    // let textY = textDecoration === 0 ? text.positionY * newHeight - 0.2 * fontSize : text.positionY * newHeight + textHeight / 2;
 
     // 处理右/底对齐
     if (text.references.includes('right')) {
-        textX = (1 - text.positionX) * newWidth;
+        textX = textDirection === 0
+            ? (1 - text.positionX) * newWidth
+            : (1 - text.positionX) * newWidth - textHeight / 2;
     }
     if (text.references.includes('bottom')) {
-        textY = (1 - text.positionY) * newHeight - 1.2 * fontSize;
+        textY = textDirection === 0
+            // ? (1 - text.positionY) * newHeight - 1.2 * fontSize
+            ? (1 - text.positionY) * newHeight - 1.2 * fontSize
+            : (1 - text.positionY) * newHeight - textWidth + textHeight / 2;
     }
+
 
     // 1. 计算文字中心点
     let centerX, centerY;
@@ -94,16 +104,65 @@ function drawText(ctx, text, newWidth, newHeight) {
         ctx.shadowOffsetY = text.options.textShadow.offsetYRatio * fontSize || 0;
     }
 
-    // 执行旋转绘制
-    ctx.translate(centerX, centerY);  // 平移到中心点
-    ctx.rotate(text.options.angle * Math.PI / 180);  // 旋转（角度转弧度）
-    ctx.translate(-centerX, -centerY);  // 平移回原始坐标系
+    if (textDirection === 0) {
+        // 执行旋转绘制
+        ctx.translate(centerX, centerY);  // 平移到中心点
+        ctx.rotate(angle * Math.PI / 180);  // 旋转（角度转弧度）
+        ctx.translate(-centerX, -centerY);  // 平移回原始坐标系
+    }
 
-    // 3. 绘制旋转后的文字
-    ctx.fillText(text.content, textX, textY);
+    if (text.options.textDirection === 0) {
+        // 3. 绘制旋转后的文字
+        ctx.fillText(text.content, textX, textY);
+    } else {
+        // 绘制纵向文本
+        drawVerticalText(ctx, text.content, textX, textY, textHeight, angle);
+    }
     // 恢复画布状态
     ctx.restore();
 }
+
+
+function drawVerticalText(ctx, text, x, y, lineHeight, rotation = 0) {
+    ctx.save();
+    const characters = text.split('');
+    const originalTextAlign = ctx.textAlign;
+    const originalTextBaseline = ctx.textBaseline;
+
+    // 设置统一的文本基线
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // 计算文本总高度
+    const totalHeight = characters.length * lineHeight;
+
+    // 移动到旋转中心点
+    ctx.translate(x, y + totalHeight / 2);
+
+    // 应用旋转（转换为弧度）
+    ctx.rotate(rotation * Math.PI / 180);
+
+    // 移回原始位置
+    ctx.translate(-x, -(y + totalHeight / 2));
+
+    for (let i = 0; i < characters.length; i++) {
+        const char = characters[i];
+        const charCode = char.charCodeAt(0);
+        if (charCode <= 256) {
+            ctx.save();
+            ctx.translate(x, y + i * lineHeight);
+            ctx.rotate(-90 * Math.PI / 180);
+            ctx.fillText(char, 0, 0);
+            ctx.restore();
+        } else {
+            ctx.fillText(char, x, y + i * lineHeight);
+        }
+    }
+    ctx.textAlign = originalTextAlign;
+    ctx.textBaseline = originalTextBaseline;
+    ctx.restore();
+}
+
 
 async function drawImage(ctx, imageItem, newWidth, newHeight) {
 
