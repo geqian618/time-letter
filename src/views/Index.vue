@@ -252,6 +252,8 @@
                         <div class="value">
                           <el-slider
                               v-model="textOptions.fontSize"
+                              :min="1"
+                              :max="100"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
@@ -370,8 +372,8 @@
                       <li class="option">
                         <div class="label">缩放</div>
                         <div class="value">
-                          <el-slider :min="imageScaleRange.min"
-                                     :max="imageScaleRange.max"
+                          <el-slider :min="1"
+                                     :max="100"
                                      size="small"
                                      v-model="imageOptions.scale"
                                      placement="top"/>
@@ -870,13 +872,6 @@ const textOptions = ref({
     shadowColor: 'rgb(0,0,0,1)'
   }
 })
-
-
-const imageScaleRange = {
-  min: 1,
-  max: 100,
-  threshold: 100
-}
 
 const imageOptions = ref({
   scale: 10,
@@ -3319,7 +3314,7 @@ function makeDraggable(dragElement, path) {
         justify-content: center;
         align-items: center;
         position: relative;
-
+        overflow: hidden; /* 隐藏超出部分 */
         img {
           max-width: 100%;
           max-height: 100%;
