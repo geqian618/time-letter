@@ -54,7 +54,7 @@ function drawText(ctx, text, newWidth, newHeight) {
 
     // 计算初始位置（相对坐标）
     let textX = textDirection === 0 ? text.positionX * newWidth : text.positionX * newWidth + fontSize / 2;
-    let textY = textDirection === 0 ? text.positionY * newHeight - 0.2 * fontSize : text.positionY * newHeight + fontSize / 2;
+    let textY = textDirection === 0 ? text.positionY * newHeight - 0.18 * fontSize : text.positionY * newHeight + fontSize / 2;
     // let textY = textDecoration === 0 ? text.positionY * newHeight - 0.2 * fontSize : text.positionY * newHeight + textHeight / 2;
 
     // 处理右/底对齐
@@ -66,7 +66,7 @@ function drawText(ctx, text, newWidth, newHeight) {
     if (text.references.includes('bottom')) {
         textY = textDirection === 0
             // ? (1 - text.positionY) * newHeight - 1.2 * fontSize
-            ? (1 - text.positionY) * newHeight - 1.2 * fontSize
+            ? (1 - text.positionY) * newHeight - 1.18 * fontSize
             : (1 - text.positionY) * newHeight - fontSize * text.content.length + fontSize / 2;
     }
 
@@ -149,7 +149,7 @@ function drawVerticalText(ctx, text, x, y, lineHeight, rotation = 0) {
         if (charCode <= 256) {
             ctx.save();
             ctx.translate(x, y + i * lineHeight);
-            ctx.rotate(rotation * Math.PI / 180);
+            ctx.rotate(0);
             ctx.fillText(char, 0, 0);
             ctx.restore();
         } else {
