@@ -925,6 +925,8 @@ const settings = ref({
     offsetY: 0,
     width: 0,
     height: 0,
+    originalWidth: 0,
+    originalHeight: 0,
     references: [],
     synchronousMode: 0,
     options: {
@@ -1666,6 +1668,9 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
 
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
+
+      const {originalWidth, originalHeight} = image.settings.images.get(element);
+
       const computedStyle = window.getComputedStyle(element);
       let elementWidth = Number.parseFloat(computedStyle.width);
       let elementHeight = Number.parseFloat(computedStyle.height);
@@ -1674,15 +1679,23 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
 
       let scale = (newVal - oldVal) / 10;
 
-      elementWidth = elementWidth + elementWidth * scale
-      elementHeight = elementHeight + elementHeight * scale
-      elementLeft = elementLeft - elementWidth * scale / 2
-      elementTop = elementTop - elementHeight * scale / 2
+      const increaseWidth = originalWidth * scale;
+      const increaseHeight = originalHeight * scale;
+
+      elementWidth = elementWidth + increaseWidth
+      elementHeight = elementHeight + increaseHeight
+
+      elementLeft = elementLeft - increaseWidth / 2
+      elementTop = elementTop - increaseHeight / 2
       const elementRight = parentRect.width - elementLeft - elementWidth;
       const elementBottom = parentRect.height - elementTop - elementHeight
 
       if (elementLeft < leftGap || elementLeft + rightGap + elementWidth > parentRect.width || elementTop < topGap || elementTop + bottomGap + elementHeight > parentRect.height) {
         return;
+      }
+
+      if (elementWidth <= 0 || elementHeight <= 0) {
+        return
       }
 
       element.style.width = elementWidth + 'px'
@@ -1839,7 +1852,10 @@ const saveTemplates = async () => {
         name: newTemplate.value.desc,
         settings: {
           border: settings.border,
-          images: Array.from(settings.images.values()),
+          images: Array.from(settings.images.values()).map(item => {
+            item.options.scale = item.width / item.originalWidth * 10
+            return item
+          }),
           texts: Array.from(settings.texts.values())
         }
       })
@@ -2863,6 +2879,8 @@ const bindDragEvent = (previewImage, image) => {
           const imageHeight = Number.parseFloat(dragElementStyle.height);
           const imageWidth = Number.parseFloat(dragElementStyle.width);
 
+          settings.value.image.originalWidth = imageWidth
+          settings.value.image.originalHeight = imageHeight
           settings.value.image.width = imageWidth
           settings.value.image.height = imageHeight
           settings.value.image.options.imageHeightRatio = imageHeight / containerRect.height
