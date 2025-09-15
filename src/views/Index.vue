@@ -1532,6 +1532,7 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
         element.style.writingMode = 'horizontal-tb'
       } else if (newVal.textDirection === 1) {
         element.style.writingMode = 'vertical-lr'
+        element.style.textOrientation = 'upright'
       }
 
       await nextTick()

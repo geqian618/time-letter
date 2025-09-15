@@ -53,21 +53,21 @@ function drawText(ctx, text, newWidth, newHeight) {
     const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
     // 计算初始位置（相对坐标）
-    let textX = textDirection === 0 ? text.positionX * newWidth : text.positionX * newWidth + textHeight / 2;
-    let textY = textDirection === 0 ? text.positionY * newHeight - 0.2 * fontSize : text.positionY * newHeight + textHeight / 2;
+    let textX = textDirection === 0 ? text.positionX * newWidth : text.positionX * newWidth + fontSize / 2;
+    let textY = textDirection === 0 ? text.positionY * newHeight - 0.2 * fontSize : text.positionY * newHeight + fontSize / 2;
     // let textY = textDecoration === 0 ? text.positionY * newHeight - 0.2 * fontSize : text.positionY * newHeight + textHeight / 2;
 
     // 处理右/底对齐
     if (text.references.includes('right')) {
         textX = textDirection === 0
             ? (1 - text.positionX) * newWidth
-            : (1 - text.positionX) * newWidth - textHeight / 2;
+            : (1 - text.positionX) * newWidth - fontSize / 2;
     }
     if (text.references.includes('bottom')) {
         textY = textDirection === 0
             // ? (1 - text.positionY) * newHeight - 1.2 * fontSize
             ? (1 - text.positionY) * newHeight - 1.2 * fontSize
-            : (1 - text.positionY) * newHeight - textWidth + textHeight / 2;
+            : (1 - text.positionY) * newHeight - fontSize * text.content.length + fontSize / 2;
     }
 
 
@@ -149,7 +149,7 @@ function drawVerticalText(ctx, text, x, y, lineHeight, rotation = 0) {
         if (charCode <= 256) {
             ctx.save();
             ctx.translate(x, y + i * lineHeight);
-            ctx.rotate(-90 * Math.PI / 180);
+            ctx.rotate(rotation * Math.PI / 180);
             ctx.fillText(char, 0, 0);
             ctx.restore();
         } else {
