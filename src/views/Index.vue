@@ -1972,6 +1972,13 @@ const useTemplate = async (options, path) => {
     div.style.transformOrigin = 'center center'
     div.style.transform = `rotate(${text.options.angle}deg)`
 
+    if (text.options.textDirection === 0) {
+      div.style.writingMode = 'horizontal-tb'
+    } else if (text.options.textDirection === 1) {
+      div.style.writingMode = 'vertical-lr'
+      div.style.textOrientation = 'upright'
+    }
+
     const {textShadow: {offsetX, offsetY, blur, shadowColor}} = text.options;
     div.style.textShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
     div.className = 'text-mark'
