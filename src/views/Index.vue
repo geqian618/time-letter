@@ -3041,7 +3041,6 @@ function makeDraggable(dragElement, path) {
           imageOptions.value = _.cloneDeep(settings.options)
         } else {
           const settings = image.settings.texts.get(dragElement);
-          console.log(_.cloneDeep(settings.options))
           textOptions.value = _.cloneDeep(settings.options)
         }
       }, 200); // 300毫秒内没有再次点击，则视为单击
