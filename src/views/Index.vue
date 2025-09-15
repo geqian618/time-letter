@@ -1023,8 +1023,6 @@ const textLabel = ref({
   content: ''
 })
 
-let timerId;
-
 const textLabels = ref([])
 
 const templateRef = ref()
@@ -2625,8 +2623,10 @@ const handleNextOne = async () => {
 }
 
 function scrollToCenterHorizontal(container, element) {
-  if (timerId) clearTimeout(timerId)
-  timerId = setTimeout(() => {
+  if (container._timerId) {
+    clearTimeout(container._timerId)
+  }
+  container._timerId = setTimeout(() => {
     const containerWidth = container.offsetWidth;
     const elementWidth = element.offsetWidth;
     const offsetLeft = element.offsetLeft;
