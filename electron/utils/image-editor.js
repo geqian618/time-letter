@@ -113,7 +113,7 @@ function drawText(ctx, text, newWidth, newHeight) {
         ctx.fillText(text.content, textX, textY);
     } else {
         // 绘制纵向文本
-        drawVerticalText(ctx, text.content, textX, textY, textHeight, angle);
+        drawVerticalText(ctx, text.content, textX, textY, fontSize, angle);
     }
 
     // 恢复画布状态
