@@ -1513,11 +1513,11 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
   const elements = parentNode.querySelectorAll('.text-mark');
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
-      const computedStyle = window.getComputedStyle(element);
+      let computedStyle = window.getComputedStyle(element);
       let elementWidth = Number.parseFloat(computedStyle.width);
       let elementHeight = Number.parseFloat(computedStyle.height);
-      let elementLeft = Number.parseFloat(element.style.left);
-      let elementTop = Number.parseFloat(element.style.top);
+      let elementLeft = Number.parseFloat(computedStyle.left);
+      let elementTop = Number.parseFloat(computedStyle.top);
       element.style.fontStyle = newVal.fontStyle
       element.style.fontWeight = newVal.fontWeight
       element.style.fontFamily = newVal.fontFamily
@@ -1537,6 +1537,8 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
       }
 
       await nextTick()
+
+      computedStyle = window.getComputedStyle(element);
 
       let newElementWidth = Number.parseFloat(computedStyle.width);
       let newElementHeight = Number.parseFloat(computedStyle.height);
@@ -1605,7 +1607,6 @@ const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVa
       image.settings.images.get(element).options.angle = newVal
       element.style.transformOrigin = 'center center'
       element.style.transform = `rotate(${newVal}deg)`;
-      console.log(element.getBoundingClientRect())
     }
   }
 });
@@ -1663,10 +1664,11 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
 
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
-      let elementWidth = Number.parseFloat(element.style.width);
-      let elementHeight = Number.parseFloat(element.style.height);
-      let elementLeft = Number.parseFloat(element.style.left);
-      let elementTop = Number.parseFloat(element.style.top);
+      const computedStyle = window.getComputedStyle(element);
+      let elementWidth = Number.parseFloat(computedStyle.width);
+      let elementHeight = Number.parseFloat(computedStyle.height);
+      let elementLeft = Number.parseFloat(computedStyle.left);
+      let elementTop = Number.parseFloat(computedStyle.top);
 
       let scale = (newVal - oldVal) / 10;
 
