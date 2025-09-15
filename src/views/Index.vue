@@ -960,6 +960,7 @@ const settings = ref({
       fontFamily: '',
       fontColor: 'rgb(0,0,0,1)',
       tagBackground: 'rgb(255,255,255,0)',
+      fontWeight: 400,
       angle: 0,
       zIndex: 0,
       textShadow: {
@@ -2841,7 +2842,7 @@ const bindDragEvent = (previewImage, image) => {
           settings.value.text.options.fontFamily = dragElementStyle.fontFamily.replace(/"/g, '')
           settings.value.text.options.fontColor = dragElementStyle.color
           settings.value.text.options.fontStyle = dragElementStyle.fontStyle
-          settings.value.text.options.fontWeight = dragElementStyle.fontWeight
+          settings.value.text.options.fontWeight = Number.parseInt(dragElementStyle.fontWeight)
           settings.value.text.options.fontSizeRatio = fontSize / containerRect.width
           settings.value.text.options.textDirection = 0
           image.settings.texts.set(dragElement, _.cloneDeep(settings.value.text))
@@ -3040,6 +3041,7 @@ function makeDraggable(dragElement, path) {
           imageOptions.value = _.cloneDeep(settings.options)
         } else {
           const settings = image.settings.texts.get(dragElement);
+          console.log(_.cloneDeep(settings.options))
           textOptions.value = _.cloneDeep(settings.options)
         }
       }, 200); // 300毫秒内没有再次点击，则视为单击
