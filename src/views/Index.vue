@@ -1514,10 +1514,11 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
       let computedStyle = window.getComputedStyle(element);
-      let elementWidth = Number.parseFloat(computedStyle.width);
-      let elementHeight = Number.parseFloat(computedStyle.height);
-      let elementLeft = Number.parseFloat(computedStyle.left);
-      let elementTop = Number.parseFloat(computedStyle.top);
+      const elementWidth = parseFloat(element.style.width) || parseFloat(computedStyle.width);
+      const elementHeight = parseFloat(element.style.height) || parseFloat(computedStyle.height);
+      let elementLeft = parseFloat(element.style.left) || parentRect.width - parseFloat(element.style.right) - elementWidth;
+      let elementTop = parseFloat(element.style.top) || parentRect.height - parseFloat(element.style.bottom) - elementHeight;
+
       element.style.fontStyle = newVal.fontStyle
       element.style.fontWeight = newVal.fontWeight
       element.style.fontFamily = newVal.fontFamily
@@ -1539,9 +1540,8 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
       await nextTick()
 
       computedStyle = window.getComputedStyle(element);
-
-      let newElementWidth = Number.parseFloat(computedStyle.width);
-      let newElementHeight = Number.parseFloat(computedStyle.height);
+      const newElementWidth = Number.parseFloat(computedStyle.width);
+      const newElementHeight = Number.parseFloat(computedStyle.height);
 
       elementLeft = elementLeft - (newElementWidth - elementWidth) / 2;
       elementTop = elementTop - (newElementHeight - elementHeight) / 2;
@@ -1585,6 +1585,8 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
       image.settings.texts.get(element).references = references
       image.settings.texts.get(element).positionX = positionX
       image.settings.texts.get(element).positionY = positionY
+      image.settings.texts.get(element).offsetX = positionOffsetX
+      image.settings.texts.get(element).offsetY = positionOffsetY
       image.settings.texts.get(element).options.fontSizeRatio = newVal.fontSize / containerRect.width
       image.settings.texts.get(element).options.textShadow.offsetXRatio = newVal.textShadow.offsetX / newVal.fontSize
       image.settings.texts.get(element).options.textShadow.offsetYRatio = newVal.textShadow.offsetY / newVal.fontSize
@@ -3034,7 +3036,7 @@ function makeDraggable(dragElement, path) {
       // 设置新的定时器
       clickTimeout = setTimeout(function () {
         dragElement.focus()
-        dragElement.style.border = '1px dashed #f00'
+        dragElement.style.outline = '1px dashed #f00'
         dragElement.setAttribute('selected', 'true')
         const image = images.value.get(selectedElement.value.path);
         if (dragElement.src) {
@@ -3052,7 +3054,7 @@ function makeDraggable(dragElement, path) {
 
   dragElement.parentNode.addEventListener('click', () => {
     if (dragElement.getAttribute('selected') === 'true') {
-      dragElement.style.border = ''
+      dragElement.style.outline = ''
       dragElement.setAttribute('selected', 'false')
     }
   })
