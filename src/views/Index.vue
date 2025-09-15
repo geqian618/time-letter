@@ -1025,9 +1025,6 @@ const textLabel = ref({
 
 let timerId;
 
-let scrollEvents = []
-
-
 const textLabels = ref([])
 
 const templateRef = ref()
@@ -2532,27 +2529,6 @@ const handleWheel = (e) => {
 }
 
 
-async function trySlidingScrollbar() {
-  if (timerId) clearTimeout(timerId)
-  timerId = setTimeout(() => {
-    let offsetX = imageList.value.scrollLeft;
-    for (let item of scrollEvents) {
-      const {width, isEdge, position} = item;
-      if (isEdge) {
-        if (position === 0) {
-          offsetX = imageList.value.scrollWidth
-        } else {
-          offsetX = 0
-        }
-      } else {
-        offsetX = position === 0 ? offsetX - width : offsetX + width
-      }
-    }
-    imageList.value.scrollLeft = offsetX
-    scrollEvents = []
-  }, 500)
-}
-
 const handleBeforeOne = async () => {
   const currentPath = selectedElement.value.path;
   const currentElement = selectedElement.value.element;
@@ -2586,12 +2562,15 @@ const handleBeforeOne = async () => {
       selectedElement.value.element = beforeElement
       selectedImages.value.set(beforeImage.path, beforeElement)
 
-      scrollEvents.push({
-        position: 0,
-        isEdge: currentElement.previousElementSibling === null,
-        width: currentElement.getBoundingClientRect().width
-      })
-      trySlidingScrollbar()
+      // 方式一，较为卡顿，过渡不流畅
+      // selectedElement.value.element.scrollIntoView({
+      //   behavior: 'smooth',
+      //   block: 'center', // 垂直方向居中
+      //   inline: 'center' // 水平方向居中
+      // })
+
+      // 方式二，过渡比较流畅
+      scrollToCenterHorizontal(imageList.value, selectedElement.value.element)
 
     }
   }
@@ -2631,16 +2610,34 @@ const handleNextOne = async () => {
       selectedElement.value.element = nextElement
       selectedImages.value.set(nextImage.path, nextElement)
 
-      scrollEvents.push({
-        position: 1,
-        isEdge: currentElement.nextElementSibling === null,
-        width: currentElement.getBoundingClientRect().width
-      })
-      trySlidingScrollbar()
+      // 方式一，较为卡顿，过渡不流畅
+      // selectedElement.value.element.scrollIntoView({
+      //   behavior: 'smooth',
+      //   block: 'center', // 垂直方向居中
+      //   inline: 'center' // 水平方向居中
+      // })
+
+      // 方式二，过渡比较流畅
+      scrollToCenterHorizontal(imageList.value, selectedElement.value.element)
 
     }
   }
 }
+
+function scrollToCenterHorizontal(container, element) {
+  if (timerId) clearTimeout(timerId)
+  timerId = setTimeout(() => {
+    const containerWidth = container.offsetWidth;
+    const elementWidth = element.offsetWidth;
+    const offsetLeft = element.offsetLeft;
+    const scrollLeft = offsetLeft - (containerWidth - elementWidth) / 2;
+    container.scrollTo({
+      left: scrollLeft,
+      behavior: 'smooth'
+    });
+  }, 200)
+}
+
 
 const setDefaultStyle = (dragElement) => {
   if (dragElement.src) {

@@ -109,15 +109,13 @@ function drawText(ctx, text, newWidth, newHeight) {
         ctx.translate(centerX, centerY);  // 平移到中心点
         ctx.rotate(angle * Math.PI / 180);  // 旋转（角度转弧度）
         ctx.translate(-centerX, -centerY);  // 平移回原始坐标系
-    }
-
-    if (text.options.textDirection === 0) {
         // 3. 绘制旋转后的文字
         ctx.fillText(text.content, textX, textY);
     } else {
         // 绘制纵向文本
         drawVerticalText(ctx, text.content, textX, textY, textHeight, angle);
     }
+
     // 恢复画布状态
     ctx.restore();
 }
