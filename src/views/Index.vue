@@ -712,43 +712,61 @@
           <!--          </div>-->
           <!--        </div>-->
         </el-tab-pane>
-        <el-tab-pane label="元信息格式">
-          <div class="items">
-            <div class="item">
-              <span class="label">相机品牌：</span>
-              <el-input class="value" v-model="projectSettings.metadataFormats.cameraBrand"></el-input>
+        <el-tab-pane label="元信息">
+          <div class="border-box">
+            <span class="border-label">格式化</span>
+            <div class="items">
+              <div class="item">
+                <span class="label">相机品牌：</span>
+                <el-input class="value" v-model="projectSettings.metadata.formats.cameraBrand"></el-input>
+              </div>
+              <div class="item">
+                <span class="label">相机型号：</span>
+                <el-input class="value" v-model="projectSettings.metadata.formats.cameraModel"></el-input>
+              </div>
+              <div class="item">
+                <span class="label">镜头型号：</span>
+                <el-input class="value" v-model="projectSettings.metadata.formats.lensModel"></el-input>
+              </div>
+              <div class="item">
+                <span class="label">焦段：</span>
+                <el-input class="value" v-model="projectSettings.metadata.formats.focalLength"></el-input>
+              </div>
+              <div class="item">
+                <span class="label">ISO：</span>
+                <el-input class="value" v-model="projectSettings.metadata.formats.iso"></el-input>
+              </div>
+              <div class="item">
+                <span class="label">快门：</span>
+                <el-input class="value" v-model="projectSettings.metadata.formats.shutter"></el-input>
+              </div>
+              <div class="item">
+                <span class="label">光圈：</span>
+                <el-input class="value" v-model="projectSettings.metadata.formats.aperture"></el-input>
+              </div>
+              <div class="item">
+                <span class="label">拍摄日期：</span>
+                <el-input class="value" v-model="projectSettings.metadata.formats.shootingTime"></el-input>
+              </div>
             </div>
-            <div class="item">
-              <span class="label">相机型号：</span>
-              <el-input class="value" v-model="projectSettings.metadataFormats.cameraModel"></el-input>
-            </div>
-            <div class="item">
-              <span class="label">镜头型号：</span>
-              <el-input class="value" v-model="projectSettings.metadataFormats.lensModel"></el-input>
-            </div>
-            <div class="item">
-              <span class="label">焦段：</span>
-              <el-input class="value" v-model="projectSettings.metadataFormats.focalLength"></el-input>
-            </div>
-            <div class="item">
-              <span class="label">ISO：</span>
-              <el-input class="value" v-model="projectSettings.metadataFormats.iso"></el-input>
-            </div>
-            <div class="item">
-              <span class="label">快门：</span>
-              <el-input class="value" v-model="projectSettings.metadataFormats.shutter"></el-input>
-            </div>
-            <div class="item">
-              <span class="label">光圈：</span>
-              <el-input class="value" v-model="projectSettings.metadataFormats.aperture"></el-input>
-            </div>
-            <div class="item">
-              <span class="label">拍摄日期：</span>
-              <el-input class="value" v-model="projectSettings.metadataFormats.shootingTime"></el-input>
+          </div>
+
+          <div class="border-box">
+            <span class="border-label">其他</span>
+            <div class="items">
+              <div class="item">
+                <span class="label">等效焦距：</span>
+                <el-switch
+                    @change="handleFocalLength"
+                    v-model="projectSettings.metadata.other.enableEquivalentFocalSegment"
+                    class="ml-2"
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+                />
+              </div>
             </div>
           </div>
           <div class="operation">
-            <el-button type="info" @click="resetMetadataFormats">重置</el-button>
+            <el-button type="info" @click="resetMetadataSettings">重置</el-button>
           </div>
         </el-tab-pane>
         <!--        <el-tab-pane label="边框"></el-tab-pane>-->
@@ -789,7 +807,7 @@ import _ from 'lodash';
 
 import MapHelper from "@/utils/map-helper";
 
-import {projectSettings, outputSizeOptions, originalMetadataFormats} from '@/config/project-settings'
+import {projectSettings, outputSizeOptions, originalMetadata} from '@/config/project-settings'
 
 const predefineColors = ref([
   '#ff4500',
@@ -1149,8 +1167,12 @@ const watchInputImages = () => {
             }
           }
           const photoMetadata = await window.electronAPI.parsePhotoMetadata(path);
+
           if (photoMetadata && photoMetadata.base) {
             image.metadata = photoMetadata.base
+            if (image.metadata.focalLength && projectSettings.value.metadata.other.enableEquivalentFocalSegment) {
+              image.metadata.focalLength = Number.parseInt(image.metadata.focalLength * 1.5)
+            }
           }
 
           image = {...image, ...item}
@@ -1427,11 +1449,27 @@ const reset = (path) => {
   renderBorders(path)
 }
 
-const resetMetadataFormats = () => {
-  projectSettings.value.metadataFormats = originalMetadataFormats
+const resetMetadataSettings = () => {
+  projectSettings.value.metadata = _.cloneDeep(originalMetadata)
   localStorage.setItem('projectSettings', JSON.stringify(projectSettings.value))
 }
 
+
+const handleFocalLength = () => {
+  for (let [path, image] of images.value) {
+    const metadata = image.metadata;
+    if (metadata && metadata.focalLength) {
+
+      metadata.focalLength = projectSettings.value.metadata.other.enableEquivalentFocalSegment
+          ? Number.parseInt(metadata.focalLength * 1.5)
+          : Number.parseInt(metadata.focalLength / 1.5)
+
+      if (path === selectedElement.value.path) {
+        settings.value.metadata = metadata
+      }
+    }
+  }
+}
 
 const clearAllLabels = (path) => {
   const image = images.value.get(path);
@@ -1491,6 +1529,7 @@ const stopTextProjectSettingsWatch = watch(projectSettings, (newVal, oldVal) => 
   //immediate 立即触发一次监视
   //immediate: true
 });
+
 
 const loadProjectSettings = () => {
   const jsonStr = localStorage.getItem('projectSettings');
@@ -2014,7 +2053,7 @@ const useTemplate = async (options, path) => {
       if (!content) {
         continue
       }
-      const format = projectSettings.value.metadataFormats[attribute]
+      const format = projectSettings.value.metadata.formats[attribute]
       if (format) {
         content = format.replace('${' + attribute + '}', content)
       }
@@ -2688,7 +2727,7 @@ const setDefaultStyle = (dragElement) => {
     } else if (type === 'metadata') {
       const attribute = dragElement.getAttribute('text');
       let value = settings.value.metadata[attribute];
-      const format = projectSettings.value.metadataFormats[attribute];
+      const format = projectSettings.value.metadata.formats[attribute];
       if (format) {
         value = format.replace('${' + attribute + '}', value)
       }
@@ -3618,24 +3657,6 @@ function makeDraggable(dragElement, path) {
 
 .el-dialog {
   .el-tabs {
-    .items {
-      width: 100%;
-
-      .item {
-        display: flex;
-        align-items: center;
-        margin: 8px;
-
-        .label {
-          width: 10%;
-          text-align: right;
-        }
-
-        .value {
-          width: 90%;
-        }
-      }
-    }
 
     .operation {
       height: 40px;
@@ -3661,6 +3682,26 @@ function makeDraggable(dragElement, path) {
         padding: 0 12px;
         font-size: 14px;
         color: #7c7b7b;
+      }
+
+
+      .items {
+        width: 100%;
+
+        .item {
+          display: flex;
+          align-items: center;
+          margin: 8px;
+
+          .label {
+            width: 80px;
+            text-align: right;
+          }
+
+          .value {
+            width: 80%;
+          }
+        }
       }
 
       .options {

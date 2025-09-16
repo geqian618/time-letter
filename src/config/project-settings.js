@@ -12,7 +12,26 @@ const projectSettings = ref({
         extname: 0,
         quality: 10
     },
-    metadataFormats: {
+    metadata: {
+        formats: {
+            iso: '${iso}',
+            cameraBrand: '${cameraBrand}',
+            cameraModel: '${cameraModel}',
+            lensModel: '${lensModel}',
+            focalLength: '${focalLength}',
+            shutter: '${shutter}',
+            aperture: '${aperture}',
+            shootingTime: '${shootingTime}'
+        },
+        other: {
+            enableEquivalentFocalSegment: false
+        }
+    }
+})
+
+
+const originalMetadata = {
+    formats: {
         iso: '${iso}',
         cameraBrand: '${cameraBrand}',
         cameraModel: '${cameraModel}',
@@ -21,19 +40,10 @@ const projectSettings = ref({
         shutter: '${shutter}',
         aperture: '${aperture}',
         shootingTime: '${shootingTime}'
+    },
+    other: {
+        enableEquivalentFocalSegment: false
     }
-})
-
-
-const originalMetadataFormats = {
-    iso: '${iso}',
-    cameraBrand: '${cameraBrand}',
-    cameraModel: '${cameraModel}',
-    lensModel: '${lensModel}',
-    focalLength: '${focalLength}',
-    shutter: '${shutter}',
-    aperture: '${aperture}',
-    shootingTime: '${shootingTime}'
 }
 
 const outputSizeOptions = [
@@ -51,4 +61,4 @@ const outputSizeOptions = [
     // {label: '自定义（包含边框）', value: 7},
 ]
 
-export {outputSizeOptions, projectSettings, originalMetadataFormats}
+export {outputSizeOptions, projectSettings, originalMetadata}
