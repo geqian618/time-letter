@@ -128,7 +128,7 @@ const mainMenu = (mainWindow) => {
             label: '设置',
             submenu: [
                 {
-                    label: '项目设置',
+                    label: '偏好设置',
                     click: outputSettings,
                 },
             ]

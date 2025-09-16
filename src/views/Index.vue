@@ -612,8 +612,8 @@
     </el-dialog>
 
     <el-dialog v-model="outputSettingsVisible"
-               title="项目设置"
-               align-center
+               title="偏好设置"
+               top="10vh"
                width="800">
       <el-tabs type="border-card" class="demo-tabs">
         <el-tab-pane label="导出">
@@ -624,8 +624,7 @@
                 <span>调整方式：</span>
                 <el-select v-model="projectSettings.outputSettings.outputSize.type"
                            placeholder="Select"
-                           size="small"
-                           style="width: 240px">
+                           size="small">
                   <el-option
                       v-for="item in outputSizeOptions"
                       :key="item.value"
