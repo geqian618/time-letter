@@ -613,6 +613,7 @@
 
     <el-dialog v-model="outputSettingsVisible"
                title="项目设置"
+               align-center
                width="800">
       <el-tabs type="border-card" class="demo-tabs">
         <el-tab-pane label="导出">
