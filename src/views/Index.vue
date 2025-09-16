@@ -1534,7 +1534,10 @@ const stopTextProjectSettingsWatch = watch(projectSettings, (newVal, oldVal) => 
 const loadProjectSettings = () => {
   const jsonStr = localStorage.getItem('projectSettings');
   if (jsonStr) {
-    projectSettings.value = JSON.parse(jsonStr)
+    const userConfig = JSON.parse(jsonStr);
+    const newUserConfig = _.merge({}, projectSettings.value, userConfig);
+    projectSettings.value = newUserConfig
+    localStorage.setItem('projectSettings', JSON.stringify(newUserConfig))
   }
 }
 

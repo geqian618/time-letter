@@ -24,7 +24,7 @@ const projectSettings = ref({
             shootingTime: '${shootingTime}'
         },
         other: {
-            enableEquivalentFocalSegment: false
+            enableEquivalentFocalSegment: false,
         }
     }
 })
