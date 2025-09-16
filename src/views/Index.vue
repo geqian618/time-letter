@@ -3109,7 +3109,7 @@ function makeDraggable(dragElement, path) {
 
   dragElement.parentNode.addEventListener('click', () => {
     if (dragElement.getAttribute('selected') === 'true') {
-      dragElement.style.outline = ''
+      dragElement.style.outline = 'none'
       dragElement.setAttribute('selected', 'false')
     }
   })
