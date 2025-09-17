@@ -358,13 +358,12 @@ async function addBorderAndText(options) {
             imageHeight = height / heightRatio;
             imageWidth = image.width * height / image.height / heightRatio
         }
+
         // 边框值为比率
-        if (percentage) {
-            borderLeft = borderLeftRatio * imageWidth
-            borderRight = borderRightRatio * imageWidth
-            borderTop = borderTopRatio * imageHeight
-            borderBottom = borderBottomRatio * imageHeight
-        }
+        borderLeft = borderLeftRatio * imageWidth
+        borderRight = borderRightRatio * imageWidth
+        borderTop = borderTopRatio * imageHeight
+        borderBottom = borderBottomRatio * imageHeight
 
         // 2. 计算新画布尺寸
         newWidth = Math.round(imageWidth + borderLeft + borderRight);
