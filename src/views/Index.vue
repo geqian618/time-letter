@@ -1522,7 +1522,7 @@ const handleResize = () => {
 }
 
 
-const stopTextProjectSettingsWatch = watch(projectSettings, (newVal, oldVal) => {
+const stopProjectSettingsWatch = watch(projectSettings, (newVal, oldVal) => {
   localStorage.setItem('projectSettings', JSON.stringify(newVal))
 }, {
   //深度监视（监视属性变化）
@@ -2347,7 +2347,7 @@ onBeforeUnmount(() => {
 
   stopWatchPhotoMetadata()
   stopTextSettingsWatch()
-  stopTextProjectSettingsWatch()
+  stopProjectSettingsWatch()
 
   stopImageBoxShadowWatch()
   stopWatchImageZIndex()
