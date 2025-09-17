@@ -1,6 +1,7 @@
 const path = require('path');
 const {Piscina} = require('piscina');
 const {dialog} = require('electron');
+const os = require("os");
 
 // 创建一个 SharedArrayBuffer 用于中断信号,  4字节，用于一个32位整数
 const sab = new SharedArrayBuffer(4);
@@ -13,7 +14,8 @@ Atomics.store(interrupt, 0, 0);
 // 初始化线程池，指向工作线程脚本
 const threadPool = new Piscina({
     filename: path.resolve(__dirname, 'worker.js'),
-    // maxThreads: 4, // 最大线程数（默认=CPU核心数）
+    maxThreads: os.cpus().length + 1, // 设置最大线程数
+    minThreads: 4, // 设置核心线程数（最小线程数）
     idleTimeout: 30000, // 线程空闲超时销毁时间（毫秒）
 });
 
