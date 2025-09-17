@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     watchTemplateContextMenu: (callback) => ipcRenderer.on('watch-template-contextMenu', callback),
     requestSaveFiles: (args) => ipcRenderer.send('request-save-files', args),
     stopSaveFiles: () => ipcRenderer.send('stop-save-files'),
+    createThreadPool: (args) => ipcRenderer.send('create-thread-pool', args),
     downloadProgress: (callback) => ipcRenderer.on('download-progress', callback),
     editorOutputSettings: (callback) => ipcRenderer.on('editor-output-settings', callback)
 });

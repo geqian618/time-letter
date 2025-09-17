@@ -26,6 +26,9 @@ const projectSettings = ref({
         other: {
             enableEquivalentFocalSegment: false,
         }
+    },
+    performance: {
+        downloadThreads: -1
     }
 })
 
@@ -46,6 +49,16 @@ const originalMetadata = {
     }
 }
 
+
+const downloadThreadsOptions = [
+    {label: '自动', value: -1},
+    {label: '4', value: 4},
+    {label: '8', value: 8},
+    {label: '12', value: 12},
+    {label: '16', value: 16},
+    {label: '32', value: 32}
+]
+
 const outputSizeOptions = [
     {label: '原尺寸（不含边框）', value: 0},
     // {label: '原尺寸宽（包含边框）', value: 1},
@@ -61,4 +74,4 @@ const outputSizeOptions = [
     // {label: '自定义（包含边框）', value: 7},
 ]
 
-export {outputSizeOptions, projectSettings, originalMetadata}
+export {outputSizeOptions, projectSettings, originalMetadata, downloadThreadsOptions}

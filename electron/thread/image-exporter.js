@@ -10,14 +10,23 @@ const interrupt = new Int32Array(sab);
 // 初始值为0（未中断）
 Atomics.store(interrupt, 0, 0);
 
+let threadPool;
 
-// 初始化线程池，指向工作线程脚本
-const threadPool = new Piscina({
-    filename: path.resolve(__dirname, 'worker.js'),
-    maxThreads: os.cpus().length + 1, // 设置最大线程数
-    minThreads: 4, // 设置核心线程数（最小线程数）
-    idleTimeout: 30000, // 线程空闲超时销毁时间（毫秒）
-});
+
+const createThreadPool = async (threads) => {
+    if (threadPool) {
+        await threadPool.destroy()
+    }
+    const maxThreads = threads === -1 ? os.cpus().length : threads;
+    // 初始化线程池，指向工作线程脚本
+    threadPool = new Piscina({
+        filename: path.resolve(__dirname, 'worker.js'),
+        maxThreads: maxThreads, // 设置最大线程数
+        minThreads: 4, // 设置核心线程数（最小线程数）
+        idleTimeout: 30000, // 线程空闲超时销毁时间（毫秒）
+    });
+    console.log('thread pool created, max threads: ' + maxThreads)
+}
 
 
 const exportImages = (dataList, progressCallback) => {
@@ -78,4 +87,4 @@ const stopSaveFiles = () => {
     Atomics.store(interrupt, 0, 1);
 }
 
-module.exports = {exportImages, stopSaveFiles}
+module.exports = {createThreadPool, exportImages, stopSaveFiles}

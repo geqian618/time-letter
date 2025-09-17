@@ -683,9 +683,7 @@
             <div class="options">
               <div class="option">
                 <span>输出格式：</span>
-                <el-select v-model="projectSettings.outputSettings.extname"
-                           size="small"
-                           style="width: 240px">
+                <el-select v-model="projectSettings.outputSettings.extname" size="small">
                   <el-option
                       v-for="item in [{label:'原格式', value: 0}, {label:'JPEG', value:1}, {label:'PNG', value: 2}]"
                       :key="item.value"
@@ -764,8 +762,7 @@
                     @change="handleFocalLength"
                     v-model="projectSettings.metadata.other.enableEquivalentFocalSegment"
                     class="ml-2"
-                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
-                />
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
               </div>
             </div>
           </div>
@@ -773,7 +770,24 @@
             <el-button type="info" @click="resetMetadataSettings">重置</el-button>
           </div>
         </el-tab-pane>
-        <!--        <el-tab-pane label="边框"></el-tab-pane>-->
+        <el-tab-pane label="性能">
+          <div class="border-box">
+            <span class="border-label">下载</span>
+            <div class="options">
+              <div class="option">
+                <span>线程数：</span>
+                <el-select @change="createThreadPool" v-model="projectSettings.performance.downloadThreads"
+                           size="small">
+                  <el-option
+                      v-for="item in downloadThreadsOptions"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"/>
+                </el-select>
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
         <!--        <el-tab-pane label="文本"></el-tab-pane>-->
         <!--        <el-tab-pane label="图片"></el-tab-pane>-->
       </el-tabs>
@@ -811,7 +825,7 @@ import _ from 'lodash';
 
 import MapHelper from "@/utils/map-helper";
 
-import {projectSettings, outputSizeOptions, originalMetadata} from '@/config/project-settings'
+import {projectSettings, outputSizeOptions, originalMetadata, downloadThreadsOptions} from '@/config/project-settings'
 
 const predefineColors = ref([
   '#ff4500',
@@ -1216,6 +1230,13 @@ const switchSliderRange = () => {
 const selectDirectory = async () => {
   projectSettings.value.outputSettings.outputPath = await window.electronAPI.selectDirectory()
 }
+
+
+const createThreadPool = () => {
+  const maxThreads = projectSettings.value.performance.downloadThreads;
+  window.electronAPI.createThreadPool(maxThreads)
+}
+
 
 const openContextMenu = () => {
   if (images.value.size) {
@@ -2325,6 +2346,7 @@ const handleChangeTextType = () => {
 }
 
 onMounted(() => {
+  createThreadPool()
   loadTemplates()
   loadTextLabels()
   watchInputImages()

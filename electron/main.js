@@ -126,6 +126,11 @@ ipcMain.on('stop-save-files', () => {
 })
 
 
+ipcMain.on('create-thread-pool', (event, maxThreads) => {
+    imageExporter.createThreadPool(maxThreads)
+})
+
+
 app.whenReady().then(() => {
     // 注册安全协议
     protocol.registerFileProtocol('app', (request, callback) => {
