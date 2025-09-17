@@ -176,8 +176,15 @@ async function drawImage(ctx, imageItem, newWidth, newHeight) {
 
     let imageY = imageItem.positionY * newHeight;
 
-    // 1. 读取图片为 Buffer
-    const imageBuffer = await fs.readFile(path);
+
+    let imageBuffer;
+
+    try {
+        // 1. 读取图片为 Buffer
+        imageBuffer = await fs.readFile(path);
+    } catch (err) {
+        throw new Error('文件已不存在：' + path)
+    }
 
     const overlay = await loadImage(imageBuffer);
 
@@ -279,8 +286,15 @@ async function addBorderAndText(options) {
 
         const outputPath = path.join(outputDirectory, path.parse(inputPath).name + "." + extname)
 
-        // 1. 读取图片为 Buffer
-        const imageBuffer = await fs.readFile(inputPath);
+        let imageBuffer;
+
+        try {
+            // 1. 读取图片为 Buffer
+            imageBuffer = await fs.readFile(inputPath);
+        } catch (err) {
+            throw new Error('文件已不存在：' + path)
+        }
+
 
         const image = await loadImage(imageBuffer);
 
@@ -380,7 +394,13 @@ async function addBorderAndText(options) {
             elements = elements.sort((before, next) => before.options.zIndex - next.options.zIndex);
             for (let element of elements) {
                 if (element.path) {
-                    await drawImage(ctx, element, newWidth, newHeight);
+                    try {
+                        await drawImage(ctx, element, newWidth, newHeight);
+                    } catch (err) {
+                        console.log(err)
+                        throw err
+                    }
+
                 } else {
                     drawText(ctx, element, newWidth, newHeight);
                 }
