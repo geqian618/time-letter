@@ -1,5 +1,6 @@
 {
   "name": "photo-editor",
+  "productName":"Photo Editor",
   "version": "1.0.0",
   "private": true,
   "main": "electron/main.js",

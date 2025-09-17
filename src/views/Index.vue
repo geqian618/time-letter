@@ -1348,6 +1348,7 @@ const watchContextMenu = () => {
         const selectedPaths = selectedImages.value.keys();
         for (let path of selectedPaths) {
           images.value.delete(path)
+          filterImages.value.delete(path)
         }
         selectedImages.value.clear();
         // const beforePath = selectedElement.value.getAttribute('path');
