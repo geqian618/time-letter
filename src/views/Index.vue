@@ -1247,7 +1247,7 @@ const editorOutputSettings = () => {
 const watchDownloadProgress = () => {
   window.electronAPI.downloadProgress((event, data) => {
     downloadProgressPercentage.value = data.percentage
-    if (downloadProgressPercentage.value === 100) {
+    if (downloadProgressPercentage.value === 100 || data.hasError) {
       setTimeout(() => {
         downloadProgressVisible.value = false
       }, 1000)
