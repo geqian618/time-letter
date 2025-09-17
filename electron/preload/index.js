@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     watchContextMenu: (callback) => ipcRenderer.on('watch-contextMenu', callback),
     watchTemplateContextMenu: (callback) => ipcRenderer.on('watch-template-contextMenu', callback),
     requestSaveFiles: (args) => ipcRenderer.send('request-save-files', args),
+    stopSaveFiles: () => ipcRenderer.send('stop-save-files'),
     downloadProgress: (callback) => ipcRenderer.on('download-progress', callback),
     editorOutputSettings: (callback) => ipcRenderer.on('editor-output-settings', callback)
 });

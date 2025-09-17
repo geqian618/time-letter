@@ -113,11 +113,16 @@ ipcMain.on('open-template-contextMenu', () => {
     templateContextMenu(window).popup()
 })
 
-ipcMain.on('request-save-files', async (event, images) => {
+ipcMain.on('request-save-files', (event, images) => {
     imageExporter.exportImages(images, (progress) => {
         // console.log(`[进度] ${progress.percentage}% | 完成: ${progress.completed}/${progress.total} | 错误: ${progress.errors}`);
         window.webContents.send('download-progress', {percentage: progress.percentage, hasError: progress.errors > 0})
     });
+})
+
+
+ipcMain.on('stop-save-files', () => {
+    imageExporter.stopSaveFiles()
 })
 
 

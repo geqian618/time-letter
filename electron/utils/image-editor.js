@@ -253,6 +253,11 @@ const getExtname = (inputPath, extnameType) => {
 
 async function addBorderAndText(options) {
     try {
+        // 创建视图来访问共享内存
+        const interruptView = new Int32Array(options.interrupt);
+        if (Atomics.load(interruptView, 0) === 1) {
+            return;
+        }
 
         let {
             inputPath,      // 原始图片路径

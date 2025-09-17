@@ -2,6 +2,14 @@ const path = require('path');
 const {Piscina} = require('piscina');
 const {dialog} = require('electron');
 
+// 创建一个 SharedArrayBuffer 用于中断信号,  4字节，用于一个32位整数
+const sab = new SharedArrayBuffer(4);
+// 初始值为0
+const interrupt = new Int32Array(sab);
+// 初始值为0（未中断）
+Atomics.store(interrupt, 0, 0);
+
+
 // 初始化线程池，指向工作线程脚本
 const threadPool = new Piscina({
     filename: path.resolve(__dirname, 'worker.js'),
@@ -11,6 +19,9 @@ const threadPool = new Piscina({
 
 
 const exportImages = (dataList, progressCallback) => {
+    // 重置中断标志为0（未中断）
+    Atomics.store(interrupt, 0, 0);
+
     const total = dataList.length;
     let completed = 0;
     let errors = 0;
@@ -31,6 +42,8 @@ const exportImages = (dataList, progressCallback) => {
             images
         };
 
+        options.interrupt = interrupt
+
         // 执行任务并更新进度
         threadPool.run(options)
             .then(() => {
@@ -47,13 +60,20 @@ const exportImages = (dataList, progressCallback) => {
 
     // 进度更新函数
     function updateProgress() {
+        // 创建视图来访问共享内存
+        const interruptView = new Int32Array(interrupt);
         progressCallback({
             total,
             completed,
             errors,
-            percentage: Math.round((completed / total) * 100)
+            percentage: Atomics.load(interruptView, 0) === 0 ? Math.round((completed / total) * 100) : 0
         });
     }
 };
 
-module.exports = {exportImages}
+const stopSaveFiles = () => {
+    // 重置中断标志为0（未中断）
+    Atomics.store(interrupt, 0, 1);
+}
+
+module.exports = {exportImages, stopSaveFiles}

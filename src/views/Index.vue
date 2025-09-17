@@ -608,7 +608,11 @@
                :close-on-click-modal="false"
                width="500">
       <el-progress :percentage="downloadProgressPercentage"/>
-      <div class="fill"></div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="info" @click="downloadProgressVisible = false">取消</el-button>
+        </div>
+      </template>
     </el-dialog>
 
     <el-dialog v-model="outputSettingsVisible"
@@ -1255,9 +1259,17 @@ const watchDownloadProgress = () => {
   })
 }
 
+const stopSaveFiles = () => {
+  window.electronAPI.stopSaveFiles()
+}
+
 const handleDownloadProgressClose = () => {
   setTimeout(() => {
-    downloadProgressPercentage.value = 0
+    if (downloadProgressPercentage.value !== 100) {
+      stopSaveFiles()
+    } else {
+      downloadProgressPercentage.value = 0
+    }
   }, 200)
 }
 
