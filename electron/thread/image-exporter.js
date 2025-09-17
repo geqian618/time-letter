@@ -14,17 +14,12 @@ const exportImages = (dataList, progressCallback) => {
     const total = dataList.length;
     let completed = 0;
     let errors = 0;
-    let hasError = false
     // 如果没有回调则使用默认的进度打印函数
     progressCallback = progressCallback || ((progress) => {
         console.log(`进度: ${progress.completed}/${progress.total} 错误: ${progress.errors}`);
     });
 
     for (let data of dataList) {
-
-        if (hasError) {
-            return
-        }
 
         const {outputDirectory, path, projectSettings, settings: {border, texts, images}} = data;
         const options = {
@@ -42,7 +37,6 @@ const exportImages = (dataList, progressCallback) => {
                 completed++;
                 updateProgress();
             }).catch(err => {
-            hasError = true
             completed++;
             errors++;
             updateProgress();
