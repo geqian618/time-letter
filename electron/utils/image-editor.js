@@ -264,7 +264,6 @@ async function addBorderAndText(options) {
                 borderTopRatio,
                 borderBottomRatio,
                 borderColor,
-                percentage = false
             },
             texts,
             images
