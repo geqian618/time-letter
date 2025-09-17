@@ -26,7 +26,7 @@ const exportImages = (dataList, progressCallback) => {
             inputPath: path,
             projectSettings,
             outputDirectory,
-            border: {...border},
+            border,
             texts,
             images
         };
