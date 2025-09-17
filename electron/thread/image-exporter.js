@@ -22,7 +22,7 @@ const createThreadPool = async (threads) => {
     threadPool = new Piscina({
         filename: path.resolve(__dirname, 'worker.js'),
         maxThreads: maxThreads, // 设置最大线程数
-        minThreads: 4, // 设置核心线程数（最小线程数）
+        minThreads: 2, // 设置核心线程数（最小线程数）
         idleTimeout: 30000, // 线程空闲超时销毁时间（毫秒）
     });
     console.log('thread pool created, max threads: ' + maxThreads)
