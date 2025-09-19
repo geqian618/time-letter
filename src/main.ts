@@ -18,6 +18,8 @@ import draggable from "@/directive/draggable.js";
 
 import inputFocus from "@/directive/input-focus.js";
 
+import dragSort from "@/directive/drag-sort.js";
+
 
 const app = createApp(App)
 
@@ -46,6 +48,8 @@ app.use(VueLazyload, {
 })
 
 app.directive('draggable', draggable)
+
+app.directive('dragSort', dragSort)
 
 // 全局应用指令
 app.directive('focus', inputFocus)

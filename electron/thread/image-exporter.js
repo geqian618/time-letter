@@ -30,7 +30,7 @@ const createThreadPool = async (threads) => {
 
 
 const exportImages = (dataList, progressCallback) => {
-    // 重置中断标志为0（未中断）
+    // 重置中断标志为 0（未中断）
     Atomics.store(interrupt, 0, 0);
 
     const total = dataList.length;
@@ -83,7 +83,7 @@ const exportImages = (dataList, progressCallback) => {
 };
 
 const stopSaveFiles = () => {
-    // 重置中断标志为0（未中断）
+    // 重置中断标志为 0（未中断）
     Atomics.store(interrupt, 0, 1);
 }
 

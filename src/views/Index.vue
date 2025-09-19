@@ -10,7 +10,7 @@
                   <template #title>
                     <span>模版预设</span>
                   </template>
-                  <div class="templates">
+                  <div class="templates" v-drag-sort="handleSortingChanged">
                     <el-menu-item
                         @contextmenu="openTemplateContextMenu(template)"
                         class="template" v-for="template in templates"
@@ -1937,6 +1937,15 @@ const saveTemplates = async () => {
       saveTemplateDialogVisible.value = false
     }
   })
+}
+
+
+const handleSortingChanged = (sourceIndex, targetIndex) => {
+  const templateList = _.cloneDeep(templates.value);
+  const [movedItem] = templateList.splice(sourceIndex, 1);
+  templateList.splice(targetIndex, 0, movedItem);
+  templates.value = templateList;
+  localStorage.setItem('templates', JSON.stringify(templates.value))
 }
 
 
