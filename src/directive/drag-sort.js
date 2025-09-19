@@ -184,6 +184,7 @@ const handleDragLeave = function (e) {
 };
 
 const handleDrop = function (e) {
+
     e.preventDefault();
 
     const el = this.parentElement;
@@ -198,17 +199,17 @@ const handleDrop = function (e) {
     const draggedIndex = children.indexOf(dragElement);
     const targetIndex = children.indexOf(this);
 
-    // 调用回调函数传递索引信息
-    if (el._dragSortCallback && typeof el._dragSortCallback === 'function') {
-        el._dragSortCallback(draggedIndex, targetIndex);
+    // 确定插入位置
+    if (draggedIndex < targetIndex) {
+        el.insertBefore(dragElement, this.nextElementSibling);
+    } else {
+        el.insertBefore(dragElement, this);
     }
 
-    // 确定插入位置
-    // if (draggedIndex < targetIndex) {
-    //     el.insertBefore(dragElement, this.nextElementSibling);
-    // } else {
-    //     el.insertBefore(dragElement, this);
-    // }
+    // 调用回调函数传递索引信息
+    if (el._dragSortCallback && typeof el._dragSortCallback === 'function') {
+        el._dragSortCallback(el, dragElement, this);
+    }
 
     return false;
 };

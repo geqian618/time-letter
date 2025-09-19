@@ -12,6 +12,7 @@
                   </template>
                   <div class="templates" v-drag-sort="handleSortingChanged">
                     <el-menu-item
+                        :data-id="template.id"
                         @contextmenu="openTemplateContextMenu(template)"
                         class="template" v-for="template in templates"
                         :key="template.id"
@@ -1940,12 +1941,20 @@ const saveTemplates = async () => {
 }
 
 
-const handleSortingChanged = (sourceIndex, targetIndex) => {
-  const templateList = _.cloneDeep(templates.value);
-  const [movedItem] = templateList.splice(sourceIndex, 1);
-  templateList.splice(targetIndex, 0, movedItem);
-  templates.value = templateList;
-  localStorage.setItem('templates', JSON.stringify(templates.value))
+const handleSortingChanged = async (el, dragaElement, targetElement) => {
+  await nextTick()
+  let newTemplate = []
+  const elements = el.querySelectorAll('.template');
+  for (let element of elements) {
+    const dataId = element.getAttribute('data-id');
+    for (let template of templates.value) {
+      if (String(template.id) === dataId) {
+        newTemplate.push(template)
+        break
+      }
+    }
+  }
+  templates.value = newTemplate
 }
 
 
