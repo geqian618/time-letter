@@ -23,7 +23,7 @@ const selectFile = async () => {
     const {filePaths} = await dialog.showOpenDialog({
         buttonLabel: '导入',
         properties: ['openFile', 'multiSelections'],
-        filters: [{name: 'Images', extensions: ['jpg', 'png', 'gif', 'webp']}]
+        filters: [{name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp']}]
     });
     if (filePaths && filePaths.length) {
         const files = await Promise.all(
@@ -47,7 +47,7 @@ const selectImageLabels = async () => {
     const {filePaths} = await dialog.showOpenDialog({
         buttonLabel: '导入',
         properties: ['openFile', 'multiSelections'],
-        filters: [{name: 'Images', extensions: ['jpg', 'png', 'gif', 'webp']}]
+        filters: [{name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp']}]
     });
     if (filePaths && filePaths.length) {
         const files = await Promise.all(
