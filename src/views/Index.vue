@@ -1912,9 +1912,9 @@ const synchronizeTemplate = () => {
   }
 }
 
-const saveTemplates = async () => {
+const saveTemplates = () => {
   if (!saveTemplateForm) return
-  await saveTemplateForm.value.validate((valid, fields) => {
+  saveTemplateForm.value.validate((valid, fields) => {
     if (valid) {
       const {settings} = images.value.get(selectedElement.value.path);
       templates.value.push({
@@ -1929,6 +1929,8 @@ const saveTemplates = async () => {
           texts: Array.from(settings.texts.values())
         }
       })
+
+      console.log(templates.value)
 
       window.localStorage.setItem('templates', JSON.stringify(templates.value))
 
@@ -1953,6 +1955,8 @@ const handleSortingChanged = (el, dragaElement, targetElement) => {
     }
   }
   templates.value = newTemplates
+
+  console.log(templates.value)
 
   localStorage.setItem('templates', JSON.stringify(newTemplates))
 }
