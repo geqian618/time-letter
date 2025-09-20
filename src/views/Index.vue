@@ -1955,6 +1955,7 @@ const handleSortingChanged = async (el, dragaElement, targetElement) => {
     }
   }
   templates.value = newTemplate
+  localStorage.setItem('templates', JSON.stringify(newTemplate))
 }
 
 
