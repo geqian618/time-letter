@@ -814,7 +814,7 @@
 
 <script setup lang="js">
 
-import {nextTick, onBeforeUnmount, onMounted, ref, watch, computed} from "vue";
+import {nextTick, onBeforeUnmount, onMounted, ref, watch, toRaw} from "vue";
 
 import {getDate, getDateTime} from '@/utils/datetime'
 
@@ -1917,9 +1917,7 @@ const saveTemplates = async () => {
   await saveTemplateForm.value.validate((valid, fields) => {
     if (valid) {
       const {settings} = images.value.get(selectedElement.value.path);
-      const json = window.localStorage.getItem('templates');
-      const templateList = json ? JSON.parse(json) : []
-      templateList.push({
+      templates.value.push({
         id: Date.now(),
         name: newTemplate.value.desc,
         settings: {
@@ -1931,31 +1929,32 @@ const saveTemplates = async () => {
           texts: Array.from(settings.texts.values())
         }
       })
-      templates.value = templateList
-      window.localStorage.setItem('templates', JSON.stringify(templateList))
+
+      window.localStorage.setItem('templates', JSON.stringify(templates.value))
 
       newTemplate.value.desc = ''
+
       saveTemplateDialogVisible.value = false
     }
   })
 }
 
 
-const handleSortingChanged = async (el, dragaElement, targetElement) => {
-  await nextTick()
-  let newTemplate = []
+const handleSortingChanged = (el, dragaElement, targetElement) => {
+  let newTemplates = []
   const elements = el.querySelectorAll('.template');
   for (let element of elements) {
     const dataId = element.getAttribute('data-id');
     for (let template of templates.value) {
       if (String(template.id) === dataId) {
-        newTemplate.push(template)
+        newTemplates.push(toRaw(template))
         break
       }
     }
   }
-  templates.value = newTemplate
-  localStorage.setItem('templates', JSON.stringify(newTemplate))
+  templates.value = newTemplates
+
+  localStorage.setItem('templates', JSON.stringify(newTemplates))
 }
 
 
