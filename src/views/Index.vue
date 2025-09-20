@@ -1966,9 +1966,8 @@ const handleSortingChanged = (el, dragaElement, targetElement) => {
       }
     }
   }
-  templates.value = newTemplates
 
-  console.log(templates.value)
+  templates.value = newTemplates
 
   localStorage.setItem('templates', JSON.stringify(newTemplates))
 }
