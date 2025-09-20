@@ -1912,12 +1912,24 @@ const synchronizeTemplate = () => {
   }
 }
 
-const saveTemplates = () => {
+const saveTemplates = async () => {
+
   if (!saveTemplateForm) return
-  saveTemplateForm.value.validate((valid, fields) => {
+
+  saveTemplateForm.value.validate(async (valid, fields) => {
+
     if (valid) {
+
       const {settings} = images.value.get(selectedElement.value.path);
-      templates.value.push({
+
+      const newTemplates = [...templates.value];
+
+      // 清空模版列表，重新生成列表
+      templates.value = []
+
+      await nextTick()
+
+      newTemplates.push({
         id: Date.now(),
         name: newTemplate.value.desc,
         settings: {
@@ -1930,7 +1942,7 @@ const saveTemplates = () => {
         }
       })
 
-      console.log(templates.value)
+      templates.value = newTemplates
 
       window.localStorage.setItem('templates', JSON.stringify(templates.value))
 
