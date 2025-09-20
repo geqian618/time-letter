@@ -1949,7 +1949,7 @@ const handleSortingChanged = (el, dragaElement, targetElement) => {
     const dataId = element.getAttribute('data-id');
     for (let template of templates.value) {
       if (String(template.id) === dataId) {
-        newTemplates.push(toRaw(template))
+        newTemplates.push(template)
         break
       }
     }
