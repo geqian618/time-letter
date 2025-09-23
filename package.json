@@ -1,6 +1,6 @@
 {
-  "name": "photo-editor",
-  "productName":"Photo Editor",
+  "name": "caption-frame",
+  "productName":"Caption Frame",
   "version": "1.0.0",
   "private": true,
   "main": "electron/main.js",
