@@ -310,11 +310,11 @@ async function addBorderAndText(options) {
 
         const heightRatio = 1 + borderTopRatio + borderBottomRatio
 
-        // 原始尺寸，不含边框
-        if (type === 0) {
+
+        if (type === 0) { // 原始尺寸，不含边框
             imageWidth = image.width;
             imageHeight = image.height;
-        } else if (type === 1) {//原始尺寸，含边框
+        } else if (type === 1) { //原始尺寸，含边框
             imageWidth = image.width / widthRatio;
             imageHeight = image.height / widthRatio;
         } else if (type === 2) { // 长边固定，不包含边框
@@ -325,7 +325,7 @@ async function addBorderAndText(options) {
                 imageWidth = longSide
                 imageHeight = longSide * image.height / image.width;
             }
-        } else if (type === 3) {// 长边固定，包含边框
+        } else if (type === 3) { // 长边固定，包含边框
             if (image.height > image.width) {
                 imageHeight = longSide / heightRatio;
                 imageWidth = longSide * image.width / image.height / heightRatio
@@ -355,10 +355,10 @@ async function addBorderAndText(options) {
         } else if (type === 7) {// 宽固定，包含边框
             imageWidth = width / widthRatio;
             imageHeight = image.height * width / image.width / widthRatio
-        } else if (type === 8) {// 高固定，不包含边框
+        } else if (type === 8) { // 高固定，不包含边框
             imageHeight = height;
             imageWidth = image.width * height / image.height
-        } else if (type === 9) {// 高固定，包含边框
+        } else if (type === 9) { // 高固定，包含边框
             imageHeight = height / heightRatio;
             imageWidth = image.width * height / image.height / heightRatio
         }
