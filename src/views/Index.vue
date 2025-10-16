@@ -516,8 +516,9 @@
 
     </div>
 
-    <el-dialog align-center v-model="customTextLabelDialogVisible" title="新增文本标签" width="500" draggable>
-      <el-form :model="textLabel" ref="textLabelForm" :rules="textLabelRules" label-width="auto" @submit.native.prevent>
+    <el-dialog align-center v-model="customTextLabelDialogVisible" :title="textLabelDialogTitle" width="500" draggable>
+      <el-form :model="textLabel" ref="textLabelForm" :rules="textLabelRules" label-width="auto"
+               style="max-width: 90%;margin-top: 10px" @submit.native.prevent>
         <el-form-item label="文本类型" prop="type">
           <el-select @change="handleChangeTextType" v-model="textLabel.type" placeholder="文本类型">
             <el-option
@@ -585,7 +586,7 @@
 
 
     <el-dialog v-model="editorTextLabelDialogVisible" title="编辑文本标签" width="60%" draggable>
-      <el-table size="small" :data="textLabels" border>
+      <el-table size="small" :data="textLabels" border style="width: 100%">
         <el-table-column prop="type" label="标签类型" show-overflow-tooltip/>
         <el-table-column prop="tips" label="提示信息" show-overflow-tooltip/>
         <el-table-column prop="content" label="文本内容" min-width="150" show-overflow-tooltip/>
@@ -813,7 +814,7 @@
 
 <script setup lang="js">
 
-import {nextTick, onBeforeUnmount, onMounted, ref, watch, toRaw} from "vue";
+import {nextTick, onBeforeUnmount, onMounted, ref, watch, computed} from "vue";
 
 import {getDate, getDateTime} from '@/utils/datetime'
 
@@ -1034,6 +1035,8 @@ const renameDialogVisible = ref(false)
 
 const customTextLabelDialogVisible = ref(false)
 
+const handleTextLabelType = ref(0)
+
 const editorImageLabelDialogVisible = ref(false)
 
 const editorTextLabelDialogVisible = ref(false)
@@ -1080,6 +1083,10 @@ const textLabelRules = {
     {required: true, message: '文本标签内容不能为空', trigger: 'blur'},
   ]
 }
+
+const textLabelDialogTitle = computed(() => {
+  return handleTextLabelType.value === 0 ? '新增文本标签' : '编辑文本标签'
+})
 
 const stopWatchFilterImages = watch(filterType, async () => {
   await clearSelectedImages()
@@ -1323,6 +1330,7 @@ const watchEditorLabel = () => {
 
 
 const openTextLabelDialog = () => {
+  handleTextLabelType.value = 0
   customTextLabelDialogVisible.value = true
   clearFormValidate(textLabelForm)
 }
@@ -1340,6 +1348,7 @@ const clearFormValidate = (formRef) => {
 
 const openEditorTextLabel = (row) => {
   textLabel.value = row
+  handleTextLabelType.value = 1
   customTextLabelDialogVisible.value = true
 }
 
@@ -3684,6 +3693,8 @@ function makeDraggable(dragElement, path) {
 
     }
   }
+
+
 }
 
 .el-dialog .fill {
@@ -3769,6 +3780,7 @@ function makeDraggable(dragElement, path) {
 .el-dialog {
 
   .el-tabs {
+
     max-height: 70vh;
 
     .operation {
@@ -3799,6 +3811,7 @@ function makeDraggable(dragElement, path) {
           color: #7c7b7b;
         }
 
+
         .items {
           width: 100%;
 
@@ -3819,7 +3832,6 @@ function makeDraggable(dragElement, path) {
         }
 
         .options {
-
           width: 100%;
 
           .option {
@@ -3828,6 +3840,10 @@ function makeDraggable(dragElement, path) {
             display: flex;
             align-items: center;
             height: 40px;
+
+            .el-select {
+              width: 160px !important;
+            }
 
             .slider-demo-block {
               width: 250px;
@@ -3856,11 +3872,13 @@ function makeDraggable(dragElement, path) {
             span, .el-button {
               margin-left: 5px;
             }
-
           }
         }
+
       }
     }
+
+
   }
 }
 
