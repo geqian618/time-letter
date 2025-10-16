@@ -1350,6 +1350,7 @@ const openEditorTextLabel = (row) => {
   textLabel.value = row
   handleTextLabelType.value = 1
   customTextLabelDialogVisible.value = true
+  clearFormValidate(textLabelForm)
 }
 
 const deleteTextLabel = (row) => {
