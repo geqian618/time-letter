@@ -3798,7 +3798,7 @@ function makeDraggable(dragElement, path) {
         position: relative;
         border: 1px solid #e4e4e5;
         border-radius: 2px;
-        padding: 25px 20px 20px;
+        padding: 15px 20px 20px;
         margin: 30px 0;
         background: #F0F0F0;
 
