@@ -547,11 +547,11 @@
     <el-dialog v-model="saveTemplateDialogVisible" title="保存预设模版" align-center width="300" draggable>
       <el-form :model="newTemplate" class="demo-form-inline" :rules="saveTemplateRules" ref="saveTemplateForm"
                @submit.native.prevent>
-        <el-form-item label="预设名称" prop="desc">
+        <el-form-item label="模板名称" prop="desc">
           <el-input v-model="newTemplate.desc"
                     ref="templateRef"
                     v-focus="saveTemplateDialogVisible"
-                    placeholder="请输入预设名称"
+                    placeholder="请输入模版名称"
                     clearable
                     @keyup.enter.native="saveTemplates"/>
         </el-form-item>
@@ -568,9 +568,11 @@
 
 
     <el-dialog v-model="renameDialogVisible" title="重命名" align-center width="300" draggable>
-      <el-form :model="oldTemplate" class="demo-form-inline" :rules="renameTemplateRules" ref="renameTemplateForm">
+      <el-form :model="oldTemplate" class="demo-form-inline" :rules="renameTemplateRules" ref="renameTemplateForm"
+               @submit.native.prevent>
         <el-form-item label="预设名称" prop="rename">
-          <el-input v-focus="renameDialogVisible" v-model="oldTemplate.rename" clearable/>
+          <el-input v-focus="renameDialogVisible" v-model="oldTemplate.rename" clearable
+                    @keyup.enter.native="renameTemplate"/>
         </el-form-item>
       </el-form>
       <template #footer>
