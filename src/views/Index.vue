@@ -609,6 +609,7 @@
                @close="handleDownloadProgressClose"
                :close-on-click-modal="false"
                width="500">
+      <div class="fill"></div>
       <el-progress :percentage="downloadProgressPercentage"/>
       <template #footer>
         <div class="dialog-footer">
@@ -3709,13 +3710,6 @@ function makeDraggable(dragElement, path) {
 
     }
   }
-
-
-}
-
-.el-dialog .fill {
-  height: 15px;
-  width: 100%;
 }
 
 
@@ -3796,6 +3790,11 @@ function makeDraggable(dragElement, path) {
 
 
 .el-dialog {
+
+  .fill {
+    height: 10px;
+    width: 100%;
+  }
 
   .el-form {
     width: 100%;
