@@ -517,8 +517,7 @@
     </div>
 
     <el-dialog align-center v-model="customTextLabelDialogVisible" :title="textLabelDialogTitle" width="500" draggable>
-      <el-form :model="textLabel" ref="textLabelForm" :rules="textLabelRules" label-width="auto"
-               style="max-width: 90%;margin-top: 10px" @submit.native.prevent>
+      <el-form :model="textLabel" ref="textLabelForm" :rules="textLabelRules" label-width="auto" @submit.native.prevent>
         <el-form-item label="文本类型" prop="type">
           <el-select @change="handleChangeTextType" v-model="textLabel.type" placeholder="文本类型">
             <el-option
@@ -569,9 +568,9 @@
 
 
     <el-dialog v-model="renameDialogVisible" title="重命名" align-center width="300" draggable>
-      <el-form :model="oldTemplate" class="demo-form-inline">
-        <el-form-item label="预设名称">
-          <el-input v-model="oldTemplate.rename" placeholder="" clearable/>
+      <el-form :model="oldTemplate" class="demo-form-inline" :rules="renameTemplateRules" ref="renameTemplateForm">
+        <el-form-item label="预设名称" prop="rename">
+          <el-input v-focus="renameDialogVisible" v-model="oldTemplate.rename" clearable/>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -586,7 +585,7 @@
 
 
     <el-dialog v-model="editorTextLabelDialogVisible" title="编辑文本标签" width="60%" draggable>
-      <el-table size="small" :data="textLabels" border style="width: 100%">
+      <el-table size="small" :data="textLabels" border>
         <el-table-column prop="type" label="标签类型" show-overflow-tooltip/>
         <el-table-column prop="tips" label="提示信息" show-overflow-tooltip/>
         <el-table-column prop="content" label="文本内容" min-width="150" show-overflow-tooltip/>
@@ -1066,10 +1065,12 @@ const templateRef = ref()
 
 const textLabelRef = ref()
 
+const renameTemplateForm = ref()
+
 const saveTemplateRules = {
   desc: [
     {required: true, message: '模板名称不能为空', trigger: 'blur'},
-  ],
+  ]
 }
 
 const textLabelRules = {
@@ -1081,6 +1082,12 @@ const textLabelRules = {
   ],
   content: [
     {required: true, message: '文本标签内容不能为空', trigger: 'blur'},
+  ]
+}
+
+const renameTemplateRules = {
+  rename: [
+    {required: true, message: '模板名称不能为空', trigger: 'blur'},
   ]
 }
 
@@ -1862,16 +1869,22 @@ const openSaveTemplateDialog = () => {
 
 
 const renameTemplate = () => {
-  if (templates.value && templates.value.length) {
-    for (let i = 0; i < templates.value.length; i++) {
-      if (templates.value[i].id === oldTemplate.value.templateId) {
-        templates.value[i].name = oldTemplate.value.rename
-        window.localStorage.setItem('templates', JSON.stringify(templates.value))
-        renameDialogVisible.value = false
-        return
+  if (!renameTemplateForm) return
+  renameTemplateForm.value.validate(async (valid, fields) => {
+    if (valid) {
+      if (templates.value && templates.value.length) {
+        for (let i = 0; i < templates.value.length; i++) {
+          if (templates.value[i].id === oldTemplate.value.templateId) {
+            templates.value[i].name = oldTemplate.value.rename
+            window.localStorage.setItem('templates', JSON.stringify(templates.value))
+            renameDialogVisible.value = false
+            return
+          }
+        }
       }
     }
-  }
+  })
+
 }
 
 const deleteTemplate = () => {
@@ -3705,7 +3718,7 @@ function makeDraggable(dragElement, path) {
 
 
 :deep(.el-dialog) {
-  background: #F0F0F0;
+  background-color: var(--dialog-main-background-color);
   padding: 1px 1px 10px 1px;
 
   .el-dialog__header {
@@ -3713,7 +3726,7 @@ function makeDraggable(dragElement, path) {
     padding-bottom: 0;
     display: flex;
     align-items: center;
-    background-color: #e8e7e7;
+    background-color: #F3F3F3;
 
     i {
       height: 100%;
@@ -3730,7 +3743,9 @@ function makeDraggable(dragElement, path) {
 
   .el-dialog__body {
     padding: 10px;
+    width: 100%;
   }
+
 
   .el-dialog__headerbtn {
     height: 25px;
@@ -3780,8 +3795,22 @@ function makeDraggable(dragElement, path) {
 
 .el-dialog {
 
-  .el-tabs {
+  .el-form {
+    width: 100%;
+    padding: 10px 10px 0 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 
+    .el-form-item {
+      width: 100%;
+    }
+  }
+
+
+  .el-tabs {
+    width: 100%;
     max-height: 70vh;
 
     .operation {
@@ -3793,6 +3822,7 @@ function makeDraggable(dragElement, path) {
 
     :deep(.el-tabs__content) {
       overflow-y: auto;
+      background-color: var(--dialog-main-background-color);
       /* 基础样式 */
       .border-box {
         position: relative;
@@ -3800,13 +3830,12 @@ function makeDraggable(dragElement, path) {
         border-radius: 2px;
         padding: 15px 20px 20px;
         margin: 30px 0;
-        background: #F0F0F0;
 
         .border-label {
           position: absolute;
           top: -12px;
           left: 15px;
-          background: #F0F0F0;
+          background-color: var(--dialog-main-background-color);
           padding: 0 12px;
           font-size: 14px;
           color: #7c7b7b;

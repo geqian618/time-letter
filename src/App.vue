@@ -30,6 +30,7 @@ import {RouterView} from 'vue-router'
   --menu-icon-color: #c2c1c1;
   --main-font-color: #A9A9A9;
   --preview-background-color: #737373;
+  --dialog-main-background-color: #FFFFFF;
 }
 
 </style>
