@@ -3727,7 +3727,10 @@ function makeDraggable(dragElement, path) {
 
 
 .el-dialog {
+
   .el-tabs {
+
+    max-height: 70vh;
 
     .operation {
       height: 40px;
@@ -3736,86 +3739,91 @@ function makeDraggable(dragElement, path) {
       align-items: end;
     }
 
-    /* 基础样式 */
-    .border-box {
-      position: relative;
-      border: 1px solid #e4e4e5;
-      border-radius: 2px;
-      padding: 25px 20px 20px;
-      margin: 30px 0;
-      background: #F0F0F0;
-
-      .border-label {
-        position: absolute;
-        top: -12px;
-        left: 15px;
+    :deep(.el-tabs__content) {
+      overflow-y: auto;
+      /* 基础样式 */
+      .border-box {
+        position: relative;
+        border: 1px solid #e4e4e5;
+        border-radius: 2px;
+        padding: 25px 20px 20px;
+        margin: 30px 0;
         background: #F0F0F0;
-        padding: 0 12px;
-        font-size: 14px;
-        color: #7c7b7b;
-      }
 
-
-      .items {
-        width: 100%;
-
-        .item {
-          display: flex;
-          align-items: center;
-          margin: 8px;
-
-          .label {
-            width: 80px;
-            text-align: right;
-          }
-
-          .value {
-            width: 80%;
-          }
+        .border-label {
+          position: absolute;
+          top: -12px;
+          left: 15px;
+          background: #F0F0F0;
+          padding: 0 12px;
+          font-size: 14px;
+          color: #7c7b7b;
         }
-      }
 
-      .options {
-        width: 100%;
 
-        .option {
-          font-size: 13px;
+        .items {
           width: 100%;
-          display: flex;
-          align-items: center;
-          height: 40px;
 
-          .el-select {
-            width: 160px !important;
-          }
-
-          .slider-demo-block {
-            width: 250px;
+          .item {
             display: flex;
             align-items: center;
+            margin: 8px;
 
-            :deep(.el-slider) {
-              margin-top: 0;
-              margin-left: 10px;
+            .label {
+              width: 80px;
+              text-align: right;
+            }
 
-              .el-slider__input {
-                margin-right: 20px;
-                width: 85px !important;
-              }
+            .value {
+              width: 80%;
             }
           }
+        }
 
-          .el-input {
-            width: 100px;
-          }
+        .options {
+          width: 100%;
 
-          span, .el-button {
-            margin-left: 5px;
+          .option {
+            font-size: 13px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            height: 40px;
+
+            .el-select {
+              width: 160px !important;
+            }
+
+            .slider-demo-block {
+              width: 250px;
+              display: flex;
+              align-items: center;
+
+              :deep(.el-slider) {
+                margin-top: 0;
+                margin-left: 10px;
+
+                .el-slider__input {
+                  margin-right: 20px;
+                  width: 85px !important;
+                }
+              }
+            }
+
+            .el-input {
+              width: 100px;
+            }
+
+            span, .el-button {
+              margin-left: 5px;
+            }
           }
         }
-      }
 
+      }
     }
+
+
   }
 }
 
