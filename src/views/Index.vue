@@ -3696,10 +3696,43 @@ function makeDraggable(dragElement, path) {
 
 
 :deep(.el-dialog) {
+
   background: #F0F0F0;
+  padding: 1px 1px 10px 1px;
+
+  .el-dialog__header {
+    height: 25px;
+    padding-bottom: 0;
+    display: flex;
+    align-items: center;
+    background-color: #e8e7e7;
+  }
+
+  .el-dialog__body {
+    padding: 10px;
+  }
+
+  .el-dialog__headerbtn {
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    margin-right: 10px;
+  }
 
   .el-dialog__title {
-    font-size: 16px;
+    font-size: 12px;
+    color: black;
+    margin-left: 10px;
+  }
+
+  .el-dialog__footer {
+    padding-top: 0;
+
+    button:last-child {
+      margin-right: 10px;
+    }
+
   }
 
   .el-tabs, .el-select {
