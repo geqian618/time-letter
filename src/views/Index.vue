@@ -517,8 +517,7 @@
     </div>
 
     <el-dialog align-center v-model="customTextLabelDialogVisible" title="新增文本标签" width="500" draggable>
-      <el-form :model="textLabel" ref="textLabelForm" :rules="textLabelRules" label-width="auto" style="max-width: 90%"
-               @submit.native.prevent>
+      <el-form :model="textLabel" ref="textLabelForm" :rules="textLabelRules" label-width="auto" @submit.native.prevent>
         <el-form-item label="文本类型" prop="type">
           <el-select @change="handleChangeTextType" v-model="textLabel.type" placeholder="文本类型">
             <el-option
@@ -586,7 +585,7 @@
 
 
     <el-dialog v-model="editorTextLabelDialogVisible" title="编辑文本标签" width="60%" draggable>
-      <el-table size="small" :data="textLabels" border style="width: 100%">
+      <el-table size="small" :data="textLabels" border>
         <el-table-column prop="type" label="标签类型" show-overflow-tooltip/>
         <el-table-column prop="tips" label="提示信息" show-overflow-tooltip/>
         <el-table-column prop="content" label="文本内容" min-width="150" show-overflow-tooltip/>
@@ -3685,8 +3684,6 @@ function makeDraggable(dragElement, path) {
 
     }
   }
-
-
 }
 
 .el-dialog .fill {
@@ -3696,16 +3693,27 @@ function makeDraggable(dragElement, path) {
 
 
 :deep(.el-dialog) {
-
   background: #F0F0F0;
   padding: 1px 1px 10px 1px;
 
   .el-dialog__header {
-    height: 25px;
+    height: 26px;
     padding-bottom: 0;
     display: flex;
     align-items: center;
     background-color: #e8e7e7;
+
+    i {
+      height: 100%;
+      width: 100%;
+      color: black;
+      border-radius: 0 4px 0 0;
+    }
+
+    i:hover {
+      color: white;
+      background-color: rgba(201, 48, 48, 0.97);
+    }
   }
 
   .el-dialog__body {
@@ -3717,7 +3725,6 @@ function makeDraggable(dragElement, path) {
     display: flex;
     align-items: center;
     justify-content: end;
-    margin-right: 10px;
   }
 
   .el-dialog__title {
@@ -3762,7 +3769,6 @@ function makeDraggable(dragElement, path) {
 .el-dialog {
 
   .el-tabs {
-
     max-height: 70vh;
 
     .operation {
@@ -3793,7 +3799,6 @@ function makeDraggable(dragElement, path) {
           color: #7c7b7b;
         }
 
-
         .items {
           width: 100%;
 
@@ -3814,6 +3819,7 @@ function makeDraggable(dragElement, path) {
         }
 
         .options {
+
           width: 100%;
 
           .option {
@@ -3822,10 +3828,6 @@ function makeDraggable(dragElement, path) {
             display: flex;
             align-items: center;
             height: 40px;
-
-            .el-select {
-              width: 160px !important;
-            }
 
             .slider-demo-block {
               width: 250px;
@@ -3843,20 +3845,22 @@ function makeDraggable(dragElement, path) {
               }
             }
 
+            .el-select {
+              width: 160px;
+            }
+
             .el-input {
-              width: 100px;
+              width: 160px;
             }
 
             span, .el-button {
               margin-left: 5px;
             }
+
           }
         }
-
       }
     }
-
-
   }
 }
 
