@@ -52,11 +52,11 @@ function drawText(ctx, text, newWidth, newHeight) {
     const textWidth = metrics.width;
     const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
-    const specialExtraFontSize = fontFamily.includes('Microsoft YaHei') ? 0.18 * fontSize : 0;
+    const specialFillFontSize = fontFamily.includes('Microsoft YaHei') ? 0.18 * fontSize : 0;
 
     // 计算初始位置（相对坐标）
     let textX = textDirection === 0 ? text.positionX * newWidth : text.positionX * newWidth + fontSize / 2;
-    let textY = textDirection === 0 ? text.positionY * newHeight - specialExtraFontSize : text.positionY * newHeight + fontSize / 2;
+    let textY = textDirection === 0 ? text.positionY * newHeight - specialFillFontSize : text.positionY * newHeight + fontSize / 2;
     // let textY = textDecoration === 0 ? text.positionY * newHeight - 0.2 * fontSize : text.positionY * newHeight + textHeight / 2;
 
     // 处理右/底对齐
@@ -68,7 +68,7 @@ function drawText(ctx, text, newWidth, newHeight) {
     if (text.references.includes('bottom')) {
         textY = textDirection === 0
             // ? (1 - text.positionY) * newHeight - 1.2 * fontSize
-            ? (1 - text.positionY) * newHeight - fontSize - specialExtraFontSize
+            ? (1 - text.positionY) * newHeight - fontSize - specialFillFontSize
             : (1 - text.positionY) * newHeight - fontSize * text.content.length + fontSize / 2;
     }
 
