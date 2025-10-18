@@ -3778,19 +3778,18 @@ function makeDraggable(dragElement, path) {
   }
 
   .el-tabs .el-tabs__nav-scroll {
-    height: 30px;
+    height: 25px;
     background: #e3e3e3;
 
     .el-tabs__item {
-      height: 30px;
-      font-size: 12px;
+      height: 25px;
+      font-size: 11px;
     }
   }
 }
 
 
 .el-dialog {
-
   .fill {
     height: 10px;
     width: 100%;
@@ -3803,6 +3802,7 @@ function makeDraggable(dragElement, path) {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    font-size: 12px;
 
     .el-form-item {
       width: 100%;
@@ -3813,6 +3813,7 @@ function makeDraggable(dragElement, path) {
   .el-tabs {
     width: 100%;
     max-height: 70vh;
+    font-size: 12px;
 
     .operation {
       height: 40px;
@@ -3834,11 +3835,11 @@ function makeDraggable(dragElement, path) {
 
         .border-label {
           position: absolute;
-          top: -12px;
+          top: -7px;
           left: 15px;
           background-color: var(--dialog-main-background-color);
           padding: 0 12px;
-          font-size: 14px;
+          font-size: 13px;
           color: #7c7b7b;
         }
 
