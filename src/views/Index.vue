@@ -578,7 +578,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="renameDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="renameTemplate">
+          <el-button type="info" @click="renameTemplate">
             确认
           </el-button>
         </div>
