@@ -3342,7 +3342,7 @@ function makeDraggable(dragElement, path) {
           :deep(.el-sub-menu) {
 
             .el-sub-menu__title {
-              height: 40px;
+              height: 45px;
             }
 
             span, svg {
@@ -3403,6 +3403,7 @@ function makeDraggable(dragElement, path) {
               .el-menu-item {
                 color: var(--main-font-color);
                 border-bottom: 1px solid #868686;
+                height: 40px;
               }
 
               .el-menu-item:last-child {
@@ -3487,7 +3488,7 @@ function makeDraggable(dragElement, path) {
             :deep(.el-sub-menu) {
 
               .el-sub-menu__title {
-                height: 40px;
+                height: 45px;
               }
 
               span, svg {
