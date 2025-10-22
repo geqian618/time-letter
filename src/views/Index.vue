@@ -3583,6 +3583,7 @@ function makeDraggable(dragElement, path) {
 
                     .el-slider {
                       width: 100%;
+                      --el-slider-button-size: 13px;
                     }
                   }
                 }

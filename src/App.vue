@@ -19,6 +19,7 @@ import {RouterView} from 'vue-router'
 }
 
 :root {
+  --el-slider-button-size: 15px;
   --border-color: #6c6c6c;
   --page-main-height: 75%;
   --page-bootom-height: 25%;
