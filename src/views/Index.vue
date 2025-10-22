@@ -3559,7 +3559,7 @@ function makeDraggable(dragElement, path) {
                     display: flex;
                     align-items: center;
                     width: calc(100% - 55px);
-                    padding: 0 15px;
+                    padding: 0 13px;
 
                     .el-icon {
                       margin-left: 5px;
