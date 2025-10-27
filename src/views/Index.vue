@@ -1786,8 +1786,6 @@ const stopImageBoxShadowWatch = watch(() => imageOptions.value.boxShadow, (newVa
 
 
 const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal, oldVal) => {
-  console.log(newVal, oldVal)
-
   const {path} = selectedElement.value;
   const image = images.value.get(path);
   const containerRect = image.getTargetElement().getBoundingClientRect();
