@@ -819,7 +819,20 @@
             </div>
           </div>
         </el-tab-pane>
-        <!--        <el-tab-pane label="文本"></el-tab-pane>-->
+        <el-tab-pane label="其他">
+          <div class="border-box">
+            <span class="border-label">便捷性</span>
+            <div class="options">
+              <div class="option">
+                <span class="label">选项锚点：</span>
+                <el-switch
+                    v-model="projectSettings.others.optionAnchorPoint"
+                    class="ml-2"
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
         <!--        <el-tab-pane label="图片"></el-tab-pane>-->
       </el-tabs>
     </el-dialog>
@@ -3089,7 +3102,6 @@ const handleClose = (index) => {
 // 展开指定索引的子菜单（未展开时才展开）
 const openSubMenu = (index) => {
   if (menuRef.value && !openedMenus.value.includes(index)) {
-    console.log(index)
     menuRef.value.open(index)
   }
 }
@@ -3249,17 +3261,21 @@ function makeDraggable(dragElement, path) {
         if (dragElement.src) {
           const settings = image.settings.images.get(dragElement);
           imageOptions.value = _.cloneDeep(settings.options)
-          openSubMenu('4')
-          nextTick(() => {
-            document.getElementById('image-options').scrollIntoView({behavior: 'smooth'});
-          })
+          if (projectSettings.value.others.optionAnchorPoint) {
+            openSubMenu('4')
+            nextTick(() => {
+              document.getElementById('image-options').scrollIntoView({behavior: 'smooth'});
+            })
+          }
         } else {
           const settings = image.settings.texts.get(dragElement);
           textOptions.value = _.cloneDeep(settings.options)
-          openSubMenu('3')
-          nextTick(() => {
-            document.getElementById('text-options').scrollIntoView({behavior: 'smooth'});
-          })
+          if (projectSettings.value.others.optionAnchorPoint) {
+            openSubMenu('3')
+            nextTick(() => {
+              document.getElementById('text-options').scrollIntoView({behavior: 'smooth'});
+            })
+          }
         }
       }, 200); // 300毫秒内没有再次点击，则视为单击
     }

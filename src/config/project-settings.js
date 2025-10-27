@@ -29,6 +29,9 @@ const projectSettings = ref({
     },
     performance: {
         downloadThreads: -1
+    },
+    others: {
+        optionAnchorPoint: true
     }
 })
 
