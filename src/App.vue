@@ -22,9 +22,9 @@ import {RouterView} from 'vue-router'
   --border-color: #6c6c6c;
   --page-main-height: 75%;
   --page-bootom-height: 25%;
-  --page-left-width: 20%;
+  --page-left-width: 18%;
   --page-center-width: 60%;
-  --page-right-width: 20%;
+  --page-right-width: 22%;
   --expand-area-background-color: #474747;
   --menu-background-color: #343434;
   --menu-icon-color: #c2c1c1;

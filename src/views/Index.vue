@@ -160,21 +160,27 @@
                         <div class="value">
                           <el-slider @change="handleBorders"
                                      size="small"
+                                     :show-tooltip="false"
                                      :min="sliderRange.min"
                                      :max="sliderRange.max"
                                      v-model="settings.border.borderTop"
                                      placement="top"/>
+                          <input type="number" class="number-input" @input="handleBorders"
+                                 v-model="settings.border.borderTop" step="1">
                         </div>
                       </li>
                       <li class="option">
                         <div class="label">左边框</div>
                         <div class="value">
                           <el-slider @change="handleBorders"
+                                     :show-tooltip="false"
                                      size="small"
                                      :min="sliderRange.min"
                                      :max="sliderRange.max"
                                      v-model="settings.border.borderLeft"
                                      placement="top"/>
+                          <input type="number" class="number-input" @input="handleBorders"
+                                 v-model="settings.border.borderLeft" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -182,10 +188,13 @@
                         <div class="value">
                           <el-slider @change="handleBorders"
                                      size="small"
+                                     :show-tooltip="false"
                                      :min="sliderRange.min"
                                      :max="sliderRange.max"
                                      v-model="settings.border.borderRight"
                                      placement="top"/>
+                          <input type="number" class="number-input" @input="handleBorders"
+                                 v-model="settings.border.borderRight" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -193,10 +202,13 @@
                         <div class="value">
                           <el-slider @change="handleBorders"
                                      size="small"
+                                     :show-tooltip="false"
                                      :min="sliderRange.min"
                                      :max="sliderRange.max"
                                      v-model="settings.border.borderBottom"
                                      placement="top"/>
+                          <input type="number" class="number-input" @input="handleBorders"
+                                 v-model="settings.border.borderBottom" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -258,6 +270,7 @@
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
+                          <input type="number" class="number-input" v-model="textOptions.fontSize" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -270,6 +283,7 @@
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
+                          <input type="number" class="number-input" v-model="textOptions.fontWeight" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -280,8 +294,22 @@
                                      :max="180"
                                      v-model="textOptions.angle"
                                      placement="top"/>
+                          <input type="number" class="number-input" v-model="textOptions.angle" step="1">
                         </div>
                       </li>
+
+                      <li class="option">
+                        <div class="label">层级</div>
+                        <div class="value">
+                          <el-slider :min="0"
+                                     :max="100"
+                                     size="small"
+                                     v-model="textOptions.zIndex"
+                                     placement="top"/>
+                          <input type="number" class="number-input" v-model="textOptions.zIndex" step="1">
+                        </div>
+                      </li>
+
                       <li class="option">
                         <div class="label">字体颜色</div>
                         <div class="value">
@@ -294,16 +322,6 @@
                         </div>
                       </li>
 
-                      <li class="option">
-                        <div class="label">层级</div>
-                        <div class="value">
-                          <el-slider :min="0"
-                                     :max="100"
-                                     size="small"
-                                     v-model="textOptions.zIndex"
-                                     placement="top"/>
-                        </div>
-                      </li>
                       <!--                    <li class="option">-->
                       <!--                      <div class="label">背景颜色</div>-->
                       <!--                      <div class="value">-->
@@ -327,6 +345,7 @@
                                      :max="50"
                                      v-model="textOptions.textShadow.offsetX"
                                      placement="top"/>
+                          <input type="number" class="number-input" v-model="textOptions.textShadow.offsetX" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -339,6 +358,7 @@
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
+                          <input type="number" class="number-input" v-model="textOptions.textShadow.offsetY" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -349,6 +369,7 @@
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
+                          <input type="number" class="number-input" v-model="textOptions.textShadow.blur" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -378,6 +399,7 @@
                                      size="small"
                                      v-model="imageOptions.scale"
                                      placement="top"/>
+                          <input type="number" class="number-input" v-model="imageOptions.scale" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -388,6 +410,7 @@
                                      size="small"
                                      v-model="imageOptions.alpha"
                                      placement="top"/>
+                          <input type="number" class="number-input" v-model="imageOptions.alpha" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -399,6 +422,7 @@
                                      :max="180"
                                      v-model="imageOptions.angle"
                                      placement="top"/>
+                          <input type="number" class="number-input" v-model="imageOptions.angle" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -409,6 +433,7 @@
                                      size="small"
                                      v-model="imageOptions.zIndex"
                                      placement="top"/>
+                          <input type="number" class="number-input" v-model="imageOptions.zIndex" step="1">
                         </div>
                       </li>
                     </ul>
@@ -423,6 +448,7 @@
                                      :max="50"
                                      v-model="imageOptions.boxShadow.offsetX"
                                      placement="top"/>
+                          <input type="number" class="number-input" v-model="imageOptions.boxShadow.offsetX" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -435,6 +461,7 @@
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
+                          <input type="number" class="number-input" v-model="imageOptions.boxShadow.offsetY" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -445,6 +472,7 @@
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
+                          <input type="number" class="number-input" v-model="imageOptions.boxShadow.blur" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -1050,8 +1078,6 @@ const enableTemplateDialogVisible = ref(false)
 const outputSettingsVisible = ref(false)
 
 const downloadProgressPercentage = ref(0)
-
-const switchElement = ref(true)
 
 const synchronousMode = ref(0);
 
@@ -1742,20 +1768,18 @@ const stopImageBoxShadowWatch = watch(() => imageOptions.value.boxShadow, (newVa
 
 
 const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal, oldVal) => {
-  if (switchElement.value) {
-    switchElement.value = false;
-    return
-  }
+  console.log(newVal, oldVal)
+
   const {path} = selectedElement.value;
   const image = images.value.get(path);
   const containerRect = image.getTargetElement().getBoundingClientRect();
   const parentRect = image.getTargetElement().parentNode.getBoundingClientRect();
   const elements = Array.from(image.settings.images.keys());
 
-  const leftGap = containerRect.left - parentRect.left;
-  const rightGap = parentRect.right - containerRect.right;
-  const topGap = containerRect.top - parentRect.top;
-  const bottomGap = parentRect.bottom - containerRect.bottom;
+  // const leftGap = containerRect.left - parentRect.left;
+  // const rightGap = parentRect.right - containerRect.right;
+  // const topGap = containerRect.top - parentRect.top;
+  // const bottomGap = parentRect.bottom - containerRect.bottom;
 
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
@@ -1768,7 +1792,7 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
       let elementLeft = Number.parseFloat(computedStyle.left);
       let elementTop = Number.parseFloat(computedStyle.top);
 
-      let scale = (newVal - oldVal) / 10;
+      let scale = (newVal - elementWidth / originalWidth * 10) / 10;
 
       const increaseWidth = originalWidth * scale;
       const increaseHeight = originalHeight * scale;
@@ -1781,13 +1805,13 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
       const elementRight = parentRect.width - elementLeft - elementWidth;
       const elementBottom = parentRect.height - elementTop - elementHeight
 
-      if (elementLeft < leftGap || elementLeft + rightGap + elementWidth > parentRect.width || elementTop < topGap || elementTop + bottomGap + elementHeight > parentRect.height) {
-        return;
-      }
-
-      if (elementWidth <= 0 || elementHeight <= 0) {
-        return
-      }
+      // if (elementLeft < leftGap || elementLeft + rightGap + elementWidth > parentRect.width || elementTop < topGap || elementTop + bottomGap + elementHeight > parentRect.height) {
+      //   return;
+      // }
+      //
+      // if (elementWidth <= 0 || elementHeight <= 0) {
+      //   return
+      // }
 
       element.style.width = elementWidth + 'px'
       element.style.height = elementHeight + 'px'
@@ -2878,17 +2902,17 @@ const bindDragEvent = (previewImage, image) => {
     element.addEventListener('dragstart', handleDragStart);
   });
 
-  previewImage.addEventListener('dragover', event =>
+  previewImage.parentNode.addEventListener('dragover', event =>
       event.preventDefault()
   );
 
-  previewImage.addEventListener('dragleave', () => {
+  previewImage.parentNode.addEventListener('dragleave', () => {
         // previewImage.style.borderColor = '#95a5a6'
       }
   );
 
   // 修复放置逻辑
-  previewImage.addEventListener('drop', function (event) {
+  previewImage.parentNode.addEventListener('drop', function (event) {
 
     event.preventDefault();
 
@@ -2919,9 +2943,9 @@ const bindDragEvent = (previewImage, image) => {
 
     dragElement.remove()
 
-    if (mouseX >= containerRect.left + offsetX && mouseX + (elementWidth - offsetX) <= containerRect.right) {
+    if (mouseX >= parentRect.left + offsetX && mouseX + (elementWidth - offsetX) <= parentRect.right) {
 
-      if (mouseY >= containerRect.top + offsetY && mouseY + (elementHeight - offsetY) <= containerRect.bottom) {
+      if (mouseY >= parentRect.top + offsetY && mouseY + (elementHeight - offsetY) <= parentRect.bottom) {
 
         // 关键：必须设为绝对定位
         dragElement.style.position = 'absolute'
@@ -3090,8 +3114,8 @@ function makeDraggable(dragElement, path) {
 
       const mouseY = event.clientY;
 
-      if (mouseX >= containerRect.left + offsetLeft && mouseX + offsetRight <= containerRect.right) {
-        if (mouseY >= containerRect.top + offsetTop && mouseY + offsetBottom <= containerRect.bottom) {
+      if (mouseX >= parentRect.left + offsetLeft && mouseX + offsetRight <= parentRect.right) {
+        if (mouseY >= parentRect.top + offsetTop && mouseY + offsetBottom <= parentRect.bottom) {
 
           // 计算移动距离（考虑旋转后的坐标系）
           const dx = mouseX - startX;
@@ -3105,7 +3129,6 @@ function makeDraggable(dragElement, path) {
 
           dragElement.style.left = elementLeft + 'px';
           dragElement.style.top = elementTop + 'px';
-
 
           let positionX;
 
@@ -3189,7 +3212,6 @@ function makeDraggable(dragElement, path) {
         const image = images.value.get(selectedElement.value.path);
         if (dragElement.src) {
           const settings = image.settings.images.get(dragElement);
-          switchElement.value = true
           imageOptions.value = _.cloneDeep(settings.options)
         } else {
           const settings = image.settings.texts.get(dragElement);
@@ -3447,15 +3469,16 @@ function makeDraggable(dragElement, path) {
       display: flex;
       justify-content: center;
       align-items: center;
-
+      overflow: auto; /* 隐藏超出部分 */
       .preview-item {
-        width: 90%;
-        height: 90%;
+        width: 100%;
+        height: 100%;
+        padding: 5%;
         display: flex;
         justify-content: center;
         align-items: center;
         position: relative;
-        overflow: hidden; /* 隐藏超出部分 */
+
         img {
           max-width: 100%;
           max-height: 100%;
@@ -3561,12 +3584,25 @@ function makeDraggable(dragElement, path) {
                     width: calc(100% - 55px);
                     padding: 0 13px;
 
+                    .number-input {
+                      width: 40px;
+                      font-size: 11px;
+                      outline: none;
+                      transition: border-color 0.3s;
+                      border: none;
+                      background: transparent;
+                      color: var(--main-font-color);
+                      margin-left: 8px;
+                    }
+
                     .el-icon {
                       margin-left: 5px;
                     }
 
-                    :deep(.el-input .el-input__wrapper) {
-                      background: #F0F0F0;
+                    :deep(.el-input) {
+                      .el-input__wrapper {
+                        background: #F0F0F0;
+                      }
                     }
 
                     :deep(.el-color-picker) {
@@ -3577,6 +3613,8 @@ function makeDraggable(dragElement, path) {
                     }
 
                     :deep(.el-select) {
+                      width: calc(100% - 38px);
+
                       span {
                         color: #4d4c4c;
                       }
