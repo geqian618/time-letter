@@ -1253,7 +1253,7 @@ const watchInputImages = () => {
         images.value.forEach((image, path) => {
           if (!image.render) {
             const element = image.getTargetElement();
-            bindDragEvent(element, image);
+            listenerPlaceElements(element, image);
             image.render = true
           }
         })
@@ -2428,6 +2428,7 @@ const handleChangeTextType = () => {
 }
 
 onMounted(() => {
+  listenerDraggableLabelElements()
   createThreadPool()
   loadTemplates()
   loadTextLabels()
@@ -2896,11 +2897,14 @@ const handleDragStart = function (event) {
 }
 
 
-const bindDragEvent = (previewImage, image) => {
-  // 设置拖拽事件
+const listenerDraggableLabelElements = () => {
+  // 设置拖拽事件m
   document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
     element.addEventListener('dragstart', handleDragStart);
   });
+}
+
+const listenerPlaceElements = (previewImage, image) => {
 
   previewImage.parentNode.addEventListener('dragover', event =>
       event.preventDefault()
