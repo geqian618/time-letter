@@ -83,7 +83,7 @@
           <div class="settings-details">
             <el-aside>
               <el-scrollbar>
-                <el-menu :default-openeds="['1']">
+                <el-menu :default-openeds="['1']" ref="menuRef" @open="handleOpen" @close="handleClose">
                   <el-sub-menu index="1">
                     <template #title>
                       <span>基本</span>
@@ -224,7 +224,7 @@
                       </li>
                     </ul>
                   </el-sub-menu>
-                  <el-sub-menu index="3">
+                  <el-sub-menu index="3" id="text-options">
                     <template #title>
                       <span>文本</span>
                     </template>
@@ -385,7 +385,7 @@
                       </li>
                     </ul>
                   </el-sub-menu>
-                  <el-sub-menu index="4">
+                  <el-sub-menu index="4" id="image-options">
                     <template #title>
                       <span>图片</span>
                     </template>
@@ -1088,6 +1088,11 @@ const textLabel = ref({
   content: ''
 })
 
+const menuRef = ref(null)
+
+// 维护已展开子菜单索引的数组
+const openedMenus = ref([])
+
 const textLabels = ref([])
 
 const templateRef = ref()
@@ -1119,6 +1124,7 @@ const renameTemplateRules = {
     {required: true, message: '模板名称不能为空', trigger: 'blur'},
   ]
 }
+
 
 const textLabelDialogTitle = computed(() => {
   return handleTextLabelType.value === 0 ? '新增文本标签' : '编辑文本标签'
@@ -1644,7 +1650,6 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
       element.style.fontSize = newVal.fontSize + 'px'
       element.style.color = newVal.fontColor
       element.style.background = newVal.tagBackground
-      element.style.transformOrigin = 'center center'
       element.style.transform = `rotate(${newVal.angle}deg)`
       const {textShadow: {offsetX, offsetY, blur, shadowColor}} = newVal;
       element.style.textShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
@@ -1662,13 +1667,13 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
       const newElementWidth = Number.parseFloat(computedStyle.width);
       const newElementHeight = Number.parseFloat(computedStyle.height);
 
-      elementLeft = elementLeft - (newElementWidth - elementWidth) / 2;
-      elementTop = elementTop - (newElementHeight - elementHeight) / 2;
+      // elementLeft = elementLeft - (newElementWidth - elementWidth) / 2;
+      // elementTop = elementTop - (newElementHeight - elementHeight) / 2;
       const elementRight = parentRect.width - elementLeft - newElementWidth;
       const elementBottom = parentRect.height - elementTop - newElementHeight
 
-      element.style.left = elementLeft + 'px';
-      element.style.top = elementTop + 'px';
+      // element.style.left = elementLeft + 'px';
+      // element.style.top = elementTop + 'px';
 
       let positionX;
 
@@ -1800,8 +1805,8 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
       elementWidth = elementWidth + increaseWidth
       elementHeight = elementHeight + increaseHeight
 
-      elementLeft = elementLeft - increaseWidth / 2
-      elementTop = elementTop - increaseHeight / 2
+      // elementLeft = elementLeft - increaseWidth / 2
+      // elementTop = elementTop - increaseHeight / 2
       const elementRight = parentRect.width - elementLeft - elementWidth;
       const elementBottom = parentRect.height - elementTop - elementHeight
 
@@ -1813,10 +1818,11 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
       //   return
       // }
 
+
+      // element.style.left = elementLeft + 'px'
+      // element.style.top = elementTop + 'px'
       element.style.width = elementWidth + 'px'
       element.style.height = elementHeight + 'px'
-      element.style.left = elementLeft + 'px'
-      element.style.top = elementTop + 'px'
 
       await nextTick();
 
@@ -2609,7 +2615,7 @@ const handleBorders = async () => {
 
   if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
 
-    const {borderLeft, borderRight, borderTop, borderBottom, borderColor, borderType} = settings.value.border;
+    let {borderLeft, borderRight, borderTop, borderBottom, borderColor, borderType} = settings.value.border;
 
     let borderLeftWidth, borderRightWidth, borderTopHeight, borderBottomHeight;
 
@@ -3063,6 +3069,32 @@ const listenerPlaceElements = (previewImage, image) => {
 };
 
 
+// 处理子菜单展开事件
+const handleOpen = (index) => {
+  // 如果索引不在已展开数组中，则添加
+  if (!openedMenus.value.includes(index)) {
+    openedMenus.value.push(index)
+  }
+}
+
+// 处理子菜单收起事件
+const handleClose = (index) => {
+  // 从已展开数组中移除对应索引
+  const idx = openedMenus.value.indexOf(index)
+  if (idx !== -1) {
+    openedMenus.value.splice(idx, 1)
+  }
+}
+
+// 展开指定索引的子菜单（未展开时才展开）
+const openSubMenu = (index) => {
+  if (menuRef.value && !openedMenus.value.includes(index)) {
+    console.log(index)
+    menuRef.value.open(index)
+  }
+}
+
+
 // 使形状可拖动
 function makeDraggable(dragElement, path) {
 
@@ -3217,9 +3249,17 @@ function makeDraggable(dragElement, path) {
         if (dragElement.src) {
           const settings = image.settings.images.get(dragElement);
           imageOptions.value = _.cloneDeep(settings.options)
+          openSubMenu('4')
+          nextTick(() => {
+            document.getElementById('image-options').scrollIntoView({behavior: 'smooth'});
+          })
         } else {
           const settings = image.settings.texts.get(dragElement);
           textOptions.value = _.cloneDeep(settings.options)
+          openSubMenu('3')
+          nextTick(() => {
+            document.getElementById('text-options').scrollIntoView({behavior: 'smooth'});
+          })
         }
       }, 200); // 300毫秒内没有再次点击，则视为单击
     }
