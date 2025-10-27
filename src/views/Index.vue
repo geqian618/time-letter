@@ -535,8 +535,8 @@
                :path="key"
                v-lazy="image.url"
                v-for="([key, image]) in filterImages"
-               @click.meta.exact="handleMultipleSelect($event,image)"
-               @click.ctrl.exact="handleMultipleSelect($event, image)"
+               @click.meta.exact="handleCtrlClick($event,image)"
+               @click.ctrl.exact="handleCtrlClick($event, image)"
                @click.shift.exact="handleShiftClick($event,image)"
                @click="handlePreview($event, image)">
         </div>
@@ -2494,59 +2494,53 @@ onBeforeUnmount(() => {
 
 async function handlePreview(event, image) {
   if (!event.ctrlKey && !event.shiftKey) {
-    //有一个被选中元素
-    if (selectedImages.value && selectedImages.value.size === 1) {
-      if (selectedElement.value.path) {
-        const beforePath = selectedElement.value.path;
-        selectedImages.value.delete(beforePath);
-        selectedElement.value.element.classList.remove('active')
-        images.value.get(beforePath).visible = false
-        await nextTick()
-      }
-    }
-    // 有多个被选中元素
-    if (selectedImages.value && selectedImages.value.size > 1) {
-      if (!selectedImages.value.has(image.path)) {
-        const selectedElements = selectedImages.value.values();
-        for (let element of selectedElements) {
-          element.classList.remove('active')
-        }
-        selectedImages.value.clear()
-      }
-
-      const beforePath = selectedElement.value.path;
-      if (beforePath) {
-        images.value.get(beforePath).visible = false
-        await nextTick()
-      }
-    }
-
     if (!selectedImages.value.has(image.path)) {
-      selectedImages.value.set(image.path, event.target)
-      event.target.classList.add('active')
+      // 清空选中元素
+      const selectedElements = selectedImages.value.values();
+      for (let element of selectedElements) {
+        element.classList.remove('active')
+      }
+      selectedImages.value.clear()
     }
 
-    image.visible = true;
-
-    await nextTick()
-
-    if (image.isUpdate) {
-      await refreshTemplate(image.path)
+    const beforePath = selectedElement.value.path;
+    // 前一次预览元素与当前预览元素不同，隐藏前一次预览元素
+    if (beforePath && beforePath !== image.path) {
+      const beforePath = selectedElement.value.path;
+      images.value.get(beforePath).visible = false
+      await nextTick()
     }
 
-    selectedElement.value.element = event.target;
+    // 没有预览元素或前一次预览元素与当前预览元素不同时显示，多次点击预览同一元素不重复渲染
+    if (!beforePath || beforePath !== image.path) {
+      image.visible = true;
+      await nextTick()
+      if (image.isUpdate) {
+        await refreshTemplate(image.path)
+      }
+    }
+
     selectedElement.value.path = event.target.getAttribute('path')
+    selectedElement.value.element = event.target;
+    // 添加当前选中元素到选中列表中
+    selectedImages.value.set(image.path, event.target)
+    event.target.classList.add('active')
 
     settings.value.metadata = image.metadata
   }
 }
 
 
-const handleMultipleSelect = (event, image) => {
+const handleCtrlClick = (event, image) => {
   const element = event.target;
   if (element.classList.contains('active')) {
     element.classList.remove('active');
     selectedImages.value.delete(image.path)
+    if (selectedElement.value.path === image.path) {
+      selectedElement.value.path = '';
+      selectedElement.value.element = null
+      image.visible = false
+    }
   } else {
     element.classList.add('active');
     selectedImages.value.set(image.path, element)
