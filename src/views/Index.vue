@@ -1186,6 +1186,8 @@ const setDefaultSelectedElement = async () => {
   selectedElement.value.path = image.path
   selectedElement.value.element = triggerElement
   selectedImages.value.set(image.path, triggerElement)
+
+  console.log(selectedElement.value)
 }
 
 
@@ -1447,12 +1449,12 @@ const watchContextMenu = () => {
         for (let path of selectedPaths) {
           images.value.delete(path)
           filterImages.value.delete(path)
+          if (path === selectedElement.value.path){
+            selectedElement.value.path = ''
+            selectedElement.value.element = null
+          }
         }
         selectedImages.value.clear();
-        // const beforePath = selectedElement.value.getAttribute('path');
-        // if (!images.value.size || !images.value.has(beforePath)) {
-        //   images.value.get(beforePath).visible = false
-        // }
       } else if (type === 1) {
 
         const newSettings = []
