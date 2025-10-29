@@ -797,7 +797,7 @@
               </div>
               <div class="item">
                 <span class="label">转换倍数：</span>
-                <el-input class="value" style="width: 150px" @change="handleFocalLength(1)"
+                <el-input class="value" style="width: 100px" @change="handleFocalLength(1)"
                           v-model="projectSettings.metadata.other.conversionMultiple"></el-input>
               </div>
             </div>
