@@ -3649,7 +3649,7 @@ function makeDraggable(dragElement, path) {
                     display: flex;
                     align-items: center;
                     width: calc(100% - 55px);
-                    padding: 0 13px;
+                    padding: 0 5px 0 10px;
 
                     .number-input {
                       width: 40px;
