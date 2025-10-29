@@ -2731,7 +2731,7 @@ const handleWheel = (e) => {
   if (imageList.value) {
     imageList.value.scrollBy({
       left: scrollAmount,
-      behavior: 'smooth' // 平滑滚动效果
+      behavior: 'auto' // 平滑滚动效果
     });
   }
 }
