@@ -3901,7 +3901,7 @@ function makeDraggable(dragElement, path) {
 
   .el-form {
     width: 100%;
-    padding: 10px 10px 0 10px;
+    padding: 20px 40px 0 40px;
     display: flex;
     flex-direction: column;
     justify-content: center;
