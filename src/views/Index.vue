@@ -3667,6 +3667,8 @@ function makeDraggable(dragElement, path) {
                     }
 
                     :deep(.el-input) {
+                      width: calc(100% - 5px);
+
                       .el-input__wrapper {
                         background: #F0F0F0;
                       }
