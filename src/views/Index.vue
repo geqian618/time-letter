@@ -1572,7 +1572,7 @@ const handleFocalLength = (type) => {
       if (type === 0) {
         metadata.focalLength = projectSettings.value.metadata.other.enableEquivalentFocalSegment
             ? Number.parseInt(metadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
-            : Number.parseInt(metadata.focalLength / projectSettings.value.metadata.other.conversionMultiple)
+            : metadata.originalFocalLength
       } else if (type === 1 && projectSettings.value.metadata.other.enableEquivalentFocalSegment) {
         metadata.focalLength = Number.parseInt(metadata.originalFocalLength * projectSettings.value.metadata.other.conversionMultiple)
       }
