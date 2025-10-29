@@ -3659,7 +3659,7 @@ function makeDraggable(dragElement, path) {
                       border: none;
                       background: transparent;
                       color: var(--main-font-color);
-                      margin-left: 8px;
+                      margin-left: 7px;
                     }
 
                     .el-icon {
@@ -3687,9 +3687,14 @@ function makeDraggable(dragElement, path) {
                       }
                     }
 
-                    .el-slider {
+                    :deep(.el-slider) {
                       width: 100%;
-                      --el-slider-button-size: 13px;
+                      --el-slider-button-size: 10px;
+                      --el-slider-height: 5px;
+
+                      .el-slider__button {
+                        margin-bottom: 1px;
+                      }
                     }
                   }
                 }
@@ -3991,35 +3996,25 @@ function makeDraggable(dragElement, path) {
             height: 40px;
 
             .el-select {
-              width: 160px !important;
-            }
-
-            .slider-demo-block {
-              width: 250px;
-              display: flex;
-              align-items: center;
-
-              :deep(.el-slider) {
-                margin-top: 0;
-                margin-left: 10px;
-
-                .el-slider__input {
-                  margin-right: 20px;
-                  width: 85px !important;
-                }
-              }
-            }
-
-            .el-select {
-              width: 160px;
+              width: 155px !important;
             }
 
             .el-input {
-              width: 160px;
+              width: 155px;
             }
 
-            span, .el-button {
-              margin-left: 5px;
+            .el-slider {
+              --el-slider-button-size: 13px;
+              --el-slider-height: 6px;
+              width: 200px;
+
+              .show-input {
+                margin-right: 10px;
+              }
+
+              .el-slider__input {
+                width: 80px;
+              }
             }
           }
         }
