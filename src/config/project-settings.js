@@ -25,6 +25,7 @@ const projectSettings = ref({
         },
         other: {
             enableEquivalentFocalSegment: false,
+            conversionMultiple: 1.5
         }
     },
     performance: {
@@ -48,7 +49,8 @@ const originalMetadata = {
         shootingTime: '${shootingTime}'
     },
     other: {
-        enableEquivalentFocalSegment: false
+        enableEquivalentFocalSegment: false,
+        conversionMultiple: 1.5
     }
 }
 

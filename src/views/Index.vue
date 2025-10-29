@@ -785,15 +785,20 @@
           </div>
 
           <div class="border-box">
-            <span class="border-label">其他</span>
+            <span class="border-label">焦距转换</span>
             <div class="items">
               <div class="item">
                 <span class="label">等效焦距：</span>
                 <el-switch
-                    @change="handleFocalLength"
+                    @change="handleFocalLength(0)"
                     v-model="projectSettings.metadata.other.enableEquivalentFocalSegment"
                     class="ml-2"
                     style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+              </div>
+              <div class="item">
+                <span class="label">转换倍数：</span>
+                <el-input class="value" style="width: 150px" @change="handleFocalLength(1)"
+                          v-model="projectSettings.metadata.other.conversionMultiple"></el-input>
               </div>
             </div>
           </div>
@@ -1252,8 +1257,11 @@ const watchInputImages = () => {
 
           if (photoMetadata && photoMetadata.base) {
             image.metadata = photoMetadata.base
-            if (image.metadata.focalLength && projectSettings.value.metadata.other.enableEquivalentFocalSegment) {
-              image.metadata.focalLength = Number.parseInt(image.metadata.focalLength * 1.5)
+            if (image.metadata.focalLength) {
+              image.metadata.originalFocalLength = photoMetadata.base.focalLength
+              if (projectSettings.value.metadata.other.enableEquivalentFocalSegment) {
+                image.metadata.focalLength = Number.parseInt(image.metadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
+              }
             }
           }
 
@@ -1449,7 +1457,7 @@ const watchContextMenu = () => {
         for (let path of selectedPaths) {
           images.value.delete(path)
           filterImages.value.delete(path)
-          if (path === selectedElement.value.path){
+          if (path === selectedElement.value.path) {
             selectedElement.value.path = ''
             selectedElement.value.element = null
           }
@@ -1556,14 +1564,18 @@ const resetMetadataSettings = () => {
 }
 
 
-const handleFocalLength = () => {
+const handleFocalLength = (type) => {
   for (let [path, image] of images.value) {
     const metadata = image.metadata;
     if (metadata && metadata.focalLength) {
 
-      metadata.focalLength = projectSettings.value.metadata.other.enableEquivalentFocalSegment
-          ? Number.parseInt(metadata.focalLength * 1.5)
-          : Number.parseInt(metadata.focalLength / 1.5)
+      if (type === 0) {
+        metadata.focalLength = projectSettings.value.metadata.other.enableEquivalentFocalSegment
+            ? Number.parseInt(metadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
+            : Number.parseInt(metadata.focalLength / projectSettings.value.metadata.other.conversionMultiple)
+      } else if (type === 1 && projectSettings.value.metadata.other.enableEquivalentFocalSegment) {
+        metadata.focalLength = Number.parseInt(metadata.originalFocalLength * projectSettings.value.metadata.other.conversionMultiple)
+      }
 
       if (path === selectedElement.value.path) {
         settings.value.metadata = metadata
