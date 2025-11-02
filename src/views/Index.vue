@@ -641,7 +641,7 @@
       <el-progress class="download-progress" :percentage="downloadProgressPercentage"/>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="info" size="small" @click="downloadProgressVisible = false">取消</el-button>
+          <el-button type="info" @click="downloadProgressVisible = false">取消</el-button>
         </div>
       </template>
     </el-dialog>
