@@ -41,15 +41,16 @@ const loadFonts = (window) => {
             const font = {
                 default: false,
                 filename,
-                label: fileParsed.name,
-                value: fileParsed.name,
+                fontFamily: fileParsed.name,
                 url: getSafeImagePath(path.join(fontPath, filename)),
                 path: path.join(fontPath, filename),
                 extname: fileParsed.ext
             };
-            fontOptions.set(font.value, font)
-            return [font.value, font]
+            return [font.fontFamily, font]
         });
+
+        fonts.forEach(([fontFamily, font]) => fontOptions.set(fontFamily, font))
+
         if (initialization) {
             window.webContents.send('watch-input-font', {type: 0, data: fontOptions})
             initialization = false

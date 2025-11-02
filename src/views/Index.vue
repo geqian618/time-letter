@@ -1227,11 +1227,10 @@ const watchInputFonts = () => {
     if (data) {
       if (type === 0) {
         for (let [fontFamily, font] of data) {
-          console.log(fontFamily, font)
           if (!fontOptions.value.has(fontFamily) && !font.default) {
             FontLoader.loadFont(fontFamily, font.url)
           }
-          fontOptions.value.set(fontFamily, font)
+          fontOptions.value.set(fontFamily, {label: fontFamily, value: fontFamily, ...font})
         }
       } else if (type === 1) {
         const fontFamily = data.fontFamily;

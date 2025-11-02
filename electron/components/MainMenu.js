@@ -64,16 +64,15 @@ const selectFonts = async () => {
                 const font = {
                     default: false,
                     filename: path.basename(filePath),
-                    label: fileParsed.name,
-                    value: fileParsed.name,
+                    fontFamily: fileParsed.name,
                     url: getSafeImagePath(filePath),
                     path: filePath,
                     extname: fileParsed.ext
                 };
-                fontOptions.set(font.value, font)
-                return [font.value, font]
+                return [font.fontFamily, font]
             })
         );
+        fonts.forEach(([fontFamily, font]) => fontOptions.set(fontFamily, font))
         window.webContents.send('watch-input-font', {type: 0, data: fonts})
     }
 }

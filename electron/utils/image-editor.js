@@ -42,7 +42,10 @@ function drawText(ctx, text, newWidth, newHeight, fontOptions) {
 
     const font = fontOptions.get(fontFamily);
     if (font && font.path) {
-        registerFont(font.path, { family: fontFamily })
+        registerFont(font.path, {family: fontFamily, weight: 'normal', style: 'normal'});
+        registerFont(font.path, {family: fontFamily, weight: 'bold', style: 'normal'});
+        registerFont(font.path, {family: fontFamily, weight: 'normal', style: 'italic'});
+        registerFont(font.path, {family: fontFamily, weight: 'bold', style: 'italic'});
     }
 
     // 添加文字样式
