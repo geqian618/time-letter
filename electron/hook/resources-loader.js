@@ -3,7 +3,9 @@ const fs = require('fs');
 const {getResourcePath, getFontPath} = require('../utils/resource-path')
 const resourcesPath = getResourcePath()
 const fontPath = getFontPath();
+const fontOptions = require('../hook/font-options')
 
+let initialization = true
 
 function getSafeImagePath(absolutePath) {
     if (process.platform === 'win32') {
@@ -34,18 +36,26 @@ const loadImageLabels = (window) => {
 
 const loadFonts = (window) => {
     fs.readdir(fontPath, (err, filenames) => {
-        const files = filenames.map((filename) => {
+        const fonts = filenames.map((filename) => {
             const fileParsed = path.parse(filename);
-            return {
+            const font = {
+                default: false,
                 filename,
-                fontFamily: fileParsed.name,
+                label: fileParsed.name,
+                value: fileParsed.name,
                 url: getSafeImagePath(path.join(fontPath, filename)),
                 path: path.join(fontPath, filename),
                 extname: fileParsed.ext
             };
-        })
-        const data = new Map(files.map(item => [item.path, item]));
-        window.webContents.send('watch-input-font', {type: 0, data})
+            fontOptions.set(font.value, font)
+            return [font.value, font]
+        });
+        if (initialization) {
+            window.webContents.send('watch-input-font', {type: 0, data: fontOptions})
+            initialization = false
+        } else {
+            window.webContents.send('watch-input-font', {type: 0, data: fonts})
+        }
     });
 }
 

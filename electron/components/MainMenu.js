@@ -4,8 +4,8 @@ const fs = require('fs')
 const {getResourcePath, getFontPath} = require('../utils/resource-path')
 const resourcesPath = getResourcePath()
 const fontPath = getFontPath()
-
 const {createChildWindow} = require('../components/ChildWindow')
+const fontOptions = require('../hook/font-options')
 
 function getSafeImagePath(absolutePath) {
     if (process.platform === 'win32') {
@@ -53,7 +53,7 @@ const selectFonts = async () => {
         ]
     });
     if (filePaths && filePaths.length) {
-        const files = await Promise.all(
+        const fonts = await Promise.all(
             filePaths.map(async (filePath) => {
                 // 读取文件
                 const buffer = fs.readFileSync(filePath);
@@ -61,17 +61,20 @@ const selectFonts = async () => {
                 fs.writeFileSync(path.join(fontPath, path.basename(filePath)), buffer);
                 filePath = path.join(fontPath, path.basename(filePath));
                 const fileParsed = path.parse(filePath);
-                return {
+                const font = {
+                    default: false,
                     filename: path.basename(filePath),
-                    fontFamily: fileParsed.name,
+                    label: fileParsed.name,
+                    value: fileParsed.name,
                     url: getSafeImagePath(filePath),
                     path: filePath,
                     extname: fileParsed.ext
                 };
+                fontOptions.set(font.value, font)
+                return [font.value, font]
             })
         );
-        const data = new Map(files.map(item => [item.path, item]));
-        window.webContents.send('watch-input-font', {type: 0, data})
+        window.webContents.send('watch-input-font', {type: 0, data: fonts})
     }
 }
 

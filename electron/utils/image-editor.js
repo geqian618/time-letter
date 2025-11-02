@@ -1,8 +1,9 @@
 const path = require('path');
 const pathToFileURL = require('url').pathToFileURL;
-const {createCanvas, loadImage} = require('canvas');
+const {createCanvas, registerFont, loadImage} = require('canvas');
 // 使用 promises API
 const fs = require('fs').promises;
+const fontOptions = require('../hook/font-options')
 
 
 /**
@@ -31,13 +32,18 @@ async function findFilePaths(dirPath, extensions, deepSearch = false) {
     return results;
 }
 
-function drawText(ctx, text, newWidth, newHeight) {
+function drawText(ctx, text, newWidth, newHeight, fontOptions) {
     const fontSize = text.options.fontSizeRatio * newWidth;
     const fontFamily = text.options.fontFamily;
     const fontStyle = text.options.fontStyle;
     const fontWeight = text.options.fontWeight;
     const textDirection = text.options.textDirection;
     const angle = text.options.angle;
+
+    const font = fontOptions.get(fontFamily);
+    if (font && font.path) {
+        registerFont(font.path, { family: fontFamily })
+    }
 
     // 添加文字样式
     ctx.font = `${fontStyle} ${fontWeight} ${fontSize + 'px'} ${fontFamily}`;
@@ -273,7 +279,8 @@ async function addBorderAndText(options) {
                 borderColor,
             },
             texts,
-            images
+            images,
+            fontOptions
         } = options;
 
 
@@ -407,7 +414,7 @@ async function addBorderAndText(options) {
                     }
 
                 } else {
-                    drawText(ctx, element, newWidth, newHeight);
+                    drawText(ctx, element, newWidth, newHeight, fontOptions);
                 }
             }
         }

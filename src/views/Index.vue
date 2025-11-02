@@ -869,13 +869,12 @@ import {getDate, getDateTime} from '@/utils/datetime'
 
 import {executeFunctionScript} from '@/utils/script-helper'
 
-import {fontOptions} from '@/hook/font-options'
-
 import FontLoader from '@/utils/FontLoader'
 
 import _ from 'lodash';
 
 import MapHelper from "@/utils/map-helper";
+
 
 import {projectSettings, outputSizeOptions, originalMetadata, downloadThreadsOptions} from '@/config/project-settings'
 
@@ -908,6 +907,8 @@ const borderOptions = [
     label: '按比例增减',
   }
 ]
+
+const fontOptions = ref(new Map())
 
 const templateSettings = ref({})
 
@@ -1225,13 +1226,12 @@ const watchInputFonts = () => {
   window.electronAPI.watchInputFonts(async (event, {type, data}) => {
     if (data) {
       if (type === 0) {
-        const fonts = Array.from(data.values());
-        for (let font of fonts) {
-          const fontFamily = font.fontFamily;
-          if (!fontOptions.value.has(fontFamily)) {
+        for (let [fontFamily, font] of data) {
+          console.log(fontFamily, font)
+          if (!fontOptions.value.has(fontFamily) && !font.default) {
             FontLoader.loadFont(fontFamily, font.url)
-            fontOptions.value.set(fontFamily, {label: fontFamily, value: fontFamily})
           }
+          fontOptions.value.set(fontFamily, font)
         }
       } else if (type === 1) {
         const fontFamily = data.fontFamily;

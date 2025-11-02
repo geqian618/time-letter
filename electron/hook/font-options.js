@@ -1,5 +1,3 @@
-import {ref} from 'vue'
-
 const defaultFonts = [
     {
         value: 'Microsoft YaHei',
@@ -99,7 +97,7 @@ const defaultFonts = [
     }
 ]
 
-const fontOptions = ref(new Map())
-defaultFonts.forEach(font => fontOptions.value.set(font.value, font))
+const fontOptions = new Map()
+defaultFonts.forEach(font => fontOptions.set(font.value, {default: true, ...font}))
 
-export {fontOptions}
+module.exports = fontOptions

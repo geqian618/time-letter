@@ -2,6 +2,7 @@ const path = require('path');
 const {Piscina} = require('piscina');
 const {dialog} = require('electron');
 const os = require("os");
+const fontOptions = require('../hook/font-options')
 
 // 创建一个 SharedArrayBuffer 用于中断信号,  4字节，用于一个32位整数
 const sab = new SharedArrayBuffer(4);
@@ -50,7 +51,8 @@ const exportImages = (dataList, progressCallback) => {
             outputDirectory,
             border,
             texts,
-            images
+            images,
+            fontOptions
         };
 
         options.interrupt = interrupt

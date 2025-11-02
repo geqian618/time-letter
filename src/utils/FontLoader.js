@@ -2,7 +2,6 @@
 const loadedFonts = new Set();
 
 const loadFont = async (fontFamilyName, path) => {
-    console.log(fontFamilyName,path)
     // 如果字体已经加载过，直接返回
     if (loadedFonts.has(fontFamilyName)) {
         console.log(`字体 "${fontFamilyName}" 已加载，跳过重复加载`);
