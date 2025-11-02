@@ -545,7 +545,8 @@
     </div>
 
     <el-dialog align-center v-model="customTextLabelDialogVisible" :title="textLabelDialogTitle" width="500" draggable>
-      <el-form :model="textLabel" ref="textLabelForm" :rules="textLabelRules" label-width="auto" @submit.native.prevent>
+      <el-form :model="textLabel" class="text-label-form" ref="textLabelForm" :rules="textLabelRules" label-width="auto"
+               @submit.native.prevent>
         <el-form-item label="文本类型" prop="type">
           <el-select @change="handleChangeTextType" v-model="textLabel.type" placeholder="文本类型">
             <el-option
@@ -3914,12 +3915,17 @@ function makeDraggable(dragElement, path) {
 
 
 .el-dialog {
+
   .fill {
     height: 10px;
     width: 100%;
   }
 
   .el-form {
+    padding: 10px 20px 0 20px;
+  }
+
+  .text-label-form {
     width: 100%;
     padding: 20px 40px 0 40px;
     display: flex;
@@ -3931,8 +3937,8 @@ function makeDraggable(dragElement, path) {
     .el-form-item {
       width: 100%;
     }
-  }
 
+  }
 
   .el-tabs {
     width: 100%;
