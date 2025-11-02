@@ -1,10 +1,10 @@
 const chokidar = require('chokidar')
 
-const loadImageLabel = require('./load-image-label');
+const ResourceLoader = require('./resources-loader');
 
 let watcher;
 
-const fileWatcher = async (window, folderPath) => {
+const imageFileWatcher = async (window, folderPath) => {
     try {
         // 关闭现有监控
         if (watcher) {
@@ -23,12 +23,12 @@ const fileWatcher = async (window, folderPath) => {
         });
 
         // 监听文件变化事件
-        watcher.on('add', path => {
-            loadImageLabel(window)
-        }).on('change', path => {
-            loadImageLabel(window)
-        }).on('unlink', path => {
-            window.webContents.send('watch-editor-label', {type: 0, data: [], event: 1, path})
+        watcher.on('add', filePath => {
+            ResourceLoader.loadImageLabels(window)
+        }).on('change', filePath => {
+            ResourceLoader.loadImageLabels(window)
+        }).on('unlink', filePath => {
+            window.webContents.send('watch-editor-label', {type: 0, data: [], event: 1, filePath})
         }).on('error', error => {
             console.error('监控错误:', error);
         });
@@ -45,4 +45,4 @@ const closeWatcher = () => {
     }
 }
 
-module.exports = {fileWatcher, closeWatcher}
+module.exports = {fileWatcher: imageFileWatcher, closeWatcher}

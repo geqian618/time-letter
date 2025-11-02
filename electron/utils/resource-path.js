@@ -8,4 +8,11 @@ const getResourcePath = () => {
 
 }
 
-module.exports = {getResourcePath}
+const getFontPath = () => {
+    return process.env.NODE_ENV === 'development'
+        ? path.join(process.cwd(), 'fonts')
+        : path.join(process.resourcesPath, 'fonts')
+
+}
+
+module.exports = {getResourcePath, getFontPath}

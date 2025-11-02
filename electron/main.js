@@ -6,7 +6,7 @@ const imageParser = require('./utils/image-parser')
 
 const imageExporter = require('./thread/image-exporter');
 
-const loadImageLabel = require('./hook/load-image-label');
+const resourcesLoader = require('./hook/resources-loader');
 
 const environment = process.env.NODE_ENV
 
@@ -22,11 +22,14 @@ const contextMenu = require('./components/ContextMenu')
 
 const templateContextMenu = require('./components/TemplateContextMenu')
 
-const {fileWatcher, closeWatcher} = require('./hook/file-watcher')
+const imageWatcher = require('./hook/image-file-watcher')
 
-const {getResourcePath} = require('./utils/resource-path')
+const fontWatcher = require('./hook/font-file-watcher')
+
+const {getResourcePath, getFontPath} = require('./utils/resource-path')
 
 const resourcesPath = getResourcePath()
+const fontPath = getFontPath()
 
 let window;
 
@@ -76,7 +79,8 @@ const createWindow = () => {
 
     window.webContents.on('did-finish-load', () => {
         // 发送消息到渲染进程
-        loadImageLabel(window)
+        resourcesLoader.loadImageLabels(window)
+        resourcesLoader.loadFonts(window)
     })
 
     window.on('ready-to-show', () => {
@@ -140,7 +144,8 @@ app.whenReady().then(() => {
 
     createWindow()
 
-    fileWatcher(window, resourcesPath)
+    imageWatcher.fileWatcher(window, resourcesPath)
+    fontWatcher.fileWatcher(window, fontPath)
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
@@ -151,7 +156,8 @@ app.whenReady().then(() => {
 
 
 app.on('before-quit', () => {
-    closeWatcher()
+    imageWatcher.closeWatcher()
+    fontWatcher.closeWatcher()
 });
 
 app.on('window-all-closed', () => {

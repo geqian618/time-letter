@@ -245,7 +245,7 @@
                         <div class="value">
                           <el-select
                               v-model="textOptions.fontFamily"
-                              :options="fontOptions"
+                              :options="loadedFonts"
                               size="small"
                               placeholder="Select"/>
                         </div>
@@ -871,6 +871,8 @@ import {executeFunctionScript} from '@/utils/script-helper'
 
 import {fontOptions} from '@/hook/font-options'
 
+import FontLoader from '@/utils/FontLoader'
+
 import _ from 'lodash';
 
 import MapHelper from "@/utils/map-helper";
@@ -1144,10 +1146,15 @@ const renameTemplateRules = {
   ]
 }
 
-
 const textLabelDialogTitle = computed(() => {
   return handleTextLabelType.value === 0 ? '新增文本标签' : '编辑文本标签'
 })
+
+
+const loadedFonts = computed(() => {
+  return Array.from(fontOptions.value.values());
+});
+
 
 const stopWatchFilterImages = watch(filterType, async () => {
   await clearSelectedImages()
@@ -1192,8 +1199,6 @@ const setDefaultSelectedElement = async () => {
   selectedElement.value.path = image.path
   selectedElement.value.element = triggerElement
   selectedImages.value.set(image.path, triggerElement)
-
-  console.log(selectedElement.value)
 }
 
 
@@ -1214,6 +1219,26 @@ const resetSelectedElement = () => {
     path: '',
     element: null
   }
+}
+
+const watchInputFonts = () => {
+  window.electronAPI.watchInputFonts(async (event, {type, data}) => {
+    if (data) {
+      if (type === 0) {
+        const fonts = Array.from(data.values());
+        for (let font of fonts) {
+          const fontFamily = font.fontFamily;
+          if (!fontOptions.value.has(fontFamily)) {
+            FontLoader.loadFont(fontFamily, font.url)
+            fontOptions.value.set(fontFamily, {label: fontFamily, value: fontFamily})
+          }
+        }
+      } else if (type === 1) {
+        const fontFamily = data.fontFamily;
+        fontOptions.value.delete(fontFamily)
+      }
+    }
+  })
 }
 
 const watchInputImages = () => {
@@ -2465,6 +2490,7 @@ onMounted(() => {
   loadTemplates()
   loadTextLabels()
   watchInputImages()
+  watchInputFonts()
   watchContextMenu()
   watchTemplateContextMenu()
   watchEditorLabel()

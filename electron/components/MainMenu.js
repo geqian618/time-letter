@@ -1,8 +1,9 @@
 const {app, dialog, Menu, shell} = require('electron');
 const path = require('path')
 const fs = require('fs')
-const {getResourcePath} = require('../utils/resource-path')
+const {getResourcePath, getFontPath} = require('../utils/resource-path')
 const resourcesPath = getResourcePath()
+const fontPath = getFontPath()
 
 const {createChildWindow} = require('../components/ChildWindow')
 
@@ -39,6 +40,38 @@ const selectFile = async () => {
         );
         const data = new Map(files.map(item => [item.path, item]));
         window.webContents.send('watch-input-image', data)
+    }
+}
+
+
+const selectFonts = async () => {
+    const {filePaths} = await dialog.showOpenDialog({
+        buttonLabel: '导入',
+        properties: ['openFile', 'multiSelections'],
+        filters: [
+            {name: 'Fonts', extensions: ['ttf', 'otf', 'woff', 'woff2', 'eot']}
+        ]
+    });
+    if (filePaths && filePaths.length) {
+        const files = await Promise.all(
+            filePaths.map(async (filePath) => {
+                // 读取文件
+                const buffer = fs.readFileSync(filePath);
+                // 写入文件
+                fs.writeFileSync(path.join(fontPath, path.basename(filePath)), buffer);
+                filePath = path.join(fontPath, path.basename(filePath));
+                const fileParsed = path.parse(filePath);
+                return {
+                    filename: path.basename(filePath),
+                    fontFamily: fileParsed.name,
+                    url: getSafeImagePath(filePath),
+                    path: filePath,
+                    extname: fileParsed.ext
+                };
+            })
+        );
+        const data = new Map(files.map(item => [item.path, item]));
+        window.webContents.send('watch-input-font', {type: 0, data})
     }
 }
 
@@ -165,7 +198,23 @@ const mainMenu = (mainWindow) => {
                                 window.webContents.send('watch-editor-label', {type: 3})
                             }
                         }
-                    ]
+                    ],
+                },
+                {
+                    label: '字体',
+                    submenu: [
+                        {
+                            label: '导入',
+                            click: selectFonts
+                        },
+                        {
+                            label: '打开资源管理器',
+                            click: () => {
+                                // 尝试打开文件夹
+                                shell.openPath(fontPath);
+                            }
+                        }
+                    ],
                 }
             ]
         },

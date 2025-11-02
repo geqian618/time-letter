@@ -1,4 +1,6 @@
-const fontOptions = [
+import {ref} from 'vue'
+
+const defaultFonts = [
     {
         value: 'Microsoft YaHei',
         label: '微软雅黑',
@@ -96,5 +98,8 @@ const fontOptions = [
         label: '冬青黑体',
     }
 ]
+
+const fontOptions = ref(new Map())
+defaultFonts.forEach(font => fontOptions.value.set(font.value, font))
 
 export {fontOptions}

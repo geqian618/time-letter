@@ -1,6 +1,6 @@
 {
   "name": "caption-frame",
-  "productName":"Caption Frame",
+  "productName": "Caption Frame",
   "version": "1.0.0",
   "private": true,
   "main": "electron/main.js",
@@ -76,9 +76,15 @@
       "dist/**/*",
       "electron/**/*"
     ],
-    "extraResources": {
-      "from": "resources/",
-      "to": "./resources"
-    }
+    "extraResources": [
+      {
+        "from": "resources/",
+        "to": "./resources"
+      },
+      {
+        "from": "fonts/",
+        "to": "./fonts"
+      }
+    ]
   }
 }

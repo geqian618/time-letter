@@ -3,6 +3,7 @@ const {contextBridge, ipcRenderer} = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
     parsePhotoMetadata: async (args) => await ipcRenderer.invoke('parse-photo-metadata', args),
     watchInputImage: (callback) => ipcRenderer.on('watch-input-image', callback),
+    watchInputFonts: (callback) => ipcRenderer.on('watch-input-font', callback),
     watchEditorLabel: (callback) => ipcRenderer.on('watch-editor-label', callback),
     openContextMenu: (args) => ipcRenderer.send('open-contextMenu', args),
     selectDirectory: async (args) => await ipcRenderer.invoke('select-directory', args),
