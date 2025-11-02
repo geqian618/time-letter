@@ -41,15 +41,12 @@ function drawText(ctx, text, newWidth, newHeight, fontOptions) {
     const angle = text.options.angle;
 
     const font = fontOptions.get(fontFamily);
-    if (font && font.path) {
-        registerFont(font.path, {family: fontFamily, weight: 'normal', style: 'normal'});
-        registerFont(font.path, {family: fontFamily, weight: 'bold', style: 'normal'});
-        registerFont(font.path, {family: fontFamily, weight: 'normal', style: 'italic'});
-        registerFont(font.path, {family: fontFamily, weight: 'bold', style: 'italic'});
+    if (font && !font.default && font.path) {
+        registerFont(font.path, {family: fontFamily, weight: String(fontWeight), style: fontStyle});
     }
 
     // 添加文字样式
-    ctx.font = `${fontStyle} ${fontWeight} ${fontSize + 'px'} ${fontFamily}`;
+    ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}, "Microsoft YaHei", sans-serif`;
     ctx.fillStyle = text.options.fontColor;
 
     // 设置对齐基准点
