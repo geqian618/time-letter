@@ -19,8 +19,8 @@ function getSafeImagePath(absolutePath) {
 
 
 const loadImageLabels = (window) => {
-    fs.readdir(resourcesPath, (err, fileNames) => {
-        const files = fileNames.map((filename) => {
+    fs.readdir(resourcesPath, (err, filenames) => {
+        const files = filenames.map((filename) => {
             const extname = path.extname(filename).slice(1);
             return {
                 filename: filename,
