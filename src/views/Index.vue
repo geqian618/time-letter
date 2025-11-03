@@ -250,7 +250,7 @@
                               placeholder="Select"/>
                         </div>
                       </li>
-                      <li class="option">
+                      <li class="option" v-show="isOptionVisible(textOptions)">
                         <div class="label">字体样式</div>
                         <div class="value">
                           <el-select
@@ -273,7 +273,7 @@
                           <input type="number" class="number-input" v-model="textOptions.fontSize" step="1">
                         </div>
                       </li>
-                      <li class="option">
+                      <li class="option" v-show="isOptionVisible(textOptions)">
                         <div class="label">字体粗细</div>
                         <div class="value">
                           <el-slider
@@ -1156,6 +1156,12 @@ const loadedFonts = computed(() => {
   return Array.from(fontOptions.value.values());
 });
 
+
+const isOptionVisible = (textOptions) => {
+  const fontFamily = textOptions.fontFamily;
+  const font = fontOptions.value.get(fontFamily);
+  return font && font.default;
+}
 
 const stopWatchFilterImages = watch(filterType, async () => {
   await clearSelectedImages()
