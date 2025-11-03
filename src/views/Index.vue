@@ -1690,6 +1690,9 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
   //停止监听 stopWatch();
   const {path} = selectedElement.value;
   const image = images.value.get(path);
+
+  if (!image) return
+
   const parentNode = image.getTargetElement().parentNode;
   const containerRect = image.getTargetElement().getBoundingClientRect();
   const parentRect = parentNode.getBoundingClientRect();
@@ -1785,6 +1788,7 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVal) => {
   const {path} = selectedElement.value;
   const image = images.value.get(path);
+  if (!image) return
   const elements = Array.from(image.settings.images.keys());
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
@@ -1798,6 +1802,7 @@ const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVa
 const stopImageAlphaWatch = watch(() => imageOptions.value.alpha, (newVal, oldVal) => {
   const {path} = selectedElement.value;
   const image = images.value.get(path);
+  if (!image) return
   const elements = Array.from(image.settings.images.keys());
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
@@ -1810,6 +1815,7 @@ const stopImageAlphaWatch = watch(() => imageOptions.value.alpha, (newVal, oldVa
 const stopImageBoxShadowWatch = watch(() => imageOptions.value.boxShadow, (newVal, oldVal) => {
   const {path} = selectedElement.value;
   const image = images.value.get(path);
+  if (!image) return
   const elements = Array.from(image.settings.images.keys());
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
@@ -1833,6 +1839,7 @@ const stopImageBoxShadowWatch = watch(() => imageOptions.value.boxShadow, (newVa
 const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal, oldVal) => {
   const {path} = selectedElement.value;
   const image = images.value.get(path);
+  if (!image) return
   const containerRect = image.getTargetElement().getBoundingClientRect();
   const parentRect = image.getTargetElement().parentNode.getBoundingClientRect();
   const elements = Array.from(image.settings.images.keys());
@@ -1931,6 +1938,7 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
 const stopWatchImageZIndex = watch(() => imageOptions.value.zIndex, (newVal, oldVal) => {
   const {path} = selectedElement.value;
   const image = images.value.get(path);
+  if (!image) return
   const elements = Array.from(image.settings.images.keys());
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
@@ -2661,6 +2669,8 @@ const handleShiftClick = (event, image) => {
 const handleBorders = async () => {
 
   const image = images.value.get(selectedElement.value.path)
+
+  if (!image) return
 
   const targetElement = image.getTargetElement();
 
