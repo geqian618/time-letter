@@ -9,7 +9,7 @@ const loadFont = async (fontFamilyName, path) => {
     }
 
     // 定义字体
-    const fontFace = new FontFace(fontFamilyName, `url(${path})`);
+    const fontFace = new FontFace(fontFamilyName, `url('${encodeURI(path)}') format('truetype')`);
     try {
         // 加载字体
         const font = await fontFace.load();
