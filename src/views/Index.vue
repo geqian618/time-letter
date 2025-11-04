@@ -1225,7 +1225,6 @@ const watchInputFonts = () => {
   window.electronAPI.watchInputFonts(async (event, {type, data}) => {
     if (data) {
       if (type === 0) {
-        console.log(data)
         for (let [fontFamily, font] of data) {
           if (!fontOptions.value.has(fontFamily) && font.url) {
             FontLoader.loadFont(fontFamily, font.url)
