@@ -245,8 +245,10 @@
                         <div class="value">
                           <el-select
                               v-model="textOptions.fontFamily"
-                              :options="loadedFonts"
+                              :options="matchFonts"
                               size="small"
+                              filterable
+                              :filter-method="handleFilterFonts"
                               placeholder="Select"/>
                         </div>
                       </li>
@@ -1075,6 +1077,8 @@ const sliderRange = ref({
   max: 200
 })
 
+const matchFonts = ref([])
+
 const textMarks = ref(null)
 
 const imageMarks = ref(null)
@@ -1152,15 +1156,8 @@ const textLabelDialogTitle = computed(() => {
 })
 
 
-const loadedFonts = computed(() => {
-  return Array.from(fontOptions.value.values());
-});
-
-
-const isOptionVisible = (textOptions) => {
-  const fontFamily = textOptions.fontFamily;
-  const font = fontOptions.value.get(fontFamily);
-  return font && font.default;
+const handleFilterFonts = (search) => {
+  matchFonts.value = Array.from(fontOptions.value.values()).filter(font => font.family.toLowerCase().startsWith(search.toLowerCase()))
 }
 
 const stopWatchFilterImages = watch(filterType, async () => {
@@ -1235,6 +1232,8 @@ const watchInputFonts = () => {
         const fontFamily = data.fontFamily;
         fontOptions.value.delete(fontFamily)
       }
+
+      matchFonts.value = Array.from(fontOptions.value.values())
     }
   })
 }
