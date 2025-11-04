@@ -1,6 +1,6 @@
 const path = require('path');
 const pathToFileURL = require('url').pathToFileURL;
-const {createCanvas, registerFont, loadImage} = require('canvas');
+const { createCanvas, loadImage, GlobalFonts } = require('@napi-rs/canvas');
 // 使用 promises API
 const fs = require('fs').promises;
 
@@ -41,10 +41,9 @@ function drawText(ctx, text, newWidth, newHeight, fontOptions) {
 
     const font = fontOptions.get(fontFamily);
     if (font && font.path) {
-        registerFont(font.path, {family: fontFamily, weight: 'normal', style: 'normal'});
-        registerFont(font.path, {family: fontFamily, weight: 'bold', style: 'normal'});
-        registerFont(font.path, {family: fontFamily, weight: 'normal', style: 'italic'});
-        registerFont(font.path, {family: fontFamily, weight: 'bold', style: 'italic'});
+        if (!GlobalFonts.has(fontFamily)) {
+            GlobalFonts.registerFromPath(font.path, fontFamily);
+        }
     }
 
     // 添加文字样式
