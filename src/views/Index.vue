@@ -716,13 +716,13 @@
                 <span>输出格式：</span>
                 <el-select v-model="projectSettings.outputSettings.extname" size="small">
                   <el-option
-                      v-for="item in [{label:'原格式', value: 0}, {label:'JPEG', value:1}, {label:'PNG', value: 2}]"
+                      v-for="item in [{label:'原格式', value: 0}, {label:'JPEG', value:1}, {label:'PNG', value: 2}, {label:'WEBP', value: 3}]"
                       :key="item.value"
                       :label="item.label"
                       :value="item.value"/>
                 </el-select>
               </div>
-              <div class="option" v-show="projectSettings.outputSettings.extname === 1">
+              <div class="option" v-show="[1,3].includes(projectSettings.outputSettings.extname) ">
                 <span>图片品质：</span>
                 <div class="slider-demo-block">
                   <el-slider v-model="projectSettings.outputSettings.quality"
