@@ -1221,19 +1221,13 @@ const clearSelectedImages = async () => {
   selectedImages.value.clear()
 }
 
-const resetSelectedElement = () => {
-  selectedElement.value = {
-    path: '',
-    element: null
-  }
-}
-
 const watchInputFonts = () => {
   window.electronAPI.watchInputFonts(async (event, {type, data}) => {
     if (data) {
       if (type === 0) {
+        console.log(data)
         for (let [fontFamily, font] of data) {
-          if (!fontOptions.value.has(fontFamily) && !font.default) {
+          if (!fontOptions.value.has(fontFamily) && font.url) {
             FontLoader.loadFont(fontFamily, font.url)
           }
           fontOptions.value.set(fontFamily, {label: fontFamily, value: fontFamily, ...font})
@@ -1412,7 +1406,7 @@ const watchEditorLabel = () => {
           }
         }
       } else if (result.event === 1) {
-        imageLabels.value.delete(result.path)
+        imageLabels.value.delete(data.filePath)
       }
     } else if (type === 1) {
       openTextLabelDialog()

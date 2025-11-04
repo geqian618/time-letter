@@ -1,6 +1,8 @@
 const chokidar = require('chokidar')
 
-const ResourceLoader = require('./resources-loader');
+const {loadImageLabels} = require('./resources-loader');
+const path = require("path");
+const {getSafeImagePath} = require("../utils/path-helper");
 
 let watcher;
 
@@ -24,11 +26,17 @@ const imageFileWatcher = async (window, folderPath) => {
 
         // 监听文件变化事件
         watcher.on('add', filePath => {
-            ResourceLoader.loadImageLabels(window)
-        }).on('change', filePath => {
-            ResourceLoader.loadImageLabels(window)
+            const pathParsed = path.parse(filePath);
+            const image = {
+                filename: path.basename(filePath),
+                url: getSafeImagePath(filePath),
+                path: filePath,
+                extname: pathParsed.ext
+            };
+            const data = new Map([[image.path, image]])
+            window.webContents.send('watch-editor-label', {type: 0, data, event: 0})
         }).on('unlink', filePath => {
-            window.webContents.send('watch-editor-label', {type: 0, data: [], event: 1, filePath})
+            window.webContents.send('watch-editor-label', {type: 0, data: {filePath}, event: 1})
         }).on('error', error => {
             console.error('监控错误:', error);
         });

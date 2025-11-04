@@ -26,7 +26,7 @@ const imageWatcher = require('./hook/image-file-watcher')
 
 const fontWatcher = require('./hook/font-file-watcher')
 
-const {getResourcePath, getFontPath} = require('./utils/resource-path')
+const {getResourcePath, getFontPath} = require('./utils/path-helper')
 
 const resourcesPath = getResourcePath()
 const fontPath = getFontPath()

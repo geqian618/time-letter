@@ -1,11 +1,11 @@
 const {app, dialog, Menu, shell} = require('electron');
 const path = require('path')
 const fs = require('fs')
-const {getResourcePath, getFontPath} = require('../utils/resource-path')
+const {getResourcePath, getFontPath} = require('../utils/path-helper')
 const resourcesPath = getResourcePath()
 const fontPath = getFontPath()
 const {createChildWindow} = require('../components/ChildWindow')
-const fontOptions = require('../hook/font-options')
+const {registerFonts} = require('../hook/font-manager')
 
 function getSafeImagePath(absolutePath) {
     if (process.platform === 'win32') {
@@ -62,17 +62,14 @@ const selectFonts = async () => {
                 filePath = path.join(fontPath, path.basename(filePath));
                 const fileParsed = path.parse(filePath);
                 const font = {
-                    default: false,
-                    filename: path.basename(filePath),
-                    fontFamily: fileParsed.name,
+                    family: fileParsed.name,
                     url: getSafeImagePath(filePath),
                     path: filePath,
-                    extname: fileParsed.ext
                 };
-                return [font.fontFamily, font]
+                return [font.family, font]
             })
         );
-        fonts.forEach(([fontFamily, font]) => fontOptions.set(fontFamily, font))
+        fonts.forEach(([family, font]) => registerFonts(font))
         window.webContents.send('watch-input-font', {type: 0, data: fonts})
     }
 }

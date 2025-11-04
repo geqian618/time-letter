@@ -1,10 +1,9 @@
 const chokidar = require('chokidar')
-
-const ResourceLoader = require('./resources-loader');
 const path = require("path");
-const fontOptions = require("./font-options");
-
+const {registerFonts, removeFonts} = require("./font-manager");
+const {getSafeImagePath} = require("../utils/path-helper");
 let watcher;
+
 
 const imageFileWatcher = async (window, folderPath) => {
     try {
@@ -26,14 +25,16 @@ const imageFileWatcher = async (window, folderPath) => {
 
         // 监听文件变化事件
         watcher.on('add', filePath => {
-            ResourceLoader.loadFonts(window)
-        }).on('change', filePath => {
-            ResourceLoader.loadFonts(window)
+            const fileParse = path.parse(filePath);
+            const family = fileParse.name;
+            const font = {family, path: filePath, url: getSafeImagePath(filePath)};
+            registerFonts(font)
+            window.webContents.send('watch-input-font', {type: 0, data: new Map([[font.family, font]])})
         }).on('unlink', filePath => {
             const fileParse = path.parse(filePath);
-            const fontFamily = fileParse.name;
-            fontOptions.delete(fontFamily)
-            window.webContents.send('watch-input-font', {type: 1, data: {fontFamily}})
+            const family = fileParse.name;
+            removeFonts(family)
+            window.webContents.send('watch-input-font', {type: 1, data: {family}})
         }).on('error', error => {
             console.error('监控错误:', error);
         });
