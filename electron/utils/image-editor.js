@@ -1,6 +1,6 @@
 const path = require('path');
 const pathToFileURL = require('url').pathToFileURL;
-const { createCanvas, loadImage, GlobalFonts } = require('@napi-rs/canvas');
+const {createCanvas, loadImage} = require('@napi-rs/canvas');
 // 使用 promises API
 const fs = require('fs').promises;
 
@@ -31,20 +31,13 @@ async function findFilePaths(dirPath, extensions, deepSearch = false) {
     return results;
 }
 
-function drawText(ctx, text, newWidth, newHeight, fontOptions) {
+function drawText(ctx, text, newWidth, newHeight) {
     const fontSize = text.options.fontSizeRatio * newWidth;
     const fontFamily = text.options.fontFamily;
     const fontStyle = text.options.fontStyle;
     const fontWeight = text.options.fontWeight;
     const textDirection = text.options.textDirection;
     const angle = text.options.angle;
-
-    const font = fontOptions.get(fontFamily);
-    if (font && font.path) {
-        if (!GlobalFonts.has(fontFamily)) {
-            GlobalFonts.registerFromPath(font.path, fontFamily);
-        }
-    }
 
     // 添加文字样式
     ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px "${fontFamily}", "Microsoft YaHei", sans-serif`;
@@ -280,8 +273,7 @@ async function addBorderAndText(options) {
                 borderColor,
             },
             texts,
-            images,
-            fontOptions
+            images
         } = options;
 
 
@@ -415,7 +407,7 @@ async function addBorderAndText(options) {
                     }
 
                 } else {
-                    drawText(ctx, element, newWidth, newHeight, fontOptions);
+                    drawText(ctx, element, newWidth, newHeight);
                 }
             }
         }

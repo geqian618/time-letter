@@ -3,6 +3,7 @@ const {Piscina} = require('piscina');
 const {dialog} = require('electron');
 const os = require("os");
 const fontOptions = require('../hook/font-options')
+const {GlobalFonts} = require("@napi-rs/canvas");
 
 // 创建一个 SharedArrayBuffer 用于中断信号,  4字节，用于一个32位整数
 const sab = new SharedArrayBuffer(4);
@@ -42,8 +43,16 @@ const exportImages = (dataList, progressCallback) => {
         console.log(`进度: ${progress.completed}/${progress.total} 错误: ${progress.errors}`);
     });
 
-    for (let data of dataList) {
+    // 注册字体
+    for (let [fontFamily, font] of fontOptions) {
+        if (font && font.path) {
+            if (!GlobalFonts.has(fontFamily)) {
+                GlobalFonts.registerFromPath(font.path, fontFamily);
+            }
+        }
+    }
 
+    for (let data of dataList) {
         const {outputDirectory, path, projectSettings, settings: {border, texts, images}} = data;
         const options = {
             inputPath: path,

@@ -250,7 +250,7 @@
                               placeholder="Select"/>
                         </div>
                       </li>
-                      <li class="option" v-show="isOptionVisible(textOptions)">
+                      <li class="option">
                         <div class="label">字体样式</div>
                         <div class="value">
                           <el-select
@@ -273,7 +273,7 @@
                           <input type="number" class="number-input" v-model="textOptions.fontSize" step="1">
                         </div>
                       </li>
-                      <li class="option" v-show="isOptionVisible(textOptions)">
+                      <li class="option">
                         <div class="label">字体粗细</div>
                         <div class="value">
                           <el-slider
