@@ -2,9 +2,9 @@ const {Tray, Menu} = require('electron')
 const path = require('path')
 
 const createTray = (app, window) => {
-    const icon = path.join(__dirname, '../resources/favicon.png')
+    const icon = path.join(__dirname, '../resources/favicon.ico')
     const tray = new Tray(icon);
-    tray.setToolTip('AppName')
+    tray.setToolTip('时光信笺')
 
     const contextMenu = Menu.buildFromTemplate([
         {label: '退出', type: 'normal', click: () => app.quit()}

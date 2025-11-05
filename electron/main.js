@@ -12,7 +12,7 @@ const environment = process.env.NODE_ENV
 
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 
-const icon = path.join(__dirname, './resources/favicon.png')
+const icon = path.join(__dirname, './resources/favicon.ico')
 
 const createTray = require('./components/Tray')
 
