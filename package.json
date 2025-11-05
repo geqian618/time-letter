@@ -1,6 +1,6 @@
 {
   "name": "caption-frame",
-  "productName": "Caption Frame",
+  "productName": "时光信笺",
   "version": "1.0.0",
   "private": true,
   "main": "electron/main.js",
