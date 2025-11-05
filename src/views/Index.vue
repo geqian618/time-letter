@@ -3480,7 +3480,7 @@ function makeDraggable(dragElement, path) {
             }
 
             .el-menu-item:hover {
-              background-color: #6e6e6e;
+              background-color: #545353;
               color: white !important;
             }
 
