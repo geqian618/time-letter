@@ -49,7 +49,7 @@ const selectFonts = async () => {
         buttonLabel: '导入',
         properties: ['openFile', 'multiSelections'],
         filters: [
-            {name: 'Fonts', extensions: ['ttf', 'otf', 'woff', 'woff2', 'eot']}
+            {name: 'Fonts', extensions: ['ttf', 'otf', 'woff', 'woff2']}
         ]
     });
     if (filePaths && filePaths.length) {
