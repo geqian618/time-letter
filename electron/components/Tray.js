@@ -2,7 +2,7 @@ const {Tray, Menu} = require('electron')
 const path = require('path')
 
 const createTray = (app, window) => {
-    const icon = path.join(__dirname, '../resources/favicon.ico')
+    const icon = path.join(__dirname, '../resources/favicon.png')
     const tray = new Tray(icon);
     tray.setToolTip('AppName')
 
