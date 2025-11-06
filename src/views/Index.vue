@@ -1460,8 +1460,9 @@ const saveTextLabel = async () => {
         textLabels.value.push(_.cloneDeep(textLabel.value))
       } else {
         for (let i = 0; i < textLabels.value.length; i++) {
-          if (textLabels.value[i].id === textLabel.value.id){
+          if (textLabels.value[i].id === textLabel.value.id) {
             textLabels.value[i] = _.cloneDeep(textLabel.value)
+            break
           }
         }
       }
