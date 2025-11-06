@@ -1182,9 +1182,9 @@ const stopWatchFilterImages = watch(filterType, async () => {
   if (filterType.value === 0) {
     filterImages.value = images.value
   } else if (filterType.value === 1) {
-    filterImages.value = new Map(Array.from(images.value).filter(([path, {metadata}]) => metadata.width > metadata.height))
+    filterImages.value = new Map(Array.from(images.value).filter(([path, {metadata}]) => metadata.width >= metadata.height))
   } else {
-    filterImages.value = new Map(Array.from(images.value).filter(([path, {metadata}]) => metadata.width <= metadata.height))
+    filterImages.value = new Map(Array.from(images.value).filter(([path, {metadata}]) => metadata.width < metadata.height))
   }
 
   await nextTick()
