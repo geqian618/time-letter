@@ -62,7 +62,7 @@ async function getImageResolution(imagePath) {
 
 function getFileSize(filePath) {
     const size = fs.statSync(filePath)?.size;
-    return size ? (size / 1024 / 1024).toFixed(2) + 'MB' : size
+    return size ? (size / 1024 / 1024).toFixed(2) + ' MB' : size
 }
 
 function formatDateTime(DateTimeOriginal) {
