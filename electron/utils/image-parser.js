@@ -62,7 +62,7 @@ async function getImageResolution(imagePath) {
 
 function getFileSize(filePath) {
     const size = fs.statSync(filePath)?.size;
-    return size ? (size / 1000 / 1000).toFixed(2) + 'MB' : size
+    return size ? (size / 1024 / 1024).toFixed(2) + 'MB' : size
 }
 
 function formatDateTime(DateTimeOriginal) {
@@ -85,45 +85,29 @@ async function parsePhotoMetadata(filePath) {
                 ExposureTime = '',
                 FNumber = '',
                 FocalLength = '',
-                LensMake = '',
                 LensModel = '',
-                CreateDate = '',
                 DateTimeOriginal = ''
             } = {}
         } = metadata;
         const {width, height} = await createSharp(filePath).metadata();
         return {
-            details: [
-                {label: '文件名称', value: path.basename(filePath)},
-                {label: '文件大小', value: getFileSize(filePath)},
-                {label: '分辨率', value: await getImageResolution(filePath)},
-                {label: '拍摄日期', value: formatDateTime(DateTimeOriginal)},
-                {label: '修改日期', value: CreateDate},
-                {label: '设备厂商', value: Make},
-                {label: '设备型号', value: Model},
-                {label: '镜头厂商', value: LensMake},
-                {label: '镜头型号', value: LensModel},
-                {label: 'ISO', value: ISO},
-                {label: '快门速度', value: ExposureTime ? shutterSpeed.formatShutterSpeed(ExposureTime) : ''},
-                {label: '光圈', value: FNumber},
-                {label: '焦段', value: FocalLength ? Math.trunc(FocalLength) : ''}
-            ],
-            base: {
-                iso: ISO,
-                cameraBrand: Make,
-                cameraModel: Model,
-                lensModel: LensModel,
-                focalLength: FocalLength ? Math.trunc(FocalLength) : '',
-                shutter: FocalLength ? shutterSpeed.formatShutterSpeed(ExposureTime) : '',
-                aperture: FNumber,
-                shootingTime: DateTimeOriginal ? formatDateTime(DateTimeOriginal) : '',
-                width,
-                height
-            }
+            iso: ISO,
+            cameraBrand: Make,
+            cameraModel: Model,
+            lensModel: LensModel,
+            focalLength: FocalLength ? Math.trunc(FocalLength) : '',
+            shutter: FocalLength ? shutterSpeed.formatShutterSpeed(ExposureTime) : '',
+            aperture: FNumber,
+            shootingTime: DateTimeOriginal ? formatDateTime(DateTimeOriginal) : '',
+            width,
+            height,
+            filename: path.basename(filePath),
+            fileSize: getFileSize(filePath),
+            resolution: await getImageResolution(filePath)
         }
     } catch (err) {
         console.log(err)
-        return {details: {}, base: {}}
+        return {}
     }
 }
 

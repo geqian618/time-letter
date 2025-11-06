@@ -532,15 +532,32 @@
           </div>
         </div>
         <div class="page-images" id="image-list" ref="imageList" @wheel="handleWheel" @contextmenu="openContextMenu">
-          <img class="imageItem"
-               :key="key"
-               :path="key"
-               v-lazy="image.url"
-               v-for="([key, image]) in filterImages"
-               @click.meta.exact="handleCtrlClick($event,image)"
-               @click.ctrl.exact="handleCtrlClick($event, image)"
-               @click.shift.exact="handleShiftClick($event,image)"
-               @click="handlePreview($event, image)">
+          <template :key="key" v-for="([key, image]) in filterImages">
+            <el-popover
+                width="fit-content"
+                :show-after="1500"
+                :hide-after="0"
+                trigger="hover">
+              <template #default>
+                <div style="font-size: 10px">
+                  <p v-if="image.metadata.filename">文件名称：{{ image.metadata.filename }}</p>
+                  <p v-if="image.metadata.shootingTime">拍摄时间：{{ image.metadata.shootingTime }}</p>
+                  <p v-if="image.metadata.resolution">分辨率：{{ image.metadata.resolution }}</p>
+                  <p v-if="image.metadata.fileSize">大小：{{ image.metadata.fileSize }}</p>
+                </div>
+              </template>
+              <template #reference>
+                <img class="imageItem"
+                     :path="image.path"
+                     v-lazy="image.url"
+                     @click.meta.exact="handleCtrlClick($event,image)"
+                     @click.ctrl.exact="handleCtrlClick($event, image)"
+                     @click.shift.exact="handleShiftClick($event,image)"
+                     @click="handlePreview($event, image)">
+              </template>
+            </el-popover>
+          </template>
+
         </div>
       </div>
 
@@ -1278,10 +1295,10 @@ const watchInputImages = () => {
           }
           const photoMetadata = await window.electronAPI.parsePhotoMetadata(path);
 
-          if (photoMetadata && photoMetadata.base) {
-            image.metadata = photoMetadata.base
+          if (photoMetadata) {
+            image.metadata = photoMetadata
             if (image.metadata.focalLength) {
-              image.metadata.originalFocalLength = photoMetadata.base.focalLength
+              image.metadata.originalFocalLength = photoMetadata.focalLength
               if (projectSettings.value.metadata.other.enableEquivalentFocalSegment) {
                 image.metadata.focalLength = Number.parseInt(image.metadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
               }
