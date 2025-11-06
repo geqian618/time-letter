@@ -166,7 +166,7 @@ const mainMenu = (mainWindow) => {
             ]
         },
         {
-            label: '资源',
+            label: '扩展',
             submenu: [
                 {
                     label: '文本标签',
