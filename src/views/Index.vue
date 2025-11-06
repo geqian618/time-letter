@@ -535,7 +535,7 @@
           <template :key="key" v-for="([key, image]) in filterImages">
             <el-popover
                 width="fit-content"
-                :show-after="1500"
+                :show-after="2000"
                 :hide-after="0"
                 trigger="hover">
               <template #default>
