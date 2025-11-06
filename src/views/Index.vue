@@ -568,7 +568,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="customTextLabelDialogVisible = false">取消</el-button>
-          <el-button type="info" @click="saveNewTextLabel">
+          <el-button type="info" @click="saveTextLabel">
             确认
           </el-button>
         </div>
@@ -1435,7 +1435,7 @@ const clearFormValidate = (formRef) => {
 
 
 const openEditorTextLabel = (row) => {
-  textLabel.value = row
+  textLabel.value = _.cloneDeep(row)
   handleTextLabelType.value = 1
   customTextLabelDialogVisible.value = true
   clearFormValidate(textLabelForm)
@@ -1451,13 +1451,19 @@ const deleteTextLabel = (row) => {
   }
 }
 
-const saveNewTextLabel = async () => {
+const saveTextLabel = async () => {
   if (!textLabelForm) return
   await textLabelForm.value.validate(async (valid, fields) => {
     if (valid) {
       if (!textLabel.value.id) {
         textLabel.value.id = Date.now() + ''
         textLabels.value.push(_.cloneDeep(textLabel.value))
+      } else {
+        for (let i = 0; i < textLabels.value.length; i++) {
+          if (textLabels.value[i].id === textLabel.value.id){
+            textLabels.value[i] = _.cloneDeep(textLabel.value)
+          }
+        }
       }
       window.localStorage.setItem('textLabels', JSON.stringify(textLabels.value))
       textLabel.value = {

@@ -169,6 +169,21 @@ const mainMenu = (mainWindow) => {
             label: '资源',
             submenu: [
                 {
+                    label: '文本标签',
+                    submenu: [
+                        {
+                            label: '新增',
+                            click: customTextLabels
+                        },
+                        {
+                            label: '管理',
+                            click: () => {
+                                window.webContents.send('watch-editor-label', {type: 3})
+                            }
+                        }
+                    ],
+                },
+                {
                     label: '图片标签',
                     submenu: [
                         {
@@ -183,21 +198,6 @@ const mainMenu = (mainWindow) => {
                             }
                         }
                     ]
-                },
-                {
-                    label: '文本标签',
-                    submenu: [
-                        {
-                            label: '新增',
-                            click: customTextLabels
-                        },
-                        {
-                            label: '管理',
-                            click: () => {
-                                window.webContents.send('watch-editor-label', {type: 3})
-                            }
-                        }
-                    ],
                 },
                 {
                     label: '字体',
