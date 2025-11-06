@@ -23,6 +23,7 @@
     "lodash": "^4.17.21",
     "normalize.css": "^8.0.1",
     "p-limit": "^6.2.0",
+    "piexifjs": "^1.0.6",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
     "piscina": "^5.0.0",

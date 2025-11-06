@@ -7,10 +7,10 @@ const shutterSpeed = require("./shutter-speed");
 
 async function parseMetadata(imagePath) {
     try {
-        const data = await fs.promises.readFile(imagePath);
+        const buffer = await fs.promises.readFile(imagePath);
 
         return await new Promise((resolve, reject) => {
-            new Exif.ExifImage({image: data}, (error, exifData) => {
+            new Exif.ExifImage({image: buffer}, (error, exifData) => {
                 if (error) {
                     // 我们可以检查错误信息，对特定错误进行不同处理
                     if (error.message.includes("No Exif segment") || error.message.includes("Not a JPEG")) {

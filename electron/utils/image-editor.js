@@ -3,7 +3,7 @@ const pathToFileURL = require('url').pathToFileURL;
 const {createCanvas, loadImage} = require('@napi-rs/canvas');
 // 使用 promises API
 const fs = require('fs').promises;
-
+const {copyExifDataToBuffer} = require('./exif-helper')
 
 /**
  * 查找指定目录下指定类型文件集合
@@ -279,7 +279,8 @@ async function addBorderAndText(options) {
         let {
             quality,
             extname: extnameType,
-            outputSize: {longSide, shortSide, width, height, type}
+            outputSize: {longSide, shortSide, width, height, type},
+            isSynchronizeMetadata
         } = outputSettings;
 
 
@@ -410,10 +411,16 @@ async function addBorderAndText(options) {
         }
 
         // 7. 保存图片 (使用 Buffer 写入)
-        const buffer = canvas.toBuffer(`image/${extname === 'jpg' ? 'jpeg' : extname}`, {
+        let buffer = canvas.toBuffer(`image/${extname === 'jpg' ? 'jpeg' : extname}`, {
             // 图片质量
             quality: quality
-        }); // 或 'image/png'
+        });
+
+
+        if (isSynchronizeMetadata) {
+            buffer = await copyExifDataToBuffer(inputPath, buffer)
+        }
+
         await fs.writeFile(outputPath, buffer);
         console.log(`处理完成！图片已保存至: ${outputPath}`);
     } catch (error) {

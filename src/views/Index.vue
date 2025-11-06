@@ -751,20 +751,17 @@
                              show-input/>
                 </div>
               </div>
+              <div class="option">
+                <span class="label">保留元数据：</span>
+                <el-switch
+                    v-model="projectSettings.outputSettings.isSynchronizeMetadata"
+                    class="ml-2"
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+              </div>
             </div>
           </div>
-
-          <!--        <div class="border-box">-->
-          <!--          <span class="border-label">输出位置</span>-->
-          <!--          <div class="options">-->
-          <!--            <div class="option">-->
-          <!--              <span>文件夹：{{ projectSettings.outputSettings.outputDirectory }}</span>-->
-          <!--              <el-button size="small" type="info" @click="selectDirectory">选择</el-button>-->
-          <!--            </div>-->
-          <!--          </div>-->
-          <!--        </div>-->
         </el-tab-pane>
-        <el-tab-pane label="元信息">
+        <el-tab-pane label="元数据">
           <div class="border-box">
             <span class="border-label">格式化</span>
             <div class="items">
@@ -1293,6 +1290,9 @@ const watchInputImages = () => {
               return imageList.value.querySelector(`[path="${path.replace(/\\/g, '\\\\')}"]`)
             }
           }
+
+          console.log(await window.electronAPI.parsePhotoMetadata(path))
+
           const photoMetadata = await window.electronAPI.parsePhotoMetadata(path);
 
           if (photoMetadata) {
