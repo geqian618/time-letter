@@ -752,7 +752,7 @@
                 </div>
               </div>
               <div class="option">
-                <span class="label">保留元数据：</span>
+                <span class="label">同步元数据：</span>
                 <el-switch
                     v-model="projectSettings.outputSettings.isSynchronizeMetadata"
                     class="ml-2"

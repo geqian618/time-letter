@@ -1,9 +1,15 @@
 const piexif = require('piexifjs');
 const fs = require('fs').promises
 
-async function readExifData(imagePath) {
+/**
+ * 安装 npm i piexifjs
+ * @param inputImagePath
+ * @returns {Promise<*|{partialData: null, warning: string}|{rawError, warning: string}|{exifData, warning: string}>}
+ */
+
+async function readExifData(inputImagePath) {
     try {
-        const buffer = await fs.readFile(imagePath);
+        const buffer = await fs.readFile(inputImagePath);
         const data = buffer.toString('binary');
         let exifData;
         try {
@@ -37,9 +43,9 @@ async function readExifData(imagePath) {
     } catch (err) {
         // 文件读取错误
         if (err.code === 'ENOENT') {
-            throw new Error(`文件不存在: ${imagePath}`);
+            throw new Error(`文件不存在: ${inputImagePath}`);
         } else if (err.code === 'EACCES') {
-            throw new Error(`没有权限读取文件: ${imagePath}`);
+            throw new Error(`没有权限读取文件: ${inputImagePath}`);
         } else {
             throw new Error(`处理文件时发生未知错误: ${err.message}`);
         }
