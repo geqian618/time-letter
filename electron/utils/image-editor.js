@@ -240,9 +240,6 @@ const getExtname = (inputPath, extnameType) => {
     let extname;
     if (extnameType === 0) {
         extname = path.extname(inputPath).slice(1)
-        if (extname === 'jpg') {
-            extname = 'jpeg'
-        }
     } else if (extnameType === 1) {
         extname = 'jpeg'
     } else if (extnameType === 2) {
@@ -413,7 +410,7 @@ async function addBorderAndText(options) {
         }
 
         // 7. 保存图片 (使用 Buffer 写入)
-        const buffer = canvas.toBuffer(`image/${extname}`, {
+        const buffer = canvas.toBuffer(`image/${extname === 'jpg' ? 'jpeg' : extname}`, {
             // 图片质量
             quality: quality
         }); // 或 'image/png'
