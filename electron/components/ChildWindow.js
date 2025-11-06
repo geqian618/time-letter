@@ -2,7 +2,7 @@ const {BrowserWindow} = require('electron')
 
 const environment = process.env.NODE_ENV
 const path = require('path')
-const icon = path.join(__dirname, '../resources/favicon.ico')
+const icon = path.join(__dirname, '../images/favicon.ico')
 
 
 let childWindow;

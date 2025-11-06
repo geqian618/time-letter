@@ -2,14 +2,14 @@ const path = require('path');
 
 const getResourcePath = () => {
     return process.env.NODE_ENV === 'development'
-        ? path.join(process.cwd(), 'resources')
-        : path.join(process.resourcesPath, 'resources')
+        ? path.join(process.cwd(), 'electron', 'resources', 'images')
+        : path.join(process.resourcesPath, 'images')
 
 }
 
 const getFontPath = () => {
     return process.env.NODE_ENV === 'development'
-        ? path.join(process.cwd(), 'fonts')
+        ? path.join(process.cwd(), 'electron', 'resources', 'fonts')
         : path.join(process.resourcesPath, 'fonts');
 }
 

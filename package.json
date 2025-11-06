@@ -78,11 +78,11 @@
     ],
     "extraResources": [
       {
-        "from": "resources/",
-        "to": "./resources"
+        "from": "electron/resources/images",
+        "to": "./images"
       },
       {
-        "from": "fonts/",
+        "from": "electron/resources/fonts",
         "to": "./fonts"
       }
     ]
