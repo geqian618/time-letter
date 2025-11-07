@@ -29,6 +29,7 @@ const projectSettings = ref({
             conversionMultiple: 1.5
         }
     },
+    fontConfig: new Map(),
     performance: {
         downloadThreads: -1
     },

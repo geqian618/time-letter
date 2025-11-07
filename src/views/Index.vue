@@ -841,6 +841,41 @@
             </div>
           </div>
         </el-tab-pane>
+        <el-tab-pane label="字体">
+          <el-table size="small" height="400" highlight-current-row :data="fontConfigs" border
+                    @cell-dblclick="handleActivateInput">
+            <el-table-column fixed prop="family" label="字体家族" show-overflow-tooltip/>
+            <el-table-column prop="familyAlias" label="字体别名" show-overflow-tooltip>
+              <template #default="scope">
+                <input type="text"
+                       @focusout="handleStopActivateInput(scope.row)"
+                       :disabled="scope.row.disabled"
+                       style="height: 100%;user-select: none;width: fit-content;background-color: transparent;outline: none;border: none"
+                       v-model="scope.row.familyAlias">
+              </template>
+            </el-table-column>
+            <el-table-column prop="tips" label="X轴偏移（基数为字体大小）" show-overflow-tooltip>
+              <template #default="scope">
+                <input type="number"
+                       @focusout="handleStopActivateInput(scope.row)"
+                       :disabled="scope.row.disabled"
+                       style="height: 100%;width: 55px;background-color: transparent;outline: none;border: none"
+                       v-model="scope.row.offsetX"
+                       step="0.01">
+              </template>
+            </el-table-column>
+            <el-table-column prop="content" label="Y轴偏移（基数为字体大小）" show-overflow-tooltip>
+              <template #default="scope">
+                <input type="number"
+                       @focusout="handleStopActivateInput(scope.row)"
+                       :disabled="scope.row.disabled"
+                       style="height: 100%;width: 55px;background-color: transparent;outline: none;border: none"
+                       v-model="scope.row.offsetY"
+                       step="0.01">
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
         <el-tab-pane label="其他">
           <div class="border-box">
             <span class="border-label">个性化</span>
@@ -1169,6 +1204,24 @@ const textLabelDialogTitle = computed(() => {
   return handleTextLabelType.value === 0 ? '新增文本标签' : '编辑文本标签'
 })
 
+const fontConfigs = computed(() => {
+  return Array.from(projectSettings.value.fontConfig.values())
+})
+
+const handleActivateInput = async (row, column, cell) => {
+  row.disabled = false;
+  const input = cell.querySelector('input');
+  if (input) {
+    await nextTick()
+    input.focus()
+  }
+}
+
+
+const handleStopActivateInput = (row, column) => {
+  row.disabled = true;
+}
+
 
 const handleFilterFonts = (search) => {
   matchFonts.value = Array.from(fontOptions.value.values()).filter(font => font.family.toLowerCase().startsWith(search.toLowerCase()))
@@ -1240,13 +1293,25 @@ const watchInputFonts = () => {
           if (!fontOptions.value.has(fontFamily) && font.url) {
             FontLoader.loadFont(fontFamily, font.url)
           }
+          if (!projectSettings.value.fontConfig.has(fontFamily)) {
+            projectSettings.value.fontConfig.set(fontFamily, {
+              family: fontFamily,
+              familyAlias: fontFamily,
+              offsetX: 0,
+              offsetY: 0,
+              disabled: true,
+              ...font
+            })
+          }
           fontOptions.value.set(fontFamily, {label: fontFamily, value: fontFamily, ...font})
         }
       } else if (type === 1) {
         const fontFamily = data.fontFamily;
         fontOptions.value.delete(fontFamily)
+        if (projectSettings.value.fontConfig.has(fontFamily)) {
+          projectSettings.value.fontConfig.delete(fontFamily)
+        }
       }
-
       matchFonts.value = Array.from(fontOptions.value.values())
     }
   })
@@ -1574,7 +1639,8 @@ const watchContextMenu = () => {
           }
         }
         currentSelectedElement.visible = true
-        window.electronAPI.requestSaveFiles(JSON.parse(JSON.stringify(newSettings)))
+
+        window.electronAPI.requestSaveFiles(_.cloneDeep(newSettings))
         downloadProgressVisible.value = true
       } else if (type === 2) {
         openSaveTemplateDialog()
@@ -1682,7 +1748,9 @@ const handleResize = () => {
 
 
 const stopProjectSettingsWatch = watch(projectSettings, (newVal, oldVal) => {
-  localStorage.setItem('projectSettings', JSON.stringify(newVal))
+  const settings = _.cloneDeep(newVal);
+  settings.fontConfig = Array.from(settings.fontConfig.entries())
+  localStorage.setItem('projectSettings', JSON.stringify(settings))
 }, {
   //深度监视（监视属性变化）
   deep: true,
@@ -1694,9 +1762,11 @@ const stopProjectSettingsWatch = watch(projectSettings, (newVal, oldVal) => {
 const loadProjectSettings = () => {
   const jsonStr = localStorage.getItem('projectSettings');
   if (jsonStr) {
-    const userConfig = JSON.parse(jsonStr);
+    const {fontConfig, ...userConfig} = JSON.parse(jsonStr);
     const newUserConfig = _.merge({}, projectSettings.value, userConfig);
+    newUserConfig.fontConfig = new Map(newUserConfig.fontConfig)
     projectSettings.value = newUserConfig
+    console.log(newUserConfig)
     localStorage.setItem('projectSettings', JSON.stringify(newUserConfig))
   }
 }
@@ -2221,7 +2291,7 @@ const useTemplate = async (options, path) => {
     const div = document.createElement('div');
     div.style.width = 'fit-content'
     div.style.height = 'fit-content'
-    div.style.lineHeight = '1em'
+    div.style.lineHeight = '1'
     div.style.whiteSpace = 'nowrap'
     div.style.fontSize = text.options.fontSize + 'px'
     div.style.color = text.options.fontColor
@@ -2914,7 +2984,7 @@ const setDefaultStyle = (dragElement) => {
     dragElement.style.width = 'fit-content'
     dragElement.style.height = 'fit-content'
     dragElement.style.fontSize = '14px'
-    dragElement.style.lineHeight = '1em'
+    dragElement.style.lineHeight = '1'
     dragElement.style.whiteSpace = 'nowrap'
     dragElement.style.fontStyle = 'normal'
     dragElement.style.fontWeight = '400'

@@ -31,7 +31,7 @@ async function findFilePaths(dirPath, extensions, deepSearch = false) {
     return results;
 }
 
-function drawText(ctx, text, newWidth, newHeight) {
+function drawText(ctx, text, newWidth, newHeight, fontConfig) {
     const fontSize = text.options.fontSizeRatio * newWidth;
     const fontFamily = text.options.fontFamily;
     const fontStyle = text.options.fontStyle;
@@ -52,20 +52,25 @@ function drawText(ctx, text, newWidth, newHeight) {
     const textWidth = metrics.width;
     const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
+
+    const font = fontConfig.get(fontFamily);
+    const offsetX = font && font.offsetX ? font.offsetX * fontSize : 0;
+    const offsetY = font && font.offsetY ? font.offsetY * fontSize : 0;
+
+
     // 计算初始位置（相对坐标）
-    let textX = textDirection === 0 ? text.positionX * newWidth : text.positionX * newWidth + fontSize / 2;
-    let textY = textDirection === 0 ? text.positionY * newHeight : text.positionY * newHeight + fontSize / 2;
+    let textX = textDirection === 0 ? text.positionX * newWidth + offsetX : text.positionX * newWidth + fontSize / 2;
+    let textY = textDirection === 0 ? text.positionY * newHeight + offsetY : text.positionY * newHeight + fontSize / 2;
 
     // 处理右/底对齐
     if (text.references.includes('right')) {
         textX = textDirection === 0
-            ? (1 - text.positionX) * newWidth
+            ? (1 - text.positionX) * newWidth + offsetX
             : (1 - text.positionX) * newWidth - fontSize / 2;
     }
     if (text.references.includes('bottom')) {
         textY = textDirection === 0
-            // ? (1 - text.positionY) * newHeight - 1.2 * fontSize
-            ? (1 - text.positionY) * newHeight - fontSize
+            ? (1 - text.positionY) * newHeight - fontSize + offsetY
             : (1 - text.positionY) * newHeight - fontSize * text.content.length + fontSize / 2;
     }
 
@@ -272,13 +277,17 @@ async function addBorderAndText(options) {
 
 
         const outputSettings = projectSettings.outputSettings;
+        const fontConfig = projectSettings.fontConfig;
 
         let {
             quality,
             extname: extnameType,
             outputSize: {longSide, shortSide, width, height, type},
-            isSynchronizeMetadata
+            isSynchronizeMetadata,
         } = outputSettings;
+
+
+        console.log(projectSettings)
 
 
         quality = quality / 10;
@@ -400,9 +409,8 @@ async function addBorderAndText(options) {
                         console.log(err)
                         throw err
                     }
-
                 } else {
-                    drawText(ctx, element, newWidth, newHeight);
+                    drawText(ctx, element, newWidth, newHeight, fontConfig);
                 }
             }
         }
