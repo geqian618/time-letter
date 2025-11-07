@@ -849,29 +849,32 @@
               <template #default="scope">
                 <input type="text"
                        @focusout="handleStopActivateInput(scope.row)"
-                       :disabled="scope.row.disabled"
+                       v-show="scope.row.editable"
                        style="height: 100%;user-select: none;width: fit-content;background-color: transparent;outline: none;border: none"
                        v-model="scope.row.familyAlias">
+                <div v-show="!scope.row.editable">{{ scope.row.familyAlias }}</div>
               </template>
             </el-table-column>
             <el-table-column prop="tips" label="X轴偏移（基数为字体大小）" show-overflow-tooltip>
               <template #default="scope">
                 <input type="number"
                        @focusout="handleStopActivateInput(scope.row)"
-                       :disabled="scope.row.disabled"
-                       style="height: 100%;width: 55px;background-color: transparent;outline: none;border: none"
+                       v-show="scope.row.editable"
+                       style="height: 100%;width: 60px;background-color: transparent;outline: none;border: none"
                        v-model="scope.row.offsetX"
                        step="0.01">
+                <div v-show="!scope.row.editable">{{ scope.row.offsetX }}</div>
               </template>
             </el-table-column>
             <el-table-column prop="content" label="Y轴偏移（基数为字体大小）" show-overflow-tooltip>
               <template #default="scope">
                 <input type="number"
                        @focusout="handleStopActivateInput(scope.row)"
-                       :disabled="scope.row.disabled"
-                       style="height: 100%;width: 55px;background-color: transparent;outline: none;border: none"
+                       v-show="scope.row.editable"
+                       style="height: 100%;width: 60px;background-color: transparent;outline: none;border: none"
                        v-model="scope.row.offsetY"
                        step="0.01">
+                <div v-show="!scope.row.editable">{{ scope.row.offsetY }}</div>
               </template>
             </el-table-column>
           </el-table>
@@ -1209,7 +1212,7 @@ const fontConfigs = computed(() => {
 })
 
 const handleActivateInput = async (row, column, cell) => {
-  row.disabled = false;
+  row.editable = true;
   const input = cell.querySelector('input');
   if (input) {
     await nextTick()
@@ -1219,7 +1222,7 @@ const handleActivateInput = async (row, column, cell) => {
 
 
 const handleStopActivateInput = (row, column) => {
-  row.disabled = true;
+  row.editable = false;
 }
 
 
@@ -1299,7 +1302,7 @@ const watchInputFonts = () => {
               familyAlias: fontFamily,
               offsetX: 0,
               offsetY: 0,
-              disabled: true,
+              editable: false,
               ...font
             })
           }
@@ -1762,7 +1765,7 @@ const stopProjectSettingsWatch = watch(projectSettings, (newVal, oldVal) => {
 const loadProjectSettings = () => {
   const jsonStr = localStorage.getItem('projectSettings');
   if (jsonStr) {
-    const {fontConfig, ...userConfig} = JSON.parse(jsonStr);
+    const userConfig = JSON.parse(jsonStr);
     const newUserConfig = _.merge({}, projectSettings.value, userConfig);
     newUserConfig.fontConfig = new Map(newUserConfig.fontConfig)
     projectSettings.value = newUserConfig
