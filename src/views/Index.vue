@@ -1359,8 +1359,6 @@ const watchInputImages = () => {
             }
           }
 
-          console.log(await window.electronAPI.parsePhotoMetadata(path))
-
           const photoMetadata = await window.electronAPI.parsePhotoMetadata(path);
 
           if (photoMetadata) {
@@ -1769,7 +1767,6 @@ const loadProjectSettings = () => {
     const newUserConfig = _.merge({}, projectSettings.value, userConfig);
     newUserConfig.fontConfig = new Map(newUserConfig.fontConfig)
     projectSettings.value = newUserConfig
-    console.log(newUserConfig)
     localStorage.setItem('projectSettings', JSON.stringify(newUserConfig))
   }
 }

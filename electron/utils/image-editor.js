@@ -286,10 +286,6 @@ async function addBorderAndText(options) {
             isSynchronizeMetadata,
         } = outputSettings;
 
-
-        console.log(projectSettings)
-
-
         quality = quality / 10;
 
         const extname = getExtname(inputPath, extnameType)
