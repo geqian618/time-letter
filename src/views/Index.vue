@@ -855,7 +855,7 @@
                 <div v-show="!scope.row.editable">{{ scope.row.familyAlias }}</div>
               </template>
             </el-table-column>
-            <el-table-column prop="tips" label="X轴偏移（基数为字体大小）" show-overflow-tooltip>
+            <el-table-column prop="tips" label="X轴偏移（字数）" show-overflow-tooltip>
               <template #default="scope">
                 <input type="number"
                        @focusout="handleStopActivateInput(scope.row)"
@@ -866,7 +866,7 @@
                 <div v-show="!scope.row.editable">{{ scope.row.offsetX }}</div>
               </template>
             </el-table-column>
-            <el-table-column prop="content" label="Y轴偏移（基数为字体大小）" show-overflow-tooltip>
+            <el-table-column prop="content" label="Y轴偏移（字数）" show-overflow-tooltip>
               <template #default="scope">
                 <input type="number"
                        @focusout="handleStopActivateInput(scope.row)"
