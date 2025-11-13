@@ -535,6 +535,7 @@
         <div class="page-images" id="image-list" ref="imageList" @wheel="handleWheel" @contextmenu="openContextMenu">
           <template :key="key" v-for="([key, image]) in filterImages">
             <el-popover
+                v-if="image.metadata.filename || image.metadata.shootingTime || image.metadata.resolution || image.metadata.fileSize"
                 width="fit-content"
                 :show-after="2000"
                 :hide-after="0"
@@ -557,8 +558,16 @@
                      @click="handlePreview($event, image)">
               </template>
             </el-popover>
-          </template>
 
+            <img v-else
+                 class="imageItem"
+                 :path="image.path"
+                 v-lazy="image.url"
+                 @click.meta.exact="handleCtrlClick($event,image)"
+                 @click.ctrl.exact="handleCtrlClick($event, image)"
+                 @click.shift.exact="handleShiftClick($event,image)"
+                 @click="handlePreview($event, image)">
+          </template>
         </div>
       </div>
 
