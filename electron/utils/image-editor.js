@@ -1,5 +1,4 @@
 const path = require('path');
-const pathToFileURL = require('url').pathToFileURL;
 const {createCanvas, loadImage} = require('@napi-rs/canvas');
 // 使用 promises API
 const fs = require('fs').promises;
@@ -205,18 +204,16 @@ async function drawImage(ctx, image, newWidth, newHeight) {
 }
 
 
-const getExtname = (inputPath, extnameType) => {
-    let extname;
+const getExtname = (originalExtname, extnameType) => {
     if (extnameType === 0) {
-        extname = path.extname(inputPath).slice(1)
+        return originalExtname
     } else if (extnameType === 1) {
-        extname = 'jpeg'
+        return 'jpeg'
     } else if (extnameType === 2) {
-        extname = 'png'
+        return 'png'
     } else if (extnameType === 3) {
-        extname = 'webp'
+        return 'webp'
     }
-    return extname;
 }
 
 async function addBorderAndText(options) {
@@ -255,11 +252,11 @@ async function addBorderAndText(options) {
 
         quality = quality / 10;
 
-        const originalExtname = path.parse(inputPath).ext;
+        const originalExtname = path.extname(inputPath).slice(1);
 
-        const extname = getExtname(inputPath, extnameType)
+        const outputExtname = getExtname(originalExtname, extnameType)
 
-        const outputPath = path.join(outputDirectory, path.parse(inputPath).name + "." + extname)
+        const outputPath = path.join(outputDirectory, path.parse(inputPath).name + "." + outputExtname)
 
         let imageBuffer;
 
@@ -381,13 +378,13 @@ async function addBorderAndText(options) {
         }
 
         // 7. 保存图片 (使用 Buffer 写入)
-        let buffer = canvas.toBuffer(`image/${extname === 'jpg' ? 'jpeg' : extname}`, {
+        let buffer = canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, {
             // 图片质量
             quality: quality
         });
 
 
-        if (['jpeg', 'jpg'].includes(originalExtname) && ['jpeg', 'jpg'].includes(extname) && isSynchronizeMetadata) {
+        if (['jpeg', 'jpg'].includes(originalExtname) && ['jpeg', 'jpg'].includes(outputExtname) && isSynchronizeMetadata) {
             buffer = await copyExifDataToBuffer(inputPath, buffer)
         }
 
