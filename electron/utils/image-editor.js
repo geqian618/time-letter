@@ -44,36 +44,17 @@ function drawText(ctx, text, newWidth, newHeight, fontConfig) {
     ctx.fillStyle = text.options.fontColor;
 
     // 设置对齐基准点
-    ctx.textAlign = text.references[0]; // 水平对齐
-    ctx.textBaseline = 'top';           // 垂直基线
+    ctx.textAlign = 'left'; // 水平对齐
+    ctx.textBaseline = 'top'; // 垂直基线
 
     // 测量文本尺寸
     const metrics = ctx.measureText(text.content);
     const textWidth = metrics.width;
     const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
-
-    const font = fontConfig.get(fontFamily);
-    const offsetX = font && font.offsetX ? font.offsetX * fontSize : 0;
-    const offsetY = font && font.offsetY ? font.offsetY * fontSize : 0;
-
-
-    // 计算初始位置（相对坐标）
-    let textX = textDirection === 0 ? text.positionX * newWidth + offsetX : text.positionX * newWidth + fontSize / 2;
-    let textY = textDirection === 0 ? text.positionY * newHeight + offsetY : text.positionY * newHeight + fontSize / 2;
-
-    // 处理右/底对齐
-    if (text.references.includes('right')) {
-        textX = textDirection === 0
-            ? (1 - text.positionX) * newWidth + offsetX
-            : (1 - text.positionX) * newWidth - fontSize / 2;
-    }
-    if (text.references.includes('bottom')) {
-        textY = textDirection === 0
-            ? (1 - text.positionY) * newHeight - fontSize + offsetY
-            : (1 - text.positionY) * newHeight - fontSize * text.content.length + fontSize / 2;
-    }
-
+    const {offsetX, offsetY} = fontConfig.get(fontFamily) || {offsetX: 0, offsetY: 0};
+    let textX = text.offsetLeft * newWidth + offsetX * fontSize
+    let textY = text.offsetTop * newHeight + offsetY * fontSize
 
     // 1. 计算文字中心点
     let centerX, centerY;
@@ -119,7 +100,6 @@ function drawText(ctx, text, newWidth, newHeight, fontConfig) {
         // 绘制纵向文本
         drawVerticalText(ctx, text.content, textX, textY, fontSize, angle);
     }
-
     // 恢复画布状态
     ctx.restore();
 }
@@ -128,22 +108,12 @@ function drawText(ctx, text, newWidth, newHeight, fontConfig) {
 function drawVerticalText(ctx, text, x, y, lineHeight, rotation = 0) {
     ctx.save();
     const characters = text.split('');
-    const originalTextAlign = ctx.textAlign;
-    const originalTextBaseline = ctx.textBaseline;
-
-    // 设置统一的文本基线
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
     // 计算文本总高度
     const totalHeight = characters.length * lineHeight;
-
     // 移动到旋转中心点
     ctx.translate(x, y + totalHeight / 2);
-
     // 应用旋转（转换为弧度）
     ctx.rotate(rotation * Math.PI / 180);
-
     // 移回原始位置
     ctx.translate(-x, -(y + totalHeight / 2));
 
@@ -160,26 +130,23 @@ function drawVerticalText(ctx, text, x, y, lineHeight, rotation = 0) {
             ctx.fillText(char, x, y + i * lineHeight);
         }
     }
-    ctx.textAlign = originalTextAlign;
-    ctx.textBaseline = originalTextBaseline;
     ctx.restore();
 }
 
 
-async function drawImage(ctx, imageItem, newWidth, newHeight) {
+async function drawImage(ctx, image, newWidth, newHeight) {
 
-    const path = imageItem.path;
+    const path = image.path;
 
-    const alpha = imageItem.options.alpha ? imageItem.options.alpha / 10 : 1;
+    const alpha = image.options.alpha ? image.options.alpha / 10 : 1;
 
-    const height = imageItem.options.imageHeightRatio * newHeight;
+    const height = image.options.imageHeightRatio * newHeight;
 
-    const width = imageItem.options.imageWidthRatio * newWidth;
+    const width = image.options.imageWidthRatio * newWidth;
 
-    let imageX = imageItem.positionX * newWidth
+    let imageX = image.offsetLeft * newWidth
 
-    let imageY = imageItem.positionY * newHeight;
-
+    let imageY = image.offsetTop * newHeight;
 
     let imageBuffer;
 
@@ -192,17 +159,17 @@ async function drawImage(ctx, imageItem, newWidth, newHeight) {
 
     const overlay = await loadImage(imageBuffer);
 
-    if (imageItem.references.includes('right')) {
-        imageX = (1 - imageItem.positionX) * newWidth - width
+    if (image.references.includes('right')) {
+        imageX = (1 - image.positionX) * newWidth - width
     }
 
-    if (imageItem.references.includes('bottom')) {
-        imageY = (1 - imageItem.positionY) * newHeight - height
+    if (image.references.includes('bottom')) {
+        imageY = (1 - image.positionY) * newHeight - height
     }
 
     // 添加旋转功能 =================================================
     // 获取旋转角度（默认0度），并转换为弧度
-    const rotation = imageItem.options.angle || 0;
+    const rotation = image.options.angle || 0;
     const rotationRadians = rotation * Math.PI / 180;
 
     // 保存当前画布状态
@@ -211,8 +178,8 @@ async function drawImage(ctx, imageItem, newWidth, newHeight) {
     ctx.globalAlpha = alpha
 
     // ============== 新增阴影设置 ==============
-    if (imageItem.options.boxShadow) {
-        const boxShadow = imageItem.options.boxShadow;
+    if (image.options.boxShadow) {
+        const boxShadow = image.options.boxShadow;
         // 设置阴影颜色（支持RGBA格式）
         ctx.shadowColor = boxShadow.shadowColor || 'rgba(0, 0, 0, 1)';
         // 设置阴影模糊度（像素）

@@ -856,7 +856,7 @@
                 <div v-show="!scope.row.editable">{{ scope.row.familyAlias }}</div>
               </template>
             </el-table-column>
-            <el-table-column prop="tips" label="X轴偏移（字数）" show-overflow-tooltip>
+            <el-table-column prop="tips" label="X轴偏移量" show-overflow-tooltip>
               <template #default="scope">
                 <input type="number"
                        @focusout="handleStopActivateInput(scope.row)"
@@ -867,7 +867,7 @@
                 <div v-show="!scope.row.editable">{{ scope.row.offsetX }}</div>
               </template>
             </el-table-column>
-            <el-table-column prop="content" label="Y轴偏移（字数）" show-overflow-tooltip>
+            <el-table-column prop="content" label="Y轴偏移量" show-overflow-tooltip>
               <template #default="scope">
                 <input type="number"
                        @focusout="handleStopActivateInput(scope.row)"
@@ -1833,14 +1833,21 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 
       let references = []
 
+      let offsetLeft;
+      let offsetTop;
+      positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
+      offsetLeft = positionOffsetX / containerRect.width;
+
+      positionOffsetY = elementTop - (containerRect.top - parentRect.top)
+      offsetTop = positionOffsetY / containerRect.height;
+
       if (elementLeft > elementRight) {
         references.push('right')
         positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - newElementWidth
         positionX = positionOffsetX / containerRect.width
       } else {
         references.push('left')
-        positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
-        positionX = positionOffsetX / containerRect.width;
+        positionX = offsetLeft
       }
 
       if (elementTop > elementBottom) {
@@ -1849,8 +1856,7 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
         positionY = positionOffsetY / containerRect.height;
       } else {
         references.push('top')
-        positionOffsetY = elementTop - (containerRect.top - parentRect.top)
-        positionY = positionOffsetY / containerRect.height;
+        positionY = offsetTop;
       }
 
       image.settings.texts.get(element).options = _.cloneDeep(newVal)
@@ -1859,6 +1865,8 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
       image.settings.texts.get(element).positionY = positionY
       image.settings.texts.get(element).offsetX = positionOffsetX
       image.settings.texts.get(element).offsetY = positionOffsetY
+      image.settings.texts.get(element).offsetLeft = offsetLeft
+      image.settings.texts.get(element).offsetTop = offsetTop
       image.settings.texts.get(element).options.fontSizeRatio = newVal.fontSize / containerRect.width
       image.settings.texts.get(element).options.textShadow.offsetXRatio = newVal.textShadow.offsetX / newVal.fontSize
       image.settings.texts.get(element).options.textShadow.offsetYRatio = newVal.textShadow.offsetY / newVal.fontSize
@@ -1986,14 +1994,22 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
 
       let references = []
 
+      let offsetLeft;
+      let offsetTop;
+
+      positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
+      offsetLeft = positionOffsetX / containerRect.width;
+
+      positionOffsetY = elementTop - (containerRect.top - parentRect.top)
+      offsetTop = positionOffsetY / containerRect.height;
+
       if (elementLeft > elementRight) {
         references.push('right')
         positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
         positionX = positionOffsetX / containerRect.width
       } else {
         references.push('left')
-        positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
-        positionX = positionOffsetX / containerRect.width;
+        positionX = offsetLeft
       }
 
       if (elementTop > elementBottom) {
@@ -2002,8 +2018,7 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
         positionY = positionOffsetY / containerRect.height;
       } else {
         references.push('top')
-        positionOffsetY = elementTop - (containerRect.top - parentRect.top)
-        positionY = positionOffsetY / containerRect.height;
+        positionY = offsetTop;
       }
 
       image.settings.images.get(element).options.scale = newVal
@@ -2011,6 +2026,8 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
       image.settings.images.get(element).positionY = positionY
       image.settings.images.get(element).offsetX = positionOffsetX
       image.settings.images.get(element).offsetY = positionOffsetY
+      image.settings.images.get(element).offsetLeft = offsetLeft
+      image.settings.images.get(element).offsetTop = offsetTop
       image.settings.images.get(element).references = references
       image.settings.images.get(element).width = elementWidth
       image.settings.images.get(element).height = elementHeight
@@ -2408,14 +2425,23 @@ const refreshPositionInformation = (path) => {
 
     let references = []
 
+    let offsetLeft;
+    let offsetTop;
+
+    positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
+    offsetLeft = positionOffsetX / containerRect.width;
+
+    positionOffsetY = elementTop - (containerRect.top - parentRect.top)
+    offsetTop = positionOffsetY / containerRect.height;
+
+
     if (elementLeft > elementRight) {
       references.push('right')
       positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
       positionX = positionOffsetX / containerRect.width
     } else {
       references.push('left')
-      positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
-      positionX = positionOffsetX / containerRect.width;
+      positionX = offsetLeft
     }
 
     if (elementTop > elementBottom) {
@@ -2424,8 +2450,7 @@ const refreshPositionInformation = (path) => {
       positionY = positionOffsetY / containerRect.height;
     } else {
       references.push('top')
-      positionOffsetY = elementTop - (containerRect.top - parentRect.top)
-      positionY = positionOffsetY / containerRect.height;
+      positionY = offsetTop
     }
 
     textLabel.references = references
@@ -2433,6 +2458,8 @@ const refreshPositionInformation = (path) => {
     textLabel.positionY = positionY
     textLabel.offsetX = positionOffsetX
     textLabel.offsetY = positionOffsetY
+    textLabel.offsetLeft = offsetLeft
+    textLabel.offsetTop = offsetTop
 
   })
 
@@ -2451,14 +2478,22 @@ const refreshPositionInformation = (path) => {
     const elementBottom = parentRect.height - elementTop - elementHeight
     let references = []
 
+    let offsetLeft;
+    let offsetTop;
+
+    positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
+    offsetLeft = positionOffsetX / containerRect.width;
+
+    positionOffsetY = elementTop - (containerRect.top - parentRect.top)
+    offsetTop = positionOffsetY / containerRect.height;
+
     if (elementLeft > elementRight) {
       references.push('right')
       positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
       positionX = positionOffsetX / containerRect.width
     } else {
       references.push('left')
-      positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
-      positionX = positionOffsetX / containerRect.width;
+      positionX = offsetLeft
     }
 
     if (elementTop > elementBottom) {
@@ -2467,8 +2502,7 @@ const refreshPositionInformation = (path) => {
       positionY = positionOffsetY / containerRect.height;
     } else {
       references.push('top')
-      positionOffsetY = elementTop - (containerRect.top - parentRect.top)
-      positionY = positionOffsetY / containerRect.height;
+      positionY = offsetTop
     }
 
     imageLabel.references = references
@@ -2476,6 +2510,8 @@ const refreshPositionInformation = (path) => {
     imageLabel.positionY = positionY
     imageLabel.offsetX = positionOffsetX
     imageLabel.offsetY = positionOffsetY
+    imageLabel.offsetLeft = offsetLeft
+    imageLabel.offsetTop = offsetTop
 
   })
 }
@@ -3131,7 +3167,16 @@ const listenerPlaceElements = (previewImage, image) => {
 
         let references = []
 
+        let offsetLeft;
+        let offsetTop;
+
         const dragElementRect = dragElement.getBoundingClientRect();
+
+        positionOffsetX = dragElementRect.left - containerRect.left
+        offsetLeft = positionOffsetX / containerRect.width;
+
+        positionOffsetY = dragElementRect.top - containerRect.top
+        offsetTop = positionOffsetY / containerRect.height;
 
         if (elementLeft > elementRight) {
           references.push('right')
@@ -3139,8 +3184,7 @@ const listenerPlaceElements = (previewImage, image) => {
           positionX = positionOffsetX / containerRect.width
         } else {
           references.push('left')
-          positionOffsetX = dragElementRect.left - containerRect.left
-          positionX = positionOffsetX / containerRect.width;
+          positionX = offsetLeft;
         }
 
         if (elementTop > elementBottom) {
@@ -3149,8 +3193,7 @@ const listenerPlaceElements = (previewImage, image) => {
           positionY = positionOffsetY / containerRect.height;
         } else {
           references.push('top')
-          positionOffsetY = dragElementRect.top - containerRect.top
-          positionY = positionOffsetY / containerRect.height;
+          positionY = offsetTop;
         }
 
         if (!dragElement.src) {
@@ -3158,7 +3201,9 @@ const listenerPlaceElements = (previewImage, image) => {
           settings.value.text.positionX = positionX
           settings.value.text.positionY = positionY
           settings.value.text.offsetX = positionOffsetX
-          settings.value.text.offsetY = positionOffsetY
+          settings.value.text.offsetX = positionOffsetX
+          settings.value.text.offsetLeft = offsetLeft
+          settings.value.text.offsetTop = offsetTop
           const type = dragElement.getAttribute('type');
           if (type === 'metadata') {
             settings.value.text.attribute = dragElement.getAttribute('text')
@@ -3184,6 +3229,8 @@ const listenerPlaceElements = (previewImage, image) => {
           settings.value.image.positionY = positionY
           settings.value.image.offsetX = positionOffsetX
           settings.value.image.offsetY = positionOffsetY
+          settings.value.text.offsetLeft = offsetLeft
+          settings.value.text.offsetTop = offsetTop
           settings.value.image.path = dragElement.getAttribute('path')
           settings.value.image.url = dragElement.src
 
@@ -3321,14 +3368,22 @@ function makeDraggable(dragElement, path) {
 
           let references = []
 
+          let offsetLeft;
+          let offsetTop;
+
+          positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
+          offsetLeft = positionOffsetX / containerRect.width;
+
+          positionOffsetY = elementTop - (containerRect.top - parentRect.top)
+          offsetTop = positionOffsetY / containerRect.height;
+
           if (elementLeft > elementRight) {
             references.push('right')
             positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
             positionX = positionOffsetX / containerRect.width
           } else {
             references.push('left')
-            positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
-            positionX = positionOffsetX / containerRect.width;
+            positionX = offsetLeft
           }
 
           if (elementTop > elementBottom) {
@@ -3338,8 +3393,7 @@ function makeDraggable(dragElement, path) {
             positionY = positionOffsetY / containerRect.height;
           } else {
             references.push('top')
-            positionOffsetY = elementTop - (containerRect.top - parentRect.top)
-            positionY = positionOffsetY / containerRect.height;
+            positionY = offsetTop
           }
 
           if (!dragElement.src) {
@@ -3349,6 +3403,8 @@ function makeDraggable(dragElement, path) {
             textMark.positionY = positionY
             textMark.offsetX = positionOffsetX
             textMark.offsetY = positionOffsetY
+            textMark.offsetLeft = offsetLeft
+            textMark.offsetTop = offsetTop
           } else {
             const imageMark = image.settings.images.get(dragElement);
             imageMark.references = references
@@ -3356,6 +3412,8 @@ function makeDraggable(dragElement, path) {
             imageMark.positionY = positionY
             imageMark.offsetX = positionOffsetX
             imageMark.offsetY = positionOffsetY
+            imageMark.offsetLeft = offsetLeft
+            imageMark.offsetTop = offsetTop
           }
         }
       }
