@@ -37,6 +37,7 @@ function drawText(ctx, text, newWidth, newHeight, fontConfig) {
     const fontWeight = text.options.fontWeight;
     const textDirection = text.options.textDirection;
     const angle = text.options.angle;
+    const textShadow = text.options.textShadow;
 
     // 添加文字样式
     ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px "${fontFamily}", "Microsoft YaHei", sans-serif`;
@@ -79,13 +80,13 @@ function drawText(ctx, text, newWidth, newHeight, fontConfig) {
     // =========== 新增：设置文字阴影属性 ===========
     if (text.options.textShadow) {
         // 默认不透明黑色
-        ctx.shadowColor = text.options.textShadow.shadowColor || 'rgba(0,0,0,1)';
+        ctx.shadowColor = textShadow.shadowColor || 'rgba(0,0,0,1)';
         // 默认模糊0像素
-        ctx.shadowBlur = text.options.textShadow.blurRatio * fontSize || 0;
+        ctx.shadowBlur = textShadow.blurRatio * fontSize || 0;
         // 默认X偏移
-        ctx.shadowOffsetX = text.options.textShadow.offsetXRatio * fontSize || 0;
+        ctx.shadowOffsetX = textShadow.offsetXRatio * fontSize || 0;
         // 默认Y偏移
-        ctx.shadowOffsetY = text.options.textShadow.offsetYRatio * fontSize || 0;
+        ctx.shadowOffsetY = textShadow.offsetYRatio * fontSize || 0;
     }
 
     if (textDirection === 0) {
