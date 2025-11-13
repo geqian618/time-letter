@@ -288,6 +288,8 @@ async function addBorderAndText(options) {
 
         quality = quality / 10;
 
+        const originalExtname = path.parse(inputPath).ext;
+
         const extname = getExtname(inputPath, extnameType)
 
         const outputPath = path.join(outputDirectory, path.parse(inputPath).name + "." + extname)
@@ -418,7 +420,7 @@ async function addBorderAndText(options) {
         });
 
 
-        if (isSynchronizeMetadata) {
+        if (['jpeg', 'jpg'].includes(originalExtname) && ['jpeg', 'jpg'].includes(extname) && isSynchronizeMetadata) {
             buffer = await copyExifDataToBuffer(inputPath, buffer)
         }
 
