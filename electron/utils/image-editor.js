@@ -105,11 +105,11 @@ function drawText(ctx, text, newWidth, newHeight, fontConfig) {
 }
 
 
-function drawVerticalText(ctx, text, x, y, lineHeight, rotation = 0) {
+function drawVerticalText(ctx, text, x, y, fontSize, rotation = 0) {
     ctx.save();
     const characters = text.split('');
     // 计算文本总高度
-    const totalHeight = characters.length * lineHeight;
+    const totalHeight = characters.length * fontSize;
     // 移动到旋转中心点
     ctx.translate(x, y + totalHeight / 2);
     // 应用旋转（转换为弧度）
@@ -122,12 +122,17 @@ function drawVerticalText(ctx, text, x, y, lineHeight, rotation = 0) {
         const charCode = char.charCodeAt(0);
         if (charCode <= 256) {
             ctx.save();
-            ctx.translate(x, y + i * lineHeight);
+            const textMetrics = ctx.measureText(char);
+            const charHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
+            const charWidth = textMetrics.width;
+            const offsetX = (fontSize - charWidth) / 2;
+            const offsetY = (fontSize - charHeight) / 2;
+            ctx.translate(x + offsetX, y + i * fontSize + offsetY);
             ctx.rotate(0);
             ctx.fillText(char, 0, 0);
             ctx.restore();
         } else {
-            ctx.fillText(char, x, y + i * lineHeight);
+            ctx.fillText(char, x, y + i * fontSize);
         }
     }
     ctx.restore();
