@@ -283,9 +283,10 @@
                               :max="900"
                               v-model="textOptions.fontWeight"
                               show-alpha
+                              step="100"
                               size="small"
                               :predefine="predefineColors"/>
-                          <input type="number" class="number-input" v-model="textOptions.fontWeight" step="1">
+                          <input type="number" class="number-input" v-model="textOptions.fontWeight" step="100">
                         </div>
                       </li>
                       <li class="option">
