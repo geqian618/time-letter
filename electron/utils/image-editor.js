@@ -125,8 +125,8 @@ function drawVerticalText(ctx, text, x, y, fontSize, rotation = 0) {
             const textMetrics = ctx.measureText(char);
             const charHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
             const charWidth = textMetrics.width;
-            const offsetX = (fontSize - charWidth) / 2;
-            const offsetY = (fontSize - charHeight) / 2;
+            const offsetX = Math.max((fontSize - charWidth) / 2, 0);
+            const offsetY = Math.max((fontSize - charHeight) / 2, 0);
             ctx.translate(x + offsetX, y + i * fontSize + offsetY);
             ctx.rotate(0);
             ctx.fillText(char, 0, 0);
