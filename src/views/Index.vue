@@ -2678,7 +2678,6 @@ async function handlePreview(event, image) {
     if (!beforePath || beforePath !== image.path) {
       image.visible = true;
       await nextTick()
-      initImageSize(image)
       if (image.isUpdate) {
         await refreshTemplate(image.path)
       }
@@ -2693,63 +2692,6 @@ async function handlePreview(event, image) {
     settings.value.metadata = image.metadata
     settings.value.border = image.settings.border
   }
-}
-
-
-const initImageSize = (image) => {
-  const previewImage = image.getTargetElement();
-  const canvasElement = previewImage.parentNode;
-  const viewElement = canvasElement.parentNode;
-  const {width: canvasWidth, height: canvasHeight} = canvasElement.getBoundingClientRect()
-  const {width: viewWidth, height: viewHeight} = viewElement.getBoundingClientRect();
-  const {naturalWidth: imageWidth, naturalHeight: imageHeight} = previewImage
-  const scaleX = viewWidth / imageWidth;
-  const scaleY = viewHeight / imageHeight;
-  const scale = Math.min(scaleX, scaleY) * 0.9;
-  previewImage.style.width = imageWidth * scale + 'px'
-  previewImage.style.height = imageHeight * scale + 'px'
-
-  // 计算居中位置
-  const centerX = canvasWidth / 2;
-  const centerY = canvasHeight / 2;
-
-
-  // 初始化时自动滚动到图形内容区域
-  function moveScrollBarToCenter() {
-    // 计算滚动位置，使图形内容居中
-    const scrollLeft = (canvasWidth - viewWidth) / 2;
-    const scrollTop = (canvasHeight - viewHeight) / 2;
-
-    // 设置滚动位置
-    viewElement.scrollLeft = Math.max(0, scrollLeft);
-    viewElement.scrollTop = Math.max(0, scrollTop);
-  }
-
-
-  // 设置缩放比例
-  function setScale(scale) {
-    // 限制缩放范围
-    currentScale = scale;
-    // 应用缩放变换
-    viewElement.style.transform = `scale(${currentScale})`;
-    // 设置变换原点为中心点
-    viewElement.style.transformOrigin = `${centerX}px ${centerY}px`;
-  }
-
-  // 缩放函数
-  function zoom(direction) {
-    const newScale = direction === 'in' ? currentScale + scaleStep : currentScale - scaleStep;
-    setScale(newScale);
-  }
-
-  // 滚轮缩放事件
-  viewElement.addEventListener('wheel', function (e) {
-    // 阻止默认滚动行为
-    e.preventDefault();
-    // 根据滚轮方向确定缩放方向
-    const direction = e.deltaY < 0 ? 'in' : 'out';
-    zoom(direction);
-  }, {passive: false});
 }
 
 
