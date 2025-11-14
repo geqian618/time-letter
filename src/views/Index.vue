@@ -74,7 +74,9 @@
 
         <div class="page-center">
           <template v-for="([key, image]) in images" :key="image.path">
-            <div class="preview-item" :path="image.path" v-show="image.visible" @contextmenu="openContextMenu">
+            <div class="canvas" :path="image.path" v-show="image.visible" @contextmenu="openContextMenu">
+              <div class="normal-background"></div>
+              <div class="blur-background"></div>
               <img :src="image.url" :id="image.path">
             </div>
           </template>
@@ -1326,7 +1328,9 @@ const watchInputImages = () => {
           let settings = {
             metadata: null,
             visible: false,
+            completed: false,
             previewElement: null,
+            scale: 1,
             render: false,
             isUpdate: false,
             settings: {
@@ -1352,6 +1356,9 @@ const watchInputImages = () => {
             },
             getTriggerElement() {
               return imageList.value.querySelector(`[path="${path.replace(/\\/g, '\\\\')}"]`)
+            },
+            getRealValueBeforeScale(value) {
+              return value * (1 / this.scale)
             }
           }
 
@@ -1596,16 +1603,16 @@ const watchContextMenu = () => {
 
           const {settings} = image
 
-          const {height, width} = image.getTargetElement().getBoundingClientRect();
+          const {offsetWidth, offsetHeight} = image.getTargetElement();
 
           const textList = Array.from(settings.texts.values()).map(item => {
-            item.options.fontSizeRatio = item.options.fontSize / width
+            item.options.fontSizeRatio = item.options.fontSize / offsetWidth
             return item
           });
 
           const imageList = Array.from(settings.images.values()).map(item => {
-            item.options.imageWidthRatio = item.width / width
-            item.options.imageHeightRatio = item.height / height
+            item.options.imageWidthRatio = item.width / offsetWidth
+            item.options.imageHeightRatio = item.height / offsetHeight
             return item
           });
 
@@ -1627,7 +1634,12 @@ const watchContextMenu = () => {
             beforeElement = nextElement;
           }
         }
+
         currentSelectedElement.visible = true
+
+        await nextTick()
+
+        moveScrollBarToCenter(currentSelectedElement)
 
         window.electronAPI.requestSaveFiles(_.cloneDeep(newSettings))
         downloadProgressVisible.value = true
@@ -2678,6 +2690,9 @@ async function handlePreview(event, image) {
     if (!beforePath || beforePath !== image.path) {
       image.visible = true;
       await nextTick()
+      if (!image.completed) {
+        initImageSize(image)
+      }
       if (image.isUpdate) {
         await refreshTemplate(image.path)
       }
@@ -2694,6 +2709,101 @@ async function handlePreview(event, image) {
   }
 }
 
+
+const initImageSize = (image) => {
+  const previewImage = image.getTargetElement();
+  const canvasElement = previewImage.parentNode;
+  const normalBackgroundElement = canvasElement.querySelector('.normal-background');
+  const blurBackgroundElement = canvasElement.querySelector('.blur-background');
+  const viewElement = canvasElement.parentNode;
+  const {width: canvasWidth, height: canvasHeight} = canvasElement.getBoundingClientRect()
+  const {width: viewWidth, height: viewHeight} = viewElement.getBoundingClientRect();
+  const {naturalWidth: imageWidth, naturalHeight: imageHeight} = previewImage
+
+  // 缩放相关变量
+  let currentScale = 1;
+  const minScale = 0.5;
+  const maxScale = 5;
+  const scaleStep = 0.1;
+
+  const scaleX = viewWidth / imageWidth;
+  const scaleY = viewHeight / imageHeight;
+
+  const scale = Math.min(scaleX, scaleY) * 0.9;
+  const newImageWidth = imageWidth * scale;
+  const newImageHeight = imageHeight * scale;
+
+  const offsetLeft = (canvasWidth - newImageWidth) / 2;
+  const offsetTop = (canvasHeight - newImageHeight) / 2;
+
+  previewImage.style.width = newImageWidth + 'px'
+  previewImage.style.height = newImageHeight + 'px'
+
+  normalBackgroundElement.style.width = newImageWidth + 'px'
+  normalBackgroundElement.style.height = newImageHeight + 'px'
+
+  blurBackgroundElement.style.width = newImageWidth + 'px'
+  blurBackgroundElement.style.height = newImageHeight + 'px'
+
+  previewImage.style.left = offsetLeft + 'px'
+  previewImage.style.top = offsetTop + 'px'
+
+  normalBackgroundElement.style.left = offsetLeft + 'px'
+  normalBackgroundElement.style.top = offsetTop + 'px'
+
+  blurBackgroundElement.style.left = offsetLeft + 'px'
+  blurBackgroundElement.style.top = offsetTop + 'px'
+
+  // 计算居中位置
+  const centerX = canvasWidth / 2;
+  const centerY = canvasHeight / 2;
+
+  moveScrollBarToCenter(image)
+
+  image.completed = true
+
+  // 设置缩放比例
+  function setScale(scale) {
+    // 限制缩放范围
+    currentScale = Math.min(Math.max(minScale, scale), maxScale);
+    // 应用缩放变换
+    canvasElement.style.transform = `scale(${currentScale})`;
+    // 设置变换原点为中心点
+    canvasElement.style.transformOrigin = `${centerX}px ${centerY}px`;
+
+    image.scale = currentScale
+  }
+
+  // 缩放函数
+  function zoom(direction) {
+    const newScale = direction === 'in' ? currentScale + scaleStep : currentScale - scaleStep;
+    setScale(newScale);
+  }
+
+  // 滚轮缩放事件
+  canvasElement.addEventListener('wheel', function (e) {
+    // 阻止默认滚动行为
+    e.preventDefault();
+    // 根据滚轮方向确定缩放方向
+    const direction = e.deltaY < 0 ? 'in' : 'out';
+    zoom(direction);
+  }, {passive: false});
+}
+
+// 初始化时自动滚动到图形内容区域
+function moveScrollBarToCenter(image) {
+  const previewImage = image.getTargetElement();
+  const canvasElement = previewImage.parentNode;
+  const viewElement = canvasElement.parentNode;
+  const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement
+  const {clientWidth: viewWidth, clientHeight: viewHeight} = viewElement
+  // 计算滚动位置，使图形内容居中
+  const scrollLeft = (canvasWidth - viewWidth) / 2;
+  const scrollTop = (canvasHeight - viewHeight) / 2;
+  // 设置滚动位置
+  viewElement.scrollLeft = Math.max(0, scrollLeft);
+  viewElement.scrollTop = Math.max(0, scrollTop);
+}
 
 const handleCtrlClick = (event, image) => {
   const element = event.target;
@@ -3099,8 +3209,8 @@ const listenerPlaceElements = (previewImage, image) => {
         // 关键：必须设为绝对定位
         dragElement.style.position = 'absolute'
 
-        const elementLeft = mouseX - parentRect.left - offsetX;
-        const elementTop = mouseY - parentRect.top - offsetY;
+        const elementLeft = image.getRealValueBeforeScale(mouseX - parentRect.left - offsetX);
+        const elementTop = image.getRealValueBeforeScale(mouseY - parentRect.top - offsetY);
         const elementRight = parentRect.width - elementLeft - elementWidth;
         const elementBottom = parentRect.height - elementTop - elementHeight
 
@@ -3175,7 +3285,7 @@ const listenerPlaceElements = (previewImage, image) => {
           settings.value.text.options.fontColor = dragElementStyle.color
           settings.value.text.options.fontStyle = dragElementStyle.fontStyle
           settings.value.text.options.fontWeight = Number.parseInt(dragElementStyle.fontWeight)
-          settings.value.text.options.fontSizeRatio = fontSize / containerRect.width
+          settings.value.text.options.fontSizeRatio = fontSize / image.getRealValueBeforeScale(containerRect.width)
           settings.value.text.options.textDirection = 0
           image.settings.texts.set(dragElement, _.cloneDeep(settings.value.text))
         } else {
@@ -3197,8 +3307,8 @@ const listenerPlaceElements = (previewImage, image) => {
           settings.value.image.originalHeight = imageHeight
           settings.value.image.width = imageWidth
           settings.value.image.height = imageHeight
-          settings.value.image.options.imageHeightRatio = imageHeight / containerRect.height
-          settings.value.image.options.imageWidthRatio = imageWidth / containerRect.width
+          settings.value.image.options.imageHeightRatio = imageHeight / image.getRealValueBeforeScale(containerRect.height)
+          settings.value.image.options.imageWidthRatio = imageWidth / image.getRealValueBeforeScale(containerRect.width)
 
           image.settings.images.set(dragElement, _.cloneDeep(settings.value.image))
         }
@@ -3275,13 +3385,13 @@ function makeDraggable(dragElement, path) {
     let initialTop = parseFloat(dragElement.style.top) || parentRect.height - parseFloat(dragElement.style.bottom) - elementHeight;
 
     // 获取鼠标位置
-    offsetLeft = event.clientX - elementRect.left;
+    offsetLeft = image.getRealValueBeforeScale(event.clientX - elementRect.left)
 
-    offsetRight = elementRect.right - event.clientX;
+    offsetRight = image.getRealValueBeforeScale(elementRect.right - event.clientX)
 
-    offsetTop = event.clientY - elementRect.top
+    offsetTop = image.getRealValueBeforeScale(event.clientY - elementRect.top)
 
-    offsetBottom = elementRect.bottom - event.clientY
+    offsetBottom = image.getRealValueBeforeScale(elementRect.bottom - event.clientY)
 
     mouseSetupX = event.clientX
 
@@ -3374,8 +3484,8 @@ function makeDraggable(dragElement, path) {
       // }
 
       // 计算移动距离（考虑旋转后的坐标系）
-      const dx = mouseX - startX;
-      const dy = mouseY - startY;
+      const dx = image.getRealValueBeforeScale(mouseX - startX);
+      const dy = image.getRealValueBeforeScale(mouseY - startY);
 
       // 计算新位置
       const elementLeft = initialLeft + dx;
@@ -3397,11 +3507,11 @@ function makeDraggable(dragElement, path) {
       let offsetLeft;
       let offsetTop;
 
-      positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
-      offsetLeft = positionOffsetX / containerRect.width;
+      positionOffsetX = elementLeft - image.getRealValueBeforeScale(containerRect.left - parentRect.left)
+      offsetLeft = positionOffsetX / image.getRealValueBeforeScale(containerRect.width);
 
-      positionOffsetY = elementTop - (containerRect.top - parentRect.top)
-      offsetTop = positionOffsetY / containerRect.height;
+      positionOffsetY = elementTop - image.getRealValueBeforeScale(containerRect.top - parentRect.top)
+      offsetTop = positionOffsetY / image.getRealValueBeforeScale(containerRect.height);
 
       if (elementLeft > elementRight) {
         references.push('right')
@@ -3741,26 +3851,27 @@ function makeDraggable(dragElement, path) {
       background: var(--preview-background-color);
       width: var(--page-center-width);
       height: 100%;
-      border-bottom: none;
       box-sizing: border-box;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      overflow: auto;
 
-      .preview-item {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        padding: 5%;
-        justify-content: center;
-        align-items: center;
+      .canvas {
+
+        width: 300%;
+        height: 300%;
         position: relative;
-        overflow: hidden; /* 隐藏超出部分 */
+
+        .normal-background {
+          position: absolute;
+          z-index: -100;
+        }
+
+        .blur-background {
+          position: absolute;
+          z-index: -1000;
+        }
+
         img {
-          max-width: 100%;
-          max-height: 100%;
-          width: auto;
-          height: auto;
+          position: absolute;
         }
       }
     }
