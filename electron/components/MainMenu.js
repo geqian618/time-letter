@@ -1,12 +1,11 @@
 const {app, dialog, Menu, shell} = require('electron');
 const path = require('path')
 const fs = require('fs')
-const {getResourcePath, getFontPath} = require('../utils/path-helper')
+const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('../utils/path-helper')
 const resourcesPath = getResourcePath()
 const fontPath = getFontPath()
 const {createChildWindow} = require('../components/ChildWindow')
 const {registerFonts} = require('../hook/font-manager')
-const {getSafeImagePath} = require('../utils/path-helper')
 
 /**
  * 图片导入
@@ -23,7 +22,7 @@ const selectFile = async () => {
                 const extname = path.extname(filePath).slice(1);
                 return {
                     filename: path.basename(filePath),
-                    url: getSafeImagePath(filePath),
+                    url: localPathToProtocolUrl(filePath),
                     path: filePath,
                     extname: extname
                 };
@@ -54,7 +53,7 @@ const selectFonts = async () => {
                 const fileParsed = path.parse(filePath);
                 const font = {
                     family: fileParsed.name,
-                    url: getSafeImagePath(filePath),
+                    url: localPathToProtocolUrl(filePath),
                     path: filePath,
                 };
                 return [font.family, font]
@@ -83,7 +82,7 @@ const selectImageLabels = async () => {
                 filePath = path.join(resourcesPath, path.basename(filePath));
                 return {
                     filename: path.basename(filePath),
-                    url: getSafeImagePath(filePath),
+                    url: localPathToProtocolUrl(filePath),
                     path: filePath,
                     extname: extname
                 };

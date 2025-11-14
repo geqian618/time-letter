@@ -7,9 +7,8 @@ const loadFont = async (fontFamily, path) => {
         console.log(`字体 "${fontFamily}" 已加载，跳过重复加载`);
         return;
     }
-
     // 定义字体
-    const fontFace = new FontFace(fontFamily, `url('${encodeURI(path)}') format('truetype')`);
+    const fontFace = new FontFace(fontFamily, `url('${path}') format('truetype')`);
     try {
         // 加载字体
         const font = await fontFace.load();

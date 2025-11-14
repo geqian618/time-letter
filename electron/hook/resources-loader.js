@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const {getResourcePath, getSafeImagePath} = require('../utils/path-helper')
+const {getResourcePath, localPathToProtocolUrl} = require('../utils/path-helper')
 const resourcesPath = getResourcePath()
 const {reloadFonts} = require('./font-manager')
 
@@ -11,7 +11,7 @@ const loadImageLabels = (window) => {
             const extname = path.extname(filename).slice(1);
             return {
                 filename: filename,
-                url: getSafeImagePath(path.join(resourcesPath, filename)),
+                url: localPathToProtocolUrl(path.join(resourcesPath, filename)),
                 path: path.join(resourcesPath, filename),
                 extname: extname
             };

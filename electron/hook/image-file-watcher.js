@@ -1,8 +1,7 @@
 const chokidar = require('chokidar')
 
-const {loadImageLabels} = require('./resources-loader');
 const path = require("path");
-const {getSafeImagePath} = require("../utils/path-helper");
+const {localPathToProtocolUrl} = require("../utils/path-helper");
 
 let watcher;
 
@@ -29,7 +28,7 @@ const imageFileWatcher = async (window, folderPath) => {
             const pathParsed = path.parse(filePath);
             const image = {
                 filename: path.basename(filePath),
-                url: getSafeImagePath(filePath),
+                url: localPathToProtocolUrl(filePath),
                 path: filePath,
                 extname: pathParsed.ext
             };

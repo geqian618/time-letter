@@ -1,7 +1,7 @@
 const {GlobalFonts} = require("@napi-rs/canvas");
 const fs = require("fs");
 const path = require("path");
-const {getFontPath, getSafeImagePath} = require("../utils/path-helper");
+const {getFontPath, localPathToProtocolUrl} = require("../utils/path-helper");
 const fontPath = getFontPath();
 const loadedFonts = new Map();
 
@@ -11,7 +11,7 @@ const reloadFonts = () => {
         const fileParsed = path.parse(filename);
         const font = {
             family: fileParsed.name,
-            url: getSafeImagePath(path.join(fontPath, filename)),
+            url: localPathToProtocolUrl(path.join(fontPath, filename)),
             path: path.join(fontPath, filename),
         };
         return [font.family, font]
@@ -30,7 +30,7 @@ const reloadExtendFonts = () => {
         const fileParsed = path.parse(filename);
         const font = {
             family: fileParsed.name,
-            url: getSafeImagePath(path.join(fontPath, filename)),
+            url: localPathToProtocolUrl(path.join(fontPath, filename)),
             path: path.join(fontPath, filename),
         };
         return [font.family, font]

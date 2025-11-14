@@ -1,7 +1,7 @@
 const chokidar = require('chokidar')
 const path = require("path");
 const {registerFonts, removeFonts} = require("./font-manager");
-const {getSafeImagePath} = require("../utils/path-helper");
+const {localPathToProtocolUrl} = require("../utils/path-helper");
 let watcher;
 
 
@@ -27,7 +27,7 @@ const imageFileWatcher = async (window, folderPath) => {
         watcher.on('add', filePath => {
             const fileParse = path.parse(filePath);
             const family = fileParse.name;
-            const font = {family, path: filePath, url: getSafeImagePath(filePath)};
+            const font = {family, path: filePath, url: localPathToProtocolUrl(filePath)};
             registerFonts(font)
             window.webContents.send('watch-input-font', {type: 0, data: new Map([[font.family, font]])})
         }).on('unlink', filePath => {
