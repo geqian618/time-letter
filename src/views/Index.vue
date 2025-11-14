@@ -2691,6 +2691,7 @@ async function handlePreview(event, image) {
     event.target.classList.add('active')
 
     settings.value.metadata = image.metadata
+    settings.value.border = image.settings.border
   }
 }
 
