@@ -3299,78 +3299,147 @@ function makeDraggable(dragElement, path) {
 
       const mouseY = event.clientY;
 
-      if (mouseX >= parentRect.left + offsetLeft && mouseX + offsetRight <= parentRect.right) {
-        if (mouseY >= parentRect.top + offsetTop && mouseY + offsetBottom <= parentRect.bottom) {
+      // if (mouseX >= parentRect.left + offsetLeft && mouseX + offsetRight <= parentRect.right) {
+      //   if (mouseY >= parentRect.top + offsetTop && mouseY + offsetBottom <= parentRect.bottom) {
+      //
+      //     // 计算移动距离（考虑旋转后的坐标系）
+      //     const dx = mouseX - startX;
+      //     const dy = mouseY - startY;
+      //
+      //     // 计算新位置
+      //     const elementLeft = initialLeft + dx;
+      //     const elementTop = initialTop + dy;
+      //     const elementRight = parentRect.width - elementLeft - elementWidth;
+      //     const elementBottom = parentRect.height - elementTop - elementHeight
+      //
+      //     dragElement.style.left = elementLeft + 'px';
+      //     dragElement.style.top = elementTop + 'px';
+      //
+      //     let positionX;
+      //
+      //     let positionY;
+      //
+      //     let positionOffsetX, positionOffsetY
+      //
+      //     let references = []
+      //
+      //     let offsetLeft;
+      //     let offsetTop;
+      //
+      //     positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
+      //     offsetLeft = positionOffsetX / containerRect.width;
+      //
+      //     positionOffsetY = elementTop - (containerRect.top - parentRect.top)
+      //     offsetTop = positionOffsetY / containerRect.height;
+      //
+      //     if (elementLeft > elementRight) {
+      //       references.push('right')
+      //       positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
+      //       positionX = positionOffsetX / containerRect.width
+      //     } else {
+      //       references.push('left')
+      //       positionX = offsetLeft
+      //     }
+      //
+      //     if (elementTop > elementBottom) {
+      //       references.push('bottom')
+      //       positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - elementHeight
+      //       positionY = positionOffsetY / containerRect.height;
+      //       positionY = positionOffsetY / containerRect.height;
+      //     } else {
+      //       references.push('top')
+      //       positionY = offsetTop
+      //     }
+      //
+      //     if (!dragElement.src) {
+      //       const textMark = image.settings.texts.get(dragElement);
+      //       textMark.references = references
+      //       textMark.positionX = positionX
+      //       textMark.positionY = positionY
+      //       textMark.offsetX = positionOffsetX
+      //       textMark.offsetY = positionOffsetY
+      //       textMark.offsetLeft = offsetLeft
+      //       textMark.offsetTop = offsetTop
+      //     } else {
+      //       const imageMark = image.settings.images.get(dragElement);
+      //       imageMark.references = references
+      //       imageMark.positionX = positionX
+      //       imageMark.positionY = positionY
+      //       imageMark.offsetX = positionOffsetX
+      //       imageMark.offsetY = positionOffsetY
+      //       imageMark.offsetLeft = offsetLeft
+      //       imageMark.offsetTop = offsetTop
+      //     }
+      //   }
+      // }
 
-          // 计算移动距离（考虑旋转后的坐标系）
-          const dx = mouseX - startX;
-          const dy = mouseY - startY;
+      // 计算移动距离（考虑旋转后的坐标系）
+      const dx = mouseX - startX;
+      const dy = mouseY - startY;
 
-          // 计算新位置
-          const elementLeft = initialLeft + dx;
-          const elementTop = initialTop + dy;
-          const elementRight = parentRect.width - elementLeft - elementWidth;
-          const elementBottom = parentRect.height - elementTop - elementHeight
+      // 计算新位置
+      const elementLeft = initialLeft + dx;
+      const elementTop = initialTop + dy;
+      const elementRight = parentRect.width - elementLeft - elementWidth;
+      const elementBottom = parentRect.height - elementTop - elementHeight
 
-          dragElement.style.left = elementLeft + 'px';
-          dragElement.style.top = elementTop + 'px';
+      dragElement.style.left = elementLeft + 'px';
+      dragElement.style.top = elementTop + 'px';
 
-          let positionX;
+      let positionX;
 
-          let positionY;
+      let positionY;
 
-          let positionOffsetX, positionOffsetY
+      let positionOffsetX, positionOffsetY
 
-          let references = []
+      let references = []
 
-          let offsetLeft;
-          let offsetTop;
+      let offsetLeft;
+      let offsetTop;
 
-          positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
-          offsetLeft = positionOffsetX / containerRect.width;
+      positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
+      offsetLeft = positionOffsetX / containerRect.width;
 
-          positionOffsetY = elementTop - (containerRect.top - parentRect.top)
-          offsetTop = positionOffsetY / containerRect.height;
+      positionOffsetY = elementTop - (containerRect.top - parentRect.top)
+      offsetTop = positionOffsetY / containerRect.height;
 
-          if (elementLeft > elementRight) {
-            references.push('right')
-            positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
-            positionX = positionOffsetX / containerRect.width
-          } else {
-            references.push('left')
-            positionX = offsetLeft
-          }
+      if (elementLeft > elementRight) {
+        references.push('right')
+        positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
+        positionX = positionOffsetX / containerRect.width
+      } else {
+        references.push('left')
+        positionX = offsetLeft
+      }
 
-          if (elementTop > elementBottom) {
-            references.push('bottom')
-            positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - elementHeight
-            positionY = positionOffsetY / containerRect.height;
-            positionY = positionOffsetY / containerRect.height;
-          } else {
-            references.push('top')
-            positionY = offsetTop
-          }
+      if (elementTop > elementBottom) {
+        references.push('bottom')
+        positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - elementHeight
+        positionY = positionOffsetY / containerRect.height;
+        positionY = positionOffsetY / containerRect.height;
+      } else {
+        references.push('top')
+        positionY = offsetTop
+      }
 
-          if (!dragElement.src) {
-            const textMark = image.settings.texts.get(dragElement);
-            textMark.references = references
-            textMark.positionX = positionX
-            textMark.positionY = positionY
-            textMark.offsetX = positionOffsetX
-            textMark.offsetY = positionOffsetY
-            textMark.offsetLeft = offsetLeft
-            textMark.offsetTop = offsetTop
-          } else {
-            const imageMark = image.settings.images.get(dragElement);
-            imageMark.references = references
-            imageMark.positionX = positionX
-            imageMark.positionY = positionY
-            imageMark.offsetX = positionOffsetX
-            imageMark.offsetY = positionOffsetY
-            imageMark.offsetLeft = offsetLeft
-            imageMark.offsetTop = offsetTop
-          }
-        }
+      if (!dragElement.src) {
+        const textMark = image.settings.texts.get(dragElement);
+        textMark.references = references
+        textMark.positionX = positionX
+        textMark.positionY = positionY
+        textMark.offsetX = positionOffsetX
+        textMark.offsetY = positionOffsetY
+        textMark.offsetLeft = offsetLeft
+        textMark.offsetTop = offsetTop
+      } else {
+        const imageMark = image.settings.images.get(dragElement);
+        imageMark.references = references
+        imageMark.positionX = positionX
+        imageMark.positionY = positionY
+        imageMark.offsetX = positionOffsetX
+        imageMark.offsetY = positionOffsetY
+        imageMark.offsetLeft = offsetLeft
+        imageMark.offsetTop = offsetTop
       }
     }
     document.onmouseup = function closeDragElement() {
@@ -3677,7 +3746,7 @@ function makeDraggable(dragElement, path) {
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: auto; /* 隐藏超出部分 */
+
       .preview-item {
         width: 100%;
         height: 100%;
@@ -3686,7 +3755,7 @@ function makeDraggable(dragElement, path) {
         justify-content: center;
         align-items: center;
         position: relative;
-
+        overflow: hidden; /* 隐藏超出部分 */
         img {
           max-width: 100%;
           max-height: 100%;
