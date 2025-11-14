@@ -3756,12 +3756,12 @@ function makeDraggable(dragElement, path) {
         align-items: center;
         position: relative;
         overflow: hidden; /* 隐藏超出部分 */
-        //img {
-        //  max-width: 100%;
-        //  max-height: 100%;
-        //  width: auto;
-        //  height: auto;
-        //}
+        img {
+          max-width: 100%;
+          max-height: 100%;
+          width: auto;
+          height: auto;
+        }
       }
     }
 
