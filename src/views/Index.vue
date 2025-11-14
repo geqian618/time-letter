@@ -1321,15 +1321,14 @@ const watchInputFonts = () => {
 const watchInputImages = () => {
   window.electronAPI.watchInputImage(async (event, data) => {
     if (data) {
-      for (let [path, item] of data) {
+      for (let [path, image] of data) {
         if (!images.value.has(path)) {
-          let image = {
+          let settings = {
             metadata: null,
             visible: false,
             previewElement: null,
             render: false,
             isUpdate: false,
-            path,
             settings: {
               border: {
                 borderLeft: 0,
@@ -1359,34 +1358,34 @@ const watchInputImages = () => {
           const photoMetadata = await window.electronAPI.parsePhotoMetadata(path);
 
           if (photoMetadata) {
-            image.metadata = photoMetadata
-            if (image.metadata.focalLength) {
-              image.metadata.originalFocalLength = photoMetadata.focalLength
+            settings.metadata = photoMetadata
+            if (settings.metadata.focalLength) {
+              settings.metadata.originalFocalLength = photoMetadata.focalLength
               if (projectSettings.value.metadata.other.enableEquivalentFocalSegment) {
-                image.metadata.focalLength = Number.parseInt(image.metadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
+                settings.metadata.focalLength = Number.parseInt(settings.metadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
               }
             }
           }
 
-          image = {...image, ...item}
+          settings = {...settings, ...image}
 
-          images.value.set(path, image)
+          images.value.set(path, settings)
 
           if (filterType.value === 0) {
-            filterImages.value.set(path, image)
-          } else if (filterType.value === 1 && image.metadata.width > image.metadata.height) {
-            filterImages.value.set(path, image)
-          } else if (filterType.value === 2 && image.metadata.width <= image.metadata.height) {
-            filterImages.value.set(path, image)
+            filterImages.value.set(path, settings)
+          } else if (filterType.value === 1 && settings.metadata.width > settings.metadata.height) {
+            filterImages.value.set(path, settings)
+          } else if (filterType.value === 2 && settings.metadata.width <= settings.metadata.height) {
+            filterImages.value.set(path, settings)
           }
         }
       }
       nextTick(() => {
-        images.value.forEach((image, path) => {
-          if (!image.render) {
-            const element = image.getTargetElement();
-            listenerPlaceElements(element, image);
-            image.render = true
+        images.value.forEach((item, path) => {
+          if (!item.render) {
+            const element = item.getTargetElement();
+            listenerPlaceElements(element, item);
+            item.render = true
           }
         })
       })

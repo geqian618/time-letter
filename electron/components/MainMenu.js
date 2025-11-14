@@ -6,16 +6,7 @@ const resourcesPath = getResourcePath()
 const fontPath = getFontPath()
 const {createChildWindow} = require('../components/ChildWindow')
 const {registerFonts} = require('../hook/font-manager')
-
-function getSafeImagePath(absolutePath) {
-    if (process.platform === 'win32') {
-        // Windows路径处理: C:\foo → /C:/foo
-        const drivePath = absolutePath.replace(/\\/g, '/')
-        return `app://${drivePath}`
-    }
-    // Linux/macOS处理: /foo/bar → /foo/bar
-    return `app://${absolutePath}`
-}
+const {getSafeImagePath} = require('../utils/path-helper')
 
 /**
  * 图片导入

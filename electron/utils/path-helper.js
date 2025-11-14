@@ -14,14 +14,17 @@ const getFontPath = () => {
 }
 
 
-function getSafeImagePath(absolutePath) {
-    if (process.platform === 'win32') {
-        // Windows路径处理: C:\foo → /C:/foo
-        const drivePath = absolutePath.replace(/\\/g, '/')
-        return `app://${drivePath}`
+function getSafeImagePath(filePath) {
+    if (!filePath || typeof filePath !== 'string') {
+        throw new Error('Invalid file path');
     }
-    // Linux/macOS处理: /foo/bar → /foo/bar
-    return `app://${absolutePath}`
+    // 标准化路径分隔符并移除多余斜杠
+    const normalizedPath = filePath
+        // 将 \\ 替换为 /
+        .replace(/\\/g, '/')
+        // 将多个连续斜杠合并为一个
+        .replace(/\/+/g, '/');
+    return `app:///${normalizedPath}`;
 }
 
 module.exports = {getResourcePath, getFontPath, getSafeImagePath}

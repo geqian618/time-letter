@@ -138,8 +138,16 @@ ipcMain.on('create-thread-pool', (event, maxThreads) => {
 app.whenReady().then(() => {
     // 注册安全协议
     protocol.registerFileProtocol('app', (request, callback) => {
-        const path = request.url.replace('app://', '');
-        callback(decodeURIComponent(path));
+        const url = request.url.replace('app://', '')
+        callback({
+            path: decodeURIComponent(url),
+            // 关闭静态资源缓存（重复请求同一个资源路径时，重新向服务器请求访问资源）
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        })
     });
 
     createWindow()
