@@ -145,17 +145,6 @@
                     </template>
                     <ul class="options">
                       <li class="option">
-                        <div class="label">边框数值</div>
-                        <div class="value">
-                          <el-select
-                              @change="switchSliderRange"
-                              v-model="settings.border.borderType"
-                              :options="borderOptions"
-                              size="small"
-                              placeholder="Select"/>
-                        </div>
-                      </li>
-                      <li class="option">
                         <div class="label">上边框</div>
                         <div class="value">
                           <el-slider @change="handleBorders"
@@ -1125,7 +1114,6 @@ const settings = ref({
     }
   },
   border: {
-    borderType: 0,
     borderLeft: 0,
     borderRight: 0,
     borderTop: 0,
@@ -1344,7 +1332,6 @@ const watchInputImages = () => {
             path,
             settings: {
               border: {
-                borderType: 0,
                 borderLeft: 0,
                 borderRight: 0,
                 borderTop: 0,
@@ -1405,14 +1392,6 @@ const watchInputImages = () => {
       })
     }
   });
-}
-
-const switchSliderRange = () => {
-  if (settings.value.border.borderType === 0) {
-    sliderRange.value.max = 200
-  } else {
-    sliderRange.value.max = 25
-  }
 }
 
 const selectDirectory = async () => {
@@ -1672,7 +1651,6 @@ const watchContextMenu = () => {
 const reset = (path) => {
   const image = clearAllLabels(path);
   image.settings.border = {
-    borderType: 0,
     borderLeft: 0,
     borderRight: 0,
     borderTop: 0,
@@ -2808,36 +2786,20 @@ const handleBorders = async () => {
 
   if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
 
-    let {borderLeft, borderRight, borderTop, borderBottom, borderColor, borderType} = settings.value.border;
+    let {borderLeft, borderRight, borderTop, borderBottom, borderColor} = settings.value.border;
 
-    let borderLeftWidth, borderRightWidth, borderTopHeight, borderBottomHeight;
-
-    if (borderType === 0) {
-      borderLeftWidth = borderLeft
-      borderRightWidth = borderRight
-      borderTopHeight = borderTop
-      borderBottomHeight = borderBottom
-    } else {
-      const {offsetWidth, offsetHeight} = targetElement;
-      const baseLength = Math.max(offsetWidth, offsetHeight);
-      borderLeftWidth = baseLength * borderLeft / 100;
-      borderRightWidth = baseLength * borderRight / 100;
-      borderTopHeight = baseLength * borderTop / 100;
-      borderBottomHeight = baseLength * borderBottom / 100;
-    }
-
-    targetElement.style.borderLeft = `${borderLeftWidth}px solid ${borderColor}`
-    targetElement.style.borderRight = `${borderRightWidth}px solid ${borderColor}`
-    targetElement.style.borderTop = `${borderTopHeight}px solid ${borderColor}`
-    targetElement.style.borderBottom = `${borderBottomHeight}px solid ${borderColor}`
+    targetElement.style.borderLeft = `${borderLeft}px solid ${borderColor}`
+    targetElement.style.borderRight = `${borderRight}px solid ${borderColor}`
+    targetElement.style.borderTop = `${borderTop}px solid ${borderColor}`
+    targetElement.style.borderBottom = `${borderBottom}px solid ${borderColor}`
 
     const {clientWidth, clientHeight} = targetElement;
 
     image.settings.border = _.cloneDeep(settings.value.border)
-    image.settings.border.borderLeftRatio = borderLeftWidth / clientWidth
-    image.settings.border.borderRightRatio = borderRightWidth / clientWidth
-    image.settings.border.borderTopRatio = borderTopHeight / clientHeight
-    image.settings.border.borderBottomRatio = borderBottomHeight / clientHeight
+    image.settings.border.borderLeftRatio = borderLeft / clientWidth
+    image.settings.border.borderRightRatio = borderRight / clientWidth
+    image.settings.border.borderTopRatio = borderTop / clientHeight
+    image.settings.border.borderBottomRatio = borderBottom / clientHeight
 
     await nextTick()
 
@@ -2859,36 +2821,20 @@ const renderBorders = (path) => {
 
   if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
 
-    const {borderLeft, borderRight, borderTop, borderBottom, borderColor, borderType} = image.settings.border;
+    const {borderLeft, borderRight, borderTop, borderBottom, borderColor} = image.settings.border;
 
-    let borderLeftWidth, borderRightWidth, borderTopHeight, borderBottomHeight;
-
-    if (borderType === 0) {
-      borderLeftWidth = borderLeft
-      borderRightWidth = borderRight
-      borderTopHeight = borderTop
-      borderBottomHeight = borderBottom
-    } else {
-      const {offsetWidth, offsetHeight} = targetElement;
-      const baseLength = Math.max(offsetWidth, offsetHeight);
-      borderLeftWidth = baseLength * borderLeft / 100;
-      borderRightWidth = baseLength * borderRight / 100;
-      borderTopHeight = baseLength * borderTop / 100;
-      borderBottomHeight = baseLength * borderBottom / 100;
-    }
-
-    targetElement.style.borderLeft = `${borderLeftWidth}px solid ${borderColor}`
-    targetElement.style.borderRight = `${borderRightWidth}px solid ${borderColor}`
-    targetElement.style.borderTop = `${borderTopHeight}px solid ${borderColor}`
-    targetElement.style.borderBottom = `${borderBottomHeight}px solid ${borderColor}`
+    targetElement.style.borderLeft = `${borderLeft}px solid ${borderColor}`
+    targetElement.style.borderRight = `${borderRight}px solid ${borderColor}`
+    targetElement.style.borderTop = `${borderTop}px solid ${borderColor}`
+    targetElement.style.borderBottom = `${borderBottom}px solid ${borderColor}`
 
     const {clientWidth, clientHeight} = targetElement;
 
     // image.settings.border = _.cloneDeep(settings.value.border)
-    image.settings.border.borderLeftRatio = borderLeftWidth / clientWidth
-    image.settings.border.borderRightRatio = borderRightWidth / clientWidth
-    image.settings.border.borderTopRatio = borderTopHeight / clientHeight
-    image.settings.border.borderBottomRatio = borderBottomHeight / clientHeight
+    image.settings.border.borderLeftRatio = borderLeft / clientWidth
+    image.settings.border.borderRightRatio = borderRight / clientWidth
+    image.settings.border.borderTopRatio = borderTop / clientHeight
+    image.settings.border.borderBottomRatio = borderBottom / clientHeight
 
   }
 }
