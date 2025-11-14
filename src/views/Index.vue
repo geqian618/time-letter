@@ -2678,6 +2678,7 @@ async function handlePreview(event, image) {
     if (!beforePath || beforePath !== image.path) {
       image.visible = true;
       await nextTick()
+      initImageSize(image)
       if (image.isUpdate) {
         await refreshTemplate(image.path)
       }
@@ -2692,6 +2693,19 @@ async function handlePreview(event, image) {
     settings.value.metadata = image.metadata
     settings.value.border = image.settings.border
   }
+}
+
+
+const initImageSize = (image) => {
+  const previewImage = image.getTargetElement();
+  const parentNode = previewImage.parentNode;
+  const {clientWidth: parentWidth, clientHeight: parentHeight} = parentNode
+  const {naturalWidth: imageWidth, naturalHeight: imageHeight} = previewImage
+  const scaleX = parentWidth / imageWidth;
+  const scaleY = parentHeight / imageHeight;
+  const scale = Math.min(scaleX, scaleY) * 0.9;
+  previewImage.style.width = imageWidth * scale + 'px'
+  previewImage.style.height = imageHeight * scale + 'px'
 }
 
 
@@ -3750,18 +3764,18 @@ function makeDraggable(dragElement, path) {
       .preview-item {
         width: 100%;
         height: 100%;
-        padding: 5%;
         display: flex;
+        padding: 5%;
         justify-content: center;
         align-items: center;
         position: relative;
         overflow: hidden; /* 隐藏超出部分 */
-        img {
-          max-width: 100%;
-          max-height: 100%;
-          width: auto;
-          height: auto;
-        }
+        //img {
+        //  max-width: 100%;
+        //  max-height: 100%;
+        //  width: auto;
+        //  height: auto;
+        //}
       }
     }
 
