@@ -2691,7 +2691,7 @@ async function handlePreview(event, image) {
       image.visible = true;
       await nextTick()
       if (!image.completed) {
-        initImageSize(image)
+        initializeCanvasLayout(image)
       }
       if (image.isUpdate) {
         await refreshTemplate(image.path)
@@ -2710,7 +2710,7 @@ async function handlePreview(event, image) {
 }
 
 
-const initImageSize = (image) => {
+const initializeCanvasLayout = (image) => {
   const previewImage = image.getTargetElement();
   const canvasElement = previewImage.parentNode;
   const normalBackgroundElement = canvasElement.querySelector('.normal-background');
