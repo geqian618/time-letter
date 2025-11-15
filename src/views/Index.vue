@@ -147,6 +147,16 @@
                     </template>
                     <ul class="options">
                       <li class="option">
+                        <div class="label">边框类型</div>
+                        <div class="value">
+                          <el-select
+                              v-model="settings.border.borderType"
+                              :options="borderOptions"
+                              size="small"
+                              placeholder="Select"/>
+                        </div>
+                      </li>
+                      <li class="option">
                         <div class="label">上边框</div>
                         <div class="value">
                           <el-slider @change="handleBorders"
@@ -200,6 +210,20 @@
                                      placement="top"/>
                           <input type="number" class="number-input" @input="handleBorders"
                                  v-model="settings.border.borderBottom" step="1">
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">模糊值</div>
+                        <div class="value">
+                          <el-slider @change="handleBorders"
+                                     size="small"
+                                     :show-tooltip="false"
+                                     :min="0"
+                                     :max="50"
+                                     v-model="settings.border.borderBlur"
+                                     placement="top"/>
+                          <input type="number" class="number-input" @input="handleBorders"
+                                 v-model="settings.border.borderBlur" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -955,11 +979,11 @@ const filterType = ref(0)
 const borderOptions = [
   {
     value: 0,
-    label: '按固定值增减',
+    label: '通用',
   },
   {
     value: 1,
-    label: '按比例增减',
+    label: '模糊',
   }
 ]
 
@@ -1116,6 +1140,8 @@ const settings = ref({
     }
   },
   border: {
+    borderBlur: 20,
+    borderType: 0,
     borderLeft: 0,
     borderRight: 0,
     borderTop: 0,
@@ -1126,7 +1152,7 @@ const settings = ref({
 
 const sliderRange = ref({
   min: 0,
-  max: 200
+  max: 300
 })
 
 const matchFonts = ref([])
@@ -1337,6 +1363,8 @@ const watchInputImages = () => {
             isUpdate: false,
             settings: {
               border: {
+                borderType: 0,
+                borderBlur: 20,
                 borderLeft: 0,
                 borderRight: 0,
                 borderTop: 0,
@@ -2906,9 +2934,27 @@ const handleBorders = async () => {
 
     const normalBackground = imageElement.parentNode.querySelector('.normal-background');
 
-    let {borderLeft, borderRight, borderTop, borderBottom, borderColor} = settings.value.border;
+    let {borderLeft, borderRight, borderTop, borderBottom, borderColor, borderType, borderBlur} = settings.value.border;
 
-    const oldBorder = normalBackground.border || {borderLeft: 0, borderRight: 0, borderTop: 0, borderBottom: 0};
+    const oldBorder = normalBackground.border || {
+      borderLeft: 0,
+      borderRight: 0,
+      borderTop: 0,
+      borderBottom: 0,
+      borderType: 0
+    };
+
+    borderType === 0 && (normalBackground.style.background = borderColor)
+
+    borderType === 1 && (normalBackground.style.filter = `blur(${borderBlur}px)`)
+
+    if (borderType !== oldBorder.borderType) {
+      if (borderType === 0) {
+        normalBackground.style.filter = ''
+      } else if (borderType === 1) {
+        normalBackground.style.background = `url('${image.url}') center / cover`
+      }
+    }
 
     if (oldBorder.borderLeft !== borderLeft) {
       const increaseWidth = borderLeft - oldBorder.borderLeft;
@@ -2937,8 +2983,6 @@ const handleBorders = async () => {
       const oldHeight = Number.parseFloat(normalBackground.style.height);
       normalBackground.style.height = (oldHeight + increaseHeight) + 'px'
     }
-
-    normalBackground.style.background = borderColor
 
     normalBackground.border = _.cloneDeep(settings.value.border)
 
