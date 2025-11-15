@@ -1330,6 +1330,8 @@ const watchInputImages = () => {
             visible: false,
             completed: false,
             previewElement: null,
+            scrollLeft: 0,
+            scrollTop: 0,
             scale: 1,
             render: false,
             isUpdate: false,
@@ -1356,9 +1358,6 @@ const watchInputImages = () => {
             },
             getTriggerElement() {
               return imageList.value.querySelector(`[path="${path.replace(/\\/g, '\\\\')}"]`)
-            },
-            getRealValueBeforeScale(value) {
-              return value * (1 / this.scale)
             }
           }
 
@@ -2690,6 +2689,7 @@ async function handlePreview(event, image) {
     if (!beforePath || beforePath !== image.path) {
       image.visible = true;
       await nextTick()
+      setScrollBarPosition(image)
       if (!image.completed) {
         initializeCanvasLayout(image)
       }
@@ -2709,6 +2709,12 @@ async function handlePreview(event, image) {
   }
 }
 
+const setScrollBarPosition = (image) => {
+  const viewElement = image.getTargetElement().parentNode.parentNode;
+  // 设置滚动位置
+  viewElement.scrollLeft = image.scrollLeft;
+  viewElement.scrollTop = image.scrollTop;
+}
 
 const initializeCanvasLayout = (image) => {
   const previewImage = image.getTargetElement();
@@ -2803,6 +2809,8 @@ function moveScrollBarToCenter(image) {
   // 设置滚动位置
   viewElement.scrollLeft = Math.max(0, scrollLeft);
   viewElement.scrollTop = Math.max(0, scrollTop);
+  image.scrollLeft = Math.max(0, scrollLeft);
+  image.scrollTop = Math.max(0, scrollTop);
 }
 
 const handleCtrlClick = (event, image) => {
@@ -2892,18 +2900,49 @@ const handleBorders = async () => {
 
   if (!image) return
 
-  const targetElement = image.getTargetElement();
+  const imageElement = image.getTargetElement();
 
-  if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
+  if (imageElement && imageElement.complete && imageElement.naturalWidth > 0) {
+
+    const normalBackground = imageElement.parentNode.querySelector('.normal-background');
 
     let {borderLeft, borderRight, borderTop, borderBottom, borderColor} = settings.value.border;
 
-    targetElement.style.borderLeft = `${borderLeft}px solid ${borderColor}`
-    targetElement.style.borderRight = `${borderRight}px solid ${borderColor}`
-    targetElement.style.borderTop = `${borderTop}px solid ${borderColor}`
-    targetElement.style.borderBottom = `${borderBottom}px solid ${borderColor}`
+    const oldBorder = normalBackground.border || {borderLeft: 0, borderRight: 0, borderTop: 0, borderBottom: 0};
 
-    const {clientWidth, clientHeight} = targetElement;
+    if (oldBorder.borderLeft !== borderLeft) {
+      const increaseWidth = borderLeft - oldBorder.borderLeft;
+      const oldWidth = Number.parseFloat(normalBackground.style.width);
+      const left = Number.parseFloat(normalBackground.style.left);
+      normalBackground.style.width = (oldWidth + increaseWidth) + 'px'
+      normalBackground.style.left = (left - increaseWidth) + 'px'
+    }
+
+    if (oldBorder.borderRight !== borderRight) {
+      const increaseWidth = borderRight - oldBorder.borderRight;
+      const oldWidth = Number.parseFloat(normalBackground.style.width);
+      normalBackground.style.width = (oldWidth + increaseWidth) + 'px'
+    }
+
+    if (oldBorder.borderTop !== borderTop) {
+      const increaseHeight = borderTop - oldBorder.borderTop;
+      const oldHeight = Number.parseFloat(normalBackground.style.height);
+      const top = Number.parseFloat(normalBackground.style.top);
+      normalBackground.style.height = (oldHeight + increaseHeight) + 'px'
+      normalBackground.style.top = (top - increaseHeight) + 'px'
+    }
+
+    if (oldBorder.borderBottom !== borderBottom) {
+      const increaseHeight = borderBottom - oldBorder.borderBottom;
+      const oldHeight = Number.parseFloat(normalBackground.style.height);
+      normalBackground.style.height = (oldHeight + increaseHeight) + 'px'
+    }
+
+    normalBackground.style.background = borderColor
+
+    normalBackground.border = _.cloneDeep(settings.value.border)
+
+    const {clientWidth, clientHeight} = imageElement;
 
     image.settings.border = _.cloneDeep(settings.value.border)
     image.settings.border.borderLeftRatio = borderLeft / clientWidth
@@ -2913,7 +2952,7 @@ const handleBorders = async () => {
 
     await nextTick()
 
-    refreshPositionInformation(selectedElement.value.path)
+    // refreshPositionInformation(selectedElement.value.path)
 
   }
 }
@@ -2921,32 +2960,32 @@ const handleBorders = async () => {
 
 const renderBorders = (path) => {
 
-  const image = images.value.get(path)
-
-  const targetElement = image.getTargetElement();
-
-  if (image.path === selectedElement.value.path) {
-    settings.value.border = image.settings.border
-  }
-
-  if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
-
-    const {borderLeft, borderRight, borderTop, borderBottom, borderColor} = image.settings.border;
-
-    targetElement.style.borderLeft = `${borderLeft}px solid ${borderColor}`
-    targetElement.style.borderRight = `${borderRight}px solid ${borderColor}`
-    targetElement.style.borderTop = `${borderTop}px solid ${borderColor}`
-    targetElement.style.borderBottom = `${borderBottom}px solid ${borderColor}`
-
-    const {clientWidth, clientHeight} = targetElement;
-
-    // image.settings.border = _.cloneDeep(settings.value.border)
-    image.settings.border.borderLeftRatio = borderLeft / clientWidth
-    image.settings.border.borderRightRatio = borderRight / clientWidth
-    image.settings.border.borderTopRatio = borderTop / clientHeight
-    image.settings.border.borderBottomRatio = borderBottom / clientHeight
-
-  }
+  // const image = images.value.get(path)
+  //
+  // const targetElement = image.getTargetElement();
+  //
+  // if (image.path === selectedElement.value.path) {
+  //   settings.value.border = image.settings.border
+  // }
+  //
+  // if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
+  //
+  //   const {borderLeft, borderRight, borderTop, borderBottom, borderColor} = image.settings.border;
+  //
+  //   targetElement.style.borderLeft = `${borderLeft}px solid ${borderColor}`
+  //   targetElement.style.borderRight = `${borderRight}px solid ${borderColor}`
+  //   targetElement.style.borderTop = `${borderTop}px solid ${borderColor}`
+  //   targetElement.style.borderBottom = `${borderBottom}px solid ${borderColor}`
+  //
+  //   const {clientWidth, clientHeight} = targetElement;
+  //
+  //   // image.settings.border = _.cloneDeep(settings.value.border)
+  //   image.settings.border.borderLeftRatio = borderLeft / clientWidth
+  //   image.settings.border.borderRightRatio = borderRight / clientWidth
+  //   image.settings.border.borderTopRatio = borderTop / clientHeight
+  //   image.settings.border.borderBottomRatio = borderBottom / clientHeight
+  //
+  // }
 }
 
 
@@ -3183,9 +3222,11 @@ const listenerPlaceElements = (previewImage, image) => {
 
     const mouseY = event.clientY;
 
-    const parentRect = previewImage.parentNode.getBoundingClientRect();
+    const canvasElement = previewImage.parentNode;
 
-    const containerRect = previewImage.getBoundingClientRect();
+    const canvasRect = canvasElement.getBoundingClientRect();
+
+    const imageRect = previewImage.getBoundingClientRect();
 
     document.body.append(dragElement);
 
@@ -3202,18 +3243,17 @@ const listenerPlaceElements = (previewImage, image) => {
 
     dragElement.remove()
 
-    if (mouseX >= parentRect.left + offsetX && mouseX + (elementWidth - offsetX) <= parentRect.right) {
+    if (mouseX >= canvasRect.left + offsetX && mouseX + (elementWidth - offsetX) <= canvasRect.right) {
 
-      if (mouseY >= parentRect.top + offsetY && mouseY + (elementHeight - offsetY) <= parentRect.bottom) {
+      if (mouseY >= canvasRect.top + offsetY && mouseY + (elementHeight - offsetY) <= canvasRect.bottom) {
 
         // 关键：必须设为绝对定位
         dragElement.style.position = 'absolute'
 
-        const elementLeft = image.getRealValueBeforeScale(mouseX - parentRect.left - offsetX);
-        const elementTop = image.getRealValueBeforeScale(mouseY - parentRect.top - offsetY);
-        const elementRight = parentRect.width - elementLeft - elementWidth;
-        const elementBottom = parentRect.height - elementTop - elementHeight
-
+        const elementLeft = (mouseX - canvasRect.left - offsetX) / image.scale;
+        const elementTop = (mouseY - canvasRect.top - offsetY) / image.scale;
+        const elementRight = canvasElement.offsetWidth - elementLeft - elementWidth;
+        const elementBottom = canvasElement.offsetHeight - elementTop - elementHeight
 
         // 设置元素定位
         dragElement.style.left = `${elementLeft}px`;
@@ -3222,31 +3262,23 @@ const listenerPlaceElements = (previewImage, image) => {
         // 关键：将元素添加到容器
         previewImage.parentNode.appendChild(dragElement);
 
-        let positionX;
-
-        let positionY;
-
-        let positionOffsetX;
-
-        let positionOffsetY;
-
+        let positionX, positionY
+        let positionOffsetX, positionOffsetY;
+        let offsetLeft, offsetTop;
         let references = []
-
-        let offsetLeft;
-        let offsetTop;
 
         const dragElementRect = dragElement.getBoundingClientRect();
 
-        positionOffsetX = dragElementRect.left - containerRect.left
-        offsetLeft = positionOffsetX / containerRect.width;
+        positionOffsetX = (dragElementRect.left - imageRect.left) / image.scale
+        offsetLeft = positionOffsetX / (imageRect.width / image.scale);
 
-        positionOffsetY = dragElementRect.top - containerRect.top
-        offsetTop = positionOffsetY / containerRect.height;
+        positionOffsetY = (dragElementRect.top - imageRect.top) / image.scale
+        offsetTop = positionOffsetY / (imageRect.height / image.scale);
 
         if (elementLeft > elementRight) {
           references.push('right')
-          positionOffsetX = containerRect.right - dragElementRect.left - dragElementRect.width
-          positionX = positionOffsetX / containerRect.width
+          positionOffsetX = (imageRect.right - dragElementRect.left - dragElementRect.width) / image.scale
+          positionX = positionOffsetX / imageRect.width / image.scale
         } else {
           references.push('left')
           positionX = offsetLeft;
@@ -3254,8 +3286,8 @@ const listenerPlaceElements = (previewImage, image) => {
 
         if (elementTop > elementBottom) {
           references.push('bottom')
-          positionOffsetY = containerRect.bottom - dragElementRect.top - dragElementRect.height
-          positionY = positionOffsetY / containerRect.height;
+          positionOffsetY = (imageRect.bottom - dragElementRect.top - dragElementRect.height) / image.scale
+          positionY = positionOffsetY / imageRect.height / image.scale;
         } else {
           references.push('top')
           positionY = offsetTop;
@@ -3285,7 +3317,7 @@ const listenerPlaceElements = (previewImage, image) => {
           settings.value.text.options.fontColor = dragElementStyle.color
           settings.value.text.options.fontStyle = dragElementStyle.fontStyle
           settings.value.text.options.fontWeight = Number.parseInt(dragElementStyle.fontWeight)
-          settings.value.text.options.fontSizeRatio = fontSize / image.getRealValueBeforeScale(containerRect.width)
+          settings.value.text.options.fontSizeRatio = fontSize / imageRect.width / image.scale
           settings.value.text.options.textDirection = 0
           image.settings.texts.set(dragElement, _.cloneDeep(settings.value.text))
         } else {
@@ -3307,8 +3339,8 @@ const listenerPlaceElements = (previewImage, image) => {
           settings.value.image.originalHeight = imageHeight
           settings.value.image.width = imageWidth
           settings.value.image.height = imageHeight
-          settings.value.image.options.imageHeightRatio = imageHeight / image.getRealValueBeforeScale(containerRect.height)
-          settings.value.image.options.imageWidthRatio = imageWidth / image.getRealValueBeforeScale(containerRect.width)
+          settings.value.image.options.imageHeightRatio = imageHeight / imageRect.height / image.scale
+          settings.value.image.options.imageWidthRatio = imageWidth / imageRect.width / image.scale
 
           image.settings.images.set(dragElement, _.cloneDeep(settings.value.image))
         }
@@ -3371,31 +3403,31 @@ function makeDraggable(dragElement, path) {
 
     event.preventDefault();
 
-    const parentRect = previewImage.parentNode.getBoundingClientRect();
-    // 限制在画布范围内
-    const containerRect = previewImage.getBoundingClientRect();
-    const elementRect = dragElement.getBoundingClientRect();
+    const canvasElement = previewImage.parentNode;
+
+    const canvasRect = canvasElement.getBoundingClientRect();
+
+    const dragElementRect = dragElement.getBoundingClientRect();
 
     // 记录初始鼠标位置和元素位置
     let startX = event.clientX;
     let startY = event.clientY;
-    const elementWidth = parseFloat(dragElement.style.width) || parseFloat(window.getComputedStyle(dragElement).width);
-    const elementHeight = parseFloat(dragElement.style.height) || parseFloat(window.getComputedStyle(dragElement).height);
-    let initialLeft = parseFloat(dragElement.style.left) || parentRect.width - parseFloat(dragElement.style.right) - elementWidth;
-    let initialTop = parseFloat(dragElement.style.top) || parentRect.height - parseFloat(dragElement.style.bottom) - elementHeight;
-
-    // 获取鼠标位置
-    offsetLeft = image.getRealValueBeforeScale(event.clientX - elementRect.left)
-
-    offsetRight = image.getRealValueBeforeScale(elementRect.right - event.clientX)
-
-    offsetTop = image.getRealValueBeforeScale(event.clientY - elementRect.top)
-
-    offsetBottom = image.getRealValueBeforeScale(elementRect.bottom - event.clientY)
 
     mouseSetupX = event.clientX
-
     mouseSetupY = event.clientY
+
+    const elementWidth = parseFloat(dragElement.style.width) || parseFloat(window.getComputedStyle(dragElement).width);
+    const elementHeight = parseFloat(dragElement.style.height) || parseFloat(window.getComputedStyle(dragElement).height);
+    let initialLeft = parseFloat(dragElement.style.left) || canvasRect.width / image.scale - parseFloat(dragElement.style.right) - elementWidth;
+    let initialTop = parseFloat(dragElement.style.top) || canvasRect.height / image.scale - parseFloat(dragElement.style.bottom) - elementHeight;
+
+
+    // 获取鼠标位置
+    offsetLeft = (startX - dragElementRect.left) / image.scale
+    offsetRight = (dragElementRect.right - startX) / image.scale
+    offsetTop = (startY - dragElementRect.top) / image.scale
+    offsetBottom = (dragElementRect.bottom - startY) / image.scale
+
 
     document.onmousemove = function elementDrag(event) {
 
@@ -3408,6 +3440,11 @@ function makeDraggable(dragElement, path) {
       const mouseX = event.clientX;
 
       const mouseY = event.clientY;
+
+      // 限制在画布范围内
+      const newImageRect = previewImage.getBoundingClientRect();
+
+      const newDragElementRect = dragElement.getBoundingClientRect();
 
       // if (mouseX >= parentRect.left + offsetLeft && mouseX + offsetRight <= parentRect.right) {
       //   if (mouseY >= parentRect.top + offsetTop && mouseY + offsetBottom <= parentRect.bottom) {
@@ -3484,52 +3521,45 @@ function makeDraggable(dragElement, path) {
       // }
 
       // 计算移动距离（考虑旋转后的坐标系）
-      const dx = image.getRealValueBeforeScale(mouseX - startX);
-      const dy = image.getRealValueBeforeScale(mouseY - startY);
+      const dx = (mouseX - startX) / image.scale;
+      const dy = (mouseY - startY) / image.scale;
 
       // 计算新位置
       const elementLeft = initialLeft + dx;
       const elementTop = initialTop + dy;
-      const elementRight = parentRect.width - elementLeft - elementWidth;
-      const elementBottom = parentRect.height - elementTop - elementHeight
+      const elementRight = canvasRect.width / image.scale - elementLeft - elementWidth;
+      const elementBottom = canvasRect.height / image.scale - elementTop - elementHeight
 
       dragElement.style.left = elementLeft + 'px';
       dragElement.style.top = elementTop + 'px';
 
-      let positionX;
-
-      let positionY;
-
-      let positionOffsetX, positionOffsetY
-
+      let positionX, positionY
+      let positionOffsetX, positionOffsetY;
+      let offsetLeft, offsetTop;
       let references = []
 
-      let offsetLeft;
-      let offsetTop;
+      positionOffsetX = (newDragElementRect.left - newImageRect.left) / image.scale
+      offsetLeft = positionOffsetX / (newImageRect.width / image.scale);
 
-      positionOffsetX = elementLeft - image.getRealValueBeforeScale(containerRect.left - parentRect.left)
-      offsetLeft = positionOffsetX / image.getRealValueBeforeScale(containerRect.width);
-
-      positionOffsetY = elementTop - image.getRealValueBeforeScale(containerRect.top - parentRect.top)
-      offsetTop = positionOffsetY / image.getRealValueBeforeScale(containerRect.height);
+      positionOffsetY = (newDragElementRect.top - newImageRect.top) / image.scale
+      offsetTop = positionOffsetY / (newImageRect.height / image.scale);
 
       if (elementLeft > elementRight) {
         references.push('right')
-        positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
-        positionX = positionOffsetX / containerRect.width
+        positionOffsetX = (newImageRect.right - newDragElementRect.left - newDragElementRect.width) / image.scale
+        positionX = positionOffsetX / newImageRect.width / image.scale
       } else {
         references.push('left')
-        positionX = offsetLeft
+        positionX = offsetLeft;
       }
 
       if (elementTop > elementBottom) {
         references.push('bottom')
-        positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - elementHeight
-        positionY = positionOffsetY / containerRect.height;
-        positionY = positionOffsetY / containerRect.height;
+        positionOffsetY = (newImageRect.bottom - newDragElementRect.top - newDragElementRect.height) / image.scale
+        positionY = positionOffsetY / newImageRect.height / image.scale;
       } else {
         references.push('top')
-        positionY = offsetTop
+        positionY = offsetTop;
       }
 
       if (!dragElement.src) {
