@@ -1639,10 +1639,10 @@ const watchContextMenu = () => {
 
         await nextTick()
 
-        moveScrollBarToCenter(currentSelectedElement)
-
         window.electronAPI.requestSaveFiles(_.cloneDeep(newSettings))
+
         downloadProgressVisible.value = true
+
       } else if (type === 2) {
         openSaveTemplateDialog()
       } else if (type === 3) {
@@ -2729,7 +2729,7 @@ const initImageSize = (image) => {
   const scaleX = viewWidth / imageWidth;
   const scaleY = viewHeight / imageHeight;
 
-  const scale = Math.min(scaleX, scaleY) * 0.9;
+  const scale = Math.min(scaleX, scaleY) * 0.8;
   const newImageWidth = imageWidth * scale;
   const newImageHeight = imageHeight * scale;
 
