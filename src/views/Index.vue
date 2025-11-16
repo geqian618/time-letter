@@ -75,8 +75,7 @@
         <div class="page-center">
           <template v-for="([key, image]) in images" :key="image.path">
             <div class="canvas" :path="image.path" v-show="image.visible" @contextmenu="openContextMenu">
-              <div class="normal-background"></div>
-              <div class="blur-background"></div>
+              <div class="image-background"></div>
               <img :src="image.url" :id="image.path">
             </div>
           </template>
@@ -1140,7 +1139,7 @@ const settings = ref({
     }
   },
   border: {
-    borderBlur: 20,
+    borderBlur: 15,
     borderType: 0,
     borderLeft: 0,
     borderRight: 0,
@@ -1364,7 +1363,7 @@ const watchInputImages = () => {
             settings: {
               border: {
                 borderType: 0,
-                borderBlur: 20,
+                borderBlur: 15,
                 borderLeft: 0,
                 borderRight: 0,
                 borderTop: 0,
@@ -1373,6 +1372,7 @@ const watchInputImages = () => {
                 borderRightRatio: 0,
                 borderTopRatio: 0,
                 borderBottomRatio: 0,
+                borderBlurRatio: 0,
                 borderColor: 'rgba(255, 255, 255, 1)',
               },
               texts: new Map(),
@@ -1426,11 +1426,6 @@ const watchInputImages = () => {
     }
   });
 }
-
-const selectDirectory = async () => {
-  projectSettings.value.outputSettings.outputPath = await window.electronAPI.selectDirectory()
-}
-
 
 const createThreadPool = () => {
   const maxThreads = projectSettings.value.performance.downloadThreads;
@@ -1628,18 +1623,20 @@ const watchContextMenu = () => {
 
           const image = images.value.get(paths[i]);
 
+          const imageElement = image.getTargetElement();
+
+          const backgroundRect = imageElement.parentNode.querySelector('.image-background').getBoundingClientRect();
+
           const {settings} = image
 
-          const {offsetWidth, offsetHeight} = image.getTargetElement();
-
           const textList = Array.from(settings.texts.values()).map(item => {
-            item.options.fontSizeRatio = item.options.fontSize / offsetWidth
+            item.options.fontSizeRatio = item.options.fontSize / (backgroundRect.width / image.scale)
             return item
           });
 
           const imageList = Array.from(settings.images.values()).map(item => {
-            item.options.imageWidthRatio = item.width / offsetWidth
-            item.options.imageHeightRatio = item.height / offsetHeight
+            item.options.imageWidthRatio = item.width / (backgroundRect.width / image.scale)
+            item.options.imageHeightRatio = item.height / (backgroundRect.height / image.scale)
             return item
           });
 
@@ -2424,120 +2421,86 @@ const useTemplate = async (options, path) => {
 }
 
 
+function updateElementPosition(image, element, elementSettings) {
+
+  const imageElement = image.getTargetElement();
+
+  const canvasElement = imageElement.parentNode;
+
+  const backgroundElement = canvasElement.querySelector('.image-background');
+
+  const backgroundRect = backgroundElement.getBoundingClientRect();
+
+  const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement;
+
+  const elementRect = element.getBoundingClientRect();
+
+  let positionX, positionY
+
+  let positionOffsetX, positionOffsetY
+
+  let offsetLeft, offsetTop;
+
+  let references = []
+
+  const elementWidth = parseFloat(element.style.width) || parseFloat(window.getComputedStyle(element).width);
+  const elementHeight = parseFloat(element.style.height) || parseFloat(window.getComputedStyle(element).height);
+
+  const elementLeft = parseFloat(element.style.left) || canvasWidth - parseFloat(element.style.right) - elementWidth;
+  const elementTop = parseFloat(element.style.top) || canvasHeight - parseFloat(element.style.bottom) - elementHeight;
+  const elementRight = canvasWidth - elementLeft - elementWidth;
+  const elementBottom = canvasHeight - elementTop - elementHeight
+
+  positionOffsetX = (elementRect.left - backgroundRect.left) / image.scale
+  offsetLeft = positionOffsetX / (backgroundRect.width / image.scale);
+
+  positionOffsetY = (elementRect.top - backgroundRect.top) / image.scale
+  offsetTop = positionOffsetY / (backgroundRect.height / image.scale);
+
+  if (elementLeft > elementRight) {
+    references.push('right')
+    positionOffsetX = (backgroundRect.right - elementRect.left - elementRect.width) / image.scale
+    positionX = positionOffsetX / (backgroundRect.width / image.scale)
+  } else {
+    references.push('left')
+    positionX = offsetLeft;
+  }
+
+  if (elementTop > elementBottom) {
+    references.push('bottom')
+    positionOffsetY = (backgroundRect.bottom - elementRect.top - elementRect.height) / image.scale
+    positionY = positionOffsetY / (backgroundRect.height / image.scale);
+  } else {
+    references.push('top')
+    positionY = offsetTop;
+  }
+
+  elementSettings.references = references
+  elementSettings.positionX = positionX
+  elementSettings.positionY = positionY
+  elementSettings.offsetX = positionOffsetX
+  elementSettings.offsetY = positionOffsetY
+  elementSettings.offsetLeft = offsetLeft
+  elementSettings.offsetTop = offsetTop
+
+  const options = elementSettings.options;
+
+  if (element.src) {
+    options.imageHeightRatio = options.imageHeightRatio / (backgroundRect.height / image.scale)
+    options.imageWidthRatio = options.imageWidthRatio / (backgroundRect.width / image.scale)
+  } else {
+    options.fontSizeRatio = options.fontSize / (backgroundRect.width / image.scale)
+  }
+}
+
 const refreshPositionInformation = (path) => {
-
   const image = images.value.get(path);
-
-  const previewImage = image.getTargetElement();
-
-  const containerRect = previewImage.getBoundingClientRect();
-
-  const parentRect = previewImage.parentNode.getBoundingClientRect();
-
   image.settings.texts.forEach((textLabel, element) => {
-
-    let positionX, positionY
-
-    let positionOffsetX, positionOffsetY
-
-    const elementWidth = parseFloat(element.style.width) || parseFloat(window.getComputedStyle(element).width);
-    const elementHeight = parseFloat(element.style.height) || parseFloat(window.getComputedStyle(element).height);
-
-    const elementLeft = parseFloat(element.style.left) || parentRect.width - parseFloat(element.style.right) - elementWidth;
-    const elementTop = parseFloat(element.style.top) || parentRect.height - parseFloat(element.style.bottom) - elementHeight;
-    const elementRight = parentRect.width - elementLeft - elementWidth;
-    const elementBottom = parentRect.height - elementTop - elementHeight
-
-    let references = []
-
-    let offsetLeft;
-    let offsetTop;
-
-    positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
-    offsetLeft = positionOffsetX / containerRect.width;
-
-    positionOffsetY = elementTop - (containerRect.top - parentRect.top)
-    offsetTop = positionOffsetY / containerRect.height;
-
-
-    if (elementLeft > elementRight) {
-      references.push('right')
-      positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
-      positionX = positionOffsetX / containerRect.width
-    } else {
-      references.push('left')
-      positionX = offsetLeft
-    }
-
-    if (elementTop > elementBottom) {
-      references.push('bottom')
-      positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - elementHeight
-      positionY = positionOffsetY / containerRect.height;
-    } else {
-      references.push('top')
-      positionY = offsetTop
-    }
-
-    textLabel.references = references
-    textLabel.positionX = positionX
-    textLabel.positionY = positionY
-    textLabel.offsetX = positionOffsetX
-    textLabel.offsetY = positionOffsetY
-    textLabel.offsetLeft = offsetLeft
-    textLabel.offsetTop = offsetTop
-
+    updateElementPosition(image, element, textLabel);
   })
 
   image.settings.images.forEach((imageLabel, element) => {
-
-    let positionX, positionY
-
-    let positionOffsetX, positionOffsetY
-
-    const elementWidth = parseFloat(element.style.width) || parseFloat(window.getComputedStyle(element).width);
-    const elementHeight = parseFloat(element.style.height) || parseFloat(window.getComputedStyle(element).height);
-
-    const elementLeft = parseFloat(element.style.left) || parentRect.width - parseFloat(element.style.right) - elementWidth;
-    const elementTop = parseFloat(element.style.top) || parentRect.height - parseFloat(element.style.bottom) - elementHeight;
-    const elementRight = parentRect.width - elementLeft - elementWidth;
-    const elementBottom = parentRect.height - elementTop - elementHeight
-    let references = []
-
-    let offsetLeft;
-    let offsetTop;
-
-    positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
-    offsetLeft = positionOffsetX / containerRect.width;
-
-    positionOffsetY = elementTop - (containerRect.top - parentRect.top)
-    offsetTop = positionOffsetY / containerRect.height;
-
-    if (elementLeft > elementRight) {
-      references.push('right')
-      positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
-      positionX = positionOffsetX / containerRect.width
-    } else {
-      references.push('left')
-      positionX = offsetLeft
-    }
-
-    if (elementTop > elementBottom) {
-      references.push('bottom')
-      positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - elementHeight
-      positionY = positionOffsetY / containerRect.height;
-    } else {
-      references.push('top')
-      positionY = offsetTop
-    }
-
-    imageLabel.references = references
-    imageLabel.positionX = positionX
-    imageLabel.positionY = positionY
-    imageLabel.offsetX = positionOffsetX
-    imageLabel.offsetY = positionOffsetY
-    imageLabel.offsetLeft = offsetLeft
-    imageLabel.offsetTop = offsetTop
-
+    updateElementPosition(image, element, imageLabel);
   })
 }
 
@@ -2747,8 +2710,7 @@ const setScrollBarPosition = (image) => {
 const initializeCanvasLayout = (image) => {
   const previewImage = image.getTargetElement();
   const canvasElement = previewImage.parentNode;
-  const normalBackgroundElement = canvasElement.querySelector('.normal-background');
-  const blurBackgroundElement = canvasElement.querySelector('.blur-background');
+  const backgroundElement = canvasElement.querySelector('.image-background');
   const viewElement = canvasElement.parentNode;
   const {width: canvasWidth, height: canvasHeight} = canvasElement.getBoundingClientRect()
   const {width: viewWidth, height: viewHeight} = viewElement.getBoundingClientRect();
@@ -2773,20 +2735,14 @@ const initializeCanvasLayout = (image) => {
   previewImage.style.width = newImageWidth + 'px'
   previewImage.style.height = newImageHeight + 'px'
 
-  normalBackgroundElement.style.width = newImageWidth + 'px'
-  normalBackgroundElement.style.height = newImageHeight + 'px'
-
-  blurBackgroundElement.style.width = newImageWidth + 'px'
-  blurBackgroundElement.style.height = newImageHeight + 'px'
+  backgroundElement.style.width = newImageWidth + 'px'
+  backgroundElement.style.height = newImageHeight + 'px'
 
   previewImage.style.left = offsetLeft + 'px'
   previewImage.style.top = offsetTop + 'px'
 
-  normalBackgroundElement.style.left = offsetLeft + 'px'
-  normalBackgroundElement.style.top = offsetTop + 'px'
-
-  blurBackgroundElement.style.left = offsetLeft + 'px'
-  blurBackgroundElement.style.top = offsetTop + 'px'
+  backgroundElement.style.left = offsetLeft + 'px'
+  backgroundElement.style.top = offsetTop + 'px'
 
   // 计算居中位置
   const centerX = canvasWidth / 2;
@@ -2932,11 +2888,11 @@ const handleBorders = async () => {
 
   if (imageElement && imageElement.complete && imageElement.naturalWidth > 0) {
 
-    const normalBackground = imageElement.parentNode.querySelector('.normal-background');
+    const backgroundElement = imageElement.parentNode.querySelector('.image-background');
 
     let {borderLeft, borderRight, borderTop, borderBottom, borderColor, borderType, borderBlur} = settings.value.border;
 
-    const oldBorder = normalBackground.border || {
+    const oldBorder = backgroundElement.border || {
       borderLeft: 0,
       borderRight: 0,
       borderTop: 0,
@@ -2944,47 +2900,55 @@ const handleBorders = async () => {
       borderType: 0
     };
 
-    borderType === 0 && (normalBackground.style.background = borderColor)
+    borderType === 0 && (backgroundElement.style.background = borderColor)
 
-    borderType === 1 && (normalBackground.style.filter = `blur(${borderBlur}px)`)
+    if (borderType === 1) {
+      backgroundElement.style.setProperty('--blur-intensity', borderBlur + 'px');
+      backgroundElement.style.setProperty('--blur-radius', '10px');
+    }
 
     if (borderType !== oldBorder.borderType) {
       if (borderType === 0) {
-        normalBackground.style.filter = ''
+        backgroundElement.removeAttribute('blur')
+        imageElement.style.borderRadius = ''
+        backgroundElement.style.borderRadius = ''
       } else if (borderType === 1) {
-        normalBackground.style.background = `url('${image.url}') center / cover`
+        backgroundElement.setAttribute('blur', '')
+        imageElement.style.borderRadius = '10px'
+        backgroundElement.style.borderRadius = '10px'
+        backgroundElement.style.background = `url('${image.url}') center / cover`
       }
     }
 
     if (oldBorder.borderLeft !== borderLeft) {
       const increaseWidth = borderLeft - oldBorder.borderLeft;
-      const oldWidth = Number.parseFloat(normalBackground.style.width);
-      const left = Number.parseFloat(normalBackground.style.left);
-      normalBackground.style.width = (oldWidth + increaseWidth) + 'px'
-      normalBackground.style.left = (left - increaseWidth) + 'px'
+      const oldWidth = Number.parseFloat(backgroundElement.style.width);
+      const left = Number.parseFloat(backgroundElement.style.left);
+      backgroundElement.style.width = (oldWidth + increaseWidth) + 'px'
+      backgroundElement.style.left = (left - increaseWidth) + 'px'
     }
 
     if (oldBorder.borderRight !== borderRight) {
       const increaseWidth = borderRight - oldBorder.borderRight;
-      const oldWidth = Number.parseFloat(normalBackground.style.width);
-      normalBackground.style.width = (oldWidth + increaseWidth) + 'px'
+      const oldWidth = Number.parseFloat(backgroundElement.style.width);
+      backgroundElement.style.width = (oldWidth + increaseWidth) + 'px'
     }
 
     if (oldBorder.borderTop !== borderTop) {
       const increaseHeight = borderTop - oldBorder.borderTop;
-      const oldHeight = Number.parseFloat(normalBackground.style.height);
-      const top = Number.parseFloat(normalBackground.style.top);
-      normalBackground.style.height = (oldHeight + increaseHeight) + 'px'
-      normalBackground.style.top = (top - increaseHeight) + 'px'
+      const oldHeight = Number.parseFloat(backgroundElement.style.height);
+      const top = Number.parseFloat(backgroundElement.style.top);
+      backgroundElement.style.height = (oldHeight + increaseHeight) + 'px'
+      backgroundElement.style.top = (top - increaseHeight) + 'px'
     }
 
     if (oldBorder.borderBottom !== borderBottom) {
       const increaseHeight = borderBottom - oldBorder.borderBottom;
-      const oldHeight = Number.parseFloat(normalBackground.style.height);
-      normalBackground.style.height = (oldHeight + increaseHeight) + 'px'
+      const oldHeight = Number.parseFloat(backgroundElement.style.height);
+      backgroundElement.style.height = (oldHeight + increaseHeight) + 'px'
     }
 
-    normalBackground.border = _.cloneDeep(settings.value.border)
+    backgroundElement.border = _.cloneDeep(settings.value.border)
 
     const {clientWidth, clientHeight} = imageElement;
 
@@ -2993,10 +2957,11 @@ const handleBorders = async () => {
     image.settings.border.borderRightRatio = borderRight / clientWidth
     image.settings.border.borderTopRatio = borderTop / clientHeight
     image.settings.border.borderBottomRatio = borderBottom / clientHeight
+    image.settings.border.borderBlurRatio = borderBlur / clientWidth
 
     await nextTick()
 
-    // refreshPositionInformation(selectedElement.value.path)
+    refreshPositionInformation(selectedElement.value.path)
 
   }
 }
@@ -3268,6 +3233,10 @@ const listenerPlaceElements = (previewImage, image) => {
 
     const canvasElement = previewImage.parentNode;
 
+    const backgroundElement = canvasElement.querySelector('.image-background');
+
+    const backgroundRect = backgroundElement.getBoundingClientRect();
+
     const canvasRect = canvasElement.getBoundingClientRect();
 
     const imageRect = previewImage.getBoundingClientRect();
@@ -3311,18 +3280,18 @@ const listenerPlaceElements = (previewImage, image) => {
         let offsetLeft, offsetTop;
         let references = []
 
-        const dragElementRect = dragElement.getBoundingClientRect();
+        const elementRect = dragElement.getBoundingClientRect();
 
-        positionOffsetX = (dragElementRect.left - imageRect.left) / image.scale
-        offsetLeft = positionOffsetX / (imageRect.width / image.scale);
+        positionOffsetX = (elementRect.left - backgroundRect.left) / image.scale
+        offsetLeft = positionOffsetX / (backgroundRect.width / image.scale);
 
-        positionOffsetY = (dragElementRect.top - imageRect.top) / image.scale
-        offsetTop = positionOffsetY / (imageRect.height / image.scale);
+        positionOffsetY = (elementRect.top - backgroundRect.top) / image.scale
+        offsetTop = positionOffsetY / (backgroundRect.height / image.scale);
 
         if (elementLeft > elementRight) {
           references.push('right')
-          positionOffsetX = (imageRect.right - dragElementRect.left - dragElementRect.width) / image.scale
-          positionX = positionOffsetX / imageRect.width / image.scale
+          positionOffsetX = (backgroundRect.right - elementRect.left - elementRect.width) / image.scale
+          positionX = positionOffsetX / (backgroundRect.width / image.scale)
         } else {
           references.push('left')
           positionX = offsetLeft;
@@ -3330,8 +3299,8 @@ const listenerPlaceElements = (previewImage, image) => {
 
         if (elementTop > elementBottom) {
           references.push('bottom')
-          positionOffsetY = (imageRect.bottom - dragElementRect.top - dragElementRect.height) / image.scale
-          positionY = positionOffsetY / imageRect.height / image.scale;
+          positionOffsetY = (backgroundRect.bottom - elementRect.top - elementRect.height) / image.scale
+          positionY = positionOffsetY / (backgroundRect.height / image.scale);
         } else {
           references.push('top')
           positionY = offsetTop;
@@ -3361,7 +3330,7 @@ const listenerPlaceElements = (previewImage, image) => {
           settings.value.text.options.fontColor = dragElementStyle.color
           settings.value.text.options.fontStyle = dragElementStyle.fontStyle
           settings.value.text.options.fontWeight = Number.parseInt(dragElementStyle.fontWeight)
-          settings.value.text.options.fontSizeRatio = fontSize / imageRect.width / image.scale
+          settings.value.text.options.fontSizeRatio = fontSize / (backgroundRect.width / image.scale)
           settings.value.text.options.textDirection = 0
           image.settings.texts.set(dragElement, _.cloneDeep(settings.value.text))
         } else {
@@ -3383,8 +3352,8 @@ const listenerPlaceElements = (previewImage, image) => {
           settings.value.image.originalHeight = imageHeight
           settings.value.image.width = imageWidth
           settings.value.image.height = imageHeight
-          settings.value.image.options.imageHeightRatio = imageHeight / imageRect.height / image.scale
-          settings.value.image.options.imageWidthRatio = imageWidth / imageRect.width / image.scale
+          settings.value.image.options.imageHeightRatio = imageHeight / (backgroundRect.height / image.scale)
+          settings.value.image.options.imageWidthRatio = imageWidth / (backgroundRect.width / image.scale)
 
           image.settings.images.set(dragElement, _.cloneDeep(settings.value.image))
         }
@@ -3486,9 +3455,9 @@ function makeDraggable(dragElement, path) {
       const mouseY = event.clientY;
 
       // 限制在画布范围内
-      const newImageRect = previewImage.getBoundingClientRect();
+      const backgroundRect = previewImage.parentNode.querySelector('.image-background');
 
-      const newDragElementRect = dragElement.getBoundingClientRect();
+      const elementRect = dragElement.getBoundingClientRect();
 
       // if (mouseX >= parentRect.left + offsetLeft && mouseX + offsetRight <= parentRect.right) {
       //   if (mouseY >= parentRect.top + offsetTop && mouseY + offsetBottom <= parentRect.bottom) {
@@ -3574,6 +3543,7 @@ function makeDraggable(dragElement, path) {
       const elementRight = canvasRect.width / image.scale - elementLeft - elementWidth;
       const elementBottom = canvasRect.height / image.scale - elementTop - elementHeight
 
+
       dragElement.style.left = elementLeft + 'px';
       dragElement.style.top = elementTop + 'px';
 
@@ -3582,16 +3552,18 @@ function makeDraggable(dragElement, path) {
       let offsetLeft, offsetTop;
       let references = []
 
-      positionOffsetX = (newDragElementRect.left - newImageRect.left) / image.scale
-      offsetLeft = positionOffsetX / (newImageRect.width / image.scale);
+      updateElementPosition()
 
-      positionOffsetY = (newDragElementRect.top - newImageRect.top) / image.scale
-      offsetTop = positionOffsetY / (newImageRect.height / image.scale);
+      positionOffsetX = (elementRect.left - backgroundRect.left) / image.scale
+      offsetLeft = positionOffsetX / (backgroundRect.width / image.scale);
+
+      positionOffsetY = (elementRect.top - backgroundRect.top) / image.scale
+      offsetTop = positionOffsetY / (backgroundRect.height / image.scale);
 
       if (elementLeft > elementRight) {
         references.push('right')
-        positionOffsetX = (newImageRect.right - newDragElementRect.left - newDragElementRect.width) / image.scale
-        positionX = positionOffsetX / newImageRect.width / image.scale
+        positionOffsetX = (backgroundRect.right - elementRect.left - elementRect.width) / image.scale
+        positionX = positionOffsetX / (backgroundRect.width / image.scale)
       } else {
         references.push('left')
         positionX = offsetLeft;
@@ -3599,12 +3571,13 @@ function makeDraggable(dragElement, path) {
 
       if (elementTop > elementBottom) {
         references.push('bottom')
-        positionOffsetY = (newImageRect.bottom - newDragElementRect.top - newDragElementRect.height) / image.scale
-        positionY = positionOffsetY / newImageRect.height / image.scale;
+        positionOffsetY = (backgroundRect.bottom - elementRect.top - elementRect.height) / image.scale
+        positionY = positionOffsetY / (backgroundRect.height / image.scale);
       } else {
         references.push('top')
         positionY = offsetTop;
       }
+
 
       if (!dragElement.src) {
         const textMark = image.settings.texts.get(dragElement);
@@ -3934,14 +3907,21 @@ function makeDraggable(dragElement, path) {
         height: 300%;
         position: relative;
 
-        .normal-background {
+        .image-background {
           position: absolute;
           z-index: -100;
         }
 
-        .blur-background {
+        .image-background[blur]::before {
+          content: '';
           position: absolute;
-          z-index: -1000;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          border-radius: var(--blur-radius, 15px);
+          backdrop-filter: blur(var(--blur-intensity, 10px));
+          z-index: -99;
         }
 
         img {

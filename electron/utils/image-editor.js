@@ -3,6 +3,7 @@ const {createCanvas, loadImage} = require('@napi-rs/canvas');
 // 使用 promises API
 const fs = require('fs').promises;
 const {copyExifDataToBuffer} = require('./exif-helper')
+const {createBlurFilterFromBuffer} = require('../utils/drop-filter')
 
 /**
  * 查找指定目录下指定类型文件集合
@@ -222,6 +223,85 @@ const getExtname = (originalExtname, extnameType) => {
     }
 }
 
+
+/**
+ * 绘制圆角矩形图片
+ * @param {CanvasRenderingContext2D} ctx - 画布上下文
+ * @param {Image} img - 图片对象
+ * @param {number} x - 图片左上角x坐标
+ * @param {number} y - 图片左上角y坐标
+ * @param {number} width - 图片宽度
+ * @param {number} height - 图片高度
+ * @param {number|object} borderRadius - 圆角大小
+ *   数字类型：统一设置四个角的圆角半径[citation:1]
+ *   对象类型：分别设置四个角的半径 { topLeft, topRight, bottomRight, bottomLeft }[citation:9]
+ */
+function drawRoundedImage(ctx, img, x, y, width, height, borderRadius) {
+    // 保存上下文状态[citation:5]
+    ctx.save();
+
+    // 创建圆角路径
+    createRoundedPath(ctx, x, y, width, height, borderRadius);
+
+    // 设置为裁剪区域
+    ctx.clip();
+
+    // 绘制图片
+    ctx.drawImage(img, x, y, width, height);
+
+    // 恢复上下文状态[citation:5]
+    ctx.restore();
+}
+
+/**
+ * 创建圆角矩形路径
+ */
+function createRoundedPath(ctx, x, y, width, height, borderRadius) {
+    let topLeft = 0;
+    let topRight = 0;
+    let bottomRight = 0;
+    let bottomLeft = 0;
+    // 处理不同类型的borderRadius参数
+    if (typeof borderRadius === 'number') {
+        // 统一圆角[citation:1]
+        topLeft = topRight = bottomRight = bottomLeft = borderRadius;
+    } else if (typeof borderRadius === 'object') {
+        // 分别设置不同圆角[citation:9]
+        topLeft = borderRadius.topLeft || 0;
+        topRight = borderRadius.topRight || 0;
+        bottomRight = borderRadius.bottomRight || 0;
+        bottomLeft = borderRadius.bottomLeft || 0;
+    }
+
+    // 确保圆角不超过宽度或高度的一半
+    const maxRadius = Math.min(width, height) / 2;
+    topLeft = Math.min(topLeft, maxRadius);
+    topRight = Math.min(topRight, maxRadius);
+    bottomRight = Math.min(bottomRight, maxRadius);
+    bottomLeft = Math.min(bottomLeft, maxRadius);
+
+    ctx.beginPath();
+    ctx.moveTo(x + topLeft, y);
+
+    // 上边线 + 右上角
+    ctx.lineTo(x + width - topRight, y);
+    ctx.arcTo(x + width, y, x + width, y + topRight, topRight);
+
+    // 右边线 + 右下角
+    ctx.lineTo(x + width, y + height - bottomRight);
+    ctx.arcTo(x + width, y + height, x + width - bottomRight, y + height, bottomRight);
+
+    // 下边线 + 左下角
+    ctx.lineTo(x + bottomLeft, y + height);
+    ctx.arcTo(x, y + height, x, y + height - bottomLeft, bottomLeft);
+
+    // 左边线 + 左上角
+    ctx.lineTo(x, y + topLeft);
+    ctx.arcTo(x, y, x + topLeft, y, topLeft);
+
+    ctx.closePath();
+}
+
 async function addBorderAndText(options) {
     try {
         // 创建视图来访问共享内存
@@ -240,6 +320,8 @@ async function addBorderAndText(options) {
                 borderTopRatio,
                 borderBottomRatio,
                 borderColor,
+                borderType,
+                borderBlurRatio
             },
             texts,
             images
@@ -276,7 +358,7 @@ async function addBorderAndText(options) {
 
         const image = await loadImage(imageBuffer);
 
-        let borderLeft, borderRight, borderTop, borderBottom
+        let borderLeft, borderRight, borderTop, borderBottom, borderBlur
 
         let newWidth, newHeight, imageWidth, imageHeight;
 
@@ -342,6 +424,7 @@ async function addBorderAndText(options) {
         borderRight = borderRightRatio * imageWidth
         borderTop = borderTopRatio * imageHeight
         borderBottom = borderBottomRatio * imageHeight
+        borderBlur = borderBlurRatio * imageWidth
 
         // 2. 计算新画布尺寸
         newWidth = Math.round(imageWidth + borderLeft + borderRight);
@@ -359,8 +442,15 @@ async function addBorderAndText(options) {
         ctx.imageSmoothingQuality = 'high'
 
         // 4. 绘制边框背景
-        ctx.fillStyle = borderColor;
-        ctx.fillRect(0, 0, newWidth, newHeight);
+        if (borderType === 0) {
+            ctx.fillStyle = borderColor;
+            ctx.fillRect(0, 0, newWidth, newHeight);
+        } else {
+            const backgroundBuffer = await createBlurFilterFromBuffer(imageBuffer, borderBlur);
+            const background = await loadImage(backgroundBuffer);
+            // 绘制原始图片（居中）
+            drawRoundedImage(ctx, background, 0, 0, newWidth, newHeight, 200)
+        }
 
         // 5. 绘制原始图片（居中）
         ctx.drawImage(image, borderLeft, borderTop, imageWidth, imageHeight);
@@ -400,6 +490,7 @@ async function addBorderAndText(options) {
         console.error('处理图片时出错:', error);
         throw error;
     }
+
 }
 
 module.exports = {addBorderAndText}
