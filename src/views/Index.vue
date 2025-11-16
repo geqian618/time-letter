@@ -2959,6 +2959,8 @@ const handleBorders = async () => {
     image.settings.border.borderBottomRatio = borderBottom / clientHeight
     image.settings.border.borderBlurRatio = borderBlur / clientWidth
 
+    console.log(borderBlur / clientWidth)
+
     await nextTick()
 
     refreshPositionInformation(selectedElement.value.path)
@@ -3575,7 +3577,6 @@ function makeDraggable(dragElement, path) {
         references.push('top')
         positionY = offsetTop;
       }
-
 
       if (!dragElement.src) {
         const textMark = image.settings.texts.get(dragElement);

@@ -441,15 +441,18 @@ async function addBorderAndText(options) {
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high'
 
-        // 4. 绘制边框背景
-        if (borderType === 0) {
-            ctx.fillStyle = borderColor;
-            ctx.fillRect(0, 0, newWidth, newHeight);
-        } else {
-            const backgroundBuffer = await createBlurFilterFromBuffer(imageBuffer, borderBlur);
-            const background = await loadImage(backgroundBuffer);
-            // 绘制原始图片（居中）
-            drawRoundedImage(ctx, background, 0, 0, newWidth, newHeight, 200)
+        if (borderLeftRatio + borderRightRatio + borderTopRatio + borderBottomRatio !== 0) {
+            // 4. 绘制边框背景
+            if (borderType === 0) {
+                ctx.fillStyle = borderColor;
+                ctx.fillRect(0, 0, newWidth, newHeight);
+            } else {
+                borderBlur = Math.min(Math.max(0.3, borderBlur), 1000)
+                const backgroundBuffer = await createBlurFilterFromBuffer(imageBuffer, borderBlur);
+                const background = await loadImage(backgroundBuffer);
+                // 绘制原始图片（居中）
+                drawRoundedImage(ctx, background, 0, 0, newWidth, newHeight, 200)
+            }
         }
 
         // 5. 绘制原始图片（居中）
