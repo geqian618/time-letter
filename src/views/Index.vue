@@ -2867,7 +2867,7 @@ const handleBorders = async () => {
 
     if (borderType === 1) {
       backgroundElement.style.setProperty('--blur-radius', borderRadius + 'px');
-      backgroundElement.style.setProperty('--blur-intensity', borderRadius + 'px');
+      backgroundElement.style.setProperty('--blur-intensity', borderBlur + 'px');
       imageElement.style.borderRadius = borderRadius + 'px'
     }
 
