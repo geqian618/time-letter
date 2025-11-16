@@ -212,6 +212,20 @@
                         </div>
                       </li>
                       <li class="option">
+                        <div class="label">圆角</div>
+                        <div class="value">
+                          <el-slider @change="handleBorders"
+                                     size="small"
+                                     :show-tooltip="false"
+                                     :min="0"
+                                     :max="50"
+                                     v-model="settings.border.borderRadius"
+                                     placement="top"/>
+                          <input type="number" class="number-input" @input="handleBorders"
+                                 v-model="settings.border.borderRadius" step="1">
+                        </div>
+                      </li>
+                      <li class="option">
                         <div class="label">模糊值</div>
                         <div class="value">
                           <el-slider @change="handleBorders"
@@ -1145,6 +1159,7 @@ const settings = ref({
     borderRight: 0,
     borderTop: 0,
     borderBottom: 0,
+    borderRadius: 0,
     borderColor: 'rgba(255, 255, 255, 1)',
   },
 })
@@ -1373,6 +1388,7 @@ const watchInputImages = () => {
                 borderTopRatio: 0,
                 borderBottomRatio: 0,
                 borderBlurRatio: 0,
+                borderRadiusRatio: 0,
                 borderColor: 'rgba(255, 255, 255, 1)',
               },
               texts: new Map(),
@@ -2826,7 +2842,16 @@ const handleBorders = async () => {
 
     const backgroundElement = imageElement.parentNode.querySelector('.image-background');
 
-    let {borderLeft, borderRight, borderTop, borderBottom, borderColor, borderType, borderBlur} = settings.value.border;
+    let {
+      borderLeft,
+      borderRight,
+      borderTop,
+      borderBottom,
+      borderColor,
+      borderType,
+      borderBlur,
+      borderRadius
+    } = settings.value.border;
 
     const oldBorder = backgroundElement.border || {
       borderLeft: 0,
@@ -2836,22 +2861,24 @@ const handleBorders = async () => {
       borderType: 0
     };
 
-    borderType === 0 && (backgroundElement.style.background = borderColor)
+    if (borderType === 0) {
+      backgroundElement.style.background = borderColor
+    }
 
     if (borderType === 1) {
-      backgroundElement.style.setProperty('--blur-intensity', borderBlur + 'px');
-      backgroundElement.style.setProperty('--blur-radius', '10px');
+      backgroundElement.style.setProperty('--blur-radius', borderRadius + 'px');
+      backgroundElement.style.setProperty('--blur-intensity', borderRadius + 'px');
+      imageElement.style.borderRadius = borderRadius + 'px'
     }
+
+    backgroundElement.style.borderRadius = borderRadius + 'px'
 
     if (borderType !== oldBorder.borderType) {
       if (borderType === 0) {
         backgroundElement.removeAttribute('blur')
-        imageElement.style.borderRadius = ''
-        backgroundElement.style.borderRadius = ''
       } else if (borderType === 1) {
         backgroundElement.setAttribute('blur', '')
-        imageElement.style.borderRadius = '10px'
-        backgroundElement.style.borderRadius = '10px'
+        imageElement.style.borderRadius = borderRadius + 'px'
         backgroundElement.style.background = `url('${image.url}') center / cover`
       }
     }
@@ -2894,6 +2921,7 @@ const handleBorders = async () => {
     image.settings.border.borderTopRatio = borderTop / clientHeight
     image.settings.border.borderBottomRatio = borderBottom / clientHeight
     image.settings.border.borderBlurRatio = borderBlur / clientWidth
+    image.settings.border.borderRadiusRatio = borderRadius / clientWidth
 
     await nextTick()
 
@@ -2913,10 +2941,17 @@ const renderBorders = (path) => {
   }
 
   if (imageElement && imageElement.complete && imageElement.naturalWidth > 0) {
-
     const backgroundElement = imageElement.parentNode.querySelector('.image-background');
-
-    let {borderLeft, borderRight, borderTop, borderBottom, borderColor, borderType, borderBlur} = settings.value.border;
+    let {
+      borderLeft,
+      borderRight,
+      borderTop,
+      borderBottom,
+      borderColor,
+      borderType,
+      borderBlur,
+      borderRadius
+    } = settings.value.border;
 
     if (borderType === 0) {
       backgroundElement.style.background = borderColor
@@ -2932,6 +2967,7 @@ const renderBorders = (path) => {
       backgroundElement.style.setProperty('--blur-radius', '10px');
     }
 
+    backgroundElement.style.borderRadius = borderRadius + 'px'
 
     const imageWidth = Number.parseFloat(imageElement.style.width);
     const imageHeight = Number.parseFloat(imageElement.style.height);
@@ -2953,6 +2989,7 @@ const renderBorders = (path) => {
     image.settings.border.borderTopRatio = borderTop / clientHeight
     image.settings.border.borderBottomRatio = borderBottom / clientHeight
     image.settings.border.borderBlurRatio = borderBlur / clientWidth
+    image.settings.border.borderRadiusRatio = borderRadius / clientWidth
   }
 }
 

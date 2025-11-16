@@ -321,7 +321,8 @@ async function addBorderAndText(options) {
                 borderBottomRatio,
                 borderColor,
                 borderType,
-                borderBlurRatio
+                borderBlurRatio,
+                borderRadiusRatio
             },
             texts,
             images
@@ -358,7 +359,7 @@ async function addBorderAndText(options) {
 
         const image = await loadImage(imageBuffer);
 
-        let borderLeft, borderRight, borderTop, borderBottom, borderBlur
+        let borderLeft, borderRight, borderTop, borderBottom, borderBlur, borderRadius
 
         let newWidth, newHeight, imageWidth, imageHeight;
 
@@ -425,6 +426,7 @@ async function addBorderAndText(options) {
         borderTop = borderTopRatio * imageHeight
         borderBottom = borderBottomRatio * imageHeight
         borderBlur = borderBlurRatio * imageWidth
+        borderRadius = borderRadiusRatio * imageWidth
 
         // 2. 计算新画布尺寸
         newWidth = Math.round(imageWidth + borderLeft + borderRight);
@@ -451,7 +453,7 @@ async function addBorderAndText(options) {
                 const backgroundBuffer = await createBlurFilterFromBuffer(imageBuffer, borderBlur);
                 const background = await loadImage(backgroundBuffer);
                 // 绘制原始图片（居中）
-                drawRoundedImage(ctx, background, 0, 0, newWidth, newHeight, 200)
+                drawRoundedImage(ctx, background, 0, 0, newWidth, newHeight, borderRadius)
             }
         }
 
