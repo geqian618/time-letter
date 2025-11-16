@@ -3455,7 +3455,7 @@ function makeDraggable(dragElement, path) {
       const mouseY = event.clientY;
 
       // 限制在画布范围内
-      const backgroundRect = previewImage.parentNode.querySelector('.image-background');
+      const backgroundRect = canvasElement.querySelector('.image-background').getBoundingClientRect();
 
       const elementRect = dragElement.getBoundingClientRect();
 
@@ -3551,8 +3551,6 @@ function makeDraggable(dragElement, path) {
       let positionOffsetX, positionOffsetY;
       let offsetLeft, offsetTop;
       let references = []
-
-      updateElementPosition()
 
       positionOffsetX = (elementRect.left - backgroundRect.left) / image.scale
       offsetLeft = positionOffsetX / (backgroundRect.width / image.scale);
