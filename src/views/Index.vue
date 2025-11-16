@@ -1686,10 +1686,12 @@ const watchContextMenu = () => {
 const reset = (path) => {
   const image = clearAllLabels(path);
   image.settings.border = {
+    borderType: 0,
     borderLeft: 0,
     borderRight: 0,
     borderTop: 0,
     borderBottom: 0,
+    borderBlur: 15,
     borderColor: 'rgba(255, 255, 255, 1)'
   }
   renderBorders(path)
@@ -1750,25 +1752,25 @@ const watchCtrlA = () => {
 }
 
 // 处理 resize 事件（添加防抖优化性能）
-const handleResize = () => {
-  let resizeTimer;
-  // 添加 resize 事件监听
-  window.addEventListener("resize", () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(async () => {
-      const path = selectedElement.value.path;
-      if (path) {
-        await refreshTemplate(path)
-        images.value.forEach((item, path) => {
-          if (path !== selectedElement.value.path) {
-            item.isUpdate = true
-          }
-        })
-      }
-    }, 100); // 200ms 防抖间隔
-  });
-
-}
+// const handleResize = () => {
+//   let resizeTimer;
+//   // 添加 resize 事件监听
+//   window.addEventListener("resize", () => {
+//     clearTimeout(resizeTimer);
+//     resizeTimer = setTimeout(async () => {
+//       const path = selectedElement.value.path;
+//       if (path) {
+//         await refreshTemplate(path)
+//         images.value.forEach((item, path) => {
+//           if (path !== selectedElement.value.path) {
+//             item.isUpdate = true
+//           }
+//         })
+//       }
+//     }, 100); // 200ms 防抖间隔
+//   });
+//
+// }
 
 
 const stopProjectSettingsWatch = watch(projectSettings, (newVal, oldVal) => {
@@ -2247,109 +2249,129 @@ const enableTemplate = () => {
 }
 
 
+function renderElementPosition(image, settings, element) {
+
+  const imageElement = image.getTargetElement();
+
+  const canvasElement = imageElement.parentNode;
+
+  const backgroundElement = canvasElement.querySelector('.image-background');
+
+  const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement;
+
+  const backgroundLeft = Number.parseInt(backgroundElement.style.left);
+  const backgroundTop = Number.parseInt(backgroundElement.style.top);
+
+  const backgroundWidth = backgroundElement.offsetWidth;
+  const backgroundHeight = backgroundElement.offsetHeight;
+
+
+  let {positionX, positionY, offsetX, offsetY, synchronousMode} = settings
+  let newPositionX, newPositionY, newOffsetX, newOffsetY
+  newOffsetX = synchronousMode === 1 ? positionX * backgroundWidth : offsetX;
+  newOffsetY = synchronousMode === 1 ? positionY * backgroundHeight : offsetY;
+
+  if (settings.references.includes('left')) {
+    newPositionX = backgroundLeft + newOffsetX
+    element.style.left = `${newPositionX}px`;
+  }
+
+  if (settings.references.includes('right')) {
+    newPositionX = canvasWidth - backgroundLeft - backgroundWidth + newOffsetX
+    element.style.right = `${newPositionX}px`;
+  }
+
+  if (settings.references.includes('top')) {
+    newPositionY = backgroundTop + newOffsetY
+    element.style.top = `${newPositionY}px`;
+  }
+
+  if (settings.references.includes('bottom')) {
+    newPositionY = canvasHeight - backgroundTop - backgroundHeight + newOffsetY
+    element.style.bottom = `${newPositionY}px`;
+  }
+}
+
 const useTemplate = async (options, path) => {
 
   options = _.cloneDeep(options)
-
-  const imageDetails = images.value.get(path);
-
-  imageDetails.isUpdate = true
-
-  imageDetails.settings.border = options.border
+  const image = images.value.get(path);
+  image.isUpdate = true
+  image.settings.border = options.border
 
   if (path === selectedElement.value.path) {
     renderBorders(path)
+    await nextTick()
   }
 
-  await nextTick()
+  const imageElement = image.getTargetElement();
+  const canvasElement = imageElement.parentNode
 
-  const previewImage = imageDetails.getTargetElement();
-
-  const parentNode = previewImage.parentNode;
-
-  const parentRect = parentNode.getBoundingClientRect();
-
-  const {left, right, top, bottom, width, height} = previewImage.getBoundingClientRect();
-
-  for (let image of options.images) {
+  for (let settings of options.images) {
+    const {angle, alpha, path, height, width, url, boxShadow: {offsetX, offsetY, blur, shadowColor}} = settings.options;
     const img = document.createElement('img');
     img.style.outline = 'none';
     img.style.cursor = 'move';
     img.style.userSelect = 'none';
     img.setAttribute('tabindex', '0')
-    img.src = image.url
-    img.setAttribute('path', image.path)
+    img.src = url
+    img.setAttribute('path', path)
     img.className = 'image-mark'
     // 关键：必须设为绝对定位
     img.style.position = 'absolute';
-    img.style.width = image.width + 'px';
-    img.style.width = image.width + 'px';
-    img.style.height = image.height + 'px'
-    img.style.opacity = image.alpha / 10
+    img.style.width = width + 'px';
+    img.style.width = width + 'px';
+    img.style.height = height + 'px'
+    img.style.opacity = alpha / 10
 
     img.style.transformOrigin = 'center center'
-    img.style.transform = `rotate(${image.options.angle}deg)`
+    img.style.transform = `rotate(${angle}deg)`
 
-    const {boxShadow: {offsetX, offsetY, blur, shadowColor}} = image.options;
     img.style.boxShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
 
     if (path === selectedElement.value.path) {
-      let {positionX, positionY, offsetX, offsetY, synchronousMode} = image
-      let newPositionX, newPositionY, newOffsetX, newOffsetY
-      newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
-      newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
-
-      if (image.references.includes('left')) {
-        newPositionX = left - parentRect.left + newOffsetX
-        img.style.left = `${newPositionX}px`;
-      }
-
-      if (image.references.includes('right')) {
-        newPositionX = parentRect.right - right + newOffsetX
-        img.style.right = `${newPositionX}px`;
-      }
-
-      if (image.references.includes('top')) {
-        newPositionY = top - parentRect.top + newOffsetY
-        img.style.top = `${newPositionY}px`;
-      }
-
-      if (image.references.includes('bottom')) {
-        newPositionY = parentRect.bottom - bottom + newOffsetY
-        img.style.bottom = `${newPositionY}px`;
-      }
+      renderElementPosition(image, settings, img);
     }
 
-    parentNode.appendChild(img)
-
-    imageDetails.settings.images.set(img, image)
-
+    canvasElement.appendChild(img)
+    image.settings.images.set(img, settings)
     makeDraggable(img, path)
   }
 
   for (let text of options.texts) {
+
+    const {
+      fontSize,
+      fontColor,
+      fontFamily,
+      fontStyle,
+      fontWeight,
+      angle,
+      textDirection,
+      textShadow: {offsetX, offsetY, blur, shadowColor}
+    } = text.options;
+
     const div = document.createElement('div');
     div.style.width = 'fit-content'
     div.style.height = 'fit-content'
     div.style.lineHeight = '1'
     div.style.whiteSpace = 'nowrap'
-    div.style.fontSize = text.options.fontSize + 'px'
-    div.style.color = text.options.fontColor
-    div.style.fontFamily = text.options.fontFamily
-    div.style.fontStyle = text.options.fontStyle
-    div.style.fontWeight = text.options.fontWeight
+    div.style.fontSize = fontSize + 'px'
+    div.style.color = fontColor
+    div.style.fontFamily = fontFamily
+    div.style.fontStyle = fontStyle
+    div.style.fontWeight = fontWeight
 
     div.style.transformOrigin = 'center center'
-    div.style.transform = `rotate(${text.options.angle}deg)`
+    div.style.transform = `rotate(${angle}deg)`
 
-    if (text.options.textDirection === 0) {
+    if (textDirection === 0) {
       div.style.writingMode = 'horizontal-tb'
-    } else if (text.options.textDirection === 1) {
+    } else if (textDirection === 1) {
       div.style.writingMode = 'vertical-lr'
       div.style.textOrientation = 'upright'
     }
 
-    const {textShadow: {offsetX, offsetY, blur, shadowColor}} = text.options;
     div.style.textShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
     div.className = 'text-mark'
     const type = text.type;
@@ -2364,7 +2386,7 @@ const useTemplate = async (options, path) => {
       div.innerHTML = text.content = content
     } else if (type === 'metadata') {
       const attribute = text.attribute;
-      let content = imageDetails.metadata[attribute];
+      let content = image.metadata[attribute];
       if (!content) {
         continue
       }
@@ -2385,37 +2407,12 @@ const useTemplate = async (options, path) => {
     div.style.position = 'absolute';
 
     if (path === selectedElement.value.path) {
-      let {positionX, positionY, offsetX, offsetY, synchronousMode} = text
-      let newPositionX, newPositionY, newOffsetX, newOffsetY
-      newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
-      newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
-      if (text.references.includes('left')) {
-        newPositionX = left - parentRect.left + newOffsetX
-        div.style.left = `${newPositionX}px`;
-      }
-
-      if (text.references.includes('right')) {
-        newPositionX = parentRect.right - right + newOffsetX
-        div.style.right = `${newPositionX}px`;
-      }
-
-      if (text.references.includes('top')) {
-        newPositionY = top - parentRect.top + newOffsetY
-        div.style.top = `${newPositionY}px`;
-      }
-
-      if (text.references.includes('bottom')) {
-        newPositionY = parentRect.bottom - bottom + newOffsetY
-        div.style.bottom = `${newPositionY}px`;
-      }
-
+      renderElementPosition(image, text, div)
     }
-    parentNode.appendChild(div)
 
-    imageDetails.settings.texts.set(div, text)
-
+    canvasElement.appendChild(div)
+    image.settings.texts.set(div, text)
     makeDraggable(div, path)
-
   }
 
 }
@@ -2515,78 +2512,17 @@ const refreshTemplate = async (path) => {
 
   await nextTick()
 
-  const previewImage = image.getTargetElement();
-
-  const parentRect = previewImage.parentNode.getBoundingClientRect();
-
-  const {left, right, top, bottom, width, height} = previewImage.getBoundingClientRect();
-
-  image.settings.texts.forEach((text, element) => {
-
-    let {positionX, positionY, offsetX, offsetY, synchronousMode} = text
-
-    let newPositionX, newPositionY, newOffsetX, newOffsetY
-    newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
-    newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
-
-    if (text.references.includes('left')) {
-      element.style.right = ''
-      newPositionX = left - parentRect.left + newOffsetX
-      element.style.left = `${newPositionX}px`;
-    }
-
-    if (text.references.includes('right')) {
-      element.style.left = ''
-      newPositionX = parentRect.right - right + newOffsetX
-      element.style.right = `${newPositionX}px`;
-    }
-
-    if (text.references.includes('top')) {
-      element.style.bottom = ''
-      newPositionY = top - parentRect.top + newOffsetY
-      element.style.top = `${newPositionY}px`;
-    }
-
-    if (text.references.includes('bottom')) {
-      element.style.top = ''
-      newPositionY = parentRect.bottom - bottom + newOffsetY
-      element.style.bottom = `${newPositionY}px`;
-    }
-
+  image.settings.texts.forEach((settings, element) => {
+    renderElementPosition(image, settings, element)
   })
 
-  image.settings.images.forEach((image, element) => {
-    let {positionX, positionY, offsetX, offsetY, synchronousMode} = image
-    let newPositionX, newPositionY, newOffsetX, newOffsetY
-    newOffsetX = synchronousMode === 1 ? positionX * width : offsetX;
-    newOffsetY = synchronousMode === 1 ? positionY * height : offsetY;
-
-    if (image.references.includes('left')) {
-      newPositionX = left - parentRect.left + newOffsetX
-      element.style.left = `${newPositionX}px`;
-    }
-
-    if (image.references.includes('right')) {
-      newPositionX = parentRect.right - right + newOffsetX
-      element.style.right = `${newPositionX}px`;
-    }
-
-    if (image.references.includes('top')) {
-      newPositionY = top - parentRect.top + newOffsetY
-      element.style.top = `${newPositionY}px`;
-    }
-
-    if (image.references.includes('bottom')) {
-      newPositionY = parentRect.bottom - bottom + newOffsetY
-      element.style.bottom = `${newPositionY}px`;
-    }
-
+  image.settings.images.forEach((settings, element) => {
+    renderElementPosition(image, settings, element)
   })
 
   await nextTick()
   refreshPositionInformation(path)
   image.isUpdate = false
-
 }
 
 
@@ -2621,7 +2557,7 @@ onMounted(() => {
   watchCtrlA()
   watchDownloadProgress()
   editorOutputSettings()
-  handleResize()
+  // handleResize()
   loadProjectSettings()
 })
 
@@ -2959,8 +2895,6 @@ const handleBorders = async () => {
     image.settings.border.borderBottomRatio = borderBottom / clientHeight
     image.settings.border.borderBlurRatio = borderBlur / clientWidth
 
-    console.log(borderBlur / clientWidth)
-
     await nextTick()
 
     refreshPositionInformation(selectedElement.value.path)
@@ -2971,32 +2905,55 @@ const handleBorders = async () => {
 
 const renderBorders = (path) => {
 
-  // const image = images.value.get(path)
-  //
-  // const targetElement = image.getTargetElement();
-  //
-  // if (image.path === selectedElement.value.path) {
-  //   settings.value.border = image.settings.border
-  // }
-  //
-  // if (targetElement && targetElement.complete && targetElement.naturalWidth > 0) {
-  //
-  //   const {borderLeft, borderRight, borderTop, borderBottom, borderColor} = image.settings.border;
-  //
-  //   targetElement.style.borderLeft = `${borderLeft}px solid ${borderColor}`
-  //   targetElement.style.borderRight = `${borderRight}px solid ${borderColor}`
-  //   targetElement.style.borderTop = `${borderTop}px solid ${borderColor}`
-  //   targetElement.style.borderBottom = `${borderBottom}px solid ${borderColor}`
-  //
-  //   const {clientWidth, clientHeight} = targetElement;
-  //
-  //   // image.settings.border = _.cloneDeep(settings.value.border)
-  //   image.settings.border.borderLeftRatio = borderLeft / clientWidth
-  //   image.settings.border.borderRightRatio = borderRight / clientWidth
-  //   image.settings.border.borderTopRatio = borderTop / clientHeight
-  //   image.settings.border.borderBottomRatio = borderBottom / clientHeight
-  //
-  // }
+  const image = images.value.get(path)
+  const imageElement = image.getTargetElement();
+
+  if (image.path === selectedElement.value.path) {
+    settings.value.border = image.settings.border
+  }
+
+  if (imageElement && imageElement.complete && imageElement.naturalWidth > 0) {
+
+    const backgroundElement = imageElement.parentNode.querySelector('.image-background');
+
+    let {borderLeft, borderRight, borderTop, borderBottom, borderColor, borderType, borderBlur} = settings.value.border;
+
+    if (borderType === 0) {
+      backgroundElement.style.background = borderColor
+      backgroundElement.removeAttribute('blur')
+      imageElement.style.borderRadius = ''
+      backgroundElement.style.borderRadius = ''
+    } else if (borderType === 1) {
+      backgroundElement.setAttribute('blur', '')
+      imageElement.style.borderRadius = '10px'
+      backgroundElement.style.borderRadius = '10px'
+      backgroundElement.style.background = `url('${image.url}') center / cover`
+      backgroundElement.style.setProperty('--blur-intensity', borderBlur + 'px');
+      backgroundElement.style.setProperty('--blur-radius', '10px');
+    }
+
+
+    const imageWidth = Number.parseFloat(imageElement.style.width);
+    const imageHeight = Number.parseFloat(imageElement.style.height);
+    const imageLeft = Number.parseFloat(imageElement.style.left);
+    const imageTop = Number.parseFloat(imageElement.style.top);
+
+    backgroundElement.style.width = (imageWidth + borderLeft + borderRight) + 'px'
+    backgroundElement.style.height = (imageHeight + borderTop + borderBottom) + 'px'
+    backgroundElement.style.left = (imageLeft - borderLeft) + 'px'
+    backgroundElement.style.top = (imageTop - borderTop) + 'px'
+
+    backgroundElement.border = _.cloneDeep(settings.value.border)
+
+    const {clientWidth, clientHeight} = imageElement;
+
+    image.settings.border = _.cloneDeep(settings.value.border)
+    image.settings.border.borderLeftRatio = borderLeft / clientWidth
+    image.settings.border.borderRightRatio = borderRight / clientWidth
+    image.settings.border.borderTopRatio = borderTop / clientHeight
+    image.settings.border.borderBottomRatio = borderBottom / clientHeight
+    image.settings.border.borderBlurRatio = borderBlur / clientWidth
+  }
 }
 
 
