@@ -2338,6 +2338,8 @@ function updateElementPosition(image, element, elementSettings) {
 
   let references = []
 
+  console.log(elementSettings)
+
   const elementWidth = parseFloat(element.style.width) || parseFloat(window.getComputedStyle(element).width);
   const elementHeight = parseFloat(element.style.height) || parseFloat(window.getComputedStyle(element).height);
 
@@ -3185,7 +3187,7 @@ const listenerPlaceElements = (previewImage, image) => {
           settings.value.text.positionX = positionX
           settings.value.text.positionY = positionY
           settings.value.text.offsetX = positionOffsetX
-          settings.value.text.offsetX = positionOffsetX
+          settings.value.text.offsetY = positionOffsetY
           settings.value.text.offsetLeft = offsetLeft
           settings.value.text.offsetTop = offsetTop
           const type = dragElement.getAttribute('type');
