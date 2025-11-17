@@ -1825,18 +1825,20 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 
   if (!image) return
 
-  const parentNode = image.getTargetElement().parentNode;
-  const containerRect = image.getTargetElement().getBoundingClientRect();
-  const parentRect = parentNode.getBoundingClientRect();
-  const elements = parentNode.querySelectorAll('.text-mark');
-  for (let element of elements) {
+  const imageElement = image.getTargetElement();
+  const canvasElement = imageElement.parentNode;
+  const {offsetWidth} = canvasElement.querySelector('.image-background');
+  const texts = image.settings.texts;
+  for (let [element, settings] of texts) {
     if (element.getAttribute('selected') === 'true') {
+      const elementRect = element.getBoundingClientRect();
       let computedStyle = window.getComputedStyle(element);
       const elementWidth = parseFloat(element.style.width) || parseFloat(computedStyle.width);
       const elementHeight = parseFloat(element.style.height) || parseFloat(computedStyle.height);
-      let elementLeft = parseFloat(element.style.left) || parentRect.width - parseFloat(element.style.right) - elementWidth;
-      let elementTop = parseFloat(element.style.top) || parentRect.height - parseFloat(element.style.bottom) - elementHeight;
+      let elementLeft = parseFloat(element.style.left) || canvasElement.offsetWidth - parseFloat(element.style.right) - elementWidth;
+      let elementTop = parseFloat(element.style.top) || canvasElement.offsetHeight - parseFloat(element.style.bottom) - elementHeight;
 
+      element.style.zIndex = newVal.zIndex
       element.style.fontStyle = newVal.fontStyle
       element.style.fontWeight = newVal.fontWeight
       element.style.fontFamily = newVal.fontFamily
@@ -1856,66 +1858,11 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 
       await nextTick()
 
-      computedStyle = window.getComputedStyle(element);
-      const newElementWidth = Number.parseFloat(computedStyle.width);
-      const newElementHeight = Number.parseFloat(computedStyle.height);
-
-      // elementLeft = elementLeft - (newElementWidth - elementWidth) / 2;
-      // elementTop = elementTop - (newElementHeight - elementHeight) / 2;
-      const elementRight = parentRect.width - elementLeft - newElementWidth;
-      const elementBottom = parentRect.height - elementTop - newElementHeight
-
-      // element.style.left = elementLeft + 'px';
-      // element.style.top = elementTop + 'px';
-
-      let positionX;
-
-      let positionY;
-
-      let positionOffsetX;
-
-      let positionOffsetY;
-
-      let references = []
-
-      let offsetLeft;
-      let offsetTop;
-      positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
-      offsetLeft = positionOffsetX / containerRect.width;
-
-      positionOffsetY = elementTop - (containerRect.top - parentRect.top)
-      offsetTop = positionOffsetY / containerRect.height;
-
-      if (elementLeft > elementRight) {
-        references.push('right')
-        positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - newElementWidth
-        positionX = positionOffsetX / containerRect.width
-      } else {
-        references.push('left')
-        positionX = offsetLeft
-      }
-
-      if (elementTop > elementBottom) {
-        references.push('bottom')
-        positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - newElementHeight
-        positionY = positionOffsetY / containerRect.height;
-      } else {
-        references.push('top')
-        positionY = offsetTop;
-      }
-
-      image.settings.texts.get(element).options = _.cloneDeep(newVal)
-      image.settings.texts.get(element).references = references
-      image.settings.texts.get(element).positionX = positionX
-      image.settings.texts.get(element).positionY = positionY
-      image.settings.texts.get(element).offsetX = positionOffsetX
-      image.settings.texts.get(element).offsetY = positionOffsetY
-      image.settings.texts.get(element).offsetLeft = offsetLeft
-      image.settings.texts.get(element).offsetTop = offsetTop
-      image.settings.texts.get(element).options.fontSizeRatio = newVal.fontSize / containerRect.width
-      image.settings.texts.get(element).options.textShadow.offsetXRatio = newVal.textShadow.offsetX / newVal.fontSize
-      image.settings.texts.get(element).options.textShadow.offsetYRatio = newVal.textShadow.offsetY / newVal.fontSize
-      image.settings.texts.get(element).options.textShadow.blurRatio = newVal.textShadow.blur / newVal.fontSize
+      settings.options = _.cloneDeep(newVal)
+      settings.options.fontSizeRatio = newVal.fontSize / offsetWidth
+      settings.options.textShadow.offsetXRatio = newVal.textShadow.offsetX / newVal.fontSize
+      settings.options.textShadow.offsetYRatio = newVal.textShadow.offsetY / newVal.fontSize
+      settings.options.textShadow.blurRatio = newVal.textShadow.blur / newVal.fontSize
     }
   }
 }, {
@@ -1961,11 +1908,11 @@ const stopImageBoxShadowWatch = watch(() => imageOptions.value.boxShadow, (newVa
     if (element.getAttribute('selected') === 'true') {
       const {offsetX, offsetY, blur, shadowColor} = newVal;
       element.style.boxShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
-      const {width} = element.getBoundingClientRect();
+      const {offsetWidth} = element;
       image.settings.images.get(element).options.boxShadow = _.cloneDeep(newVal)
-      image.settings.images.get(element).options.boxShadow.offsetXRatio = offsetX / width
-      image.settings.images.get(element).options.boxShadow.offsetYRatio = offsetY / width
-      image.settings.images.get(element).options.boxShadow.blurRatio = blur / width
+      image.settings.images.get(element).options.boxShadow.offsetXRatio = offsetX / offsetWidth
+      image.settings.images.get(element).options.boxShadow.offsetYRatio = offsetY / offsetWidth
+      image.settings.images.get(element).options.boxShadow.blurRatio = blur / offsetWidth
     }
   }
 }, {
@@ -1980,20 +1927,11 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
   const {path} = selectedElement.value;
   const image = images.value.get(path);
   if (!image) return
-  const containerRect = image.getTargetElement().getBoundingClientRect();
-  const parentRect = image.getTargetElement().parentNode.getBoundingClientRect();
+  const {offsetWidth, offsetHeight} = image.getTargetElement().parentNode.querySelector('.image-background');
   const elements = Array.from(image.settings.images.keys());
-
-  // const leftGap = containerRect.left - parentRect.left;
-  // const rightGap = parentRect.right - containerRect.right;
-  // const topGap = containerRect.top - parentRect.top;
-  // const bottomGap = parentRect.bottom - containerRect.bottom;
-
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
-
       const {originalWidth, originalHeight} = image.settings.images.get(element);
-
       const computedStyle = window.getComputedStyle(element);
       let elementWidth = Number.parseFloat(computedStyle.width);
       let elementHeight = Number.parseFloat(computedStyle.height);
@@ -2008,76 +1946,16 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
       elementWidth = elementWidth + increaseWidth
       elementHeight = elementHeight + increaseHeight
 
-      // elementLeft = elementLeft - increaseWidth / 2
-      // elementTop = elementTop - increaseHeight / 2
-      const elementRight = parentRect.width - elementLeft - elementWidth;
-      const elementBottom = parentRect.height - elementTop - elementHeight
-
-      // if (elementLeft < leftGap || elementLeft + rightGap + elementWidth > parentRect.width || elementTop < topGap || elementTop + bottomGap + elementHeight > parentRect.height) {
-      //   return;
-      // }
-      //
-      // if (elementWidth <= 0 || elementHeight <= 0) {
-      //   return
-      // }
-
-
-      // element.style.left = elementLeft + 'px'
-      // element.style.top = elementTop + 'px'
       element.style.width = elementWidth + 'px'
       element.style.height = elementHeight + 'px'
 
       await nextTick();
 
-      let positionX;
-
-      let positionY;
-
-      let positionOffsetX;
-
-      let positionOffsetY;
-
-      let references = []
-
-      let offsetLeft;
-      let offsetTop;
-
-      positionOffsetX = elementLeft - (containerRect.left - parentRect.left)
-      offsetLeft = positionOffsetX / containerRect.width;
-
-      positionOffsetY = elementTop - (containerRect.top - parentRect.top)
-      offsetTop = positionOffsetY / containerRect.height;
-
-      if (elementLeft > elementRight) {
-        references.push('right')
-        positionOffsetX = containerRect.right - (parentRect.left + elementLeft) - elementWidth
-        positionX = positionOffsetX / containerRect.width
-      } else {
-        references.push('left')
-        positionX = offsetLeft
-      }
-
-      if (elementTop > elementBottom) {
-        references.push('bottom')
-        positionOffsetY = containerRect.bottom - (parentRect.top + elementTop) - elementHeight
-        positionY = positionOffsetY / containerRect.height;
-      } else {
-        references.push('top')
-        positionY = offsetTop;
-      }
-
       image.settings.images.get(element).options.scale = newVal
-      image.settings.images.get(element).positionX = positionX
-      image.settings.images.get(element).positionY = positionY
-      image.settings.images.get(element).offsetX = positionOffsetX
-      image.settings.images.get(element).offsetY = positionOffsetY
-      image.settings.images.get(element).offsetLeft = offsetLeft
-      image.settings.images.get(element).offsetTop = offsetTop
-      image.settings.images.get(element).references = references
       image.settings.images.get(element).width = elementWidth
       image.settings.images.get(element).height = elementHeight
-      image.settings.images.get(element).options.imageWidthRatio = elementWidth / containerRect.width
-      image.settings.images.get(element).options.imageHeightRatio = elementHeight / containerRect.height
+      image.settings.images.get(element).options.imageWidthRatio = elementWidth / offsetWidth
+      image.settings.images.get(element).options.imageHeightRatio = elementHeight / offsetHeight
 
     }
   }
@@ -3335,8 +3213,8 @@ const listenerPlaceElements = (previewImage, image) => {
           settings.value.image.positionY = positionY
           settings.value.image.offsetX = positionOffsetX
           settings.value.image.offsetY = positionOffsetY
-          settings.value.text.offsetLeft = offsetLeft
-          settings.value.text.offsetTop = offsetTop
+          settings.value.image.offsetLeft = offsetLeft
+          settings.value.image.offsetTop = offsetTop
           settings.value.image.path = dragElement.getAttribute('path')
           settings.value.image.url = dragElement.src
 
@@ -3429,7 +3307,6 @@ function makeDraggable(dragElement, path) {
     const elementHeight = parseFloat(dragElement.style.height) || parseFloat(window.getComputedStyle(dragElement).height);
     let initialLeft = parseFloat(dragElement.style.left) || canvasRect.width / image.scale - parseFloat(dragElement.style.right) - elementWidth;
     let initialTop = parseFloat(dragElement.style.top) || canvasRect.height / image.scale - parseFloat(dragElement.style.bottom) - elementHeight;
-
 
     // 获取鼠标位置
     offsetLeft = (startX - dragElementRect.left) / image.scale
@@ -3539,24 +3416,26 @@ function makeDraggable(dragElement, path) {
       const elementRight = canvasRect.width / image.scale - elementLeft - elementWidth;
       const elementBottom = canvasRect.height / image.scale - elementTop - elementHeight
 
-
       dragElement.style.left = elementLeft + 'px';
       dragElement.style.top = elementTop + 'px';
+
+      const left = dragElement.offsetLeft - canvasElement.scrollLeft + canvasRect.left;
+      const top = dragElement.offsetTop - canvasElement.scrollTop + canvasRect.top;
 
       let positionX, positionY
       let positionOffsetX, positionOffsetY;
       let offsetLeft, offsetTop;
       let references = []
 
-      positionOffsetX = (elementRect.left - backgroundRect.left) / image.scale
+      positionOffsetX = (left - backgroundRect.left) / image.scale
       offsetLeft = positionOffsetX / (backgroundRect.width / image.scale);
 
-      positionOffsetY = (elementRect.top - backgroundRect.top) / image.scale
+      positionOffsetY = (top - backgroundRect.top) / image.scale
       offsetTop = positionOffsetY / (backgroundRect.height / image.scale);
 
       if (elementLeft > elementRight) {
         references.push('right')
-        positionOffsetX = (backgroundRect.right - elementRect.left - elementRect.width) / image.scale
+        positionOffsetX = (backgroundRect.right - left - dragElement.offsetWidth) / image.scale
         positionX = positionOffsetX / (backgroundRect.width / image.scale)
       } else {
         references.push('left')
@@ -3565,7 +3444,7 @@ function makeDraggable(dragElement, path) {
 
       if (elementTop > elementBottom) {
         references.push('bottom')
-        positionOffsetY = (backgroundRect.bottom - elementRect.top - elementRect.height) / image.scale
+        positionOffsetY = (backgroundRect.bottom - top - dragElement.offsetHeight) / image.scale
         positionY = positionOffsetY / (backgroundRect.height / image.scale);
       } else {
         references.push('top')
