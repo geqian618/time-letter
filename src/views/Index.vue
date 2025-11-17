@@ -2859,7 +2859,7 @@ const renderBorders = async (path) => {
 
     backgroundElement.border = _.cloneDeep(settings.value.border)
 
-    const {clientWidth, clientHeight} = imsageElement;
+    const {clientWidth, clientHeight} = imageElement;
 
     image.settings.border = _.cloneDeep(settings.value.border)
     image.settings.border.borderLeftRatio = borderLeft / clientWidth
