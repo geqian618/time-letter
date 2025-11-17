@@ -457,8 +457,13 @@ async function addBorderAndText(options) {
             }
         }
 
-        // 5. 绘制原始图片（居中）
-        ctx.drawImage(image, borderLeft, borderTop, imageWidth, imageHeight);
+        if (borderRadius > 0) {
+            // 5. 绘制原始图片（居中）
+            drawRoundedImage(ctx, image, borderLeft, borderTop, imageWidth, imageHeight, borderRadius);
+        } else {
+            // 5. 绘制原始图片（居中）
+            ctx.drawImage(image, borderLeft, borderTop, imageWidth, imageHeight);
+        }
 
         let elements = [...texts, ...images];
 

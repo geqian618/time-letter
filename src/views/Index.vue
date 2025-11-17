@@ -149,6 +149,7 @@
                         <div class="label">边框类型</div>
                         <div class="value">
                           <el-select
+                              @change="handleBorders"
                               v-model="settings.border.borderType"
                               :options="borderOptions"
                               size="small"
@@ -1631,6 +1632,10 @@ const watchContextMenu = () => {
 
           await nextTick()
 
+          if (!nextElement.completed) {
+            await initializeCanvasLayout(nextElement)
+          }
+
           if (nextElement.isUpdate) {
             await refreshTemplate(paths[i])
           }
@@ -2316,8 +2321,7 @@ const useTemplate = async (options, path) => {
   image.settings.border = options.border
 
   if (path === selectedElement.value.path) {
-    renderBorders(path)
-    await nextTick()
+    await renderBorders(path)
   }
 
   const imageElement = image.getTargetElement();
@@ -2522,11 +2526,7 @@ const refreshTemplate = async (path) => {
 
   const image = images.value.get(path);
 
-  settings.value.border = image.settings.border
-
-  renderBorders(path)
-
-  await nextTick()
+  await renderBorders(path)
 
   image.settings.texts.forEach((settings, element) => {
     renderElementPosition(image, settings, element)
@@ -2537,7 +2537,9 @@ const refreshTemplate = async (path) => {
   })
 
   await nextTick()
+
   refreshPositionInformation(path)
+
   image.isUpdate = false
 }
 
@@ -2632,10 +2634,10 @@ async function handlePreview(event, image) {
     if (!beforePath || beforePath !== image.path) {
       image.visible = true;
       await nextTick()
-      setScrollBarPosition(image)
       if (!image.completed) {
-        initializeCanvasLayout(image)
+        await initializeCanvasLayout(image)
       }
+      setScrollBarPosition(image)
       if (image.isUpdate) {
         await refreshTemplate(image.path)
       }
@@ -2659,7 +2661,7 @@ const setScrollBarPosition = (image) => {
   viewElement.scrollTop = image.scrollTop;
 }
 
-const initializeCanvasLayout = (image) => {
+const initializeCanvasLayout = async (image) => {
   const previewImage = image.getTargetElement();
   const canvasElement = previewImage.parentNode;
   const backgroundElement = canvasElement.querySelector('.image-background');
@@ -2703,6 +2705,8 @@ const initializeCanvasLayout = (image) => {
   moveScrollBarToCenter(image)
 
   image.completed = true
+
+  await nextTick()
 
   // 设置缩放比例
   function setScale(scale) {
@@ -2853,32 +2857,14 @@ const handleBorders = async () => {
       borderRadius
     } = settings.value.border;
 
-    const oldBorder = backgroundElement.border || {
-      borderLeft: 0,
-      borderRight: 0,
-      borderTop: 0,
-      borderBottom: 0,
-      borderType: 0
-    };
-
-    if (borderType === 0) {
-      backgroundElement.style.background = borderColor
-    }
-
-    if (borderType === 1) {
-      backgroundElement.style.setProperty('--blur-radius', borderRadius + 'px');
-      backgroundElement.style.setProperty('--blur-intensity', borderBlur + 'px');
-      imageElement.style.borderRadius = borderRadius + 'px'
-    }
-
-    backgroundElement.style.borderRadius = borderRadius + 'px'
+    const oldBorder = backgroundElement.border || {};
 
     if (borderType !== oldBorder.borderType) {
       if (borderType === 0) {
-        backgroundElement.removeAttribute('blur')
+        backgroundElement.removeAttribute('blur-border')
+        backgroundElement.style.background = borderColor
       } else if (borderType === 1) {
-        backgroundElement.setAttribute('blur', '')
-        imageElement.style.borderRadius = borderRadius + 'px'
+        backgroundElement.setAttribute('blur-border', '')
         backgroundElement.style.background = `url('${image.url}') center / cover`
       }
     }
@@ -2911,6 +2897,21 @@ const handleBorders = async () => {
       backgroundElement.style.height = (oldHeight + increaseHeight) + 'px'
     }
 
+
+    if (borderRadius !== oldBorder.borderRadius) {
+      imageElement.style.borderRadius = borderRadius + 'px'
+      backgroundElement.style.borderRadius = borderRadius + 'px'
+    }
+
+    if (borderType === 0 && borderColor !== oldBorder.borderColor) {
+      backgroundElement.style.background = borderColor
+    }
+
+
+    if (borderType === 1 && borderBlur !== oldBorder.borderBlur) {
+      backgroundElement.style.setProperty('--blur-intensity', borderBlur + 'px');
+    }
+
     backgroundElement.border = _.cloneDeep(settings.value.border)
 
     const {clientWidth, clientHeight} = imageElement;
@@ -2931,8 +2932,7 @@ const handleBorders = async () => {
 }
 
 
-const renderBorders = (path) => {
-
+const renderBorders = async (path) => {
   const image = images.value.get(path)
   const imageElement = image.getTargetElement();
 
@@ -2951,22 +2951,18 @@ const renderBorders = (path) => {
       borderType,
       borderBlur,
       borderRadius
-    } = settings.value.border;
+    } = image.settings.border;
 
     if (borderType === 0) {
       backgroundElement.style.background = borderColor
       backgroundElement.removeAttribute('blur')
-      imageElement.style.borderRadius = ''
-      backgroundElement.style.borderRadius = ''
     } else if (borderType === 1) {
-      backgroundElement.setAttribute('blur', '')
-      imageElement.style.borderRadius = '10px'
-      backgroundElement.style.borderRadius = '10px'
+      backgroundElement.setAttribute('blur-border', '')
       backgroundElement.style.background = `url('${image.url}') center / cover`
       backgroundElement.style.setProperty('--blur-intensity', borderBlur + 'px');
-      backgroundElement.style.setProperty('--blur-radius', '10px');
     }
 
+    imageElement.style.borderRadius = borderRadius + 'px'
     backgroundElement.style.borderRadius = borderRadius + 'px'
 
     const imageWidth = Number.parseFloat(imageElement.style.width);
@@ -2978,6 +2974,8 @@ const renderBorders = (path) => {
     backgroundElement.style.height = (imageHeight + borderTop + borderBottom) + 'px'
     backgroundElement.style.left = (imageLeft - borderLeft) + 'px'
     backgroundElement.style.top = (imageTop - borderTop) + 'px'
+
+    await nextTick()
 
     backgroundElement.border = _.cloneDeep(settings.value.border)
 
@@ -3901,24 +3899,25 @@ function makeDraggable(dragElement, path) {
         position: relative;
 
         .image-background {
+          overflow: hidden;
           position: absolute;
-          z-index: -100;
+          z-index: 0;
         }
 
-        .image-background[blur]::before {
+        .image-background[blur-border]::before {
           content: '';
           position: absolute;
           top: 0;
           left: 0;
           right: 0;
           bottom: 0;
-          border-radius: var(--blur-radius, 15px);
           backdrop-filter: blur(var(--blur-intensity, 10px));
-          z-index: -99;
+          z-index: 1;
         }
 
         img {
           position: absolute;
+          z-index: 2;
         }
       }
     }
