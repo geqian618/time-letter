@@ -2195,6 +2195,7 @@ const useTemplate = async (options, path) => {
 
   options = _.cloneDeep(options)
   const image = images.value.get(path);
+
   image.isUpdate = true
   image.settings.border = options.border
 
@@ -2206,20 +2207,19 @@ const useTemplate = async (options, path) => {
   const canvasElement = imageElement.parentNode
 
   for (let settings of options.images) {
-    const {angle, alpha, path, height, width, url, boxShadow: {offsetX, offsetY, blur, shadowColor}} = settings.options;
+    const {angle, alpha, boxShadow: {offsetX, offsetY, blur, shadowColor}} = settings.options;
     const img = document.createElement('img');
     img.style.outline = 'none';
     img.style.cursor = 'move';
     img.style.userSelect = 'none';
     img.setAttribute('tabindex', '0')
-    img.src = url
-    img.setAttribute('path', path)
+    img.src = settings.url
+    img.setAttribute('path', settings.path)
     img.className = 'image-mark'
     // 关键：必须设为绝对定位
     img.style.position = 'absolute';
-    img.style.width = width + 'px';
-    img.style.width = width + 'px';
-    img.style.height = height + 'px'
+    img.style.width = settings.width + 'px';
+    img.style.height = settings.height + 'px'
     img.style.opacity = alpha / 10
 
     img.style.transformOrigin = 'center center'
@@ -2233,6 +2233,7 @@ const useTemplate = async (options, path) => {
 
     canvasElement.appendChild(img)
     image.settings.images.set(img, settings)
+    console.log(settings)
     makeDraggable(img, path)
   }
 
