@@ -3903,7 +3903,6 @@ function makeDraggable(dragElement, path) {
         .image-background {
           overflow: hidden;
           position: absolute;
-          z-index: 0;
         }
 
         .image-background[blur-border]::before {
@@ -3914,12 +3913,10 @@ function makeDraggable(dragElement, path) {
           right: 0;
           bottom: 0;
           backdrop-filter: blur(var(--blur-intensity, 10px));
-          z-index: 1;
         }
 
         img {
           position: absolute;
-          z-index: 2;
         }
       }
     }
