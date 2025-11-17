@@ -2870,7 +2870,7 @@ const handleBorders = async () => {
     }
 
     if (oldBorder.borderLeft !== borderLeft) {
-      const increaseWidth = borderLeft - oldBorder.borderLeft;
+      const increaseWidth = borderLeft - (oldBorder.borderLeft || 0);
       const oldWidth = Number.parseFloat(backgroundElement.style.width);
       const left = Number.parseFloat(backgroundElement.style.left);
       backgroundElement.style.width = (oldWidth + increaseWidth) + 'px'
@@ -2878,21 +2878,23 @@ const handleBorders = async () => {
     }
 
     if (oldBorder.borderRight !== borderRight) {
-      const increaseWidth = borderRight - oldBorder.borderRight;
+      const increaseWidth = borderRight - (oldBorder.borderRight || 0);
       const oldWidth = Number.parseFloat(backgroundElement.style.width);
       backgroundElement.style.width = (oldWidth + increaseWidth) + 'px'
     }
 
     if (oldBorder.borderTop !== borderTop) {
-      const increaseHeight = borderTop - oldBorder.borderTop;
+      const increaseHeight = borderTop - (oldBorder.borderTop || 0);
       const oldHeight = Number.parseFloat(backgroundElement.style.height);
       const top = Number.parseFloat(backgroundElement.style.top);
+      console.log((oldHeight + increaseHeight) + 'px')
+      console.log((top - increaseHeight) + 'px')
       backgroundElement.style.height = (oldHeight + increaseHeight) + 'px'
       backgroundElement.style.top = (top - increaseHeight) + 'px'
     }
 
     if (oldBorder.borderBottom !== borderBottom) {
-      const increaseHeight = borderBottom - oldBorder.borderBottom;
+      const increaseHeight = borderBottom - (oldBorder.borderBottom || 0);
       const oldHeight = Number.parseFloat(backgroundElement.style.height);
       backgroundElement.style.height = (oldHeight + increaseHeight) + 'px'
     }
@@ -2979,7 +2981,7 @@ const renderBorders = async (path) => {
 
     backgroundElement.border = _.cloneDeep(settings.value.border)
 
-    const {clientWidth, clientHeight} = imageElement;
+    const {clientWidth, clientHeight} = imsageElement;
 
     image.settings.border = _.cloneDeep(settings.value.border)
     image.settings.border.borderLeftRatio = borderLeft / clientWidth
