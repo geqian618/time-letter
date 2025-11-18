@@ -1640,24 +1640,25 @@ const watchContextMenu = () => {
             await refreshTemplate(paths[i])
           }
 
-          await nextTick()
-
           const image = images.value.get(paths[i]);
 
           const imageElement = image.getTargetElement();
 
-          const backgroundRect = imageElement.parentNode.querySelector('.image-background').getBoundingClientRect();
+          const backgroundElement = imageElement.parentNode.querySelector('.image-background');
+
+          const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
+          const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
 
           const {settings} = image
 
           const textList = Array.from(settings.texts.values()).map(item => {
-            item.options.fontSizeRatio = item.options.fontSize / (backgroundRect.width / image.scale)
+            item.options.fontSizeRatio = item.options.fontSize / backgroundWidth
             return item
           });
 
           const imageList = Array.from(settings.images.values()).map(item => {
-            item.options.imageWidthRatio = item.width / (backgroundRect.width / image.scale)
-            item.options.imageHeightRatio = item.height / (backgroundRect.height / image.scale)
+            item.options.imageWidthRatio = item.width / backgroundWidth
+            item.options.imageHeightRatio = item.height / backgroundHeight
             return item
           });
 
@@ -1681,8 +1682,6 @@ const watchContextMenu = () => {
         }
 
         currentSelectedElement.visible = true
-
-        await nextTick()
 
         window.electronAPI.requestSaveFiles(_.cloneDeep(newSettings))
 
