@@ -146,9 +146,9 @@ async function drawImage(ctx, image, newWidth, newHeight) {
 
     const alpha = image.options.alpha ? image.options.alpha / 10 : 1;
 
-    const height = image.options.imageHeightRatio * newHeight;
-
     const width = image.options.imageWidthRatio * newWidth;
+
+    const height = image.options.imageHeightRatio * newHeight;
 
     let imageX = image.offsetLeft * newWidth
 
