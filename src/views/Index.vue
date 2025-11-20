@@ -2888,7 +2888,7 @@ const renderBorders = async (path) => {
     backgroundElement.style.height = (imageHeight + borderTop + borderBottom) + 'px'
     backgroundElement.style.left = (imageLeft - borderLeft) + 'px'
     backgroundElement.style.top = (imageTop - borderTop) + 'px'
-    backgroundElement.style.right = (imageLeft - borderRight) + 'px'
+    backgroundElement.style.right = (imageRight - borderRight) + 'px'
     backgroundElement.style.bottom = (imageBottom - borderBottom) + 'px'
 
     await nextTick()
