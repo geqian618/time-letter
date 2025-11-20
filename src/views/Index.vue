@@ -1431,15 +1431,6 @@ const watchInputImages = () => {
           }
         }
       }
-      nextTick(() => {
-        images.value.forEach((item, path) => {
-          if (!item.render) {
-            const element = item.getTargetElement();
-            listenerPlaceElements(element, item);
-            item.render = true
-          }
-        })
-      })
     }
   });
 }
@@ -1682,6 +1673,8 @@ const watchContextMenu = () => {
         }
 
         currentSelectedElement.visible = true
+
+        await nextTick()
 
         window.electronAPI.requestSaveFiles(_.cloneDeep(newSettings))
 
@@ -2611,6 +2604,8 @@ const initializeCanvasLayout = async (image) => {
 
   moveScrollBarToCenter(image)
 
+  listenerPutElements(canvasElement, image);
+
   image.completed = true
 
   await nextTick()
@@ -3120,19 +3115,19 @@ const listenerDraggableLabelElements = () => {
   });
 }
 
-const listenerPlaceElements = (previewImage, image) => {
+const listenerPutElements = (canvasElement, image) => {
 
-  previewImage.parentNode.addEventListener('dragover', event =>
+  canvasElement.addEventListener('dragover', event =>
       event.preventDefault()
   );
 
-  previewImage.parentNode.addEventListener('dragleave', () => {
+  canvasElement.addEventListener('dragleave', () => {
         // previewImage.style.borderColor = '#95a5a6'
       }
   );
 
   // 修复放置逻辑
-  previewImage.parentNode.addEventListener('drop', function (event) {
+  canvasElement.addEventListener('drop', function (event) {
 
     event.preventDefault();
 
@@ -3143,8 +3138,6 @@ const listenerPlaceElements = (previewImage, image) => {
     const mouseX = event.clientX;
 
     const mouseY = event.clientY;
-
-    const canvasElement = previewImage.parentNode;
 
     const backgroundElement = canvasElement.querySelector('.image-background');
 
@@ -3183,7 +3176,7 @@ const listenerPlaceElements = (previewImage, image) => {
         dragElement.style.bottom = `${elementBottom}px`;
 
         // 关键：将元素添加到容器
-        previewImage.parentNode.appendChild(dragElement);
+        canvasElement.appendChild(dragElement);
 
         const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
         const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
@@ -3513,7 +3506,7 @@ function makeDraggable(dragElement, path) {
       input.value = originalText;
       input.style.width = 'fit-content'
       input.style.height = dragElement.style.height
-      input.style.padding = '0 5px'
+      input.style.padding = '0 2px'
 
       // 清空元素内容并添加输入框
       dragElement.innerHTML = '';
@@ -3545,16 +3538,9 @@ function makeDraggable(dragElement, path) {
           return
         }
         dragElement.setAttribute('selected', 'false')
-        const containerRect = image.getTargetElement().getBoundingClientRect();
-        const dragElementRect = dragElement.getBoundingClientRect();
-        const textLabel = image.settings.texts.get(dragElement);
-        textLabel.options.fontWidthRatio = dragElementRect.width / containerRect.width
-        textLabel.options.fontHeightRatio = dragElementRect.height / containerRect.height
         textLabel.content = newValue
       });
-
     })
-
   }
 }
 
