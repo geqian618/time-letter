@@ -484,11 +484,15 @@ async function addBorderAndText(options) {
         }
 
         // 7. 保存图片 (使用 Buffer 写入)
-        let buffer = canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, {
-            // 图片质量
-            quality: quality
-        });
+        let buffer;
 
+        if (outputExtname === 'png') {
+            buffer = canvas.toBuffer('image/png');
+        } else {
+            buffer = canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, {
+                quality: quality
+            });
+        }
 
         if (['jpeg', 'jpg'].includes(originalExtname) && ['jpeg', 'jpg'].includes(outputExtname) && isSynchronizeMetadata) {
             buffer = await copyExifDataToBuffer(inputPath, buffer)
