@@ -2865,7 +2865,7 @@ const renderBorders = async (path) => {
 
     if (borderType === 0) {
       backgroundElement.style.background = borderColor
-      backgroundElement.removeAttribute('blur')
+      backgroundElement.removeAttribute('blur-border')
       backgroundElement.style.boxShadow = ''
     } else if (borderType === 1) {
       backgroundElement.setAttribute('blur-border', '')
