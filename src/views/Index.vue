@@ -2517,6 +2517,7 @@ async function handlePreview(event, image) {
     }
 
     const beforePath = selectedElement.value.path;
+
     // 前一次预览元素与当前预览元素不同，隐藏前一次预览元素
     if (beforePath && beforePath !== image.path) {
       const beforePath = selectedElement.value.path;
@@ -2539,6 +2540,7 @@ async function handlePreview(event, image) {
 
     selectedElement.value.path = event.target.getAttribute('path')
     selectedElement.value.element = event.target;
+
     // 添加当前选中元素到选中列表中
     selectedImages.value.set(image.path, event.target)
     event.target.classList.add('active')
@@ -2606,6 +2608,15 @@ const initializeCanvasLayout = async (image) => {
 
   listenerPutElements(canvasElement, image);
 
+  // 滚轮缩放事件
+  canvasElement.addEventListener('wheel', function (e) {
+    // 阻止默认滚动行为
+    e.preventDefault();
+    // 根据滚轮方向确定缩放方向
+    const direction = e.deltaY < 0 ? 'in' : 'out';
+    zoom(direction);
+  }, {passive: false});
+
   image.completed = true
 
   await nextTick()
@@ -2627,15 +2638,6 @@ const initializeCanvasLayout = async (image) => {
     const newScale = direction === 'in' ? currentScale + scaleStep : currentScale - scaleStep;
     setScale(newScale);
   }
-
-  // 滚轮缩放事件
-  canvasElement.addEventListener('wheel', function (e) {
-    // 阻止默认滚动行为
-    e.preventDefault();
-    // 根据滚轮方向确定缩放方向
-    const direction = e.deltaY < 0 ? 'in' : 'out';
-    zoom(direction);
-  }, {passive: false});
 }
 
 // 初始化时自动滚动到图形内容区域
