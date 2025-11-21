@@ -2,7 +2,7 @@ const {BrowserWindow} = require('electron')
 
 const environment = process.env.NODE_ENV
 const path = require('path')
-const icon = path.join(__dirname, '../images/favicon.ico')
+const icon = path.join(__dirname, '../resources/favicon.ico')
 
 
 let childWindow;
@@ -15,7 +15,7 @@ const createChildWindow = () => {
         minWidth: 600,
         maxHeight: 400,
         minHeight: 400,
-        icon: path.join(icon),
+        icon: icon,
         show: false,
         autoHideMenuBar: true,
         webPreferences: {
