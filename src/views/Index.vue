@@ -3509,6 +3509,7 @@ function makeDraggable(dragElement, path) {
       input.style.width = 'fit-content'
       input.style.height = dragElement.style.height
       input.style.padding = '0 2px'
+      input.style.outline = '1px solid white'
 
       // 清空元素内容并添加输入框
       dragElement.innerHTML = '';
