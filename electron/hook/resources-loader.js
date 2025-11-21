@@ -23,7 +23,7 @@ const loadImageLabels = (window) => {
 
 const loadFonts = (window) => {
     const fonts = reloadFonts();
-    window.webContents.send('watch-input-font', {type: 0, data: fonts})
+    window.webContents.send('watch-input-font', {type: -1, data: fonts})
 }
 
 

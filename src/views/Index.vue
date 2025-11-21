@@ -968,6 +968,7 @@ import _ from 'lodash';
 
 import MapHelper from "@/utils/map-helper";
 
+import Notification from '@/utils/Notification'
 
 import {projectSettings, outputSizeOptions, originalMetadata, downloadThreadsOptions} from '@/config/project-settings'
 
@@ -1332,10 +1333,20 @@ const clearSelectedImages = async () => {
 const watchInputFonts = () => {
   window.electronAPI.watchInputFonts(async (event, {type, data}) => {
     if (data) {
-      if (type === 0) {
+      if (type === 0 || type === -1) {
         for (let [fontFamily, font] of data) {
           if (!fontOptions.value.has(fontFamily) && font.url) {
-            FontLoader.loadFont(fontFamily, font.url)
+            try {
+              FontLoader.loadFont(fontFamily, font.url)
+              if (type === 0) {
+                setTimeout(() => {
+                  Notification.success(`字体 ${fontFamily} 加载成功`)
+                }, 100)
+              }
+            } catch (error) {
+              Notification.error(error.message)
+              return
+            }
           }
           if (!projectSettings.value.fontConfig.has(fontFamily)) {
             projectSettings.value.fontConfig.set(fontFamily, {
