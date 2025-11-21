@@ -1340,11 +1340,11 @@ const watchInputFonts = () => {
               FontLoader.loadFont(fontFamily, font.url)
               if (type === 0) {
                 setTimeout(() => {
-                  Notification.success(`字体 ${fontFamily} 加载成功`)
+                  Notification.success(`字体 ${fontFamily} 加载成功`, '提示')
                 }, 100)
               }
             } catch (error) {
-              Notification.error(error.message)
+              Notification.error(error.message, '提示')
               return
             }
           }
