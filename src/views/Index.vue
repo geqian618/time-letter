@@ -2783,6 +2783,7 @@ const handleBorders = async () => {
         backgroundElement.setAttribute('blur-border', '')
         backgroundElement.style.background = `url('${image.url}') center / cover`
         backgroundElement.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.4)'
+        imageElement.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.4)'
       }
     }
 
@@ -2878,11 +2879,13 @@ const renderBorders = async (path) => {
       backgroundElement.style.background = borderColor
       backgroundElement.removeAttribute('blur-border')
       backgroundElement.style.boxShadow = ''
+      imageElement.style.boxShadow = ''
     } else if (borderType === 1) {
       backgroundElement.setAttribute('blur-border', '')
       backgroundElement.style.background = `url('${image.url}') center / cover`
       backgroundElement.style.setProperty('--blur-intensity', borderBlur + 'px');
       backgroundElement.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.4)'
+      imageElement.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.3)'
     }
 
     imageElement.style.borderRadius = borderRadius + 'px'

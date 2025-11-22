@@ -233,14 +233,35 @@ const getExtname = (originalExtname, extnameType) => {
  * @param {number} width - 图片宽度
  * @param {number} height - 图片高度
  * @param {number|object} borderRadius - 圆角大小
- *   数字类型：统一设置四个角的圆角半径[citation:1]
- *   对象类型：分别设置四个角的半径 { topLeft, topRight, bottomRight, bottomLeft }[citation:9]
+ *   数字类型：统一设置四个角的圆角半径
+ *   对象类型：分别设置四个角的半径 { topLeft, topRight, bottomRight, bottomLeft }
  */
 function drawRoundedImage(ctx, img, x, y, width, height, borderRadius) {
-    // 保存上下文状态[citation:5]
+
+    // 保存上下文状态
     ctx.save();
 
-    // 创建圆角路径
+    // ============== 方法1：先绘制阴影，再绘制图片 ==============
+    // 设置阴影
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    ctx.shadowBlur = 150;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+
+    // 创建圆角路径用于绘制阴影
+    createRoundedPath(ctx, x, y, width, height, borderRadius);
+
+    // 填充路径以产生阴影（使用透明色，这样只有阴影可见）
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.01)'; // 几乎透明的颜色
+    ctx.fill();
+
+    // 清除阴影设置，避免影响后续绘制
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+
+    // 创建圆角路径用于裁剪
     createRoundedPath(ctx, x, y, width, height, borderRadius);
 
     // 设置为裁剪区域
@@ -249,7 +270,7 @@ function drawRoundedImage(ctx, img, x, y, width, height, borderRadius) {
     // 绘制图片
     ctx.drawImage(img, x, y, width, height);
 
-    // 恢复上下文状态[citation:5]
+    // 恢复上下文状态
     ctx.restore();
 }
 
@@ -261,12 +282,11 @@ function createRoundedPath(ctx, x, y, width, height, borderRadius) {
     let topRight = 0;
     let bottomRight = 0;
     let bottomLeft = 0;
+
     // 处理不同类型的borderRadius参数
     if (typeof borderRadius === 'number') {
-        // 统一圆角[citation:1]
         topLeft = topRight = bottomRight = bottomLeft = borderRadius;
     } else if (typeof borderRadius === 'object') {
-        // 分别设置不同圆角[citation:9]
         topLeft = borderRadius.topLeft || 0;
         topRight = borderRadius.topRight || 0;
         bottomRight = borderRadius.bottomRight || 0;
