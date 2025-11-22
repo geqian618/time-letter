@@ -243,7 +243,7 @@ function drawRoundedImage(ctx, img, x, y, width, height, borderRadius) {
 
     // ============== 方法1：先绘制阴影，再绘制图片 ==============
     // 设置阴影
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
     ctx.shadowBlur = 150;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;

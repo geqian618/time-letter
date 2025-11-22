@@ -2885,7 +2885,7 @@ const renderBorders = async (path) => {
       backgroundElement.style.background = `url('${image.url}') center / cover`
       backgroundElement.style.setProperty('--blur-intensity', borderBlur + 'px');
       backgroundElement.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.4)'
-      imageElement.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.3)'
+      imageElement.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.4)'
     }
 
     imageElement.style.borderRadius = borderRadius + 'px'
