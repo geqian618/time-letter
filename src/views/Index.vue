@@ -785,7 +785,7 @@
                 <div class="slider-demo-block">
                   <el-slider v-model="projectSettings.outputSettings.quality"
                              :min="1"
-                             :max="10"
+                             :max="100"
                              size="small"
                              show-input/>
                 </div>
@@ -4234,7 +4234,7 @@ function makeDraggable(dragElement, path) {
               }
 
               .el-slider__input {
-                width: 80px;
+                width: 85px;
               }
             }
           }

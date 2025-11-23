@@ -507,7 +507,7 @@ async function addBorderAndText(options) {
         if (outputExtname === 'png') {
             buffer = canvas.toBuffer('image/png');
         } else {
-            buffer = canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, quality * 10);
+            buffer = canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, quality);
         }
 
         if (['jpeg', 'jpg'].includes(originalExtname) && ['jpeg', 'jpg'].includes(outputExtname) && isSynchronizeMetadata) {
