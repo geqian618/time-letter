@@ -10,7 +10,7 @@ const projectSettings = ref({
             height: 1080
         },
         extname: 0,
-        quality: 10,
+        quality: 100,
         isSynchronizeMetadata: true
     },
     metadata: {
