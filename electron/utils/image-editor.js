@@ -54,8 +54,8 @@ function drawText(ctx, text, newWidth, newHeight, fontConfig) {
     const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
     const {offsetX, offsetY} = fontConfig.get(fontFamily) || {offsetX: 0, offsetY: 0};
-    let textX = text.offsetLeft * newWidth + offsetX * fontSize
-    let textY = text.offsetTop * newHeight + offsetY * fontSize
+    let textX = text.offsetLeftRatio * newWidth + offsetX * fontSize
+    let textY = text.offsetTopRatio * newHeight + offsetY * fontSize
 
     // 1. 计算文字中心点
     let centerX, centerY;
@@ -150,9 +150,9 @@ async function drawImage(ctx, image, newWidth, newHeight) {
 
     const height = image.options.imageHeightRatio * newHeight;
 
-    let imageX = image.offsetLeft * newWidth
+    let imageX = image.offsetLeftRatio * newWidth
 
-    let imageY = image.offsetTop * newHeight;
+    let imageY = image.offsetTopRatio * newHeight;
 
     let imageBuffer;
 

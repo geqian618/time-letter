@@ -2185,37 +2185,36 @@ function renderElementPosition(image, settings, element) {
 
   const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement;
 
-  const backgroundLeft = Number.parseInt(backgroundElement.style.left);
-  const backgroundTop = Number.parseInt(backgroundElement.style.top);
+  const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
+  const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
+  const backgroundLeft = Number.parseFloat(backgroundElement.style.left);
+  const backgroundRight = Number.parseFloat(backgroundElement.style.right);
+  const backgroundTop = Number.parseFloat(backgroundElement.style.top);
+  const backgroundBottom = Number.parseFloat(backgroundElement.style.bottom);
 
-  const backgroundWidth = backgroundElement.offsetWidth;
-  const backgroundHeight = backgroundElement.offsetHeight;
+  let {
+    offsetLeft,
+    offsetLeftRatio,
+    offsetRight,
+    offsetRightRatio,
+    offsetTop,
+    offsetTopRatio,
+    offsetBottom,
+    offsetBottomRatio,
+    synchronousMode
+  } = settings
 
+  offsetLeft = synchronousMode === 1 ? offsetLeftRatio * backgroundWidth : offsetLeft;
+  offsetRight = synchronousMode === 1 ? offsetRightRatio * backgroundWidth : offsetRight;
+  offsetTop = synchronousMode === 1 ? offsetTopRatio * backgroundHeight : offsetTop;
+  offsetBottom = synchronousMode === 1 ? offsetBottomRatio * backgroundHeight : offsetBottom;
 
-  let {positionX, positionY, offsetX, offsetY, synchronousMode} = settings
-  let newPositionX, newPositionY, newOffsetX, newOffsetY
-  newOffsetX = synchronousMode === 1 ? positionX * backgroundWidth : offsetX;
-  newOffsetY = synchronousMode === 1 ? positionY * backgroundHeight : offsetY;
+  const left = backgroundLeft + offsetLeft;
+  const right = backgroundRight + offsetRight;
+  const top = backgroundTop + offsetTop;
+  const bottom = backgroundBottom + offsetBottom;
 
-  if (settings.references.includes('left')) {
-    newPositionX = backgroundLeft + newOffsetX
-    element.style.left = `${newPositionX}px`;
-  }
-
-  if (settings.references.includes('right')) {
-    newPositionX = canvasWidth - backgroundLeft - backgroundWidth + newOffsetX
-    element.style.right = `${newPositionX}px`;
-  }
-
-  if (settings.references.includes('top')) {
-    newPositionY = backgroundTop + newOffsetY
-    element.style.top = `${newPositionY}px`;
-  }
-
-  if (settings.references.includes('bottom')) {
-    newPositionY = canvasHeight - backgroundTop - backgroundHeight + newOffsetY
-    element.style.bottom = `${newPositionY}px`;
-  }
+  element.style.inset = `${top}px ${right}px ${bottom}px ${left}px`
 }
 
 const useTemplate = async (options, path) => {
@@ -3192,10 +3191,8 @@ const monitorPutElements = (canvasElement, image) => {
 
     let elementHeight = Number.parseFloat(computedStyle.height)
 
-    if (dragElement.src) {
-      dragElement.style.width = elementWidth + 'px'
-      dragElement.style.height = elementHeight + 'px'
-    }
+    dragElement.style.width = elementWidth + 'px'
+    dragElement.style.height = elementHeight + 'px'
 
     dragElement.remove()
 
@@ -3226,83 +3223,70 @@ const monitorPutElements = (canvasElement, image) => {
         const backgroundTop = Number.parseFloat(backgroundElement.style.top);
         const backgroundBottom = Number.parseFloat(backgroundElement.style.bottom);
 
-        let positionX, positionY
-        let positionOffsetX, positionOffsetY;
-        let offsetLeft, offsetTop;
         let references = []
 
-        positionOffsetX = elementLeft - backgroundLeft
-        offsetLeft = positionOffsetX / backgroundWidth
+        let offsetLeft = elementLeft - backgroundLeft
+        let offsetLeftRatio = offsetLeft / backgroundWidth
 
-        positionOffsetY = elementTop - backgroundTop
-        offsetTop = positionOffsetY / backgroundHeight
+        let offsetRight = elementRight - backgroundRight
+        let offsetRightRatio = offsetRight / backgroundWidth
 
-        if (elementLeft > elementRight) {
-          references.push('right')
-          positionOffsetX = elementRight - backgroundRight
-          positionX = positionOffsetX / backgroundWidth
-        } else {
-          references.push('left')
-          positionX = offsetLeft;
-        }
+        let offsetTop = elementTop - backgroundTop
+        let offsetTopRatio = offsetTop / backgroundHeight
 
-        if (elementTop > elementBottom) {
-          references.push('bottom')
-          positionOffsetY = elementBottom - backgroundBottom
-          positionY = positionOffsetY / backgroundHeight
-        } else {
-          references.push('top')
-          positionY = offsetTop;
-        }
+        let offsetBottom = elementBottom - backgroundBottom
+        let offsetBottomRatio = offsetBottom / backgroundHeight
+
+        elementLeft > elementRight ? references.push('right') : references.push('left')
+
+        elementTop > elementBottom ? references.push('bottom') : references.push('top')
+
+        const params = !dragElement.src ? settings.value.text : settings.value.image
+
+        params.references = references
+        params.offsetLeft = offsetLeft
+        params.offsetLeftRatio = offsetLeftRatio
+        params.offsetRight = offsetRight
+        params.offsetRightRatio = offsetRightRatio
+        params.offsetTop = offsetTop
+        params.offsetTopRatio = offsetTopRatio
+        params.offsetBottom = offsetBottom
+        params.offsetBottomRatio = offsetBottomRatio
+
+        params.width = elementWidth
+        params.height = elementHeight
 
         if (!dragElement.src) {
-          settings.value.text.references = references
-          settings.value.text.positionX = positionX
-          settings.value.text.positionY = positionY
-          settings.value.text.offsetX = positionOffsetX
-          settings.value.text.offsetY = positionOffsetY
-          settings.value.text.offsetLeft = offsetLeft
-          settings.value.text.offsetTop = offsetTop
           const type = dragElement.getAttribute('type');
           if (type === 'metadata') {
-            settings.value.text.attribute = dragElement.getAttribute('text')
+            params.attribute = dragElement.getAttribute('text')
           }
           if (type === 'script') {
-            settings.value.text.expression = dragElement.getAttribute('text')
+            params.expression = dragElement.getAttribute('text')
           }
-          settings.value.text.content = dragElement.innerText
-          settings.value.text.type = dragElement.getAttribute('type')
+          params.content = dragElement.innerText
+          params.type = dragElement.getAttribute('type')
           const dragElementStyle = window.getComputedStyle(dragElement);
           const fontSize = Number.parseFloat(dragElementStyle.fontSize);
-          settings.value.image.width = elementWidth
-          settings.value.image.height = elementHeight
-          settings.value.text.options.fontSize = fontSize
-          settings.value.text.options.fontFamily = dragElementStyle.fontFamily.replace(/"/g, '')
-          settings.value.text.options.fontColor = dragElementStyle.color
-          settings.value.text.options.fontStyle = dragElementStyle.fontStyle
-          settings.value.text.options.fontWeight = Number.parseInt(dragElementStyle.fontWeight)
-          settings.value.text.options.fontSizeRatio = fontSize / backgroundWidth
-          settings.value.text.options.textDirection = 0
-          image.settings.texts.set(dragElement, _.cloneDeep(settings.value.text))
+          params.options.fontSize = fontSize
+          params.options.fontFamily = dragElementStyle.fontFamily.replace(/"/g, '')
+          params.options.fontColor = dragElementStyle.color
+          params.options.fontStyle = dragElementStyle.fontStyle
+          params.options.fontWeight = Number.parseInt(dragElementStyle.fontWeight)
+          params.options.fontSizeRatio = fontSize / backgroundWidth
+          params.options.textDirection = 0
         } else {
-          settings.value.image.references = references
-          settings.value.image.positionX = positionX
-          settings.value.image.positionY = positionY
-          settings.value.image.offsetX = positionOffsetX
-          settings.value.image.offsetY = positionOffsetY
-          settings.value.image.offsetLeft = offsetLeft
-          settings.value.image.offsetTop = offsetTop
-          settings.value.image.path = dragElement.getAttribute('path')
-          settings.value.image.url = dragElement.src
-          settings.value.image.originalWidth = elementWidth
-          settings.value.image.originalHeight = elementHeight
-          settings.value.image.width = elementWidth
-          settings.value.image.height = elementHeight
-          settings.value.image.options.imageHeightRatio = elementHeight / backgroundHeight
-          settings.value.image.options.imageWidthRatio = elementWidth / backgroundWidth
-
-          image.settings.images.set(dragElement, _.cloneDeep(settings.value.image))
+          params.path = dragElement.getAttribute('path')
+          params.url = dragElement.src
+          params.originalWidth = elementWidth
+          params.originalHeight = elementHeight
+          params.options.imageHeightRatio = elementHeight / backgroundHeight
+          params.options.imageWidthRatio = elementWidth / backgroundWidth
         }
+
+        const labelMap = !dragElement.src ? image.settings.texts : image.settings.images;
+
+        labelMap.set(dragElement, _.cloneDeep(params))
 
         makeDraggable(dragElement, selectedElement.value.path)
       }
@@ -3419,54 +3403,34 @@ function makeDraggable(dragElement, path) {
       const backgroundTop = Number.parseFloat(backgroundElement.style.top);
       const backgroundBottom = Number.parseFloat(backgroundElement.style.bottom);
 
-      let positionX, positionY
-      let positionOffsetX, positionOffsetY;
-      let offsetLeft, offsetTop;
       let references = []
 
-      positionOffsetX = elementLeft - backgroundLeft
-      offsetLeft = positionOffsetX / backgroundWidth;
+      let offsetLeft = elementLeft - backgroundLeft
+      let offsetLeftRatio = offsetLeft / backgroundWidth
 
-      positionOffsetY = elementTop - backgroundTop
-      offsetTop = positionOffsetY / backgroundHeight
+      let offsetRight = elementRight - backgroundRight
+      let offsetRightRatio = offsetRight / backgroundWidth
 
-      if (elementLeft > elementRight) {
-        references.push('right')
-        positionOffsetX = elementRight - backgroundRight
-        positionX = positionOffsetX / backgroundWidth
-      } else {
-        references.push('left')
-        positionX = offsetLeft;
-      }
+      let offsetTop = elementTop - backgroundTop
+      let offsetTopRatio = offsetTop / backgroundHeight
 
-      if (elementTop > elementBottom) {
-        references.push('bottom')
-        positionOffsetY = elementBottom - backgroundBottom
-        positionY = positionOffsetY / backgroundHeight
-      } else {
-        references.push('top')
-        positionY = offsetTop;
-      }
+      let offsetBottom = elementBottom - backgroundBottom
+      let offsetBottomRatio = offsetBottom / backgroundHeight
 
-      if (!dragElement.src) {
-        const textMark = image.settings.texts.get(dragElement);
-        textMark.references = references
-        textMark.positionX = positionX
-        textMark.positionY = positionY
-        textMark.offsetX = positionOffsetX
-        textMark.offsetY = positionOffsetY
-        textMark.offsetLeft = offsetLeft
-        textMark.offsetTop = offsetTop
-      } else {
-        const imageMark = image.settings.images.get(dragElement);
-        imageMark.references = references
-        imageMark.positionX = positionX
-        imageMark.positionY = positionY
-        imageMark.offsetX = positionOffsetX
-        imageMark.offsetY = positionOffsetY
-        imageMark.offsetLeft = offsetLeft
-        imageMark.offsetTop = offsetTop
-      }
+      elementLeft > elementRight ? references.push('right') : references.push('left')
+
+      elementTop > elementBottom ? references.push('bottom') : references.push('top')
+
+      const settings = !dragElement.src ? image.settings.texts.get(dragElement) : image.settings.images.get(dragElement)
+      settings.references = references
+      settings.offsetLeft = offsetLeft
+      settings.offsetLeftRatio = offsetLeftRatio
+      settings.offsetRight = offsetRight
+      settings.offsetRightRatio = offsetRightRatio
+      settings.offsetTop = offsetTop
+      settings.offsetTopRatio = offsetTopRatio
+      settings.offsetBottom = offsetBottom
+      settings.offsetBottomRatio = offsetBottomRatio
     }
     document.onmouseup = function closeDragElement() {
       document.onmouseup = null;
