@@ -72,7 +72,7 @@
           </el-aside>
         </div>
 
-        <div class="page-center">
+        <div class="page-center" ref="previewContainer">
           <template v-for="([key, image]) in images" :key="image.path">
             <div class="canvas" :path="image.path" v-show="image.visible" @contextmenu="openContextMenu">
               <div class="image-background"></div>
@@ -1174,6 +1174,8 @@ const sliderRange = ref({
 const matchFonts = ref([])
 
 const textMarks = ref(null)
+
+const previewContainer = ref(null)
 
 const imageMarks = ref(null)
 
@@ -2468,7 +2470,8 @@ const handleChangeTextType = () => {
 }
 
 onMounted(() => {
-  listenerDraggableLabelElements()
+  monitorScrollbar()
+  monitorDraggableLabelElements()
   createThreadPool()
   loadTemplates()
   loadTextLabels()
@@ -2562,7 +2565,7 @@ async function handlePreview(event, image) {
 }
 
 const setScrollBarPosition = (image) => {
-  const viewElement = image.getTargetElement().parentNode.parentNode;
+  const viewElement = previewContainer.value;
   // 设置滚动位置
   viewElement.scrollLeft = image.scrollLeft;
   viewElement.scrollTop = image.scrollTop;
@@ -2617,7 +2620,7 @@ const initializeCanvasLayout = async (image) => {
 
   moveScrollBarToCenter(image)
 
-  listenerPutElements(canvasElement, image);
+  monitorPutElements(canvasElement, image);
 
   // 滚轮缩放事件
   canvasElement.addEventListener('wheel', function (e) {
@@ -2650,6 +2653,27 @@ const initializeCanvasLayout = async (image) => {
     setScale(newScale);
   }
 }
+
+const monitorScrollbar = () => {
+  let scrollTimeout = null;
+  previewContainer.value.addEventListener('scroll', event => {
+    const image = images.value.get(selectedElement.value.path);
+    if (image) {
+      // 清除之前的定时器
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+      }
+      // 设置新的定时器（防抖：100ms）
+      scrollTimeout = setTimeout(() => {
+        const target = event.target;
+        // 设置滚动条参数到 image 对象
+        image.scrollTop = target.scrollTop;
+        image.scrollLeft = target.scrollLeft;
+      }, 100);
+    }
+  });
+}
+
 
 // 初始化时自动滚动到图形内容区域
 function moveScrollBarToCenter(image) {
@@ -3124,14 +3148,14 @@ const handleDragStart = function (event) {
 }
 
 
-const listenerDraggableLabelElements = () => {
+const monitorDraggableLabelElements = () => {
   // 设置拖拽事件m
   document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
     element.addEventListener('dragstart', handleDragStart);
   });
 }
 
-const listenerPutElements = (canvasElement, image) => {
+const monitorPutElements = (canvasElement, image) => {
 
   canvasElement.addEventListener('dragover', event =>
       event.preventDefault()
