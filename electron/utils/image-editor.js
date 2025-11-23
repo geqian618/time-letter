@@ -359,8 +359,6 @@ async function addBorderAndText(options) {
             isSynchronizeMetadata,
         } = outputSettings;
 
-        quality = quality / 10;
-
         const originalExtname = path.extname(inputPath).slice(1);
 
         const outputExtname = getExtname(originalExtname, extnameType)
@@ -509,9 +507,7 @@ async function addBorderAndText(options) {
         if (outputExtname === 'png') {
             buffer = canvas.toBuffer('image/png');
         } else {
-            buffer = canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, {
-                quality: quality
-            });
+            buffer = canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, quality * 10);
         }
 
         if (['jpeg', 'jpg'].includes(originalExtname) && ['jpeg', 'jpg'].includes(outputExtname) && isSynchronizeMetadata) {
