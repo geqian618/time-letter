@@ -1872,9 +1872,14 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 
       element.style.left = elementLeft - increaseWidth / 2 + 'px'
       element.style.top = elementTop - increaseHeight / 2 + 'px'
-      element.style.right = elementRight + increaseWidth / 2 + 'px'
-      element.style.bottom = elementBottom + increaseHeight / 2 + 'px'
+      element.style.right = elementRight - increaseWidth / 2 + 'px'
+      element.style.bottom = elementBottom - increaseHeight / 2 + 'px'
 
+      await nextTick()
+
+
+      settings.width = newElementWidth
+      settings.height = newElementHeight
       settings.options = _.cloneDeep(newVal)
       settings.options.fontSizeRatio = newVal.fontSize / offsetWidth
       settings.options.textShadow.offsetXRatio = newVal.textShadow.offsetX / newVal.fontSize
@@ -2092,7 +2097,9 @@ const saveTemplates = async () => {
 
     if (valid) {
 
-      const {settings} = images.value.get(selectedElement.value.path);
+      const image = images.value.get(selectedElement.value.path);
+
+      const settings = _.cloneDeep(image.settings)
 
       const newTemplates = [...templates.value];
 
@@ -2231,8 +2238,6 @@ function renderElementPosition(image, settings, element) {
   if (references.includes('bottom')) {
     top = canvasHeight - bottom - height
   }
-
-  console.log(references)
 
   element.style.left = left + 'px'
   element.style.top = top + 'px'
@@ -2375,8 +2380,8 @@ function updateElementPosition(image, element, elementSettings) {
 
   const computedStyle = window.getComputedStyle(element);
 
-  const elementWidth = parseFloat(element.style.width) || parseFloat(computedStyle.width);
-  const elementHeight = parseFloat(element.style.height) || parseFloat(computedStyle.height);
+  const elementWidth = image.width;
+  const elementHeight = image.height;
 
   const elementLeft = parseFloat(element.style.left) || parseFloat(computedStyle.left);
   const elementTop = parseFloat(element.style.top) || parseFloat(computedStyle.top);
@@ -2403,6 +2408,7 @@ function updateElementPosition(image, element, elementSettings) {
 
   let offsetBottom = elementBottom - backgroundBottom
   let offsetBottomRatio = offsetBottom / backgroundHeight
+
 
   elementLeft > elementRight ? references.push('right') : references.push('left')
 
@@ -3360,8 +3366,6 @@ function makeDraggable(dragElement, path) {
 
     const canvasElement = previewImage.parentNode;
 
-    const canvasRect = canvasElement.getBoundingClientRect();
-
     const dragElementRect = dragElement.getBoundingClientRect();
 
     // 记录初始鼠标位置和元素位置
@@ -3371,10 +3375,10 @@ function makeDraggable(dragElement, path) {
     mouseSetupX = event.clientX
     mouseSetupY = event.clientY
 
-    const elementWidth = parseFloat(dragElement.style.width) || parseFloat(window.getComputedStyle(dragElement).width);
-    const elementHeight = parseFloat(dragElement.style.height) || parseFloat(window.getComputedStyle(dragElement).height);
-    let initialLeft = parseFloat(dragElement.style.left) || canvasRect.width / image.scale - parseFloat(dragElement.style.right) - elementWidth;
-    let initialTop = parseFloat(dragElement.style.top) || canvasRect.height / image.scale - parseFloat(dragElement.style.bottom) - elementHeight;
+    const elementWidth = parseFloat(window.getComputedStyle(dragElement).width);
+    const elementHeight = parseFloat(window.getComputedStyle(dragElement).height);
+    let initialLeft = parseFloat(dragElement.style.left) || canvasElement.offsetWidth - parseFloat(dragElement.style.right) - elementWidth;
+    let initialTop = parseFloat(dragElement.style.top) || canvasElement.offsetHeight - parseFloat(dragElement.style.bottom) - elementHeight;
 
     // 获取鼠标位置
     offsetLeft = (startX - dragElementRect.left) / image.scale
@@ -3410,6 +3414,8 @@ function makeDraggable(dragElement, path) {
 
       dragElement.style.left = elementLeft + 'px';
       dragElement.style.top = elementTop + 'px';
+      dragElement.style.right = elementRight + 'px';
+      dragElement.style.bottom = elementBottom + 'px';
 
       const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
       const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
