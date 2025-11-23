@@ -1703,13 +1703,13 @@ const watchContextMenu = () => {
         paths.forEach(path => clearAllLabels(path))
       } else if (type === 5) {
         const paths = Array.from(selectedImages.value.keys());
-        paths.forEach(path => reset(path))
+        paths.forEach(path => resetSettings(path))
       }
     }
   });
 }
 
-const reset = (path) => {
+const resetSettings = (path) => {
   const image = clearAllLabels(path);
   image.settings.border = {
     borderType: 0,
@@ -1718,6 +1718,7 @@ const reset = (path) => {
     borderTop: 0,
     borderBottom: 0,
     borderBlur: 15,
+    borderRadius: 0,
     borderColor: 'rgba(255, 255, 255, 1)'
   }
   renderBorders(path)
