@@ -2192,6 +2192,9 @@ function renderElementPosition(image, settings, element) {
   const backgroundBottom = Number.parseFloat(backgroundElement.style.bottom);
 
   let {
+    width,
+    height,
+    references,
     offsetLeft,
     offsetLeftRatio,
     offsetRight,
@@ -2203,20 +2206,38 @@ function renderElementPosition(image, settings, element) {
     synchronousMode
   } = settings
 
-  offsetLeft = synchronousMode === 1 ? offsetLeftRatio * backgroundWidth : offsetLeft;
-  offsetRight = synchronousMode === 1 ? offsetRightRatio * backgroundWidth : offsetRight;
-  offsetTop = synchronousMode === 1 ? offsetTopRatio * backgroundHeight : offsetTop;
-  offsetBottom = synchronousMode === 1 ? offsetBottomRatio * backgroundHeight : offsetBottom;
+  let newOffsetLeft = synchronousMode === 1 ? offsetLeftRatio * backgroundWidth : offsetLeft;
+  let newOffsetRight = synchronousMode === 1 ? offsetRightRatio * backgroundWidth : offsetRight;
+  let newOffsetTop = synchronousMode === 1 ? offsetTopRatio * backgroundHeight : offsetTop;
+  let newOffsetBottom = synchronousMode === 1 ? offsetBottomRatio * backgroundHeight : offsetBottom;
 
-  const left = backgroundLeft + offsetLeft + 'px';
-  const right = backgroundRight + offsetRight + 'px';
-  const top = backgroundTop + offsetTop + 'px';
-  const bottom = backgroundBottom + offsetBottom + 'px';
+  let left = backgroundLeft + newOffsetLeft;
+  let right = backgroundRight + newOffsetRight;
+  let top = backgroundTop + newOffsetTop;
+  let bottom = backgroundBottom + newOffsetBottom;
 
-  element.style.left = left
-  element.style.top = top
-  element.style.right = right
-  element.style.bottom = bottom
+  if (references.includes('left')) {
+    right = canvasWidth - left - width
+  }
+
+  if (references.includes('right')) {
+    left = canvasWidth - right - width
+  }
+
+  if (references.includes('top')) {
+    bottom = canvasHeight - top - height
+  }
+
+  if (references.includes('bottom')) {
+    top = canvasHeight - bottom - height
+  }
+
+  console.log(references)
+
+  element.style.left = left + 'px'
+  element.style.top = top + 'px'
+  element.style.right = right + 'px'
+  element.style.bottom = bottom + 'px'
 }
 
 const useTemplate = async (options, path) => {
@@ -3375,6 +3396,8 @@ function makeDraggable(dragElement, path) {
 
       const backgroundElement = canvasElement.querySelector('.image-background');
 
+      const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement
+
       // 计算移动距离（考虑旋转后的坐标系）
       const dx = (mouseX - startX) / image.scale;
       const dy = (mouseY - startY) / image.scale;
@@ -3382,8 +3405,8 @@ function makeDraggable(dragElement, path) {
       // 计算新位置
       const elementLeft = initialLeft + dx;
       const elementTop = initialTop + dy;
-      const elementRight = canvasRect.width / image.scale - elementLeft - elementWidth;
-      const elementBottom = canvasRect.height / image.scale - elementTop - elementHeight
+      const elementRight = canvasWidth - elementLeft - elementWidth;
+      const elementBottom = canvasHeight - elementTop - elementHeight
 
       dragElement.style.left = elementLeft + 'px';
       dragElement.style.top = elementTop + 'px';
