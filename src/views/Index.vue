@@ -1864,7 +1864,6 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 
       await nextTick()
 
-
       const newElementWidth = element.offsetWidth;
       const newElementHeight = element.offsetHeight;
 
@@ -1876,12 +1875,12 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
       element.style.right = elementRight + increaseWidth / 2 + 'px'
       element.style.bottom = elementBottom + increaseHeight / 2 + 'px'
 
-      updateElementPosition(image, element, settings)
       settings.options = _.cloneDeep(newVal)
       settings.options.fontSizeRatio = newVal.fontSize / offsetWidth
       settings.options.textShadow.offsetXRatio = newVal.textShadow.offsetX / newVal.fontSize
       settings.options.textShadow.offsetYRatio = newVal.textShadow.offsetY / newVal.fontSize
       settings.options.textShadow.blurRatio = newVal.textShadow.blur / newVal.fontSize
+      updateElementPosition(image, element, settings)
     }
   }
 }, {
@@ -2209,12 +2208,15 @@ function renderElementPosition(image, settings, element) {
   offsetTop = synchronousMode === 1 ? offsetTopRatio * backgroundHeight : offsetTop;
   offsetBottom = synchronousMode === 1 ? offsetBottomRatio * backgroundHeight : offsetBottom;
 
-  const left = backgroundLeft + offsetLeft;
-  const right = backgroundRight + offsetRight;
-  const top = backgroundTop + offsetTop;
-  const bottom = backgroundBottom + offsetBottom;
+  const left = backgroundLeft + offsetLeft + 'px';
+  const right = backgroundRight + offsetRight + 'px';
+  const top = backgroundTop + offsetTop + 'px';
+  const bottom = backgroundBottom + offsetBottom + 'px';
 
-  element.style.inset = `${top}px ${right}px ${bottom}px ${left}px`
+  element.style.left = left
+  element.style.top = top
+  element.style.right = right
+  element.style.bottom = bottom
 }
 
 const useTemplate = async (options, path) => {
@@ -2350,14 +2352,6 @@ function updateElementPosition(image, element, elementSettings) {
 
   const backgroundElement = canvasElement.querySelector('.image-background');
 
-  let positionX, positionY
-
-  let positionOffsetX, positionOffsetY
-
-  let offsetLeft, offsetTop;
-
-  let references = []
-
   const computedStyle = window.getComputedStyle(element);
 
   const elementWidth = parseFloat(element.style.width) || parseFloat(computedStyle.width);
@@ -2375,37 +2369,33 @@ function updateElementPosition(image, element, elementSettings) {
   const backgroundTop = Number.parseFloat(backgroundElement.style.top);
   const backgroundBottom = Number.parseFloat(backgroundElement.style.bottom);
 
-  positionOffsetX = elementLeft - backgroundLeft
-  offsetLeft = positionOffsetX / backgroundWidth;
+  let references = []
 
-  positionOffsetY = elementTop - backgroundTop
-  offsetTop = positionOffsetY / backgroundHeight
+  let offsetLeft = elementLeft - backgroundLeft
+  let offsetLeftRatio = offsetLeft / backgroundWidth
 
-  if (elementLeft > elementRight) {
-    references.push('right')
-    positionOffsetX = elementRight - backgroundRight
-    positionX = positionOffsetX / backgroundWidth
-  } else {
-    references.push('left')
-    positionX = offsetLeft;
-  }
+  let offsetRight = elementRight - backgroundRight
+  let offsetRightRatio = offsetRight / backgroundWidth
 
-  if (elementTop > elementBottom) {
-    references.push('bottom')
-    positionOffsetY = elementBottom - backgroundBottom
-    positionY = positionOffsetY / backgroundHeight
-  } else {
-    references.push('top')
-    positionY = offsetTop;
-  }
+  let offsetTop = elementTop - backgroundTop
+  let offsetTopRatio = offsetTop / backgroundHeight
+
+  let offsetBottom = elementBottom - backgroundBottom
+  let offsetBottomRatio = offsetBottom / backgroundHeight
+
+  elementLeft > elementRight ? references.push('right') : references.push('left')
+
+  elementTop > elementBottom ? references.push('bottom') : references.push('top')
 
   elementSettings.references = references
-  elementSettings.positionX = positionX
-  elementSettings.positionY = positionY
-  elementSettings.offsetX = positionOffsetX
-  elementSettings.offsetY = positionOffsetY
   elementSettings.offsetLeft = offsetLeft
+  elementSettings.offsetLeftRatio = offsetLeftRatio
+  elementSettings.offsetRight = offsetRight
+  elementSettings.offsetRightRatio = offsetRightRatio
   elementSettings.offsetTop = offsetTop
+  elementSettings.offsetTopRatio = offsetTopRatio
+  elementSettings.offsetBottom = offsetBottom
+  elementSettings.offsetBottomRatio = offsetBottomRatio
 
   const options = elementSettings.options;
 
@@ -3191,8 +3181,10 @@ const monitorPutElements = (canvasElement, image) => {
 
     let elementHeight = Number.parseFloat(computedStyle.height)
 
-    dragElement.style.width = elementWidth + 'px'
-    dragElement.style.height = elementHeight + 'px'
+    if (dragElement.src) {
+      dragElement.style.width = elementWidth + 'px'
+      dragElement.style.height = elementHeight + 'px'
+    }
 
     dragElement.remove()
 
