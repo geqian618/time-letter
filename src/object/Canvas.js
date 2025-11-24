@@ -29,12 +29,8 @@ export class Canvas {
     }
 
     getTriggerElement(imageList) {
-        if (!imageList || !imageList.value) {
-            console.warn('imageList is not provided');
-            return null;
-        }
         const escapedPath = this.path.replace(/\\/g, '\\\\');
-        return imageList.value.querySelector(`[path="${escapedPath}"]`);
+        return imageList.querySelector(`[path="${escapedPath}"]`);
     }
 
     // 添加一些实用的方法

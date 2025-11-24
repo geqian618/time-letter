@@ -1154,32 +1154,30 @@ const stopWatchAvailableCanvas = watch(filterType, async () => {
 
 
 const setDefaultSelectedElement = async () => {
-  const path = selectedElement.value.path;
+  const selectedPath = selectedElement.value.path;
   const paths = Array.from(availableCanvas.value.keys());
-  if (!paths.length || !path) return
-  let canvas
-  let triggerElement
-  if (paths.includes(path)) {
-    canvas = availableCanvas.value.get(selectedElement.value.path);
-    triggerElement = canvas.getTriggerElement();
+  if (!paths.length || !selectedPath) return
+  const selectedCanvas = CanvasManager.getCanvas(selectedPath);
+  let nextSelectCanvas, triggerElement
+  if (paths.includes(selectedPath)) {
+    nextSelectCanvas = availableCanvas.value.get(selectedElement.value.path);
+    triggerElement = nextSelectCanvas.getTriggerElement(imageList.value);
   } else {
-    canvas = availableCanvas.value.get(paths[0]);
-    triggerElement = canvas.getTriggerElement();
+    nextSelectCanvas = availableCanvas.value.get(paths[0]);
+    triggerElement = nextSelectCanvas.getTriggerElement(imageList.value);
     await nextTick()
-    canvas.value.get(path).visible = false
+    selectedCanvas.hide()
     await nextTick()
-    canvas.visible = true
+    nextSelectCanvas.show()
     await nextTick()
-    if (canvas.isUpdate) {
-      refreshTemplate(canvas.path)
-    }
+    renderCanvas(nextSelectCanvas)
     await nextTick()
   }
   triggerElement.classList.add('active')
   triggerElement.setAttribute('selected', 'true')
-  selectedElement.value.path = canvas.path
+  selectedElement.value.path = nextSelectCanvas.path
   selectedElement.value.element = triggerElement
-  selectedImages.value.set(canvas.path, triggerElement)
+  selectedImages.value.set(nextSelectCanvas.path, triggerElement)
 }
 
 
@@ -1430,29 +1428,23 @@ const watchContextMenu = () => {
 
         const paths = Array.from(selectedImages.value.keys());
 
-        const currentSelectedElement = CanvasManager.getCanvas(selectedElement.value.path);
+        const selectedCanvas = CanvasManager.getCanvas(selectedElement.value.path);
 
-        let beforeElement = currentSelectedElement;
+        let beforeCanvas = selectedCanvas;
 
         for (let i = 0; i < paths.length; i++) {
 
-          const nextElement = CanvasManager.getCanvas(paths[i]);
+          const nextCanvas = CanvasManager.getCanvas(paths[i]);
 
-          beforeElement.visible = false
-
-          await nextTick()
-
-          nextElement.visible = true
+          beforeCanvas.hide()
 
           await nextTick()
 
-          if (!nextElement.completed) {
-            await initializeCanvasLayout(nextElement)
-          }
+          nextCanvas.show()
 
-          if (nextElement.isUpdate) {
-            await refreshTemplate(paths[i])
-          }
+          await nextTick()
+
+          renderCanvas(nextCanvas)
 
           const {settings: {border, texts, images}} = CanvasManager.getCanvas(paths[i]);
 
@@ -1468,18 +1460,19 @@ const watchContextMenu = () => {
           })
 
           if (i === paths.length - 1) {
-            nextElement.visible = false
+            nextCanvas.hide()
             await nextTick();
           } else {
-            beforeElement = nextElement;
+            beforeCanvas = nextCanvas;
           }
         }
 
-        currentSelectedElement.visible = true
+        selectedCanvas.show()
 
         await nextTick()
 
         window.electronAPI.requestSaveFiles(_.cloneDeep(newSettings))
+
         downloadProgressVisible.value = true
 
       } else if (type === 2) {
@@ -2300,15 +2293,9 @@ async function handlePreview(event, canvas) {
 
     // 没有预览元素或前一次预览元素与当前预览元素不同时显示，多次点击预览同一元素不重复渲染
     if (!beforePath || beforePath !== canvas.path) {
-      canvas.visible = true;
+      canvas.show();
       await nextTick()
-      if (!canvas.completed) {
-        await initializeCanvasLayout(canvas)
-      }
-      setScrollBarPosition(canvas)
-      if (canvas.isUpdate) {
-        await refreshTemplate(canvas.path)
-      }
+      renderCanvas(canvas)
     }
 
     selectedElement.value.path = event.target.getAttribute('path')
@@ -2317,9 +2304,6 @@ async function handlePreview(event, canvas) {
     // 添加当前选中元素到选中列表中
     selectedImages.value.set(canvas.path, event.target)
     event.target.classList.add('active')
-
-    metadataOptions.value = canvas.metadata
-    borderOptions.value = canvas.settings.border.options
   }
 }
 
@@ -2409,6 +2393,22 @@ const initializeCanvasLayout = async (canvas) => {
   function zoom(direction) {
     const newScale = direction === 'in' ? currentScale + scaleStep : currentScale - scaleStep;
     setScale(newScale);
+  }
+}
+
+
+const renderCanvas = async (canvas) => {
+
+  if (!canvas.isCompleted()) {
+    await initializeCanvasLayout(canvas)
+  }
+
+  setScrollBarPosition(canvas)
+  metadataOptions.value = canvas.metadata
+  borderOptions.value = canvas.settings.border.options
+
+  if (canvas.isUpdate) {
+    await refreshTemplate(canvas.path)
   }
 }
 
@@ -2734,15 +2734,7 @@ const handleBeforeOne = async () => {
 
     await nextTick()
 
-    if (!beforeCanvas.completed) {
-      await initializeCanvasLayout(beforeCanvas)
-    }
-
-    setScrollBarPosition(beforeCanvas)
-
-    if (beforeCanvas.isUpdate) {
-      await refreshTemplate(beforeCanvas.path)
-    }
+    renderCanvas(beforeCanvas)
 
     const beforeElement = currentElement.previousElementSibling || currentElement.parentNode.lastElementChild;
     if (beforeElement) {
@@ -2752,8 +2744,6 @@ const handleBeforeOne = async () => {
       selectedElement.value.path = beforeCanvas.path
       selectedElement.value.element = beforeElement
       selectedImages.value.set(beforeCanvas.path, beforeElement)
-      metadataOptions.value = beforeCanvas.metadata
-      borderOptions.value = beforeCanvas.settings.border.options
       // 方式一，较为卡顿，过渡不流畅
       // selectedElement.value.element.scrollIntoView({
       //   behavior: 'smooth',
@@ -2787,15 +2777,7 @@ const handleNextOne = async () => {
 
     await nextTick()
 
-    if (!nextCanvas.completed) {
-      await initializeCanvasLayout(nextCanvas)
-    }
-
-    setScrollBarPosition(nextCanvas)
-
-    if (nextCanvas.isUpdate) {
-      await refreshTemplate(nextCanvas.path)
-    }
+    renderCanvas(nextCanvas)
 
     const nextElement = currentElement.nextElementSibling || currentElement.parentNode.firstElementChild;
     if (nextElement) {
@@ -2805,8 +2787,6 @@ const handleNextOne = async () => {
       selectedElement.value.path = nextCanvas.path
       selectedElement.value.element = nextElement
       selectedImages.value.set(nextCanvas.path, nextElement)
-      metadataOptions.value = nextCanvas.metadata
-      borderOptions.value = nextCanvas.settings.border.options
       // 方式一，较为卡顿，过渡不流畅
       // selectedElement.value.element.scrollIntoView({
       //   behavior: 'smooth',
@@ -2819,6 +2799,7 @@ const handleNextOne = async () => {
     }
   }
 }
+
 
 function scrollToCenterHorizontal(container, element) {
   if (container._timerId) {
