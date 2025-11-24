@@ -548,6 +548,16 @@
             </el-tooltip>
           </div>
 
+          <div class="tab-wrapper">
+            <el-tooltip effect="dark" content="居中" placement="top">
+              <img src="../assets/images/居中显示-未激活.png" class="inactive small-size" alt="居中">
+            </el-tooltip>
+            <el-tooltip effect="dark" content="居中" placement="top">
+              <img src="../assets/images/居中显示-激活.png" class="active small-size" @click="handleScrollBarToCenter"
+                   alt="居中">
+            </el-tooltip>
+          </div>
+
           <div class="filter">
             <div class="filter-label">筛选：</div>
             <div class="filter-select">
@@ -2438,9 +2448,17 @@ const monitorScrollbar = () => {
   });
 }
 
+const handleScrollBarToCenter = () => {
+  if (selectedElement.value && selectedElement.value.path) {
+    const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+    moveScrollBarToCenter(canvas)
+  }
+}
+
 
 // 初始化时自动滚动到图形内容区域
 function moveScrollBarToCenter(canvas) {
+  if (!canvas) return
   const imageElement = canvas.getImageElement();
   const canvasElement = imageElement.parentNode;
   const previewContainer = canvasElement.parentNode;
@@ -3718,12 +3736,18 @@ function makeDraggable(dragElement, path) {
       .tab-wrapper {
         position: relative;
         height: 70%;
+        display: flex;
+        align-items: center;
 
         img {
           height: 100%;
           width: auto;
           margin-left: 15px;
           transition: opacity 0.4s ease;
+        }
+
+        .small-size {
+          padding: 5%;
         }
 
         .inactive {
