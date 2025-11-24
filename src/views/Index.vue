@@ -73,10 +73,10 @@
         </div>
 
         <div class="page-center" ref="previewContainer">
-          <template v-for="([key, image]) in images" :key="image.path">
-            <div class="canvas" :path="image.path" v-show="image.visible" @contextmenu="openContextMenu">
+          <template v-for="([key, canvas]) in CanvasManager.getCanvases()" :key="canvas.path">
+            <div class="canvas" :path="canvas.path" v-show="canvas.visible" @contextmenu="openContextMenu">
               <div class="image-background"></div>
-              <img :src="image.url" :id="image.path">
+              <img :src="canvas.url" :id="canvas.path">
             </div>
           </template>
         </div>
@@ -93,49 +93,49 @@
                       <li class="option">
                         <div class="label text-mark" draggable="true" type="metadata" text="cameraBrand">相机品牌</div>
                         <div class="value">
-                          <el-input v-model="settings.metadata.cameraBrand" size="small"/>
+                          <el-input v-model="metadataOptions.cameraBrand" size="small"/>
                         </div>
                       </li>
                       <li class="option">
                         <div class="label text-mark" draggable="true" type="metadata" text="cameraModel">相机型号</div>
                         <div class="value">
-                          <el-input v-model="settings.metadata.cameraModel" size="small"/>
+                          <el-input v-model="metadataOptions.cameraModel" size="small"/>
                         </div>
                       </li>
                       <li class="option">
                         <div class="label text-mark" draggable="true" type="metadata" text="lensModel">镜头型号</div>
                         <div class="value">
-                          <el-input v-model="settings.metadata.lensModel" size="small"/>
+                          <el-input v-model="metadataOptions.lensModel" size="small"/>
                         </div>
                       </li>
                       <li class="option">
                         <div class="label text-mark" draggable="true" type="metadata" text="focalLength">焦段</div>
                         <div class="value">
-                          <el-input v-model="settings.metadata.focalLength" size="small"/>
+                          <el-input v-model="metadataOptions.focalLength" size="small"/>
                         </div>
                       </li>
                       <li class="option">
                         <div class="label text-mark" draggable="true" type="metadata" text="iso">IOS</div>
                         <div class="value">
-                          <el-input v-model="settings.metadata.iso" size="small"/>
+                          <el-input v-model="metadataOptions.iso" size="small"/>
                         </div>
                       </li>
                       <li class="option">
                         <div class="label text-mark" draggable="true" type="metadata" text="shutter">快门</div>
                         <div class="value">
-                          <el-input v-model="settings.metadata.shutter" size="small"/>
+                          <el-input v-model="metadataOptions.shutter" size="small"/>
                         </div>
                       </li>
                       <li class="option">
                         <div class="label text-mark" draggable="true" type="metadata" text="aperture">光圈</div>
                         <div class="value">
-                          <el-input v-model="settings.metadata.aperture" size="small"/>
+                          <el-input v-model="metadataOptions.aperture" size="small"/>
                         </div>
                       </li>
                       <li class="option">
                         <div class="label text-mark" draggable="true" type="metadata" text="shootingTime">拍摄日期</div>
                         <div class="value">
-                          <el-input v-model="settings.metadata.shootingTime" size="small"/>
+                          <el-input v-model="metadataOptions.shootingTime" size="small"/>
                         </div>
                       </li>
                     </ul>
@@ -150,8 +150,8 @@
                         <div class="value">
                           <el-select
                               @change="handleBorders"
-                              v-model="settings.border.borderType"
-                              :options="borderOptions"
+                              v-model="borderOptions.borderType"
+                              :options="[{value: 0,label: '通用'}, {value: 1,label: '模糊'}]"
                               size="small"
                               placeholder="Select"/>
                         </div>
@@ -164,10 +164,10 @@
                                      :show-tooltip="false"
                                      :min="sliderRange.min"
                                      :max="sliderRange.max"
-                                     v-model="settings.border.borderTop"
+                                     v-model="borderOptions.borderTop"
                                      placement="top"/>
                           <input type="number" class="number-input" @input="handleBorders"
-                                 v-model="settings.border.borderTop" step="1">
+                                 v-model="borderOptions.borderTop" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -178,10 +178,10 @@
                                      size="small"
                                      :min="sliderRange.min"
                                      :max="sliderRange.max"
-                                     v-model="settings.border.borderLeft"
+                                     v-model="borderOptions.borderLeft"
                                      placement="top"/>
                           <input type="number" class="number-input" @input="handleBorders"
-                                 v-model="settings.border.borderLeft" step="1">
+                                 v-model="borderOptions.borderLeft" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -192,10 +192,10 @@
                                      :show-tooltip="false"
                                      :min="sliderRange.min"
                                      :max="sliderRange.max"
-                                     v-model="settings.border.borderRight"
+                                     v-model="borderOptions.borderRight"
                                      placement="top"/>
                           <input type="number" class="number-input" @input="handleBorders"
-                                 v-model="settings.border.borderRight" step="1">
+                                 v-model="borderOptions.borderRight" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -206,10 +206,10 @@
                                      :show-tooltip="false"
                                      :min="sliderRange.min"
                                      :max="sliderRange.max"
-                                     v-model="settings.border.borderBottom"
+                                     v-model="borderOptions.borderBottom"
                                      placement="top"/>
                           <input type="number" class="number-input" @input="handleBorders"
-                                 v-model="settings.border.borderBottom" step="1">
+                                 v-model="borderOptions.borderBottom" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -220,10 +220,10 @@
                                      :show-tooltip="false"
                                      :min="0"
                                      :max="50"
-                                     v-model="settings.border.borderRadius"
+                                     v-model="borderOptions.borderRadius"
                                      placement="top"/>
                           <input type="number" class="number-input" @input="handleBorders"
-                                 v-model="settings.border.borderRadius" step="1">
+                                 v-model="borderOptions.borderRadius" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -234,10 +234,10 @@
                                      :show-tooltip="false"
                                      :min="0"
                                      :max="50"
-                                     v-model="settings.border.borderBlur"
+                                     v-model="borderOptions.borderBlur"
                                      placement="top"/>
                           <input type="number" class="number-input" @input="handleBorders"
-                                 v-model="settings.border.borderBlur" step="1">
+                                 v-model="borderOptions.borderBlur" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -246,7 +246,7 @@
                           <el-color-picker
                               size="small"
                               @change="handleBorders"
-                              v-model="settings.border.borderColor"
+                              v-model="borderOptions.borderColor"
                               show-alpha
                               :predefine="predefineColors"/>
                         </div>
@@ -561,41 +561,41 @@
             </div>
           </div>
         </div>
-        <div class="page-images" id="image-list" ref="imageList" @wheel="handleWheel" @contextmenu="openContextMenu">
-          <template :key="key" v-for="([key, image]) in filterImages">
+        <div class="image-list" id="image-list" ref="imageList" @wheel="handleWheel" @contextmenu="openContextMenu">
+          <template :key="key" v-for="([key, canvas]) in availableCanvas">
             <el-popover
-                v-if="image.metadata.filename || image.metadata.shootingTime || image.metadata.resolution || image.metadata.fileSize"
+                v-if="canvas.metadata.filename || canvas.metadata.shootingTime || canvas.metadata.resolution || canvas.metadata.fileSize"
                 width="fit-content"
                 :show-after="2000"
                 :hide-after="0"
                 trigger="hover">
               <template #default>
                 <div style="font-size: 10px">
-                  <p v-if="image.metadata.filename">文件名称：{{ image.metadata.filename }}</p>
-                  <p v-if="image.metadata.shootingTime">拍摄时间：{{ image.metadata.shootingTime }}</p>
-                  <p v-if="image.metadata.resolution">分辨率：{{ image.metadata.resolution }}</p>
-                  <p v-if="image.metadata.fileSize">大小：{{ image.metadata.fileSize }}</p>
+                  <p v-if="canvas.metadata.filename">文件名称：{{ canvas.metadata.filename }}</p>
+                  <p v-if="canvas.metadata.shootingTime">拍摄时间：{{ canvas.metadata.shootingTime }}</p>
+                  <p v-if="canvas.metadata.resolution">分辨率：{{ canvas.metadata.resolution }}</p>
+                  <p v-if="canvas.metadata.fileSize">大小：{{ canvas.metadata.fileSize }}</p>
                 </div>
               </template>
               <template #reference>
                 <img class="imageItem"
-                     :path="image.path"
-                     v-lazy="image.url"
-                     @click.meta.exact="handleCtrlClick($event,image)"
-                     @click.ctrl.exact="handleCtrlClick($event, image)"
-                     @click.shift.exact="handleShiftClick($event,image)"
-                     @click="handlePreview($event, image)">
+                     :path="canvas.path"
+                     v-lazy="canvas.url"
+                     @click.meta.exact="handleCtrlClick($event,canvas)"
+                     @click.ctrl.exact="handleCtrlClick($event, canvas)"
+                     @click.shift.exact="handleShiftClick($event,canvas)"
+                     @click="handlePreview($event, canvas)">
               </template>
             </el-popover>
 
             <img v-else
                  class="imageItem"
-                 :path="image.path"
-                 v-lazy="image.url"
-                 @click.meta.exact="handleCtrlClick($event,image)"
-                 @click.ctrl.exact="handleCtrlClick($event, image)"
-                 @click.shift.exact="handleShiftClick($event,image)"
-                 @click="handlePreview($event, image)">
+                 :path="canvas.path"
+                 v-lazy="canvas.url"
+                 @click.meta.exact="handleCtrlClick($event,canvas)"
+                 @click.ctrl.exact="handleCtrlClick($event, canvas)"
+                 @click.shift.exact="handleShiftClick($event,canvas)"
+                 @click="handlePreview($event, canvas)">
           </template>
         </div>
       </div>
@@ -972,49 +972,36 @@ import Notification from '@/utils/Notification'
 
 import {projectSettings, outputSizeOptions, originalMetadata, downloadThreadsOptions} from '@/config/project-settings'
 
-const predefineColors = ref([
-  '#ff4500',
-  '#ff8c00',
-  '#ffd700',
-  '#90ee90',
-  '#00ced1',
-  '#1e90ff',
-  '#c71585',
-  'rgba(255, 69, 0, 0.68)',
-  'rgb(255, 120, 0)',
-  'hsv(51, 100, 98)',
-  'hsva(120, 40, 94, 0.5)',
-  'hsl(181, 100%, 37%)',
-  'hsla(209, 100%, 56%, 0.73)',
-  '#c7158577',
-])
+import {
+  TextLabel,
+  BorderSettings,
+  Metadata,
+  ImageSettings,
+  TextSettings,
+  TextOptions,
+  ImageOptions,
+  BorderOptions
+} from '@/object/Configuration'
+
+import {Canvas} from '@/object/Canvas'
+
+import CanvasManager from "@/object/CanvasManager";
+
+import {predefineColors} from '@/config/color-configuration'
 
 const filterType = ref(0)
-
-const borderOptions = [
-  {
-    value: 0,
-    label: '通用',
-  },
-  {
-    value: 1,
-    label: '模糊',
-  }
-]
 
 const fontOptions = ref(new Map())
 
 const templateSettings = ref({})
 
-const images = ref(new Map())
-
-const filterImages = ref(new Map())
+const availableCanvas = ref(new Map())
 
 const imageList = ref(null);
 
-const saveTemplateForm = ref();
+const saveTemplateForm = ref({});
 
-const textLabelForm = ref();
+const textLabelForm = ref({});
 
 const selectedElement = ref({
   element: null,
@@ -1022,6 +1009,7 @@ const selectedElement = ref({
 });
 
 const selectedImages = ref(new Map())
+
 
 const newTemplate = ref({
   desc: '',
@@ -1034,156 +1022,37 @@ const oldTemplate = ref({
 
 const templates = ref([])
 
+const textOptions = ref(new TextOptions())
 
-const textOptions = ref({
-  fontSize: 14,
-  fontFamily: 'Microsoft YaHei',
-  fontStyle: 'normal',
-  fontWeight: 400,
-  fontColor: 'rgb(0,0,0,1)',
-  textDirection: 0,
-  tagBackground: 'rgb(255,255,255,0)',
-  angle: 0,
-  zIndex: 0,
-  textShadow: {
-    offsetX: 0,
-    offsetY: 0,
-    blur: 0,
-    offsetXRatio: 0,
-    offsetYRatio: 0,
-    blurRatio: 0,
-    shadowColor: 'rgb(0,0,0,1)'
-  }
-})
+const imageOptions = ref(new ImageOptions())
 
-const imageOptions = ref({
-  scale: 10,
-  angle: 0,
-  alpha: 10,
-  zIndex: 0,
-  boxShadow: {
-    offsetX: 0,
-    offsetY: 0,
-    blur: 0,
-    offsetXRatio: 0,
-    offsetYRatio: 0,
-    blurRatio: 0,
-    shadowColor: 'rgb(0,0,0,1)',
-  }
-})
+const borderOptions = ref(new BorderOptions())
+
+const metadataOptions = ref(new Metadata())
 
 const dragParameters = {
   dragElement: null,
-  originalElement: null,
   offsetX: 0,
   offsetY: 0
 }
-
-const settings = ref({
-  outputDirectory: '',
-  files: [],
-  metadata: {
-    cameraBrand: '',
-    cameraModel: '',
-    lensModel: '',
-    focalLength: '',
-    iso: '',
-    shutter: '',
-    aperture: '',
-    shootingTime: '',
-    width: null,
-    height: null
-  },
-  image: {
-    path: '',
-    url: '',
-    offsetLeft: 0,
-    offsetLeftRatio: 0,
-    offsetRight: 0,
-    offsetRightRatio: 0,
-    offsetTop: 0,
-    offsetTopRatio: 0,
-    offsetBottom: 0,
-    offsetBottomRatio: 0,
-    width: 0,
-    height: 0,
-    originalWidth: 0,
-    originalHeight: 0,
-    references: [],
-    synchronousMode: 0,
-    options: {
-      scale: 10,
-      angle: 0,
-      alpha: 10,
-      zIndex: 0,
-      boxShadow: {
-        offsetX: 0,
-        offsetY: 0,
-        blur: 0,
-        offsetXRatio: 0,
-        offsetYRatio: 0,
-        blurRatio: 0,
-        shadowColor: 'rgb(0,0,0,1)'
-      }
-    }
-  },
-  text: {
-    type: 'text',
-    expression: '',
-    attribute: '',
-    content: '',
-    offsetLeft: 0,
-    offsetLeftRatio: 0,
-    offsetRight: 0,
-    offsetRightRatio: 0,
-    offsetTop: 0,
-    offsetTopRatio: 0,
-    offsetBottom: 0,
-    offsetBottomRatio: 0,
-    references: [],
-    synchronousMode: 0,
-    options: {
-      textDirection: 0,
-      fontSize: 14,
-      fontFamily: '',
-      fontColor: 'rgb(0,0,0,1)',
-      tagBackground: 'rgb(255,255,255,0)',
-      fontWeight: 400,
-      angle: 0,
-      zIndex: 0,
-      textShadow: {
-        offsetX: 0,
-        offsetY: 0,
-        blur: 0,
-        offsetXRatio: 0,
-        offsetYRatio: 0,
-        blurRatio: 0,
-        shadowColor: 'rgb(0,0,0,1)'
-      }
-    }
-  },
-  border: {
-    borderBlur: 15,
-    borderType: 0,
-    borderLeft: 0,
-    borderRight: 0,
-    borderTop: 0,
-    borderBottom: 0,
-    borderRadius: 0,
-    borderColor: 'rgba(255, 255, 255, 1)',
-  },
-})
 
 const sliderRange = ref({
   min: 0,
   max: 300
 })
 
+const previewContainer = ref(null)
+
+const menuRef = ref(null)
+
+const templateRef = ref()
+
+const textLabelRef = ref()
+
+
 const matchFonts = ref([])
 
 const textMarks = ref(null)
-
-const previewContainer = ref(null)
 
 const imageMarks = ref(null)
 
@@ -1211,23 +1080,13 @@ const downloadProgressPercentage = ref(0)
 
 const synchronousMode = ref(0);
 
-const textLabel = ref({
-  id: '',
-  tips: '',
-  type: 'text',
-  content: ''
-})
+const textLabel = ref(new TextLabel())
 
-const menuRef = ref(null)
 
 // 维护已展开子菜单索引的数组
 const openedMenus = ref([])
 
 const textLabels = ref([])
-
-const templateRef = ref()
-
-const textLabelRef = ref()
 
 const renameTemplateForm = ref()
 
@@ -1282,15 +1141,11 @@ const handleFilterFonts = (search) => {
   matchFonts.value = Array.from(fontOptions.value.values()).filter(font => font.family.toLowerCase().startsWith(search.toLowerCase()))
 }
 
-const stopWatchFilterImages = watch(filterType, async () => {
+const stopWatchAvailableCanvas = watch(filterType, async () => {
+
   await clearSelectedImages()
-  if (filterType.value === 0) {
-    filterImages.value = images.value
-  } else if (filterType.value === 1) {
-    filterImages.value = new Map(Array.from(images.value).filter(([path, {metadata}]) => metadata.width >= metadata.height))
-  } else {
-    filterImages.value = new Map(Array.from(images.value).filter(([path, {metadata}]) => metadata.width < metadata.height))
-  }
+
+  availableCanvas.value = CanvasManager.getAvailableCanvases(filterType.value)
 
   await nextTick()
 
@@ -1300,31 +1155,31 @@ const stopWatchFilterImages = watch(filterType, async () => {
 
 const setDefaultSelectedElement = async () => {
   const path = selectedElement.value.path;
-  const paths = Array.from(filterImages.value.keys());
+  const paths = Array.from(availableCanvas.value.keys());
   if (!paths.length || !path) return
-  let image
+  let canvas
   let triggerElement
   if (paths.includes(path)) {
-    image = filterImages.value.get(selectedElement.value.path);
-    triggerElement = image.getTriggerElement();
+    canvas = availableCanvas.value.get(selectedElement.value.path);
+    triggerElement = canvas.getTriggerElement();
   } else {
-    image = filterImages.value.get(paths[0]);
-    triggerElement = image.getTriggerElement();
+    canvas = availableCanvas.value.get(paths[0]);
+    triggerElement = canvas.getTriggerElement();
     await nextTick()
-    images.value.get(path).visible = false
+    canvas.value.get(path).visible = false
     await nextTick()
-    image.visible = true
+    canvas.visible = true
     await nextTick()
-    if (image.isUpdate) {
-      refreshTemplate(image.path)
+    if (canvas.isUpdate) {
+      refreshTemplate(canvas.path)
     }
     await nextTick()
   }
   triggerElement.classList.add('active')
   triggerElement.setAttribute('selected', 'true')
-  selectedElement.value.path = image.path
+  selectedElement.value.path = canvas.path
   selectedElement.value.element = triggerElement
-  selectedImages.value.set(image.path, triggerElement)
+  selectedImages.value.set(canvas.path, triggerElement)
 }
 
 
@@ -1385,71 +1240,23 @@ const watchInputFonts = () => {
 const watchInputImages = () => {
   window.electronAPI.watchInputImage(async (event, data) => {
     if (data) {
-      for (let [path, image] of data) {
-        if (!images.value.has(path)) {
-          let settings = {
-            metadata: null,
-            visible: false,
-            completed: false,
-            previewElement: null,
-            scrollLeft: 0,
-            scrollTop: 0,
-            scale: 1,
-            render: false,
-            isUpdate: false,
-            settings: {
-              border: {
-                borderType: 0,
-                borderBlur: 15,
-                borderLeft: 0,
-                borderRight: 0,
-                borderTop: 0,
-                borderBottom: 0,
-                borderLeftRatio: 0,
-                borderRightRatio: 0,
-                borderTopRatio: 0,
-                borderBottomRatio: 0,
-                borderBlurRatio: 0,
-                borderRadiusRatio: 0,
-                borderColor: 'rgba(255, 255, 255, 1)',
-              },
-              texts: new Map(),
-              images: new Map(),
-            },
-            getTargetElement() {
-              if (!this.previewElement) {
-                this.previewElement = document.getElementById(this.path)
-              }
-              return this.previewElement
-            },
-            getTriggerElement() {
-              return imageList.value.querySelector(`[path="${path.replace(/\\/g, '\\\\')}"]`)
-            }
-          }
-
-          const photoMetadata = await window.electronAPI.parsePhotoMetadata(path);
-
-          if (photoMetadata) {
-            settings.metadata = photoMetadata
-            if (settings.metadata.focalLength) {
-              settings.metadata.originalFocalLength = photoMetadata.focalLength
+      for (let [path, picture] of data) {
+        if (!CanvasManager.hasCanvas(path)) {
+          let canvas = new Canvas()
+          const metadata = await window.electronAPI.parsePhotoMetadata(path);
+          if (metadata) {
+            if (metadata.focalLength) {
+              metadata.originalFocalLength = metadata.focalLength
               if (projectSettings.value.metadata.other.enableEquivalentFocalSegment) {
-                settings.metadata.focalLength = Number.parseInt(settings.metadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
+                metadata.focalLength = Number.parseInt(metadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
               }
             }
+            canvas.metadata = metadata
           }
 
-          settings = {...settings, ...image}
+          CanvasManager.setCanvas(path, Object.assign(new Canvas(), canvas, picture))
 
-          images.value.set(path, settings)
-
-          if (filterType.value === 0) {
-            filterImages.value.set(path, settings)
-          } else if (filterType.value === 1 && settings.metadata.width > settings.metadata.height) {
-            filterImages.value.set(path, settings)
-          } else if (filterType.value === 2 && settings.metadata.width <= settings.metadata.height) {
-            filterImages.value.set(path, settings)
-          }
+          availableCanvas.value = CanvasManager.getAvailableCanvases(filterType.value)
         }
       }
     }
@@ -1463,7 +1270,7 @@ const createThreadPool = () => {
 
 
 const openContextMenu = () => {
-  if (images.value.size) {
+  if (CanvasManager.isNotEmpty()) {
     window.electronAPI.openContextMenu()
   }
 }
@@ -1596,12 +1403,7 @@ const saveTextLabel = async () => {
         }
       }
       window.localStorage.setItem('textLabels', JSON.stringify(textLabels.value))
-      textLabel.value = {
-        id: '',
-        type: 'text',
-        tips: '',
-        content: '',
-      }
+      textLabel.value = new TextLabel()
       customTextLabelDialogVisible.value = false;
     }
   })
@@ -1614,8 +1416,8 @@ const watchContextMenu = () => {
       if (type === 0) {
         const selectedPaths = selectedImages.value.keys();
         for (let path of selectedPaths) {
-          images.value.delete(path)
-          filterImages.value.delete(path)
+          CanvasManager.deleteCanvas(path)
+          availableCanvas.value.delete(path)
           if (path === selectedElement.value.path) {
             selectedElement.value.path = ''
             selectedElement.value.element = null
@@ -1628,13 +1430,13 @@ const watchContextMenu = () => {
 
         const paths = Array.from(selectedImages.value.keys());
 
-        const currentSelectedElement = images.value.get(selectedElement.value.path);
+        const currentSelectedElement = CanvasManager.getCanvas(selectedElement.value.path);
 
         let beforeElement = currentSelectedElement;
 
         for (let i = 0; i < paths.length; i++) {
 
-          const nextElement = images.value.get(paths[i]);
+          const nextElement = CanvasManager.getCanvas(paths[i]);
 
           beforeElement.visible = false
 
@@ -1652,36 +1454,16 @@ const watchContextMenu = () => {
             await refreshTemplate(paths[i])
           }
 
-          const image = images.value.get(paths[i]);
-
-          const imageElement = image.getTargetElement();
-
-          const backgroundElement = imageElement.parentNode.querySelector('.image-background');
-
-          const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
-          const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
-
-          const {settings} = image
-
-          const textList = Array.from(settings.texts.values()).map(item => {
-            item.options.fontSizeRatio = item.options.fontSize / backgroundWidth
-            return item
-          });
-
-          const imageList = Array.from(settings.images.values()).map(item => {
-            item.options.imageWidthRatio = item.width / backgroundWidth
-            item.options.imageHeightRatio = item.height / backgroundHeight
-            return item
-          });
+          const {settings: {border, texts, images}} = CanvasManager.getCanvas(paths[i]);
 
           newSettings.push({
             path: paths[i],
             projectSettings: projectSettings.value,
             outputDirectory: data.outputDirectory,
             settings: {
-              border: settings.border,
-              texts: textList,
-              images: imageList
+              border,
+              images: [...images.values()],
+              texts: [...texts.values()],
             }
           })
 
@@ -1698,11 +1480,11 @@ const watchContextMenu = () => {
         await nextTick()
 
         window.electronAPI.requestSaveFiles(_.cloneDeep(newSettings))
-
         downloadProgressVisible.value = true
 
       } else if (type === 2) {
-        openSaveTemplateDialog()
+        saveTemplateDialogVisible.value = true
+        clearFormValidate(saveTemplateForm)
       } else if (type === 3) {
         synchronousMode.value = data.method
         synchronizeTemplate()
@@ -1718,17 +1500,8 @@ const watchContextMenu = () => {
 }
 
 const resetSettings = (path) => {
-  const image = clearAllLabels(path);
-  image.settings.border = {
-    borderType: 0,
-    borderLeft: 0,
-    borderRight: 0,
-    borderTop: 0,
-    borderBottom: 0,
-    borderBlur: 15,
-    borderRadius: 0,
-    borderColor: 'rgba(255, 255, 255, 1)'
-  }
+  const canvas = clearAllLabels(path);
+  canvas.settings.border = new BorderOptions()
   renderBorders(path)
 }
 
@@ -1739,10 +1512,9 @@ const resetMetadataSettings = () => {
 
 
 const handleFocalLength = (type) => {
-  for (let [path, image] of images.value) {
-    const metadata = image.metadata;
+  for (let [path, canvas] of CanvasManager.getCanvases()) {
+    const metadata = canvas.metadata;
     if (metadata && metadata.focalLength) {
-
       if (type === 0) {
         metadata.focalLength = projectSettings.value.metadata.other.enableEquivalentFocalSegment
             ? Number.parseInt(metadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
@@ -1752,23 +1524,23 @@ const handleFocalLength = (type) => {
       }
 
       if (path === selectedElement.value.path) {
-        settings.value.metadata = metadata
+        metadataOptions.value = metadata
       }
     }
   }
 }
 
 const clearAllLabels = (path) => {
-  const image = images.value.get(path);
-  for (let element of image.settings.images.keys()) {
+  const canvas = CanvasManager.getCanvas(path);
+  for (let element of canvas.settings.images.keys()) {
     element.remove()
   }
-  for (let element of image.settings.texts.keys()) {
+  for (let element of canvas.settings.texts.keys()) {
     element.remove()
   }
-  image.settings.texts.clear()
-  image.settings.images.clear()
-  return image
+  canvas.settings.texts.clear()
+  canvas.settings.images.clear()
+  return canvas
 }
 
 const watchCtrlA = () => {
@@ -1834,15 +1606,14 @@ const loadProjectSettings = () => {
 
 const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
   //停止监听 stopWatch();
-  const {path} = selectedElement.value;
-  const image = images.value.get(path);
-  if (!image) return
-  const imageElement = image.getTargetElement();
+  const canvas = CanvasManager.getCanvas(selectedElement.value);
+  if (!canvas) return
+  const imageElement = canvas.getTargetElement();
   const backgroundElement = imageElement.parentNode.querySelector('.image-background');
   const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
   const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
-  const texts = image.settings.texts;
-  for (let [element, settings] of texts) {
+
+  for (let [element, settings] of canvas.settings.texts) {
     if (element.getAttribute('selected') === 'true') {
       let computedStyle = window.getComputedStyle(element);
       const elementWidth = parseFloat(element.style.width) || parseFloat(computedStyle.width);
@@ -1892,7 +1663,7 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
       settings.options.textShadow.offsetYRatio = newVal.textShadow.offsetY / newVal.fontSize
       settings.options.textShadow.blurRatio = newVal.textShadow.blur / newVal.fontSize
 
-      updateElementPosition(image, element, settings)
+      updateElementPosition(canvas, element, settings)
     }
   }
 }, {
@@ -1903,67 +1674,68 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 });
 
 const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVal) => {
-  const {path} = selectedElement.value;
-  const image = images.value.get(path);
-  if (!image) return
-  const elements = Array.from(image.settings.images.keys());
-  for (let element of elements) {
+  const canvas = CanvasManager.getCanvas(selectedElement.value);
+  if (!canvas) return
+  const elements = Array.from(canvas.settings.images.keys());
+  for (let element of canvas.settings.images.keys()) {
     if (element.getAttribute('selected') === 'true') {
-      image.settings.images.get(element).options.angle = newVal
       element.style.transformOrigin = 'center center'
       element.style.transform = `rotate(${newVal}deg)`;
+
+      const imageSettings = canvas.settings.images.get(element);
+      imageSettings.options.angle = newVal
     }
   }
 });
 
 const stopImageAlphaWatch = watch(() => imageOptions.value.alpha, (newVal, oldVal) => {
-  const {path} = selectedElement.value;
-  const image = images.value.get(path);
-  if (!image) return
-  const elements = Array.from(image.settings.images.keys());
+  const canvas = CanvasManager.getCanvas(selectedElement.value);
+  if (!canvas) return
+  const elements = Array.from(canvas.settings.images.keys());
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
-      image.settings.images.get(element).options.alpha = newVal
       element.style.opacity = newVal / 10
+
+      const imageSettings = canvas.settings.images.get(element);
+      imageSettings.options.alpha = newVal
     }
   }
 });
 
 const stopImageBoxShadowWatch = watch(() => imageOptions.value.boxShadow, (newVal, oldVal) => {
-  const {path} = selectedElement.value;
-  const image = images.value.get(path);
-  if (!image) return
-  const elements = Array.from(image.settings.images.keys());
+  const canvas = CanvasManager.getCanvas(selectedElement.value);
+  if (!canvas) return
+  const elements = Array.from(canvas.settings.images.keys());
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
       const {offsetX, offsetY, blur, shadowColor} = newVal;
       element.style.boxShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
+
       const {offsetWidth, offsetHeight} = element;
-      const settings = image.settings.images.get(element);
-      settings.options.boxShadow = _.cloneDeep(newVal)
-      settings.options.boxShadow.offsetXRatio = offsetX / offsetWidth
-      settings.options.boxShadow.offsetYRatio = offsetY / offsetHeight
-      settings.options.boxShadow.blurRatio = blur / offsetWidth
+      const imageSettings = canvas.settings.images.get(element);
+      imageSettings.options.boxShadow = _.cloneDeep(newVal)
+      imageSettings.options.boxShadow.offsetXRatio = offsetX / offsetWidth
+      imageSettings.options.boxShadow.offsetYRatio = offsetY / offsetHeight
+      imageSettings.options.boxShadow.blurRatio = blur / offsetWidth
     }
   }
 }, {
   //深度监视（监视属性变化）
   deep: true,
-  //immediate 立即触发一次监视
-  //immediate: true
 })
 
 
 const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal, oldVal) => {
-  const {path} = selectedElement.value;
-  const image = images.value.get(path);
-  if (!image) return
-  const backgroundElement = image.getTargetElement().parentNode.querySelector('.image-background');
+  const canvas = CanvasManager.getCanvas(selectedElement.value);
+  if (!canvas) return
+  const backgroundElement = canvas.getTargetElement().parentNode.querySelector('.image-background');
   const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
   const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
-  for (let [element, settings] of image.settings.images) {
+  for (let [element, imageSettings] of canvas.settings.images) {
     if (element.getAttribute('selected') === 'true') {
-      const {originalWidth, originalHeight} = image.settings.images.get(element);
+
+      const {originalWidth, originalHeight} = imageSettings;
+
       const computedStyle = window.getComputedStyle(element);
       let elementWidth = Number.parseFloat(computedStyle.width);
       let elementHeight = Number.parseFloat(computedStyle.height);
@@ -1994,46 +1766,42 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
 
       await nextTick();
 
-      settings.width = elementWidth
-      settings.height = elementHeight
-      settings.options.scale = newVal
-      settings.options.imageWidthRatio = elementWidth / backgroundWidth
-      settings.options.imageHeightRatio = elementHeight / backgroundHeight
+      imageSettings.width = elementWidth
+      imageSettings.height = elementHeight
+      imageSettings.options.scale = newVal
+      imageSettings.options.imageWidthRatio = elementWidth / backgroundWidth
+      imageSettings.options.imageHeightRatio = elementHeight / backgroundHeight
 
-      updateElementPosition(image, element, settings)
+      updateElementPosition(canvas, element, settings)
     }
   }
 });
 
 
 const stopWatchImageZIndex = watch(() => imageOptions.value.zIndex, (newVal, oldVal) => {
-  const {path} = selectedElement.value;
-  const image = images.value.get(path);
-  if (!image) return
-  const elements = Array.from(image.settings.images.keys());
+  const canvas = CanvasManager.getCanvas(selectedElement.value);
+  if (!canvas) return
+  const elements = Array.from(canvas.settings.images.keys());
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
       element.style.zIndex = newVal
-      image.settings.images.get(element).options.zIndex = newVal;
+
+      const imageSettings = canvas.settings.images.get(element);
+      imageSettings.options.zIndex = newVal;
     }
   }
 })
 
-const stopWatchPhotoMetadata = watch(() => settings.value.metadata, (newVal, oldVal) => {
+const stopWatchPhotoMetadata = watch(() => metadataOptions, (newVal, oldVal) => {
   const path = selectedElement.value.path;
   if (path) {
-    images.value.get(path).metadata = _.cloneDeep(newVal)
+    const canvas = CanvasManager.getCanvas(path);
+    canvas.metadata = _.cloneDeep(newVal)
   }
 }, {
   //深度监视（监视属性变化）
   deep: true,
 })
-
-
-const openSaveTemplateDialog = () => {
-  saveTemplateDialogVisible.value = true
-  clearFormValidate(saveTemplateForm)
-}
 
 
 const renameTemplate = () => {
@@ -2068,34 +1836,32 @@ const deleteTemplate = () => {
 }
 
 const synchronizeTemplate = () => {
-  if (selectedElement.value) {
-    const targetPath = selectedElement.value.path;
-    const targetSettings = images.value.get(targetPath).settings;
-
+  if (selectedElement.value && selectedElement.value.path) {
+    const {settings: {border, images, texts}} = CanvasManager.getCanvas(selectedElement.value.path);
     const options = {
-      border: targetSettings.border,
-      images: Array.from(targetSettings.images.values()).map(item => {
+      border,
+      images: Array.from(images.values()).map(item => {
         item.synchronousMode = synchronousMode.value
         return item
       }),
-      texts: Array.from(targetSettings.texts.values()).map(item => {
+      texts: Array.from(texts.values()).map(item => {
         item.synchronousMode = synchronousMode.value
         return item
       })
     }
 
     selectedImages.value.forEach((image, path) => {
-      if (targetPath !== path) {
-        const image = images.value.get(path);
-        for (let element of image.settings.images.keys()) {
+      if (selectedElement.value.path !== path) {
+        let {settings: {texts, images, border}} = CanvasManager.getCanvas(path);
+        for (let element of images.keys()) {
           element.remove()
         }
-        for (let element of image.settings.texts.keys()) {
+        for (let element of texts.keys()) {
           element.remove()
         }
-        image.settings.border = {}
-        image.settings.texts.clear()
-        image.settings.images.clear()
+        border = {}
+        texts.clear()
+        images.clear()
         useTemplate(_.cloneDeep(options), path)
       }
     })
@@ -2110,9 +1876,8 @@ const saveTemplates = async () => {
 
     if (valid) {
 
-      const image = images.value.get(selectedElement.value.path);
-
-      const settings = _.cloneDeep(image.settings)
+      const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+      const {border, images, texts} = _.cloneDeep(canvas.settings)
 
       const newTemplates = [...templates.value];
 
@@ -2125,12 +1890,9 @@ const saveTemplates = async () => {
         id: Date.now(),
         name: newTemplate.value.desc,
         settings: {
-          border: settings.border,
-          images: Array.from(settings.images.values()).map(item => {
-            item.options.scale = item.width / item.originalWidth * 10
-            return item
-          }),
-          texts: Array.from(settings.texts.values())
+          border: border,
+          images: Array.from(images.values()),
+          texts: Array.from(texts.values())
         }
       })
 
@@ -2166,7 +1928,7 @@ const handleSortingChanged = (el, dragaElement, targetElement) => {
 
 
 const openEnableTemplateDialog = ({settings}) => {
-  if (images.value.size && selectedElement.value.path) {
+  if (CanvasManager.isNotEmpty() && selectedElement.value.path) {
     templateSettings.value = settings
     enableTemplateDialogVisible.value = true
   }
@@ -2175,16 +1937,16 @@ const openEnableTemplateDialog = ({settings}) => {
 
 const enableTemplate = () => {
   for (let path of selectedImages.value.keys()) {
-    const image = images.value.get(path);
-    for (let element of image.settings.images.keys()) {
+    let {settings: {images, texts, border}} = CanvasManager.getCanvas(path);
+    for (let element of images.keys()) {
       element.remove()
     }
-    for (let element of image.settings.texts.keys()) {
+    for (let element of texts.keys()) {
       element.remove()
     }
-    image.settings.border = {}
-    image.settings.texts.clear()
-    image.settings.images.clear()
+    border = {}
+    texts.clear()
+    images.clear()
     templateSettings.value.texts.forEach(item => item.synchronousMode = synchronousMode.value)
     templateSettings.value.images.forEach(item => item.synchronousMode = synchronousMode.value)
     useTemplate(templateSettings.value, path)
@@ -2194,9 +1956,9 @@ const enableTemplate = () => {
 }
 
 
-function renderElementPosition(image, settings, element) {
+function renderElementPosition(canvas, settings, element) {
 
-  const imageElement = image.getTargetElement();
+  const imageElement = canvas.getTargetElement();
 
   const canvasElement = imageElement.parentNode;
 
@@ -2256,37 +2018,43 @@ function renderElementPosition(image, settings, element) {
   element.style.top = top + 'px'
   element.style.right = right + 'px'
   element.style.bottom = bottom + 'px'
+
+  if (element.src) {
+    settings.options.imageWidthRatio = settings.width / backgroundWidth
+    settings.options.imageHeightRatio = settings.height / backgroundHeight
+  } else {
+    settings.options.fontSizeRatio = settings.options.fontSize / backgroundWidth
+  }
 }
 
 const useTemplate = async (options, path) => {
 
-  options = _.cloneDeep(options)
-  const image = images.value.get(path);
+  const {images, texts} = _.cloneDeep(options)
 
-  image.isUpdate = true
-  image.settings.border = options.border
+  const canvas = CanvasManager.getCanvas(path);
+  canvas.isUpdate = true
+  canvas.settings.border = options.border
 
   if (path === selectedElement.value.path) {
     await renderBorders(path)
   }
 
-  const imageElement = image.getTargetElement();
-  const canvasElement = imageElement.parentNode
+  const canvasElement = canvas.getTargetElement().parentNode
 
-  for (let settings of options.images) {
-    const {angle, alpha, boxShadow: {offsetX, offsetY, blur, shadowColor}} = settings.options;
+  for (let image of images) {
+    const {angle, alpha, boxShadow: {offsetX, offsetY, blur, shadowColor}} = image.options;
     const img = document.createElement('img');
     img.style.outline = 'none';
     img.style.cursor = 'move';
     img.style.userSelect = 'none';
     img.setAttribute('tabindex', '0')
-    img.src = settings.url
-    img.setAttribute('path', settings.path)
+    img.src = image.url
+    img.setAttribute('path', image.path)
     img.className = 'image-mark'
     // 关键：必须设为绝对定位
     img.style.position = 'absolute';
-    img.style.width = settings.width + 'px';
-    img.style.height = settings.height + 'px'
+    img.style.width = image.width + 'px';
+    img.style.height = image.height + 'px'
     img.style.opacity = alpha / 10
 
     img.style.transformOrigin = 'center center'
@@ -2295,15 +2063,15 @@ const useTemplate = async (options, path) => {
     img.style.boxShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
 
     if (path === selectedElement.value.path) {
-      renderElementPosition(image, settings, img);
+      renderElementPosition(canvas, image, img);
     }
 
     canvasElement.appendChild(img)
-    image.settings.images.set(img, settings)
+    canvas.settings.images.set(img, image)
     makeDraggable(img, path)
   }
 
-  for (let text of options.texts) {
+  for (let text of texts) {
 
     const {
       fontSize,
@@ -2351,7 +2119,7 @@ const useTemplate = async (options, path) => {
       div.innerHTML = text.content = content
     } else if (type === 'metadata') {
       const attribute = text.attribute;
-      let content = image.metadata[attribute];
+      let content = canvas.metadata[attribute];
       if (!content) {
         continue
       }
@@ -2372,20 +2140,20 @@ const useTemplate = async (options, path) => {
     div.style.position = 'absolute';
 
     if (path === selectedElement.value.path) {
-      renderElementPosition(image, text, div)
+      renderElementPosition(canvas, text, div)
     }
 
     canvasElement.appendChild(div)
-    image.settings.texts.set(div, text)
+    canvas.settings.texts.set(div, text)
     makeDraggable(div, path)
   }
 
 }
 
 
-function updateElementPosition(image, element, elementSettings) {
+function updateElementPosition(canvas, element, settings) {
 
-  const imageElement = image.getTargetElement();
+  const imageElement = canvas.getTargetElement();
 
   const canvasElement = imageElement.parentNode;
 
@@ -2393,8 +2161,8 @@ function updateElementPosition(image, element, elementSettings) {
 
   const computedStyle = window.getComputedStyle(element);
 
-  const elementWidth = image.width;
-  const elementHeight = image.height;
+  const elementWidth = canvas.width;
+  const elementHeight = canvas.height;
 
   const elementLeft = parseFloat(element.style.left) || parseFloat(computedStyle.left);
   const elementTop = parseFloat(element.style.top) || parseFloat(computedStyle.top);
@@ -2427,48 +2195,48 @@ function updateElementPosition(image, element, elementSettings) {
 
   elementTop > elementBottom ? references.push('bottom') : references.push('top')
 
-  elementSettings.references = references
-  elementSettings.offsetLeft = offsetLeft
-  elementSettings.offsetLeftRatio = offsetLeftRatio
-  elementSettings.offsetRight = offsetRight
-  elementSettings.offsetRightRatio = offsetRightRatio
-  elementSettings.offsetTop = offsetTop
-  elementSettings.offsetTopRatio = offsetTopRatio
-  elementSettings.offsetBottom = offsetBottom
-  elementSettings.offsetBottomRatio = offsetBottomRatio
+  settings.references = references
+  settings.offsetLeft = offsetLeft
+  settings.offsetLeftRatio = offsetLeftRatio
+  settings.offsetRight = offsetRight
+  settings.offsetRightRatio = offsetRightRatio
+  settings.offsetTop = offsetTop
+  settings.offsetTopRatio = offsetTopRatio
+  settings.offsetBottom = offsetBottom
+  settings.offsetBottomRatio = offsetBottomRatio
 }
 
 const refreshPositionInformation = (path) => {
-  const image = images.value.get(path);
-  image.settings.texts.forEach((textLabel, element) => {
-    updateElementPosition(image, element, textLabel);
+  const canvas = CanvasManager.getCanvas(path);
+  canvas.settings.texts.forEach((textLabel, element) => {
+    updateElementPosition(canvas, element, textLabel);
   })
 
-  image.settings.images.forEach((imageLabel, element) => {
-    updateElementPosition(image, element, imageLabel);
+  canvas.settings.images.forEach((imageLabel, element) => {
+    updateElementPosition(canvas, element, imageLabel);
   })
 }
 
 
 const refreshTemplate = async (path) => {
 
-  const image = images.value.get(path);
+  const canvas = CanvasManager.getCanvas(path);
 
   await renderBorders(path)
 
-  image.settings.texts.forEach((settings, element) => {
-    renderElementPosition(image, settings, element)
+  canvas.settings.texts.forEach((settings, element) => {
+    renderElementPosition(canvas, settings, element)
   })
 
-  image.settings.images.forEach((settings, element) => {
-    renderElementPosition(image, settings, element)
+  canvas.settings.images.forEach((settings, element) => {
+    renderElementPosition(canvas, settings, element)
   })
 
   await nextTick()
 
   refreshPositionInformation(path)
 
-  image.isUpdate = false
+  canvas.isUpdate = false
 }
 
 
@@ -2490,6 +2258,16 @@ const handleChangeTextType = () => {
       '}'
 }
 
+const clearAllEventListener = () => {
+  // 组件销毁前移除监听，避免内存泄漏
+  // window.removeEventListener("resize", handleResize);
+
+  document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
+    element.removeEventListener('dragstart', handleDragStart)
+  });
+}
+
+
 onMounted(() => {
   monitorScrollbar()
   monitorDraggableLabelElements()
@@ -2509,40 +2287,23 @@ onMounted(() => {
 })
 
 
-const clearAllEventListener = () => {
-
-  // 组件销毁前移除监听，避免内存泄漏
-  window.removeEventListener("resize", handleResize);
-
-  document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
-    element.removeEventListener('dragstart', handleDragStart)
-  });
-
-}
-
-
 onBeforeUnmount(() => {
-
   clearAllEventListener()
-
-  stopWatchFilterImages()
-
+  stopWatchAvailableCanvas()
   stopWatchPhotoMetadata()
   stopTextSettingsWatch()
   stopProjectSettingsWatch()
-
   stopImageBoxShadowWatch()
   stopWatchImageZIndex()
   stopImageAlphaWatch()
   stopImageScaleWatch()
   stopImageAngleWatch()
-
 })
 
 
-async function handlePreview(event, image) {
+async function handlePreview(event, canvas) {
   if (!event.ctrlKey && !event.shiftKey) {
-    if (!selectedImages.value.has(image.path)) {
+    if (!selectedImages.value.has(canvas.path)) {
       // 清空选中元素
       const selectedElements = selectedImages.value.values();
       for (let element of selectedElements) {
@@ -2554,22 +2315,23 @@ async function handlePreview(event, image) {
     const beforePath = selectedElement.value.path;
 
     // 前一次预览元素与当前预览元素不同，隐藏前一次预览元素
-    if (beforePath && beforePath !== image.path) {
+    if (beforePath && beforePath !== canvas.path) {
       const beforePath = selectedElement.value.path;
-      images.value.get(beforePath).visible = false
+      const beforeCanvas = CanvasManager.getCanvas(beforePath);
+      beforeCanvas.hide()
       await nextTick()
     }
 
     // 没有预览元素或前一次预览元素与当前预览元素不同时显示，多次点击预览同一元素不重复渲染
-    if (!beforePath || beforePath !== image.path) {
-      image.visible = true;
+    if (!beforePath || beforePath !== canvas.path) {
+      canvas.visible = true;
       await nextTick()
-      if (!image.completed) {
-        await initializeCanvasLayout(image)
+      if (!canvas.completed) {
+        await initializeCanvasLayout(canvas)
       }
-      setScrollBarPosition(image)
-      if (image.isUpdate) {
-        await refreshTemplate(image.path)
+      setScrollBarPosition(canvas)
+      if (canvas.isUpdate) {
+        await refreshTemplate(canvas.path)
       }
     }
 
@@ -2577,28 +2339,27 @@ async function handlePreview(event, image) {
     selectedElement.value.element = event.target;
 
     // 添加当前选中元素到选中列表中
-    selectedImages.value.set(image.path, event.target)
+    selectedImages.value.set(canvas.path, event.target)
     event.target.classList.add('active')
 
-    settings.value.metadata = image.metadata
-    settings.value.border = image.settings.border
+    metadataOptions.value = canvas.metadata
+    borderOptions.value = canvas.settings.border
   }
 }
 
-const setScrollBarPosition = (image) => {
-  const viewElement = previewContainer.value;
+const setScrollBarPosition = (canvas) => {
   // 设置滚动位置
-  viewElement.scrollLeft = image.scrollLeft;
-  viewElement.scrollTop = image.scrollTop;
+  previewContainer.value.scrollLeft = canvas.scrollLeft;
+  previewContainer.value.scrollTop = canvas.scrollTop;
 }
 
-const initializeCanvasLayout = async (image) => {
-  const imageElement = image.getTargetElement();
+const initializeCanvasLayout = async (canvas) => {
+  const imageElement = canvas.getTargetElement();
   const canvasElement = imageElement.parentNode;
   const backgroundElement = canvasElement.querySelector('.image-background');
-  const viewElement = canvasElement.parentNode;
+  const previewContainer = canvasElement.parentNode;
   const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement
-  const {offsetWidth: viewWidth, offsetHeight: viewHeight} = viewElement;
+  const {offsetWidth: previewContainerWidth, offsetHeight: previewContainerHeight} = previewContainer;
   const {naturalWidth: imageWidth, naturalHeight: imageHeight} = imageElement
 
   // 缩放相关变量
@@ -2607,8 +2368,8 @@ const initializeCanvasLayout = async (image) => {
   const maxScale = 5;
   const scaleStep = 0.1;
 
-  const scaleX = viewWidth / imageWidth;
-  const scaleY = viewHeight / imageHeight;
+  const scaleX = previewContainerWidth / imageWidth;
+  const scaleY = previewContainerHeight / imageHeight;
 
   const scale = Math.min(scaleX, scaleY) * 0.8;
   const newImageWidth = imageWidth * scale;
@@ -2639,9 +2400,9 @@ const initializeCanvasLayout = async (image) => {
   const centerX = canvasWidth / 2;
   const centerY = canvasHeight / 2;
 
-  moveScrollBarToCenter(image)
+  moveScrollBarToCenter(canvas)
 
-  monitorPutElements(canvasElement, image);
+  monitorPutElements(canvasElement, canvas);
 
   // 滚轮缩放事件
   canvasElement.addEventListener('wheel', function (e) {
@@ -2652,7 +2413,7 @@ const initializeCanvasLayout = async (image) => {
     zoom(direction);
   }, {passive: false});
 
-  image.completed = true
+  canvas.completed = true
 
   await nextTick()
 
@@ -2665,7 +2426,7 @@ const initializeCanvasLayout = async (image) => {
     // 设置变换原点为中心点
     canvasElement.style.transformOrigin = `${centerX}px ${centerY}px`;
 
-    image.scale = currentScale
+    canvas.scale = currentScale
   }
 
   // 缩放函数
@@ -2678,69 +2439,69 @@ const initializeCanvasLayout = async (image) => {
 const monitorScrollbar = () => {
   let scrollTimeout = null;
   previewContainer.value.addEventListener('scroll', event => {
-    const image = images.value.get(selectedElement.value.path);
-    if (image) {
-      // 清除之前的定时器
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout);
-      }
-      // 设置新的定时器（防抖：100ms）
-      scrollTimeout = setTimeout(() => {
-        const target = event.target;
-        // 设置滚动条参数到 image 对象
-        image.scrollTop = target.scrollTop;
-        image.scrollLeft = target.scrollLeft;
-      }, 100);
+    const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+    if (!canvas) return
+
+    // 清除之前的定时器
+    if (scrollTimeout) {
+      clearTimeout(scrollTimeout);
     }
+
+    // 设置新的定时器（防抖：100ms）
+    scrollTimeout = setTimeout(() => {
+      const target = event.target;
+      // 设置滚动条参数到 image 对象
+      canvas.scrollTop = target.scrollTop;
+      canvas.scrollLeft = target.scrollLeft;
+    }, 100);
   });
 }
 
 
 // 初始化时自动滚动到图形内容区域
-function moveScrollBarToCenter(image) {
-  const previewImage = image.getTargetElement();
-  const canvasElement = previewImage.parentNode;
-  const viewElement = canvasElement.parentNode;
+function moveScrollBarToCenter(canvas) {
+  const imageElement = canvas.getTargetElement();
+  const canvasElement = imageElement.parentNode;
+  const previewContainer = canvasElement.parentNode;
   const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement
-  const {clientWidth: viewWidth, clientHeight: viewHeight} = viewElement
+  const {clientWidth: previewContainerWidth, clientHeight: previewContainerHeight} = previewContainer
   // 计算滚动位置，使图形内容居中
-  const scrollLeft = (canvasWidth - viewWidth) / 2;
-  const scrollTop = (canvasHeight - viewHeight) / 2;
+  const scrollLeft = (canvasWidth - previewContainerWidth) / 2;
+  const scrollTop = (canvasHeight - previewContainerHeight) / 2;
   // 设置滚动位置
-  viewElement.scrollLeft = Math.max(0, scrollLeft);
-  viewElement.scrollTop = Math.max(0, scrollTop);
-  image.scrollLeft = Math.max(0, scrollLeft);
-  image.scrollTop = Math.max(0, scrollTop);
+  previewContainer.scrollLeft = Math.max(0, scrollLeft);
+  previewContainer.scrollTop = Math.max(0, scrollTop);
+  canvas.scrollLeft = Math.max(0, scrollLeft);
+  canvas.scrollTop = Math.max(0, scrollTop);
 }
 
-const handleCtrlClick = (event, image) => {
+const handleCtrlClick = (event, canvas) => {
   const element = event.target;
   if (element.classList.contains('active')) {
     element.classList.remove('active');
-    selectedImages.value.delete(image.path)
-    if (selectedElement.value.path === image.path) {
+    selectedImages.value.delete(canvas.path)
+    if (selectedElement.value.path === canvas.path) {
       selectedElement.value.path = '';
       selectedElement.value.element = null
-      image.visible = false
+      canvas.hide()
     }
   } else {
     element.classList.add('active');
-    selectedImages.value.set(image.path, element)
+    selectedImages.value.set(canvas.path, element)
   }
 }
 
 
-const handleShiftClick = (event, image) => {
+const handleShiftClick = (event, canvas) => {
   if (selectedImages.value.size) {
     const elements = document.documentElement.querySelectorAll('img.imageItem');
-    const path = image.path;
     let index = -1;
     const beforeElements = [];
     const afterElements = [];
     for (let i = 0; i < elements.length; i++) {
       const originalElement = elements[i];
       const active = originalElement.classList.contains('active');
-      if (path === originalElement.getAttribute('path')) {
+      if (canvas.path === originalElement.getAttribute('path')) {
         index = i;
         beforeElements.push({active, originalElement})
         afterElements.push({active, originalElement})
@@ -2796,16 +2557,13 @@ const handleShiftClick = (event, image) => {
 
 const handleBorders = async () => {
 
-  const image = images.value.get(selectedElement.value.path)
+  const canvas = CanvasManager.getCanvas(selectedElement.value.path)
+  if (!canvas) return
 
-  if (!image) return
-
-  const imageElement = image.getTargetElement();
+  const imageElement = canvas.getTargetElement();
 
   if (imageElement && imageElement.complete && imageElement.naturalWidth > 0) {
-
     const backgroundElement = imageElement.parentNode.querySelector('.image-background');
-
     let {
       borderLeft,
       borderRight,
@@ -2815,7 +2573,7 @@ const handleBorders = async () => {
       borderType,
       borderBlur,
       borderRadius
-    } = settings.value.border;
+    } = borderOptions.value;
 
     const oldBorder = backgroundElement.border || {};
 
@@ -2826,7 +2584,7 @@ const handleBorders = async () => {
         backgroundElement.style.boxShadow = ''
       } else if (borderType === 1) {
         backgroundElement.setAttribute('blur-border', '')
-        backgroundElement.style.background = `url('${image.url}') center / cover`
+        backgroundElement.style.background = `url('${canvas.url}') center / cover`
         backgroundElement.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.4)'
         imageElement.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.4)'
       }
@@ -2879,17 +2637,18 @@ const handleBorders = async () => {
       backgroundElement.style.setProperty('--blur-intensity', borderBlur + 'px');
     }
 
-    backgroundElement.border = _.cloneDeep(settings.value.border)
-
+    const newBorder = _.cloneDeep(borderOptions.value);
+    backgroundElement.border = newBorder
     const {clientWidth, clientHeight} = imageElement;
+    const settings = canvas.settings;
 
-    image.settings.border = _.cloneDeep(settings.value.border)
-    image.settings.border.borderLeftRatio = borderLeft / clientWidth
-    image.settings.border.borderRightRatio = borderRight / clientWidth
-    image.settings.border.borderTopRatio = borderTop / clientHeight
-    image.settings.border.borderBottomRatio = borderBottom / clientHeight
-    image.settings.border.borderBlurRatio = borderBlur / clientWidth
-    image.settings.border.borderRadiusRatio = borderRadius / clientWidth
+    settings.border = newBorder
+    settings.border.borderLeftRatio = borderLeft / clientWidth
+    settings.border.borderRightRatio = borderRight / clientWidth
+    settings.border.borderTopRatio = borderTop / clientHeight
+    settings.border.borderBottomRatio = borderBottom / clientHeight
+    settings.border.borderBlurRatio = borderBlur / clientWidth
+    settings.border.borderRadiusRatio = borderRadius / clientWidth
 
     await nextTick()
 
@@ -2900,11 +2659,11 @@ const handleBorders = async () => {
 
 
 const renderBorders = async (path) => {
-  const image = images.value.get(path)
-  const imageElement = image.getTargetElement();
+  const canvas = CanvasManager.getCanvas(path)
+  const imageElement = canvas.getTargetElement();
 
-  if (image.path === selectedElement.value.path) {
-    settings.value.border = image.settings.border
+  if (canvas.path === selectedElement.value.path) {
+    borderOptions.value = canvas.settings.border
   }
 
   if (imageElement && imageElement.complete && imageElement.naturalWidth > 0) {
@@ -2918,7 +2677,7 @@ const renderBorders = async (path) => {
       borderType,
       borderBlur,
       borderRadius
-    } = image.settings.border;
+    } = canvas.settings.border;
 
     if (borderType === 0) {
       backgroundElement.style.background = borderColor
@@ -2927,7 +2686,7 @@ const renderBorders = async (path) => {
       imageElement.style.boxShadow = ''
     } else if (borderType === 1) {
       backgroundElement.setAttribute('blur-border', '')
-      backgroundElement.style.background = `url('${image.url}') center / cover`
+      backgroundElement.style.background = `url('${canvas.url}') center / cover`
       backgroundElement.style.setProperty('--blur-intensity', borderBlur + 'px');
       backgroundElement.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.4)'
       imageElement.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.4)'
@@ -2952,17 +2711,19 @@ const renderBorders = async (path) => {
 
     await nextTick()
 
-    backgroundElement.border = _.cloneDeep(settings.value.border)
-
     const {clientWidth, clientHeight} = imageElement;
 
-    image.settings.border = _.cloneDeep(settings.value.border)
-    image.settings.border.borderLeftRatio = borderLeft / clientWidth
-    image.settings.border.borderRightRatio = borderRight / clientWidth
-    image.settings.border.borderTopRatio = borderTop / clientHeight
-    image.settings.border.borderBottomRatio = borderBottom / clientHeight
-    image.settings.border.borderBlurRatio = borderBlur / clientWidth
-    image.settings.border.borderRadiusRatio = borderRadius / clientWidth
+    const newBorder = _.cloneDeep(borderOptions.value);
+    backgroundElement.border = newBorder
+
+    const settings = canvas.settings.border;
+    settings.border = newBorder
+    settings.border.borderLeftRatio = borderLeft / clientWidth
+    settings.border.borderRightRatio = borderRight / clientWidth
+    settings.border.borderTopRatio = borderTop / clientHeight
+    settings.border.borderBottomRatio = borderBottom / clientHeight
+    settings.border.borderBlurRatio = borderBlur / clientWidth
+    settings.border.borderRadiusRatio = borderRadius / clientWidth
   }
 }
 
@@ -2984,13 +2745,12 @@ const handleWheel = (e) => {
 
 
 const handleBeforeOne = async () => {
-  const currentPath = selectedElement.value.path;
-  const currentElement = selectedElement.value.element;
+  const {path: currentPath, element: currentElement} = selectedElement.value;
   if (!currentPath) return
-  const currentImage = filterImages.value.get(currentPath);
-  const beforeImage = MapHelper.getBeforeValue(filterImages.value, currentPath);
-  if (currentImage && beforeImage) {
-    currentImage.visible = false
+  const currentCanvas = availableCanvas.value.get(currentPath);
+  const beforeCanvas = MapHelper.getBeforeValue(availableCanvas.value, currentPath);
+  if (currentCanvas && beforeCanvas) {
+    currentCanvas.hide()
     if (currentElement) {
       currentElement.setAttribute('selected', 'false')
       currentElement.classList.remove('active')
@@ -2999,22 +2759,28 @@ const handleBeforeOne = async () => {
 
     await nextTick()
 
-    beforeImage.visible = true
+    beforeCanvas.show()
 
     await nextTick()
 
-    if (beforeImage.isUpdate) {
-      await refreshTemplate(beforeImage.path)
+    if (!beforeCanvas.completed) {
+      await initializeCanvasLayout(beforeCanvas)
+    }
+
+    setScrollBarPosition(beforeCanvas)
+
+    if (beforeCanvas.isUpdate) {
+      await refreshTemplate(beforeCanvas.path)
     }
 
     const beforeElement = currentElement.previousElementSibling || currentElement.parentNode.lastElementChild;
     if (beforeElement) {
-      settings.value.metadata = beforeImage.metadata
+      metadataOptions.value = beforeCanvas.metadata
       beforeElement.classList.add('active')
       beforeElement.setAttribute('selected', 'true')
-      selectedElement.value.path = beforeImage.path
+      selectedElement.value.path = beforeCanvas.path
       selectedElement.value.element = beforeElement
-      selectedImages.value.set(beforeImage.path, beforeElement)
+      selectedImages.value.set(beforeCanvas.path, beforeElement)
 
       // 方式一，较为卡顿，过渡不流畅
       // selectedElement.value.element.scrollIntoView({
@@ -3025,44 +2791,48 @@ const handleBeforeOne = async () => {
 
       // 方式二，过渡比较流畅
       scrollToCenterHorizontal(imageList.value, selectedElement.value.element)
-
     }
   }
 }
 
 const handleNextOne = async () => {
-  const currentPath = selectedElement.value.path;
-  const currentElement = selectedElement.value.element;
+  const {path: currentPath, element: currentElement} = selectedElement.value;
   if (!currentPath) return
-  const currentImage = filterImages.value.get(currentPath);
-  const nextImage = MapHelper.getNextValue(filterImages.value, currentPath);
-  if (currentImage && nextImage) {
+  const currentCanvas = availableCanvas.value.get(currentPath);
+  const nextCanvas = MapHelper.getNextValue(availableCanvas.value, currentPath);
+  if (currentCanvas && nextCanvas) {
     if (currentElement) {
       currentElement.setAttribute('selected', 'false')
       currentElement.classList.remove('active')
       selectedImages.value.delete(currentPath)
     }
 
-    currentImage.visible = false
+    currentCanvas.hide()
 
     await nextTick()
 
-    nextImage.visible = true
+    nextCanvas.show()
 
     await nextTick()
 
-    if (nextImage.isUpdate) {
-      await refreshTemplate(nextImage.path)
+    if (!nextCanvas.completed) {
+      await initializeCanvasLayout(nextCanvas)
+    }
+
+    setScrollBarPosition(nextCanvas)
+
+    if (nextCanvas.isUpdate) {
+      await refreshTemplate(nextCanvas.path)
     }
 
     const nextElement = currentElement.nextElementSibling || currentElement.parentNode.firstElementChild;
     if (nextElement) {
-      settings.value.metadata = nextImage.metadata
+      metadataOptions.value = nextCanvas.metadata
       nextElement.classList.add('active')
       nextElement.setAttribute('selected', 'true')
-      selectedElement.value.path = nextImage.path
+      selectedElement.value.path = nextCanvas.path
       selectedElement.value.element = nextElement
-      selectedImages.value.set(nextImage.path, nextElement)
+      selectedImages.value.set(nextCanvas.path, nextElement)
 
       // 方式一，较为卡顿，过渡不流畅
       // selectedElement.value.element.scrollIntoView({
@@ -3073,7 +2843,6 @@ const handleNextOne = async () => {
 
       // 方式二，过渡比较流畅
       scrollToCenterHorizontal(imageList.value, selectedElement.value.element)
-
     }
   }
 }
@@ -3119,7 +2888,7 @@ const setDefaultStyle = (dragElement) => {
       dragElement.innerHTML = dragElement.getAttribute('text');
     } else if (type === 'metadata') {
       const attribute = dragElement.getAttribute('text');
-      let value = settings.value.metadata[attribute];
+      let value = metadataOptions.value[attribute];
       const format = projectSettings.value.metadata.formats[attribute];
       if (format) {
         value = format.replace('${' + attribute + '}', value)
@@ -3145,7 +2914,6 @@ const handleDragStart = function (event) {
 
   dragParameters.offsetX = offsetX;
   dragParameters.offsetY = offsetY;
-  dragParameters.originalElement = component
   dragParameters.dragElement = dragElement
 
   setDefaultStyle(dragElement);
@@ -3176,7 +2944,7 @@ const monitorDraggableLabelElements = () => {
   });
 }
 
-const monitorPutElements = (canvasElement, image) => {
+const monitorPutElements = (canvasElement, canvas) => {
 
   canvasElement.addEventListener('dragover', event =>
       event.preventDefault()
@@ -3225,8 +2993,8 @@ const monitorPutElements = (canvasElement, image) => {
         // 关键：必须设为绝对定位
         dragElement.style.position = 'absolute'
 
-        const elementLeft = (mouseX - canvasRect.left - offsetX) / image.scale;
-        const elementTop = (mouseY - canvasRect.top - offsetY) / image.scale;
+        const elementLeft = (mouseX - canvasRect.left - offsetX) / canvas.scale;
+        const elementTop = (mouseY - canvasRect.top - offsetY) / canvas.scale;
         const elementRight = canvasElement.offsetWidth - elementLeft - elementWidth;
         const elementBottom = canvasElement.offsetHeight - elementTop - elementHeight
 
@@ -3264,52 +3032,52 @@ const monitorPutElements = (canvasElement, image) => {
 
         elementTop > elementBottom ? references.push('bottom') : references.push('top')
 
-        const params = _.cloneDeep(!dragElement.src ? settings.value.text : settings.value.image)
+        const settings = _.cloneDeep(!dragElement.src ? new TextSettings() : new ImageSettings())
 
-        params.references = references
-        params.offsetLeft = offsetLeft
-        params.offsetLeftRatio = offsetLeftRatio
-        params.offsetRight = offsetRight
-        params.offsetRightRatio = offsetRightRatio
-        params.offsetTop = offsetTop
-        params.offsetTopRatio = offsetTopRatio
-        params.offsetBottom = offsetBottom
-        params.offsetBottomRatio = offsetBottomRatio
+        settings.references = references
+        settings.offsetLeft = offsetLeft
+        settings.offsetLeftRatio = offsetLeftRatio
+        settings.offsetRight = offsetRight
+        settings.offsetRightRatio = offsetRightRatio
+        settings.offsetTop = offsetTop
+        settings.offsetTopRatio = offsetTopRatio
+        settings.offsetBottom = offsetBottom
+        settings.offsetBottomRatio = offsetBottomRatio
 
-        params.width = elementWidth
-        params.height = elementHeight
+        settings.width = elementWidth
+        settings.height = elementHeight
 
         if (!dragElement.src) {
           const type = dragElement.getAttribute('type');
           if (type === 'metadata') {
-            params.attribute = dragElement.getAttribute('text')
+            settings.attribute = dragElement.getAttribute('text')
           }
           if (type === 'script') {
-            params.expression = dragElement.getAttribute('text')
+            settings.expression = dragElement.getAttribute('text')
           }
-          params.content = dragElement.innerText
-          params.type = dragElement.getAttribute('type')
+          settings.content = dragElement.innerText
+          settings.type = dragElement.getAttribute('type')
           const dragElementStyle = window.getComputedStyle(dragElement);
           const fontSize = Number.parseFloat(dragElementStyle.fontSize);
-          params.options.fontSize = fontSize
-          params.options.fontFamily = dragElementStyle.fontFamily.replace(/"/g, '')
-          params.options.fontColor = dragElementStyle.color
-          params.options.fontStyle = dragElementStyle.fontStyle
-          params.options.fontWeight = Number.parseInt(dragElementStyle.fontWeight)
-          params.options.fontSizeRatio = fontSize / backgroundWidth
-          params.options.textDirection = 0
+          settings.options.fontSize = fontSize
+          settings.options.fontFamily = dragElementStyle.fontFamily.replace(/"/g, '')
+          settings.options.fontColor = dragElementStyle.color
+          settings.options.fontStyle = dragElementStyle.fontStyle
+          settings.options.fontWeight = Number.parseInt(dragElementStyle.fontWeight)
+          settings.options.fontSizeRatio = fontSize / backgroundWidth
+          settings.options.textDirection = 0
         } else {
-          params.path = dragElement.getAttribute('path')
-          params.url = dragElement.src
-          params.originalWidth = elementWidth
-          params.originalHeight = elementHeight
-          params.options.imageHeightRatio = elementHeight / backgroundHeight
-          params.options.imageWidthRatio = elementWidth / backgroundWidth
+          settings.path = dragElement.getAttribute('path')
+          settings.url = dragElement.src
+          settings.originalWidth = elementWidth
+          settings.originalHeight = elementHeight
+          settings.options.imageHeightRatio = elementHeight / backgroundHeight
+          settings.options.imageWidthRatio = elementWidth / backgroundWidth
         }
 
-        const positionElementMap = !dragElement.src ? image.settings.texts : image.settings.images;
+        const elementMapping = !dragElement.src ? canvas.settings.texts : canvas.settings.images;
 
-        positionElementMap.set(dragElement, params)
+        elementMapping.set(dragElement, settings)
 
         makeDraggable(dragElement, selectedElement.value.path)
       }
@@ -3354,23 +3122,17 @@ const openSubMenu = (index) => {
 // 使形状可拖动
 function makeDraggable(dragElement, path) {
 
-  const image = images.value.get(path);
-
-  const previewImage = image.getTargetElement();
-
-  let mouseOffsetLeft, mouseOffsetRight, mouseOffsetTop, mouseOffsetBottom
+  const canvas = CanvasManager.getCanvas(path);
+  const imagesElement = canvas.getTargetElement();
 
   let clickTimeout = null;
-
   let mouseSetupX, mouseSetupY
 
   dragElement.onmousedown = function dragMouseDown(event) {
 
     event.preventDefault();
 
-    const canvasElement = previewImage.parentNode;
-
-    const dragElementRect = dragElement.getBoundingClientRect();
+    const canvasElement = imagesElement.parentNode;
 
     // 记录初始鼠标位置和元素位置
     let startX = event.clientX;
@@ -3407,8 +3169,8 @@ function makeDraggable(dragElement, path) {
       const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement
 
       // 计算移动距离（考虑旋转后的坐标系）
-      const dx = (mouseX - startX) / image.scale;
-      const dy = (mouseY - startY) / image.scale;
+      const dx = (mouseX - startX) / canvas.scale;
+      const dy = (mouseY - startY) / canvas.scale;
 
       // 计算新位置
       const elementLeft = initialLeft + dx;
@@ -3446,7 +3208,7 @@ function makeDraggable(dragElement, path) {
 
       elementTop > elementBottom ? references.push('bottom') : references.push('top')
 
-      const settings = !dragElement.src ? image.settings.texts.get(dragElement) : image.settings.images.get(dragElement)
+      const settings = !dragElement.src ? canvas.settings.texts.get(dragElement) : canvas.settings.images.get(dragElement)
       settings.references = references
       settings.offsetLeft = offsetLeft
       settings.offsetLeftRatio = offsetLeftRatio
@@ -3469,11 +3231,11 @@ function makeDraggable(dragElement, path) {
       // event.preventDefault();
       if (dragElement.getAttribute('selected') === 'true') {
         if (!dragElement.src && !dragElement.querySelectorAll('input').length) {
-          image.settings.texts.delete(dragElement)
+          canvas.settings.texts.delete(dragElement)
           dragElement.remove()
         }
         if (dragElement.src) {
-          image.settings.images.delete(dragElement)
+          canvas.settings.images.delete(dragElement)
           dragElement.remove()
         }
       }
@@ -3489,10 +3251,10 @@ function makeDraggable(dragElement, path) {
         dragElement.focus()
         dragElement.style.outline = '1px dashed #f00'
         dragElement.setAttribute('selected', 'true')
-        const image = images.value.get(selectedElement.value.path);
+        const canvas = CanvasManager.getCanvas(selectedElement.value.path);
         if (dragElement.src) {
-          const settings = image.settings.images.get(dragElement);
-          imageOptions.value = _.cloneDeep(settings.options)
+          const imageSettings = canvas.settings.images.get(dragElement);
+          imageOptions.value = _.cloneDeep(imageSettings.options)
           if (projectSettings.value.others.optionAnchorPoint) {
             openSubMenu('4')
             nextTick(() => {
@@ -3500,8 +3262,8 @@ function makeDraggable(dragElement, path) {
             })
           }
         } else {
-          const settings = image.settings.texts.get(dragElement);
-          textOptions.value = _.cloneDeep(settings.options)
+          const textSettings = canvas.settings.texts.get(dragElement);
+          textOptions.value = _.cloneDeep(textSettings.options)
           if (projectSettings.value.others.optionAnchorPoint) {
             openSubMenu('3')
             nextTick(() => {
@@ -3562,10 +3324,10 @@ function makeDraggable(dragElement, path) {
         const type = dragElement.getAttribute('type');
         input.remove()
         dragElement.innerHTML = newValue ? newValue : ''
-        const image = images.value.get(selectedElement.value.path);
         if (!newValue) {
           dragElement.remove();
-          image.settings.texts.delete(dragElement);
+          const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+          canvas.settings.texts.delete(dragElement);
           return
         }
         dragElement.setAttribute('selected', 'false')
@@ -4026,7 +3788,7 @@ function makeDraggable(dragElement, path) {
       }
     }
 
-    .page-images {
+    .image-list {
       box-sizing: border-box;
       width: 100%;
       height: 75%;
