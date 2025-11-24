@@ -1170,8 +1170,7 @@ const setDefaultSelectedElement = async () => {
     await nextTick()
     nextSelectCanvas.show()
     await nextTick()
-    renderCanvas(nextSelectCanvas)
-    await nextTick()
+    await renderCanvas(nextSelectCanvas)
   }
   triggerElement.classList.add('active')
   triggerElement.setAttribute('selected', 'true')
@@ -1444,7 +1443,13 @@ const watchContextMenu = () => {
 
           await nextTick()
 
-          renderCanvas(nextCanvas)
+          if (!nextCanvas.completed) {
+            await initializeCanvasLayout(nextCanvas)
+          }
+
+          if (nextCanvas.isUpdate) {
+            await refreshTemplate(nextCanvas.path)
+          }
 
           const {settings: {border, texts, images}} = CanvasManager.getCanvas(paths[i]);
 
@@ -2295,7 +2300,7 @@ async function handlePreview(event, canvas) {
     if (!beforePath || beforePath !== canvas.path) {
       canvas.show();
       await nextTick()
-      renderCanvas(canvas)
+      await renderCanvas(canvas)
     }
 
     selectedElement.value.path = event.target.getAttribute('path')
@@ -2399,7 +2404,7 @@ const initializeCanvasLayout = async (canvas) => {
 
 const renderCanvas = async (canvas) => {
 
-  if (!canvas.isCompleted()) {
+  if (!canvas.completed) {
     await initializeCanvasLayout(canvas)
   }
 
@@ -2734,7 +2739,7 @@ const handleBeforeOne = async () => {
 
     await nextTick()
 
-    renderCanvas(beforeCanvas)
+    await renderCanvas(beforeCanvas)
 
     const beforeElement = currentElement.previousElementSibling || currentElement.parentNode.lastElementChild;
     if (beforeElement) {
@@ -2777,7 +2782,7 @@ const handleNextOne = async () => {
 
     await nextTick()
 
-    renderCanvas(nextCanvas)
+    await renderCanvas(nextCanvas)
 
     const nextElement = currentElement.nextElementSibling || currentElement.parentNode.firstElementChild;
     if (nextElement) {
