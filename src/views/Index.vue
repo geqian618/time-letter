@@ -1905,7 +1905,6 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVal) => {
   const {path} = selectedElement.value;
   const image = images.value.get(path);
-
   if (!image) return
   const elements = Array.from(image.settings.images.keys());
   for (let element of elements) {

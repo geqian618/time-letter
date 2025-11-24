@@ -165,14 +165,6 @@ async function drawImage(ctx, image, newWidth, newHeight) {
 
     const overlay = await loadImage(imageBuffer);
 
-    if (image.references.includes('right')) {
-        imageX = (1 - image.positionX) * newWidth - width
-    }
-
-    if (image.references.includes('bottom')) {
-        imageY = (1 - image.positionY) * newHeight - height
-    }
-
     // 添加旋转功能 =================================================
     // 获取旋转角度（默认0度），并转换为弧度
     const rotation = image.options.angle || 0;
