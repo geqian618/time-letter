@@ -1097,10 +1097,14 @@ const settings = ref({
   image: {
     path: '',
     url: '',
-    positionX: 0,
-    positionY: 0,
-    offsetX: 0,
-    offsetY: 0,
+    offsetLeft: 0,
+    offsetLeftRatio: 0,
+    offsetRight: 0,
+    offsetRightRatio: 0,
+    offsetTop: 0,
+    offsetTopRatio: 0,
+    offsetBottom: 0,
+    offsetBottomRatio: 0,
     width: 0,
     height: 0,
     originalWidth: 0,
@@ -1128,10 +1132,14 @@ const settings = ref({
     expression: '',
     attribute: '',
     content: '',
-    positionX: 0,
-    positionY: 0,
-    offsetX: 0,
-    offsetY: 0,
+    offsetLeft: 0,
+    offsetLeftRatio: 0,
+    offsetRight: 0,
+    offsetRightRatio: 0,
+    offsetTop: 0,
+    offsetTopRatio: 0,
+    offsetBottom: 0,
+    offsetBottomRatio: 0,
     references: [],
     synchronousMode: 0,
     options: {
@@ -1828,12 +1836,11 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
   //停止监听 stopWatch();
   const {path} = selectedElement.value;
   const image = images.value.get(path);
-
   if (!image) return
-
   const imageElement = image.getTargetElement();
-  const canvasElement = imageElement.parentNode;
-  const {offsetWidth} = canvasElement.querySelector('.image-background');
+  const backgroundElement = imageElement.parentNode.querySelector('.image-background');
+  const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
+  const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
   const texts = image.settings.texts;
   for (let [element, settings] of texts) {
     if (element.getAttribute('selected') === 'true') {
@@ -1877,14 +1884,14 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 
       await nextTick()
 
-
       settings.width = newElementWidth
       settings.height = newElementHeight
       settings.options = _.cloneDeep(newVal)
-      settings.options.fontSizeRatio = newVal.fontSize / offsetWidth
+      settings.options.fontSizeRatio = newVal.fontSize / backgroundWidth
       settings.options.textShadow.offsetXRatio = newVal.textShadow.offsetX / newVal.fontSize
       settings.options.textShadow.offsetYRatio = newVal.textShadow.offsetY / newVal.fontSize
       settings.options.textShadow.blurRatio = newVal.textShadow.blur / newVal.fontSize
+
       updateElementPosition(image, element, settings)
     }
   }
@@ -1933,10 +1940,11 @@ const stopImageBoxShadowWatch = watch(() => imageOptions.value.boxShadow, (newVa
       const {offsetX, offsetY, blur, shadowColor} = newVal;
       element.style.boxShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
       const {offsetWidth, offsetHeight} = element;
-      image.settings.images.get(element).options.boxShadow = _.cloneDeep(newVal)
-      image.settings.images.get(element).options.boxShadow.offsetXRatio = offsetX / offsetWidth
-      image.settings.images.get(element).options.boxShadow.offsetYRatio = offsetY / offsetHeight
-      image.settings.images.get(element).options.boxShadow.blurRatio = blur / offsetWidth
+      const settings = image.settings.images.get(element);
+      settings.options.boxShadow = _.cloneDeep(newVal)
+      settings.options.boxShadow.offsetXRatio = offsetX / offsetWidth
+      settings.options.boxShadow.offsetYRatio = offsetY / offsetHeight
+      settings.options.boxShadow.blurRatio = blur / offsetWidth
     }
   }
 }, {
@@ -1951,6 +1959,9 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
   const {path} = selectedElement.value;
   const image = images.value.get(path);
   if (!image) return
+  const backgroundElement = image.getTargetElement().parentNode.querySelector('.image-background');
+  const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
+  const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
   for (let [element, settings] of image.settings.images) {
     if (element.getAttribute('selected') === 'true') {
       const {originalWidth, originalHeight} = image.settings.images.get(element);
@@ -1984,9 +1995,12 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
 
       await nextTick();
 
-      settings.options.scale = newVal
       settings.width = elementWidth
       settings.height = elementHeight
+      settings.options.scale = newVal
+      settings.options.imageWidthRatio = elementWidth / backgroundWidth
+      settings.options.imageHeightRatio = elementHeight / backgroundHeight
+
       updateElementPosition(image, element, settings)
     }
   }
@@ -2423,15 +2437,6 @@ function updateElementPosition(image, element, elementSettings) {
   elementSettings.offsetTopRatio = offsetTopRatio
   elementSettings.offsetBottom = offsetBottom
   elementSettings.offsetBottomRatio = offsetBottomRatio
-
-  const options = elementSettings.options;
-
-  if (element.src) {
-    options.imageHeightRatio = options.imageHeightRatio / backgroundHeight
-    options.imageWidthRatio = options.imageWidthRatio / backgroundWidth
-  } else {
-    options.fontSizeRatio = options.fontSize / backgroundWidth
-  }
 }
 
 const refreshPositionInformation = (path) => {
@@ -3260,7 +3265,7 @@ const monitorPutElements = (canvasElement, image) => {
 
         elementTop > elementBottom ? references.push('bottom') : references.push('top')
 
-        const params = !dragElement.src ? settings.value.text : settings.value.image
+        const params = _.cloneDeep(!dragElement.src ? settings.value.text : settings.value.image)
 
         params.references = references
         params.offsetLeft = offsetLeft
@@ -3303,9 +3308,9 @@ const monitorPutElements = (canvasElement, image) => {
           params.options.imageWidthRatio = elementWidth / backgroundWidth
         }
 
-        const labelMap = !dragElement.src ? image.settings.texts : image.settings.images;
+        const positionElementMap = !dragElement.src ? image.settings.texts : image.settings.images;
 
-        labelMap.set(dragElement, _.cloneDeep(params))
+        positionElementMap.set(dragElement, params)
 
         makeDraggable(dragElement, selectedElement.value.path)
       }
@@ -3354,7 +3359,7 @@ function makeDraggable(dragElement, path) {
 
   const previewImage = image.getTargetElement();
 
-  let offsetLeft, offsetRight, offsetTop, offsetBottom
+  let mouseOffsetLeft, mouseOffsetRight, mouseOffsetTop, mouseOffsetBottom
 
   let clickTimeout = null;
 
@@ -3381,10 +3386,10 @@ function makeDraggable(dragElement, path) {
     let initialTop = parseFloat(dragElement.style.top) || canvasElement.offsetHeight - parseFloat(dragElement.style.bottom) - elementHeight;
 
     // 获取鼠标位置
-    offsetLeft = (startX - dragElementRect.left) / image.scale
-    offsetRight = (dragElementRect.right - startX) / image.scale
-    offsetTop = (startY - dragElementRect.top) / image.scale
-    offsetBottom = (dragElementRect.bottom - startY) / image.scale
+    // mouseOffsetLeft = (startX - dragElementRect.left) / image.scale
+    // mouseOffsetRight = (dragElementRect.right - startX) / image.scale
+    // mouseOffsetTop = (startY - dragElementRect.top) / image.scale
+    // mouseOffsetBottom = (dragElementRect.bottom - startY) / image.scale
 
     document.onmousemove = function elementDrag(event) {
 
