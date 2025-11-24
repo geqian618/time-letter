@@ -1,3 +1,5 @@
+import {BorderSettings} from '@/object/Configuration'
+
 export class Canvas {
     constructor() {
         this.metadata = null;
@@ -13,28 +15,13 @@ export class Canvas {
         this.filename = '';
         this.extname = '';
         this.settings = {
-            border: {
-                borderType: 0,
-                borderLeft: 0,
-                borderRight: 0,
-                borderTop: 0,
-                borderBottom: 0,
-                borderLeftRatio: 0,
-                borderRightRatio: 0,
-                borderTopRatio: 0,
-                borderBottomRatio: 0,
-                borderBlur: 15,
-                borderBlurRatio: 0,
-                borderRadius: 15,
-                borderRadiusRatio: 0,
-                borderColor: 'rgba(255, 255, 255, 1)',
-            },
+            border: new BorderSettings(),
             texts: new Map(),
             images: new Map(),
         };
     }
 
-    getTargetElement() {
+    getImageElement() {
         if (!this.imageElement) {
             this.imageElement = document.getElementById(this.path);
         }

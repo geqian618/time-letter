@@ -100,9 +100,16 @@ export class Metadata {
 // 边框设置类
 export class BorderSettings {
     constructor() {
-        this.borderOptions = new BorderOptions()
+        this.borderLeftRatio = 0;
+        this.borderRightRatio = 0;
+        this.borderTopRatio = 0;
+        this.borderBottomRatio = 0;
+        this.borderBlurRatio = 0;
+        this.borderRadiusRatio = 0;
+        this.options = new BorderOptions()
     }
 }
+
 
 // 边框设置类
 export class BorderOptions {

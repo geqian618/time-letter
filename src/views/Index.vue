@@ -1501,7 +1501,7 @@ const watchContextMenu = () => {
 
 const resetSettings = (path) => {
   const canvas = clearAllLabels(path);
-  canvas.settings.border = new BorderOptions()
+  canvas.settings.border = new BorderSettings()
   renderBorders(path)
 }
 
@@ -1606,13 +1606,12 @@ const loadProjectSettings = () => {
 
 const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
   //停止监听 stopWatch();
-  const canvas = CanvasManager.getCanvas(selectedElement.value);
+  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
   if (!canvas) return
-  const imageElement = canvas.getTargetElement();
+  const imageElement = canvas.getImageElement();
   const backgroundElement = imageElement.parentNode.querySelector('.image-background');
   const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
   const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
-
   for (let [element, settings] of canvas.settings.texts) {
     if (element.getAttribute('selected') === 'true') {
       let computedStyle = window.getComputedStyle(element);
@@ -1657,7 +1656,6 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 
       settings.width = newElementWidth
       settings.height = newElementHeight
-      settings.options = _.cloneDeep(newVal)
       settings.options.fontSizeRatio = newVal.fontSize / backgroundWidth
       settings.options.textShadow.offsetXRatio = newVal.textShadow.offsetX / newVal.fontSize
       settings.options.textShadow.offsetYRatio = newVal.textShadow.offsetY / newVal.fontSize
@@ -1674,36 +1672,30 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 });
 
 const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVal) => {
-  const canvas = CanvasManager.getCanvas(selectedElement.value);
+  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
   if (!canvas) return
   const elements = Array.from(canvas.settings.images.keys());
-  for (let element of canvas.settings.images.keys()) {
+  for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
       element.style.transformOrigin = 'center center'
       element.style.transform = `rotate(${newVal}deg)`;
-
-      const imageSettings = canvas.settings.images.get(element);
-      imageSettings.options.angle = newVal
     }
   }
 });
 
 const stopImageAlphaWatch = watch(() => imageOptions.value.alpha, (newVal, oldVal) => {
-  const canvas = CanvasManager.getCanvas(selectedElement.value);
+  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
   if (!canvas) return
   const elements = Array.from(canvas.settings.images.keys());
   for (let element of elements) {
     if (element.getAttribute('selected') === 'true') {
       element.style.opacity = newVal / 10
-
-      const imageSettings = canvas.settings.images.get(element);
-      imageSettings.options.alpha = newVal
     }
   }
 });
 
 const stopImageBoxShadowWatch = watch(() => imageOptions.value.boxShadow, (newVal, oldVal) => {
-  const canvas = CanvasManager.getCanvas(selectedElement.value);
+  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
   if (!canvas) return
   const elements = Array.from(canvas.settings.images.keys());
   for (let element of elements) {
@@ -1713,7 +1705,6 @@ const stopImageBoxShadowWatch = watch(() => imageOptions.value.boxShadow, (newVa
 
       const {offsetWidth, offsetHeight} = element;
       const imageSettings = canvas.settings.images.get(element);
-      imageSettings.options.boxShadow = _.cloneDeep(newVal)
       imageSettings.options.boxShadow.offsetXRatio = offsetX / offsetWidth
       imageSettings.options.boxShadow.offsetYRatio = offsetY / offsetHeight
       imageSettings.options.boxShadow.blurRatio = blur / offsetWidth
@@ -1726,9 +1717,9 @@ const stopImageBoxShadowWatch = watch(() => imageOptions.value.boxShadow, (newVa
 
 
 const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal, oldVal) => {
-  const canvas = CanvasManager.getCanvas(selectedElement.value);
+  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
   if (!canvas) return
-  const backgroundElement = canvas.getTargetElement().parentNode.querySelector('.image-background');
+  const backgroundElement = canvas.getImageElement().parentNode.querySelector('.image-background');
   const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
   const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
   for (let [element, imageSettings] of canvas.settings.images) {
@@ -1768,18 +1759,17 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
 
       imageSettings.width = elementWidth
       imageSettings.height = elementHeight
-      imageSettings.options.scale = newVal
       imageSettings.options.imageWidthRatio = elementWidth / backgroundWidth
       imageSettings.options.imageHeightRatio = elementHeight / backgroundHeight
 
-      updateElementPosition(canvas, element, settings)
+      updateElementPosition(canvas, element, imageSettings)
     }
   }
 });
 
 
 const stopWatchImageZIndex = watch(() => imageOptions.value.zIndex, (newVal, oldVal) => {
-  const canvas = CanvasManager.getCanvas(selectedElement.value);
+  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
   if (!canvas) return
   const elements = Array.from(canvas.settings.images.keys());
   for (let element of elements) {
@@ -1792,16 +1782,15 @@ const stopWatchImageZIndex = watch(() => imageOptions.value.zIndex, (newVal, old
   }
 })
 
-const stopWatchPhotoMetadata = watch(() => metadataOptions, (newVal, oldVal) => {
-  const path = selectedElement.value.path;
-  if (path) {
-    const canvas = CanvasManager.getCanvas(path);
-    canvas.metadata = _.cloneDeep(newVal)
-  }
-}, {
-  //深度监视（监视属性变化）
-  deep: true,
-})
+// const stopWatchPhotoMetadata = watch(() => metadataOptions, (newVal, oldVal) => {
+//   if (selectedElement.value.path) {
+//     const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+//     canvas.metadata = _.cloneDeep(newVal)
+//   }
+// }, {
+//   //深度监视（监视属性变化）
+//   deep: true,
+// })
 
 
 const renameTemplate = () => {
@@ -1837,14 +1826,14 @@ const deleteTemplate = () => {
 
 const synchronizeTemplate = () => {
   if (selectedElement.value && selectedElement.value.path) {
-    const {settings: {border, images, texts}} = CanvasManager.getCanvas(selectedElement.value.path);
-    const options = {
-      border,
-      images: Array.from(images.values()).map(item => {
+    const {settings: templateSettings} = CanvasManager.getCanvas(selectedElement.value.path);
+    const targetSettings = {
+      border: templateSettings.border,
+      images: Array.from(templateSettings.images.values()).map(item => {
         item.synchronousMode = synchronousMode.value
         return item
       }),
-      texts: Array.from(texts.values()).map(item => {
+      texts: Array.from(templateSettings.texts.values()).map(item => {
         item.synchronousMode = synchronousMode.value
         return item
       })
@@ -1852,17 +1841,16 @@ const synchronizeTemplate = () => {
 
     selectedImages.value.forEach((image, path) => {
       if (selectedElement.value.path !== path) {
-        let {settings: {texts, images, border}} = CanvasManager.getCanvas(path);
-        for (let element of images.keys()) {
+        let {settings: originalSettings} = CanvasManager.getCanvas(path);
+        for (let element of originalSettings.images.keys()) {
           element.remove()
         }
-        for (let element of texts.keys()) {
+        for (let element of originalSettings.texts.keys()) {
           element.remove()
         }
-        border = {}
-        texts.clear()
-        images.clear()
-        useTemplate(_.cloneDeep(options), path)
+        originalSettings.texts.clear()
+        originalSettings.images.clear()
+        useTemplate(_.cloneDeep(targetSettings), path)
       }
     })
   }
@@ -1873,17 +1861,12 @@ const saveTemplates = async () => {
   if (!saveTemplateForm) return
 
   saveTemplateForm.value.validate(async (valid, fields) => {
-
     if (valid) {
-
       const canvas = CanvasManager.getCanvas(selectedElement.value.path);
       const {border, images, texts} = _.cloneDeep(canvas.settings)
-
       const newTemplates = [...templates.value];
-
       // 清空模版列表，重新生成列表
       templates.value = []
-
       await nextTick()
 
       newTemplates.push({
@@ -1895,13 +1878,9 @@ const saveTemplates = async () => {
           texts: Array.from(texts.values())
         }
       })
-
       templates.value = newTemplates
-
       window.localStorage.setItem('templates', JSON.stringify(templates.value))
-
       newTemplate.value.desc = ''
-
       saveTemplateDialogVisible.value = false
     }
   })
@@ -1937,19 +1916,18 @@ const openEnableTemplateDialog = ({settings}) => {
 
 const enableTemplate = () => {
   for (let path of selectedImages.value.keys()) {
-    let {settings: {images, texts, border}} = CanvasManager.getCanvas(path);
-    for (let element of images.keys()) {
+    let {settings: originalSettings} = CanvasManager.getCanvas(path);
+    for (let element of originalSettings.images.keys()) {
       element.remove()
     }
-    for (let element of texts.keys()) {
+    for (let element of originalSettings.texts.keys()) {
       element.remove()
     }
-    border = {}
-    texts.clear()
-    images.clear()
+    originalSettings.texts.clear()
+    originalSettings.images.clear()
     templateSettings.value.texts.forEach(item => item.synchronousMode = synchronousMode.value)
     templateSettings.value.images.forEach(item => item.synchronousMode = synchronousMode.value)
-    useTemplate(templateSettings.value, path)
+    useTemplate(_.cloneDeep(templateSettings.value), path)
   }
   enableTemplateDialogVisible.value = false
   synchronousMode.value = 0
@@ -1958,7 +1936,7 @@ const enableTemplate = () => {
 
 function renderElementPosition(canvas, settings, element) {
 
-  const imageElement = canvas.getTargetElement();
+  const imageElement = canvas.getImageElement();
 
   const canvasElement = imageElement.parentNode;
 
@@ -2027,19 +2005,17 @@ function renderElementPosition(canvas, settings, element) {
   }
 }
 
-const useTemplate = async (options, path) => {
-
-  const {images, texts} = _.cloneDeep(options)
-
+const useTemplate = async (targetSettings, path) => {
+  const {images, texts} = targetSettings
   const canvas = CanvasManager.getCanvas(path);
+  canvas.settings.border = targetSettings.border
   canvas.isUpdate = true
-  canvas.settings.border = options.border
 
   if (path === selectedElement.value.path) {
     await renderBorders(path)
   }
 
-  const canvasElement = canvas.getTargetElement().parentNode
+  const canvasElement = canvas.getImageElement().parentNode
 
   for (let image of images) {
     const {angle, alpha, boxShadow: {offsetX, offsetY, blur, shadowColor}} = image.options;
@@ -2153,7 +2129,7 @@ const useTemplate = async (options, path) => {
 
 function updateElementPosition(canvas, element, settings) {
 
-  const imageElement = canvas.getTargetElement();
+  const imageElement = canvas.getImageElement();
 
   const canvasElement = imageElement.parentNode;
 
@@ -2343,7 +2319,7 @@ async function handlePreview(event, canvas) {
     event.target.classList.add('active')
 
     metadataOptions.value = canvas.metadata
-    borderOptions.value = canvas.settings.border
+    borderOptions.value = canvas.settings.border.options
   }
 }
 
@@ -2354,7 +2330,7 @@ const setScrollBarPosition = (canvas) => {
 }
 
 const initializeCanvasLayout = async (canvas) => {
-  const imageElement = canvas.getTargetElement();
+  const imageElement = canvas.getImageElement();
   const canvasElement = imageElement.parentNode;
   const backgroundElement = canvasElement.querySelector('.image-background');
   const previewContainer = canvasElement.parentNode;
@@ -2460,7 +2436,7 @@ const monitorScrollbar = () => {
 
 // 初始化时自动滚动到图形内容区域
 function moveScrollBarToCenter(canvas) {
-  const imageElement = canvas.getTargetElement();
+  const imageElement = canvas.getImageElement();
   const canvasElement = imageElement.parentNode;
   const previewContainer = canvasElement.parentNode;
   const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement
@@ -2560,7 +2536,7 @@ const handleBorders = async () => {
   const canvas = CanvasManager.getCanvas(selectedElement.value.path)
   if (!canvas) return
 
-  const imageElement = canvas.getTargetElement();
+  const imageElement = canvas.getImageElement();
 
   if (imageElement && imageElement.complete && imageElement.naturalWidth > 0) {
     const backgroundElement = imageElement.parentNode.querySelector('.image-background');
@@ -2637,18 +2613,16 @@ const handleBorders = async () => {
       backgroundElement.style.setProperty('--blur-intensity', borderBlur + 'px');
     }
 
-    const newBorder = _.cloneDeep(borderOptions.value);
-    backgroundElement.border = newBorder
+    backgroundElement.border = _.cloneDeep(borderOptions.value)
     const {clientWidth, clientHeight} = imageElement;
-    const settings = canvas.settings;
 
-    settings.border = newBorder
-    settings.border.borderLeftRatio = borderLeft / clientWidth
-    settings.border.borderRightRatio = borderRight / clientWidth
-    settings.border.borderTopRatio = borderTop / clientHeight
-    settings.border.borderBottomRatio = borderBottom / clientHeight
-    settings.border.borderBlurRatio = borderBlur / clientWidth
-    settings.border.borderRadiusRatio = borderRadius / clientWidth
+    const border = canvas.settings.border;
+    border.borderLeftRatio = borderLeft / clientWidth
+    border.borderRightRatio = borderRight / clientWidth
+    border.borderTopRatio = borderTop / clientHeight
+    border.borderBottomRatio = borderBottom / clientHeight
+    border.borderBlurRatio = borderBlur / clientWidth
+    border.borderRadiusRatio = borderRadius / clientWidth
 
     await nextTick()
 
@@ -2660,10 +2634,9 @@ const handleBorders = async () => {
 
 const renderBorders = async (path) => {
   const canvas = CanvasManager.getCanvas(path)
-  const imageElement = canvas.getTargetElement();
-
+  const imageElement = canvas.getImageElement();
   if (canvas.path === selectedElement.value.path) {
-    borderOptions.value = canvas.settings.border
+    borderOptions.value = canvas.settings.border.options
   }
 
   if (imageElement && imageElement.complete && imageElement.naturalWidth > 0) {
@@ -2677,7 +2650,7 @@ const renderBorders = async (path) => {
       borderType,
       borderBlur,
       borderRadius
-    } = canvas.settings.border;
+    } = canvas.settings.border.options;
 
     if (borderType === 0) {
       backgroundElement.style.background = borderColor
@@ -2713,17 +2686,15 @@ const renderBorders = async (path) => {
 
     const {clientWidth, clientHeight} = imageElement;
 
-    const newBorder = _.cloneDeep(borderOptions.value);
-    backgroundElement.border = newBorder
+    backgroundElement.border = _.cloneDeep(borderOptions.value)
 
-    const settings = canvas.settings.border;
-    settings.border = newBorder
-    settings.border.borderLeftRatio = borderLeft / clientWidth
-    settings.border.borderRightRatio = borderRight / clientWidth
-    settings.border.borderTopRatio = borderTop / clientHeight
-    settings.border.borderBottomRatio = borderBottom / clientHeight
-    settings.border.borderBlurRatio = borderBlur / clientWidth
-    settings.border.borderRadiusRatio = borderRadius / clientWidth
+    const border = canvas.settings.border;
+    border.borderLeftRatio = borderLeft / clientWidth
+    border.borderRightRatio = borderRight / clientWidth
+    border.borderTopRatio = borderTop / clientHeight
+    border.borderBottomRatio = borderBottom / clientHeight
+    border.borderBlurRatio = borderBlur / clientWidth
+    border.borderRadiusRatio = borderRadius / clientWidth
   }
 }
 
@@ -2781,7 +2752,8 @@ const handleBeforeOne = async () => {
       selectedElement.value.path = beforeCanvas.path
       selectedElement.value.element = beforeElement
       selectedImages.value.set(beforeCanvas.path, beforeElement)
-
+      metadataOptions.value = beforeCanvas.metadata
+      borderOptions.value = beforeCanvas.settings.border.options
       // 方式一，较为卡顿，过渡不流畅
       // selectedElement.value.element.scrollIntoView({
       //   behavior: 'smooth',
@@ -2833,7 +2805,8 @@ const handleNextOne = async () => {
       selectedElement.value.path = nextCanvas.path
       selectedElement.value.element = nextElement
       selectedImages.value.set(nextCanvas.path, nextElement)
-
+      metadataOptions.value = nextCanvas.metadata
+      borderOptions.value = nextCanvas.settings.border.options
       // 方式一，较为卡顿，过渡不流畅
       // selectedElement.value.element.scrollIntoView({
       //   behavior: 'smooth',
@@ -2951,7 +2924,7 @@ const monitorPutElements = (canvasElement, canvas) => {
   );
 
   canvasElement.addEventListener('dragleave', () => {
-        // previewImage.style.borderColor = '#95a5a6'
+        // imageElement.style.borderColor = '#95a5a6'
       }
   );
 
@@ -3032,7 +3005,7 @@ const monitorPutElements = (canvasElement, canvas) => {
 
         elementTop > elementBottom ? references.push('bottom') : references.push('top')
 
-        const settings = _.cloneDeep(!dragElement.src ? new TextSettings() : new ImageSettings())
+        const settings = !dragElement.src ? new TextSettings() : new ImageSettings()
 
         settings.references = references
         settings.offsetLeft = offsetLeft
@@ -3123,7 +3096,7 @@ const openSubMenu = (index) => {
 function makeDraggable(dragElement, path) {
 
   const canvas = CanvasManager.getCanvas(path);
-  const imagesElement = canvas.getTargetElement();
+  const imagesElement = canvas.getImageElement();
 
   let clickTimeout = null;
   let mouseSetupX, mouseSetupY
@@ -3254,7 +3227,7 @@ function makeDraggable(dragElement, path) {
         const canvas = CanvasManager.getCanvas(selectedElement.value.path);
         if (dragElement.src) {
           const imageSettings = canvas.settings.images.get(dragElement);
-          imageOptions.value = _.cloneDeep(imageSettings.options)
+          imageOptions.value = imageSettings.options
           if (projectSettings.value.others.optionAnchorPoint) {
             openSubMenu('4')
             nextTick(() => {
@@ -3263,7 +3236,7 @@ function makeDraggable(dragElement, path) {
           }
         } else {
           const textSettings = canvas.settings.texts.get(dragElement);
-          textOptions.value = _.cloneDeep(textSettings.options)
+          textOptions.value = textSettings.options
           if (projectSettings.value.others.optionAnchorPoint) {
             openSubMenu('3')
             nextTick(() => {

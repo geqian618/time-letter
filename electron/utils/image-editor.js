@@ -314,42 +314,44 @@ function createRoundedPath(ctx, x, y, width, height, borderRadius) {
     ctx.closePath();
 }
 
-async function addBorderAndText(options) {
+async function addBorderAndText(settings) {
     try {
         // 创建视图来访问共享内存
-        const interruptView = new Int32Array(options.interrupt);
+        const interruptView = new Int32Array(settings.interrupt);
         if (Atomics.load(interruptView, 0) === 1) {
             return;
         }
 
         let {
-            inputPath,      // 原始图片路径
-            outputDirectory,     // 输出目录
-            projectSettings,
+            // 原始图片路径
+            inputPath,
+            // 输出目录
+            outputDirectory,
+            projectSettings: {
+                outputSettings: {
+                    quality,
+                    extname: extnameType,
+                    outputSize: {longSide, shortSide, width, height, type},
+                    isSynchronizeMetadata,
+                },
+                fontConfig
+            },
             border: {
                 borderLeftRatio,
                 borderRightRatio,
                 borderTopRatio,
                 borderBottomRatio,
-                borderColor,
-                borderType,
                 borderBlurRatio,
-                borderRadiusRatio
+                borderRadiusRatio,
+                options: {
+                    borderColor,
+                    borderType,
+                }
             },
             texts,
             images
-        } = options;
+        } = settings;
 
-
-        const outputSettings = projectSettings.outputSettings;
-        const fontConfig = projectSettings.fontConfig;
-
-        let {
-            quality,
-            extname: extnameType,
-            outputSize: {longSide, shortSide, width, height, type},
-            isSynchronizeMetadata,
-        } = outputSettings;
 
         const originalExtname = path.extname(inputPath).slice(1);
 
@@ -366,7 +368,6 @@ async function addBorderAndText(options) {
             throw new Error('文件已不存在：' + path)
         }
 
-
         const image = await loadImage(imageBuffer);
 
         let borderLeft, borderRight, borderTop, borderBottom, borderBlur, borderRadius
@@ -376,7 +377,6 @@ async function addBorderAndText(options) {
         const widthRatio = 1 + borderLeftRatio + borderRightRatio
 
         const heightRatio = 1 + borderTopRatio + borderBottomRatio
-
 
         if (type === 0) { // 原始尺寸，不含边框
             imageWidth = image.width;
