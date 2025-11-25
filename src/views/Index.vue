@@ -3067,11 +3067,12 @@ const openSubMenu = (index) => {
 // 使形状可拖动
 function makeDraggable(dragElement, path) {
 
+  let clickTimeout = null;
+
+  let mouseSetupX, mouseSetupY
+
   const canvas = CanvasManager.getCanvas(path);
   const imagesElement = canvas.getImageElement();
-
-  let clickTimeout = null;
-  let mouseSetupX, mouseSetupY
 
   dragElement.onmousedown = function dragMouseDown(event) {
 
@@ -3153,7 +3154,8 @@ function makeDraggable(dragElement, path) {
 
       elementTop > elementBottom ? references.push('bottom') : references.push('top')
 
-      const settings = !dragElement.src ? canvas.settings.texts.get(dragElement) : canvas.settings.images.get(dragElement)
+      const settings = (dragElement instanceof HTMLDivElement) ? canvas.settings.texts.get(dragElement) : canvas.settings.images.get(dragElement)
+
       settings.references = references
       settings.offsetLeft = offsetLeft
       settings.offsetLeftRatio = offsetLeftRatio
@@ -3176,11 +3178,11 @@ function makeDraggable(dragElement, path) {
       // event.preventDefault();
       if (dragElement.getAttribute('selected') === 'true') {
         if (!dragElement.src && !dragElement.querySelectorAll('input').length) {
-          canvas.settings.texts.delete(dragElement)
+          CanvasManager.deleteElement(selectedElement.value.path, dragElement)
           dragElement.remove()
         }
         if (dragElement.src) {
-          canvas.settings.images.delete(dragElement)
+          CanvasManager.deleteElement(selectedElement.value.path, dragElement)
           dragElement.remove()
         }
       }
@@ -3196,10 +3198,8 @@ function makeDraggable(dragElement, path) {
         dragElement.focus()
         dragElement.style.outline = '1px dashed #f00'
         dragElement.setAttribute('selected', 'true')
-        const canvas = CanvasManager.getCanvas(selectedElement.value.path);
-        if (dragElement.src) {
-          const imageSettings = canvas.settings.images.get(dragElement);
-          imageOptions.value = imageSettings.options
+        if (dragElement instanceof HTMLImageElement) {
+          textOptions.value = CanvasManager.getSettings(selectedElement.value.path, dragElement).options
           if (projectSettings.value.others.optionAnchorPoint) {
             openSubMenu('4')
             nextTick(() => {
@@ -3207,8 +3207,7 @@ function makeDraggable(dragElement, path) {
             })
           }
         } else {
-          const textSettings = canvas.settings.texts.get(dragElement);
-          textOptions.value = textSettings.options
+          textOptions.value = CanvasManager.getSettings(selectedElement.value.path, dragElement).options
           if (projectSettings.value.others.optionAnchorPoint) {
             openSubMenu('3')
             nextTick(() => {
@@ -3237,6 +3236,7 @@ function makeDraggable(dragElement, path) {
 
       // 保存原始文本
       const originalText = dragElement.textContent;
+
       // 创建输入框
       const input = document.createElement('input');
       input.type = 'text';
@@ -3271,8 +3271,7 @@ function makeDraggable(dragElement, path) {
         dragElement.innerHTML = newValue ? newValue : ''
         if (!newValue) {
           dragElement.remove();
-          const canvas = CanvasManager.getCanvas(selectedElement.value.path);
-          canvas.settings.texts.delete(dragElement);
+          CanvasManager.deleteElement(selectedElement.value.path, dragElement)
           return
         }
         dragElement.setAttribute('selected', 'false')

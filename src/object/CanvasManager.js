@@ -10,17 +10,23 @@ const getCanvases = () => {
     return canvases.value;
 }
 
-const getTextSettings = (key, element) => {
-    return canvases.value.get(key).settings.texts.get(element);
+
+const getSettings = (key, element) => {
+    if (key && element) {
+        if (element instanceof HTMLDivElement) {
+            return getCanvas(key).settings.texts.get(element)
+        }
+        if (element instanceof HTMLImageElement) {
+            return getCanvas(key).settings.images.get(element)
+        }
+    }
+    throw new Error('Invalid parameter')
 }
 
 const getTexts = (key) => {
     return canvases.value.get(key).settings.texts;
 }
 
-const getImageSettings = (key, element) => {
-    return canvases.value.get(key).settings.images.get(element);
-}
 
 const getImages = (key) => {
     return canvases.value.get(key).settings.images;
@@ -36,6 +42,17 @@ const clearImages = (key) => {
 
 const deleteCanvas = (key) => {
     return canvases.value.delete(key);
+}
+
+const deleteElement = (key, element) => {
+    if (key && element) {
+        if (element instanceof HTMLDivElement) {
+            getCanvas(key).settings.texts.delete(element)
+        }
+        if (element instanceof HTMLImageElement) {
+            getCanvas(key).settings.images.delete(element)
+        }
+    }
 }
 
 const setCanvas = (key, value) => {
@@ -66,9 +83,9 @@ export default {
     getAvailableCanvases,
     getTexts,
     getImages,
-    getImageSettings,
-    getTextSettings,
+    getSettings,
     deleteCanvas,
+    deleteElement,
     setCanvas,
     hasCanvas,
     isNotEmpty,
