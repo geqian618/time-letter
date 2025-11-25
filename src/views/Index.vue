@@ -591,7 +591,7 @@
             </div>
           </div>
         </div>
-        <div class="image-list" id="image-list" ref="imageList" @wheel="handleWheel" @contextmenu="openContextMenu">
+        <div class="image-list" id="image-list" ref="previewList" @wheel="handleWheel" @contextmenu="openContextMenu">
           <template :key="key" v-for="([key, canvas]) in availableCanvas">
             <el-popover
                 v-if="canvas.metadata.filename || canvas.metadata.shootingTime || canvas.metadata.resolution || canvas.metadata.fileSize"
@@ -1032,19 +1032,12 @@ const templateSettings = ref({})
 
 const availableCanvas = ref(new Map())
 
-const imageList = ref(null);
-
-const saveTemplateForm = ref({});
-
-const textLabelForm = ref({});
-
 const selectedElement = ref({
   element: null,
   path: ''
 });
 
 const selectedImages = ref(new Map())
-
 
 const newTemplate = ref({
   templateName: '',
@@ -1065,18 +1058,14 @@ const borderOptions = ref(new BorderOptions())
 
 const metadataOptions = ref(new Metadata())
 
-const dragParameters = {
-  dragElement: null,
-  offsetX: 0,
-  offsetY: 0
-}
-
 const sliderRange = ref({
   min: 0,
   max: 300
 })
 
 const previewContainer = ref(null)
+
+const previewList = ref(null);
 
 const menuRef = ref(null)
 
@@ -1098,8 +1087,6 @@ const renameDialogVisible = ref(false)
 
 const customTextLabelDialogVisible = ref(false)
 
-const handleTextLabelType = ref(0)
-
 const editorImageLabelDialogVisible = ref(false)
 
 const editorTextLabelDialogVisible = ref(false)
@@ -1109,6 +1096,8 @@ const downloadProgressVisible = ref(false)
 const enableTemplateDialogVisible = ref(false)
 
 const outputSettingsVisible = ref(false)
+
+const handleTextLabelType = ref(0)
 
 const downloadProgressPercentage = ref(0)
 
@@ -1120,6 +1109,10 @@ const textLabel = ref(new TextLabel())
 const openedMenus = ref([])
 
 const textLabels = ref([])
+
+const saveTemplateForm = ref({});
+
+const textLabelForm = ref({});
 
 const renameTemplateForm = ref()
 
@@ -1154,6 +1147,7 @@ const textLabelDialogTitle = computed(() => {
   return handleTextLabelType.value === 0 ? '新增文本标签' : '编辑文本标签'
 })
 
+
 const fontConfigs = computed(() => {
   return Array.from(projectSettings.value.fontConfig.values())
 })
@@ -1167,7 +1161,6 @@ const handleActivateInput = async (row, column, cell) => {
   }
 }
 
-
 const handleStopActivateInput = (row, column) => {
   row.editable = false;
 }
@@ -1176,6 +1169,7 @@ const handleStopActivateInput = (row, column) => {
 const handleFilterFonts = (search) => {
   matchFonts.value = Array.from(fontOptions.value.values()).filter(font => font.family.toLowerCase().startsWith(search.toLowerCase()))
 }
+
 
 const stopWatchAvailableCanvas = watch(filterType, async () => {
 
@@ -1197,10 +1191,10 @@ const setDefaultSelectedElement = async () => {
   let nextSelectCanvas, triggerElement
   if (paths.includes(selectedPath)) {
     nextSelectCanvas = availableCanvas.value.get(selectedElement.value.path);
-    triggerElement = nextSelectCanvas.getTriggerElement(imageList.value);
+    triggerElement = nextSelectCanvas.getTriggerElement(previewList.value);
   } else {
     nextSelectCanvas = availableCanvas.value.get(paths[0]);
-    triggerElement = nextSelectCanvas.getTriggerElement(imageList.value);
+    triggerElement = nextSelectCanvas.getTriggerElement(previewList.value);
     await nextTick()
     selectedCanvas.hide()
     await nextTick()
@@ -1217,10 +1211,6 @@ const setDefaultSelectedElement = async () => {
 
 
 const clearSelectedImages = async () => {
-  const path = selectedElement.value.path;
-  if (!path) {
-    return
-  }
   selectedImages.value.forEach((element, path) => {
     element.classList.remove('active')
     element.setAttribute('selected', 'false')
@@ -1588,28 +1578,6 @@ const watchCtrlA = () => {
     }
   });
 }
-
-// 处理 resize 事件（添加防抖优化性能）
-// const handleResize = () => {
-//   let resizeTimer;
-//   // 添加 resize 事件监听
-//   window.addEventListener("resize", () => {
-//     clearTimeout(resizeTimer);
-//     resizeTimer = setTimeout(async () => {
-//       const path = selectedElement.value.path;
-//       if (path) {
-//         await refreshTemplate(path)
-//         images.value.forEach((item, path) => {
-//           if (path !== selectedElement.value.path) {
-//             item.isUpdate = true
-//           }
-//         })
-//       }
-//     }, 100); // 200ms 防抖间隔
-//   });
-//
-// }
-
 
 const stopProjectSettingsWatch = watch(projectSettings, (newVal, oldVal) => {
   const settings = _.cloneDeep(newVal);
@@ -2179,47 +2147,10 @@ const loadTextLabels = () => {
 }
 
 const clearAllEventListener = () => {
-  // 组件销毁前移除监听，避免内存泄漏
-  // window.removeEventListener("resize", handleResize);
-
   document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
     element.removeEventListener('dragstart', handleDragStart)
   });
 }
-
-
-onMounted(() => {
-  monitorScrollbar()
-  monitorDraggableLabelElements()
-  createThreadPool()
-  loadTemplates()
-  loadTextLabels()
-  watchInputImages()
-  watchInputFonts()
-  watchContextMenu()
-  watchTemplateContextMenu()
-  watchEditorLabel()
-  watchCtrlA()
-  watchDownloadProgress()
-  editorOutputSettings()
-  // handleResize()
-  loadProjectSettings()
-})
-
-
-onBeforeUnmount(() => {
-  clearAllEventListener()
-  stopWatchAvailableCanvas()
-  stopWatchPhotoMetadata()
-  stopTextSettingsWatch()
-  stopProjectSettingsWatch()
-  stopImageBoxShadowWatch()
-  stopWatchImageZIndex()
-  stopImageAlphaWatch()
-  stopImageScaleWatch()
-  stopImageAngleWatch()
-})
-
 
 async function handlePreview(event, canvas) {
   if (!event.ctrlKey && !event.shiftKey) {
@@ -2665,8 +2596,8 @@ const handleWheel = (e) => {
   // 3. 转换为水平滚动：向下滚向右移动，向上滚向左移动
   const scrollAmount = e.deltaY * 1.8; // 调整滚动速度
   // 4. 应用滚动
-  if (imageList.value) {
-    imageList.value.scrollBy({
+  if (previewList.value) {
+    previewList.value.scrollBy({
       left: scrollAmount,
       behavior: 'auto' // 平滑滚动效果
     });
@@ -2711,7 +2642,7 @@ const handleBeforeOne = async () => {
       // })
 
       // 方式二，过渡比较流畅
-      scrollToCenterHorizontal(imageList.value, selectedElement.value.element)
+      scrollToCenterHorizontal(previewList.value, selectedElement.value.element)
     }
   }
 }
@@ -2754,7 +2685,7 @@ const handleNextOne = async () => {
       // })
 
       // 方式二，过渡比较流畅
-      scrollToCenterHorizontal(imageList.value, selectedElement.value.element)
+      scrollToCenterHorizontal(previewList.value, selectedElement.value.element)
     }
   }
 }
@@ -3189,6 +3120,38 @@ function makeDraggable(dragElement, path) {
     })
   }
 }
+
+
+onMounted(() => {
+  monitorScrollbar()
+  monitorDraggableLabelElements()
+  createThreadPool()
+  loadTemplates()
+  loadTextLabels()
+  watchInputImages()
+  watchInputFonts()
+  watchContextMenu()
+  watchTemplateContextMenu()
+  watchEditorLabel()
+  watchCtrlA()
+  watchDownloadProgress()
+  editorOutputSettings()
+  // handleResize()
+  loadProjectSettings()
+})
+
+
+onBeforeUnmount(() => {
+  clearAllEventListener()
+  stopWatchAvailableCanvas()
+  stopTextSettingsWatch()
+  stopProjectSettingsWatch()
+  stopImageBoxShadowWatch()
+  stopWatchImageZIndex()
+  stopImageAlphaWatch()
+  stopImageScaleWatch()
+  stopImageAngleWatch()
+})
 
 
 </script>
