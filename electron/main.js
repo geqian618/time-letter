@@ -153,6 +153,7 @@ app.whenReady().then(() => {
     createWindow()
 
     imageWatcher.fileWatcher(window, resourcesPath)
+
     fontWatcher.fileWatcher(window, fontPath)
 
     app.on('activate', () => {

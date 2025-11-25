@@ -294,11 +294,16 @@
                         <div class="value">
                           <el-select
                               v-model="textOptions.fontFamily"
-                              :options="matchFonts"
-                              size="small"
                               filterable
+                              size="small"
                               :filter-method="handleFilterFonts"
-                              placeholder="Select"/>
+                              placeholder="Select">
+                            <el-option
+                                v-for="font in matchFonts"
+                                :key="font.family"
+                                :label="font.familyAlias"
+                                :value="font.family"/>
+                          </el-select>
                         </div>
                       </li>
                       <li class="option">
@@ -918,7 +923,7 @@
           </div>
         </el-tab-pane>
         <el-tab-pane label="字体">
-          <el-table size="small" height="400" highlight-current-row :data="fontConfigs" border
+          <el-table size="small" height="400" highlight-current-row :data="availableFonts" border
                     @cell-dblclick="handleActivateInput">
             <el-table-column fixed prop="family" label="字体家族" show-overflow-tooltip/>
             <el-table-column prop="familyAlias" label="字体别名" show-overflow-tooltip>
@@ -1013,7 +1018,7 @@ import {
   TextSettings,
   TextOptions,
   ImageOptions,
-  BorderOptions
+  BorderOptions, FontSettings
 } from '@/object/Configuration'
 
 import {Canvas} from '@/object/Canvas'
@@ -1026,7 +1031,7 @@ import DraggableElementFactory from "@/object/DraggableElementFactory";
 
 const filterType = ref(0)
 
-const fontOptions = ref(new Map())
+const matchFonts = ref([])
 
 const templateSettings = ref({})
 
@@ -1073,7 +1078,6 @@ const templateRef = ref()
 
 const textLabelRef = ref()
 
-const matchFonts = ref([])
 
 const textMarks = ref(null)
 
@@ -1148,8 +1152,8 @@ const textLabelDialogTitle = computed(() => {
 })
 
 
-const fontConfigs = computed(() => {
-  return Array.from(projectSettings.value.fontConfig.values())
+const availableFonts = computed(() => {
+  return Array.from(projectSettings.value.availableFonts.values())
 })
 
 const handleActivateInput = async (row, column, cell) => {
@@ -1167,7 +1171,7 @@ const handleStopActivateInput = (row, column) => {
 
 
 const handleFilterFonts = (search) => {
-  matchFonts.value = Array.from(fontOptions.value.values()).filter(font => font.family.toLowerCase().startsWith(search.toLowerCase()))
+  matchFonts.value = Array.from(projectSettings.value.availableFonts.values()).filter(font => font.familyAlias.toLowerCase().startsWith(search.toLowerCase()))
 }
 
 
@@ -1222,42 +1226,46 @@ const watchInputFonts = () => {
   window.electronAPI.watchInputFonts(async (event, {type, data}) => {
     if (data) {
       if (type === 0 || type === -1) {
-        for (let [fontFamily, font] of data) {
-          if (!fontOptions.value.has(fontFamily) && font.url) {
+        if (type === -1) {
+          removeExpiredFonts(projectSettings.value.availableFonts, data)
+        }
+        for (let [family, font] of data) {
+          if (!projectSettings.value.availableFonts.has(family)) {
             try {
-              FontLoader.loadFont(fontFamily, font.url)
-              if (type === 0) {
-                setTimeout(() => {
-                  Notification.success(`字体 ${fontFamily} 加载成功`, '提示')
-                }, 100)
+              const fontSettings = new FontSettings();
+              fontSettings.family = family
+              fontSettings.familyAlias = family
+              projectSettings.value.availableFonts.set(family, {...fontSettings, ...font});
+              if (font.url) {
+                // 加载字体
+                FontLoader.loadFont(family, font.url)
+                if (type === 0) {
+                  setTimeout(() => {
+                    Notification.success(`字体 ${family} 加载成功`, '提示')
+                  }, 100)
+                }
               }
             } catch (error) {
+              projectSettings.value.availableFonts.delete(family);
               Notification.error(error.message, '提示')
               return
             }
           }
-          if (!projectSettings.value.fontConfig.has(fontFamily)) {
-            projectSettings.value.fontConfig.set(fontFamily, {
-              family: fontFamily,
-              familyAlias: fontFamily,
-              offsetX: 0,
-              offsetY: 0,
-              editable: false,
-              ...font
-            })
-          }
-          fontOptions.value.set(fontFamily, {label: fontFamily, value: fontFamily, ...font})
         }
       } else if (type === 1) {
         const fontFamily = data.fontFamily;
-        fontOptions.value.delete(fontFamily)
-        if (projectSettings.value.fontConfig.has(fontFamily)) {
-          projectSettings.value.fontConfig.delete(fontFamily)
-        }
+        projectSettings.value.availableFonts.delete(fontFamily)
       }
-      matchFonts.value = Array.from(fontOptions.value.values())
     }
   })
+}
+
+const removeExpiredFonts = (cacheFonts, availableFonts) => {
+  cacheFonts.forEach((font, family) => {
+    if (!availableFonts.has(family)) {
+      cacheFonts.delete(family);
+    }
+  });
 }
 
 const watchInputImages = () => {
@@ -1581,7 +1589,7 @@ const watchCtrlA = () => {
 
 const stopProjectSettingsWatch = watch(projectSettings, (newVal, oldVal) => {
   const settings = _.cloneDeep(newVal);
-  settings.fontConfig = Array.from(settings.fontConfig.entries())
+  settings.availableFonts = Array.from(settings.availableFonts.entries())
   localStorage.setItem('projectSettings', JSON.stringify(settings))
 }, {
   //深度监视（监视属性变化）
@@ -1596,7 +1604,7 @@ const loadProjectSettings = () => {
   if (jsonStr) {
     const userConfig = JSON.parse(jsonStr);
     const newUserConfig = _.merge({}, projectSettings.value, userConfig);
-    newUserConfig.fontConfig = new Map(newUserConfig.fontConfig)
+    newUserConfig.availableFonts = new Map(newUserConfig.availableFonts)
     projectSettings.value = newUserConfig
     localStorage.setItem('projectSettings', JSON.stringify(newUserConfig))
   }

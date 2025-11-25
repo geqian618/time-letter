@@ -1,11 +1,11 @@
 const chokidar = require('chokidar')
 const path = require("path");
-const {registerFonts, removeFonts} = require("./font-manager");
+const {registerFonts} = require("./font-manager");
 const {localPathToProtocolUrl} = require("../utils/path-helper");
 let watcher;
 
 
-const imageFileWatcher = async (window, folderPath) => {
+const fileWatcher = async (window, folderPath) => {
     try {
         // 关闭现有监控
         if (watcher) {
@@ -30,11 +30,6 @@ const imageFileWatcher = async (window, folderPath) => {
             const font = {family, path: filePath, url: localPathToProtocolUrl(filePath)};
             registerFonts(font)
             window.webContents.send('watch-input-font', {type: 0, data: new Map([[font.family, font]])})
-        }).on('unlink', filePath => {
-            const fileParse = path.parse(filePath);
-            const family = fileParse.name;
-            removeFonts(family)
-            window.webContents.send('watch-input-font', {type: 1, data: {family}})
         }).on('error', error => {
             console.error('监控错误:', error);
         });
@@ -51,4 +46,4 @@ const closeWatcher = () => {
     }
 }
 
-module.exports = {fileWatcher: imageFileWatcher, closeWatcher}
+module.exports = {fileWatcher, closeWatcher}

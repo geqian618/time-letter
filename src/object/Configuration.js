@@ -124,16 +124,15 @@ export class BorderOptions {
     }
 }
 
-
-// 主设置类
-export class Configuration {
+export class FontSettings {
     constructor() {
-        this.outputDirectory = '';
-        this.files = [];
-        this.metadata = new Metadata();
-        this.image = new ImageSettings();
-        this.text = new TextSettings();
-        this.border = new BorderSettings();
+        this.family = '';
+        this.familyAlias = '';
+        this.url = '';
+        this.path = '';
+        this.offsetX = 0;
+        this.offsetY = 0;
+        this.editable = false;
     }
 }
 
@@ -149,3 +148,19 @@ export class TextLabel {
             '}';
     }
 }
+
+
+// 主设置类
+export class Configuration {
+    constructor() {
+        this.outputDirectory = '';
+        this.files = [];
+        this.metadata = new Metadata();
+        this.image = new ImageSettings();
+        this.text = new TextSettings();
+        this.border = new BorderSettings();
+    }
+}
+
+
+

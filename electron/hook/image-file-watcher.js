@@ -1,11 +1,10 @@
 const chokidar = require('chokidar')
-
 const path = require("path");
 const {localPathToProtocolUrl} = require("../utils/path-helper");
 
 let watcher;
 
-const imageFileWatcher = async (window, folderPath) => {
+const fileWatcher = async (window, folderPath) => {
     try {
         // 关闭现有监控
         if (watcher) {
@@ -52,4 +51,4 @@ const closeWatcher = () => {
     }
 }
 
-module.exports = {fileWatcher: imageFileWatcher, closeWatcher}
+module.exports = {fileWatcher, closeWatcher}
