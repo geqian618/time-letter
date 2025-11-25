@@ -135,10 +135,5 @@ export class Canvas {
     }
 }
 
-// 工具函数：创建预览设置实例
-export function createPreviewSettings(path = '') {
-    return new Canvas(path);
-}
-
 // 默认导出
 export default Canvas;
