@@ -1230,26 +1230,25 @@ const watchInputFonts = () => {
           removeExpiredFonts(projectSettings.value.availableFonts, data)
         }
         for (let [family, font] of data) {
-          if (!projectSettings.value.availableFonts.has(family)) {
+          if (font.url) {
             try {
-              const fontSettings = new FontSettings();
-              fontSettings.family = family
-              fontSettings.familyAlias = family
-              projectSettings.value.availableFonts.set(family, {...fontSettings, ...font});
-              if (font.url) {
-                // 加载字体
-                FontLoader.loadFont(family, font.url)
-                if (type === 0) {
-                  setTimeout(() => {
-                    Notification.success(`字体 ${family} 加载成功`, '提示')
-                  }, 100)
-                }
+              // 加载字体
+              FontLoader.loadFont(family, font.url)
+              if (type === 0) {
+                setTimeout(() => {
+                  Notification.success(`字体 ${family} 加载成功`, '提示')
+                }, 100)
               }
             } catch (error) {
-              projectSettings.value.availableFonts.delete(family);
               Notification.error(error.message, '提示')
-              return
+              continue
             }
+          }
+          if (!projectSettings.value.availableFonts.has(family)) {
+            const fontSettings = new FontSettings();
+            fontSettings.family = family
+            fontSettings.familyAlias = family
+            projectSettings.value.availableFonts.set(family, {...fontSettings, ...font});
           }
         }
       } else if (type === 1) {
