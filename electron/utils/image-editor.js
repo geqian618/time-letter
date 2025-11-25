@@ -480,7 +480,7 @@ async function addBorderAndText(settings) {
         if (elements && elements.length) {
             elements = elements.sort((before, next) => before.options.zIndex - next.options.zIndex);
             for (let element of elements) {
-                if (element.type === 0) {
+                if (element.tagName === 'img') {
                     try {
                         await drawImage(ctx, element, newWidth, newHeight);
                     } catch (err) {

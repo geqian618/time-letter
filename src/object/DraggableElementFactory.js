@@ -2,48 +2,126 @@ import {getDate, getDateTime} from '@/utils/datetime'
 
 import {executeFunctionScript} from '@/utils/script-helper'
 
+import {projectSettings} from "@/config/project-settings";
+
 class DraggableElementFactory {
 
-    constructor(data, metadataOptions, projectSettings) {
-        this.data = data
+    constructor(settings, metadataOptions) {
+        this.settings = settings
         this.metadataOptions = metadataOptions;
-        this.projectSettings = projectSettings;
-        this.dragElement = document.createElement(data.tagName);
-        this.#setDefaultStyle()
+        this.dragElement = document.createElement(settings.tagName);
+        this.#setComponentStyle()
     }
 
-
-    // 设置默认样式
-    #setDefaultStyle() {
-        this.#setBasicStyle();
-        this.#setCommonStyle();
-        this.#setContent();
-    }
-
-    // 设置基础样式
-    #setBasicStyle() {
-        if (this.data.tagName === 'img') {
-            this.dragElement.style.width = this.data.width;
-            this.dragElement.style.height = this.data.Height;
-            return;
+    #setComponentStyle() {
+        if (this.dragElement instanceof HTMLImageElement) {
+            this.#setImageStyle()
+        } else {
+            this.#setTextStyle()
+            this.#setContent()
         }
-        this.dragElement.style.width = 'fit-content';
-        this.dragElement.style.height = 'fit-content';
-        this.dragElement.style.fontSize = '14px';
-        this.dragElement.style.lineHeight = '1';
-        this.dragElement.style.whiteSpace = 'nowrap';
-        this.dragElement.style.fontStyle = 'normal';
-        this.dragElement.style.fontWeight = '400';
+        this.#setCommonStyle()
+    }
+
+    #setImageStyle() {
+        const {
+            url = '',
+            path = '',
+            width = 0,
+            height = 0,
+            options: {
+                angle = 0,
+                alpha = 10,
+                boxShadow: {
+                    offsetX = 0,
+                    offsetY = 0,
+                    blur = 0,
+                    shadowColor = '#000000'
+                } = {}
+            } = {}
+        } = this.settings || {};
+
+        this.dragElement.style.outline = 'none';
+        this.dragElement.style.cursor = 'move';
+        this.dragElement.style.userSelect = 'none';
+        this.dragElement.src = url
+        // 关键：必须设为绝对定位
+        this.dragElement.style.position = 'absolute';
+        this.dragElement.style.width = width + 'px';
+        this.dragElement.style.height = height + 'px'
+        this.dragElement.style.opacity = alpha / 10
+
+        this.dragElement.style.transformOrigin = 'center center'
+        this.dragElement.style.transform = `rotate(${angle}deg)`
+
+        this.dragElement.style.boxShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
+
+        this.dragElement.setAttribute('path', path)
+    }
+
+
+    #setTextStyle() {
+        const {
+            type,
+            expression,
+            options: {
+                fontSize = 16,
+                fontColor = '#000000',
+                fontFamily = 'Arial, sans-serif',
+                fontStyle = 'normal',
+                fontWeight = 'normal',
+                angle = 0,
+                textDirection = 0,
+                textShadow: {
+                    offsetX = 0,
+                    offsetY = 0,
+                    blur = 0,
+                    shadowColor = '#000000'
+                } = {}
+            } = {}
+        } = this.settings || {};
+
+        this.dragElement.style.width = 'fit-content'
+        this.dragElement.style.height = 'fit-content'
+        this.dragElement.style.lineHeight = '1'
+        this.dragElement.style.whiteSpace = 'nowrap'
+        this.dragElement.style.fontSize = fontSize + 'px'
+        this.dragElement.style.color = fontColor
+        this.dragElement.style.fontFamily = fontFamily
+        this.dragElement.style.fontStyle = fontStyle
+        this.dragElement.style.fontWeight = fontWeight
+
+        this.dragElement.style.transformOrigin = 'center center'
+        this.dragElement.style.transform = `rotate(${angle}deg)`
+
+        if (textDirection === 0) {
+            this.dragElement.style.writingMode = 'horizontal-tb'
+        } else if (textDirection === 1) {
+            this.dragElement.style.writingMode = 'vertical-lr'
+            this.dragElement.style.textOrientation = 'upright'
+        }
+
+        this.dragElement.style.textShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
+
+        this.dragElement.setAttribute('type', type)
+        this.dragElement.setAttribute('expression', expression)
+    }
+
+
+    // 设置通用样式
+    #setCommonStyle() {
+        this.dragElement.style.outline = 'none';
+        this.dragElement.style.cursor = 'move';
+        this.dragElement.style.userSelect = 'none';
+        this.dragElement.setAttribute('tabindex', '0')
+        this.dragElement.setAttribute('copy', '');
+        // 关键：必须设为绝对定位
+        this.dragElement.style.position = 'absolute';
     }
 
     // 设置内容
     #setContent() {
-        if (this.data.tagName === 'img') {
-            this.dragElement.src = this.data.src
-            return
-        }
-        const type = this.data.dataType;
-        const text = this.data.text;
+        const {type, content, expression} = this.settings
         switch (type) {
             case 'date':
                 this.dragElement.innerHTML = getDate();
@@ -52,40 +130,31 @@ class DraggableElementFactory {
                 this.dragElement.innerHTML = getDateTime();
                 break;
             case 'script':
-                this.dragElement.innerHTML = executeFunctionScript(text);
+                this.dragElement.innerHTML = executeFunctionScript(expression);
                 break;
             case 'text':
-                this.dragElement.innerHTML = text;
+                this.dragElement.innerHTML = content;
                 break;
             case 'metadata':
-                this.#setMetadataContent(text);
+                this.#setMetadataContent(expression);
                 break;
         }
     }
 
     // 设置元数据内容
     #setMetadataContent(attribute) {
-        if (!this.metadataOptions || !this.projectSettings) {
+        if (!this.metadataOptions || !projectSettings.value) {
             console.warn('Metadata dependencies not set');
             return;
         }
         let content = this.metadataOptions[attribute];
-        const format = this.projectSettings.metadata.formats[attribute];
+        const format = projectSettings.value.metadata.formats[attribute];
         if (format) {
             content = format.replace('${' + attribute + '}', content);
         }
         this.dragElement.innerHTML = content;
     }
 
-    // 设置通用样式
-    #setCommonStyle() {
-        this.dragElement.style.outline = 'none';
-        this.dragElement.style.cursor = 'move';
-        this.dragElement.style.userSelect = 'none';
-        this.dragElement.setAttribute('tabindex', '0');
-        this.dragElement.setAttribute('copy', '');
-        this.dragElement.setAttribute('path', this.data.path);
-    }
 
     getElement() {
         return new Promise((resolve, reject) => {

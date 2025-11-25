@@ -12,13 +12,13 @@
                   </template>
                   <div class="templates" v-drag-sort="handleSortingChanged">
                     <el-menu-item
-                        :data-id="template.id"
+                        :data-id="template.templateId"
                         @contextmenu="openTemplateContextMenu(template)"
                         class="template" v-for="template in templates"
-                        :key="template.id"
-                        :index="template.id"
+                        :key="template.templateId"
+                        :index="template.templateId"
                         @click="openEnableTemplateDialog(template)">
-                      {{ template.name }}
+                      {{ template.templateName }}
                     </el-menu-item>
                   </div>
                 </el-sub-menu>
@@ -60,6 +60,7 @@
                              :id="textLabel.id"
                              draggable="true"
                              :text="textLabel.content"
+                             :expression="textLabel.script"
                              :type="textLabel.type ==='text'?'text':'script'">
                           <img draggable="false" src="../assets/icon/custom.svg">
                         </div>
@@ -92,7 +93,8 @@
                     <ul class="options metadata">
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" text="cameraBrand">相机品牌</div>
+                          <div class="text-mark" draggable="true" type="metadata" expression="cameraBrand">相机品牌
+                          </div>
                         </div>
                         <div class="value">
                           <el-input v-model="metadataOptions.cameraBrand" size="small"/>
@@ -100,7 +102,8 @@
                       </li>
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" text="cameraModel">相机型号</div>
+                          <div class="text-mark" draggable="true" type="metadata" expression="cameraModel">相机型号
+                          </div>
                         </div>
                         <div class="value">
                           <el-input v-model="metadataOptions.cameraModel" size="small"/>
@@ -108,7 +111,7 @@
                       </li>
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" text="lensModel">镜头型号</div>
+                          <div class="text-mark" draggable="true" type="metadata" expression="lensModel">镜头型号</div>
                         </div>
                         <div class="value">
                           <el-input v-model="metadataOptions.lensModel" size="small"/>
@@ -116,7 +119,7 @@
                       </li>
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" text="focalLength">焦段</div>
+                          <div class="text-mark" draggable="true" type="metadata" expression="focalLength">焦段</div>
                         </div>
                         <div class="value">
                           <el-input v-model="metadataOptions.focalLength" size="small"/>
@@ -124,7 +127,7 @@
                       </li>
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" text="iso">IOS</div>
+                          <div class="text-mark" draggable="true" type="metadata" expression="iso">IOS</div>
                         </div>
                         <div class="value">
                           <el-input v-model="metadataOptions.iso" size="small"/>
@@ -132,7 +135,7 @@
                       </li>
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" text="shutter">快门</div>
+                          <div class="text-mark" draggable="true" type="metadata" expression="shutter">快门</div>
                         </div>
                         <div class="value">
                           <el-input v-model="metadataOptions.shutter" size="small"/>
@@ -140,7 +143,7 @@
                       </li>
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" text="aperture">光圈</div>
+                          <div class="text-mark" draggable="true" type="metadata" expression="aperture">光圈</div>
                         </div>
                         <div class="value">
                           <el-input v-model="metadataOptions.aperture" size="small"/>
@@ -148,7 +151,8 @@
                       </li>
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" text="shootingTime">拍摄日期</div>
+                          <div class="text-mark" draggable="true" type="metadata" expression="shootingTime">拍摄日期
+                          </div>
                         </div>
                         <div class="value">
                           <el-input v-model="metadataOptions.shootingTime" size="small"/>
@@ -632,7 +636,7 @@
       <el-form :model="textLabel" class="text-label-form" ref="textLabelForm" :rules="textLabelRules" label-width="auto"
                @submit.native.prevent>
         <el-form-item label="文本类型" prop="type">
-          <el-select @change="handleChangeTextType" v-model="textLabel.type" placeholder="文本类型">
+          <el-select v-model="textLabel.type" placeholder="文本类型">
             <el-option
                 v-for="(item,index) in [{label:'普通文本', value:'text'}, {label:'JavaScript脚本', value:'script'}]"
                 :key="index"
@@ -643,8 +647,11 @@
         <el-form-item label="提示" prop="tips">
           <el-input v-model="textLabel.tips" ref="textLabelRef" v-focus="customTextLabelDialogVisible"/>
         </el-form-item>
-        <el-form-item label="文本" prop="content">
+        <el-form-item label="文本" prop="content" v-if="textLabel.type === 'text'">
           <el-input v-model="textLabel.content" :rows="4" type="textarea"/>
+        </el-form-item>
+        <el-form-item label="脚本" prop="script" v-if="textLabel.type === 'script'">
+          <el-input v-model="textLabel.script" :rows="4" type="textarea"/>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -660,8 +667,8 @@
     <el-dialog v-model="saveTemplateDialogVisible" title="保存预设模版" align-center width="300" draggable>
       <el-form :model="newTemplate" class="demo-form-inline" :rules="saveTemplateRules" ref="saveTemplateForm"
                @submit.native.prevent>
-        <el-form-item label="模板名称" prop="desc">
-          <el-input v-model="newTemplate.desc"
+        <el-form-item label="模板名称" prop="templateName">
+          <el-input v-model="newTemplate.templateName"
                     ref="templateRef"
                     v-focus="saveTemplateDialogVisible"
                     placeholder="请输入模版名称"
@@ -684,7 +691,7 @@
       <el-form :model="oldTemplate" class="demo-form-inline" :rules="renameTemplateRules" ref="renameTemplateForm"
                @submit.native.prevent>
         <el-form-item label="预设名称" prop="rename">
-          <el-input v-focus="renameDialogVisible" v-model="oldTemplate.rename" clearable
+          <el-input v-focus="renameDialogVisible" v-model="oldTemplate.templateName" clearable
                     @keyup.enter.native="renameTemplate"/>
         </el-form-item>
       </el-form>
@@ -703,7 +710,11 @@
       <el-table size="small" :data="textLabels" border>
         <el-table-column prop="type" label="标签类型" show-overflow-tooltip/>
         <el-table-column prop="tips" label="提示信息" show-overflow-tooltip/>
-        <el-table-column prop="content" label="文本内容" min-width="150" show-overflow-tooltip/>
+        <el-table-column label="文本内容" min-width="150" show-overflow-tooltip>
+          <template #default="{row}">
+            {{ row.type === 'text' ? row.content : row.script }}
+          </template>
+        </el-table-column>
         <el-table-column fixed="right" label="操作" min-width="100">
           <template #default="scope">
             <el-button link type="primary" size="small" @click="openEditorTextLabel(scope.row)">
@@ -1036,12 +1047,12 @@ const selectedImages = ref(new Map())
 
 
 const newTemplate = ref({
-  desc: '',
+  templateName: '',
 })
 
 const oldTemplate = ref({
   templateId: 0,
-  rename: ''
+  templateName: ''
 })
 
 const templates = ref([])
@@ -1072,7 +1083,6 @@ const menuRef = ref(null)
 const templateRef = ref()
 
 const textLabelRef = ref()
-
 
 const matchFonts = ref([])
 
@@ -1106,7 +1116,6 @@ const synchronousMode = ref(0);
 
 const textLabel = ref(new TextLabel())
 
-
 // 维护已展开子菜单索引的数组
 const openedMenus = ref([])
 
@@ -1115,7 +1124,7 @@ const textLabels = ref([])
 const renameTemplateForm = ref()
 
 const saveTemplateRules = {
-  desc: [
+  templateName: [
     {required: true, message: '模板名称不能为空', trigger: 'blur'},
   ]
 }
@@ -1128,12 +1137,15 @@ const textLabelRules = {
     {required: true, message: '提示信息不能为空', trigger: 'blur'},
   ],
   content: [
-    {required: true, message: '文本标签内容不能为空', trigger: 'blur'},
+    {required: true, message: '文本内容不能为空', trigger: 'blur'},
+  ],
+  script: [
+    {required: true, message: '脚本不能为空', trigger: 'blur'},
   ]
 }
 
 const renameTemplateRules = {
-  rename: [
+  templateName: [
     {required: true, message: '模板名称不能为空', trigger: 'blur'},
   ]
 }
@@ -1296,10 +1308,10 @@ const openContextMenu = () => {
   }
 }
 
-const openTemplateContextMenu = ({id, name}) => {
+const openTemplateContextMenu = ({templateId, templateName}) => {
   if (templates.value.length) {
-    oldTemplate.value.templateId = id
-    oldTemplate.value.rename = name
+    oldTemplate.value.templateId = templateId
+    oldTemplate.value.templateName = templateName
     window.electronAPI.openTemplateContextMenu()
   }
 }
@@ -1364,20 +1376,16 @@ const watchEditorLabel = () => {
         imageLabels.value.delete(data.filePath)
       }
     } else if (type === 1) {
-      openTextLabelDialog()
+      textLabel.value = new TextLabel()
+      handleTextLabelType.value = 0
+      customTextLabelDialogVisible.value = true
+      clearFormValidate(textLabelForm)
     } else if (type === 2) {
       editorImageLabelDialogVisible.value = true
     } else if (type === 3) {
       editorTextLabelDialogVisible.value = true
     }
   })
-}
-
-
-const openTextLabelDialog = () => {
-  handleTextLabelType.value = 0
-  customTextLabelDialogVisible.value = true
-  clearFormValidate(textLabelForm)
 }
 
 
@@ -1412,6 +1420,7 @@ const saveTextLabel = async () => {
   if (!textLabelForm) return
   await textLabelForm.value.validate(async (valid, fields) => {
     if (valid) {
+      textLabel.value.type === 'script' ? textLabel.value.content = '' : textLabel.value.script = ''
       if (!textLabel.value.id) {
         textLabel.value.id = Date.now() + ''
         textLabels.value.push(_.cloneDeep(textLabel.value))
@@ -1822,7 +1831,7 @@ const renameTemplate = () => {
       if (templates.value && templates.value.length) {
         for (let i = 0; i < templates.value.length; i++) {
           if (templates.value[i].id === oldTemplate.value.templateId) {
-            templates.value[i].name = oldTemplate.value.rename
+            templates.value[i].templateName = oldTemplate.value.templateName
             window.localStorage.setItem('templates', JSON.stringify(templates.value))
             renameDialogVisible.value = false
             return
@@ -1837,7 +1846,7 @@ const renameTemplate = () => {
 const deleteTemplate = () => {
   if (templates.value && templates.value.length) {
     for (let i = 0; i < templates.value.length; i++) {
-      if (templates.value[i].id === oldTemplate.value.templateId) {
+      if (templates.value[i].templateId === oldTemplate.value.templateId) {
         templates.value.splice(i, 1)
         window.localStorage.setItem('templates', JSON.stringify(templates.value))
         return
@@ -1892,8 +1901,8 @@ const saveTemplates = async () => {
       await nextTick()
 
       newTemplates.push({
-        id: Date.now(),
-        name: newTemplate.value.desc,
+        templateId: Date.now(),
+        templateName: newTemplate.value.templateName,
         settings: {
           border: border,
           images: Array.from(images.values()),
@@ -1902,7 +1911,7 @@ const saveTemplates = async () => {
       })
       templates.value = newTemplates
       window.localStorage.setItem('templates', JSON.stringify(templates.value))
-      newTemplate.value.desc = ''
+      newTemplate.value.templateName = ''
       saveTemplateDialogVisible.value = false
     }
   })
@@ -1915,7 +1924,7 @@ const handleSortingChanged = (el, dragaElement, targetElement) => {
   for (let element of elements) {
     const dataId = element.getAttribute('data-id');
     for (let template of templates.value) {
-      if (String(template.id) === dataId) {
+      if (String(template.templateId) === dataId) {
         newTemplates.push(template)
         break
       }
@@ -2028,8 +2037,12 @@ function renderElementPosition(canvas, settings, element) {
 }
 
 const useTemplate = async (targetSettings, path) => {
+
   const {images, texts} = targetSettings
+
   const canvas = CanvasManager.getCanvas(path);
+  const canvasElement = canvas.getImageElement().parentNode
+
   canvas.settings.border = targetSettings.border
   canvas.isUpdate = true
 
@@ -2037,113 +2050,30 @@ const useTemplate = async (targetSettings, path) => {
     await renderBorders(path)
   }
 
-  const canvasElement = canvas.getImageElement().parentNode
-
-  for (let image of images) {
-    const {angle, alpha, boxShadow: {offsetX, offsetY, blur, shadowColor}} = image.options;
-    const img = document.createElement('img');
-    img.style.outline = 'none';
-    img.style.cursor = 'move';
-    img.style.userSelect = 'none';
-    img.setAttribute('tabindex', '0')
-    img.src = image.url
-    img.setAttribute('path', image.path)
-    img.className = 'image-mark'
-    // 关键：必须设为绝对定位
-    img.style.position = 'absolute';
-    img.style.width = image.width + 'px';
-    img.style.height = image.height + 'px'
-    img.style.opacity = alpha / 10
-
-    img.style.transformOrigin = 'center center'
-    img.style.transform = `rotate(${angle}deg)`
-
-    img.style.boxShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
+  for (let settings of images) {
+    const factory = new DraggableElementFactory(settings, canvas.metadata);
+    const element = await factory.getElement();
 
     if (path === selectedElement.value.path) {
-      renderElementPosition(canvas, image, img);
+      renderElementPosition(canvas, settings, element);
     }
 
-    canvasElement.appendChild(img)
-    canvas.settings.images.set(img, image)
-    makeDraggable(img, path)
+    canvasElement.appendChild(element)
+    canvas.settings.images.set(element, settings)
+    makeDraggable(element, path)
   }
 
-  for (let text of texts) {
-
-    const {
-      fontSize,
-      fontColor,
-      fontFamily,
-      fontStyle,
-      fontWeight,
-      angle,
-      textDirection,
-      textShadow: {offsetX, offsetY, blur, shadowColor}
-    } = text.options;
-
-    const div = document.createElement('div');
-    div.style.width = 'fit-content'
-    div.style.height = 'fit-content'
-    div.style.lineHeight = '1'
-    div.style.whiteSpace = 'nowrap'
-    div.style.fontSize = fontSize + 'px'
-    div.style.color = fontColor
-    div.style.fontFamily = fontFamily
-    div.style.fontStyle = fontStyle
-    div.style.fontWeight = fontWeight
-
-    div.style.transformOrigin = 'center center'
-    div.style.transform = `rotate(${angle}deg)`
-
-    if (textDirection === 0) {
-      div.style.writingMode = 'horizontal-tb'
-    } else if (textDirection === 1) {
-      div.style.writingMode = 'vertical-lr'
-      div.style.textOrientation = 'upright'
-    }
-
-    div.style.textShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
-    div.className = 'text-mark'
-    const type = text.type;
-    if (type === 'date') {
-      const content = getDate()
-      div.innerHTML = text.content = content
-    } else if (type === 'datetime') {
-      const content = getDateTime();
-      div.innerHTML = text.content = content
-    } else if (type === 'script') {
-      const content = executeFunctionScript(text.expression)
-      div.innerHTML = text.content = content
-    } else if (type === 'metadata') {
-      const attribute = text.attribute;
-      let content = canvas.metadata[attribute];
-      if (!content) {
-        continue
-      }
-      const format = projectSettings.value.metadata.formats[attribute]
-      if (format) {
-        content = format.replace('${' + attribute + '}', content)
-      }
-      div.innerHTML = text.content = content;
-    } else {
-      div.innerHTML = text.content;
-    }
-    div.style.outline = 'none';
-    div.style.cursor = 'move';
-    div.style.userSelect = 'none';
-    div.setAttribute('tabindex', '0')
-
-    // 关键：必须设为绝对定位
-    div.style.position = 'absolute';
+  for (let settings of texts) {
+    const factory = new DraggableElementFactory(settings, canvas.metadata);
+    const element = await factory.getElement();
 
     if (path === selectedElement.value.path) {
-      renderElementPosition(canvas, text, div)
+      renderElementPosition(canvas, settings, element)
     }
 
-    canvasElement.appendChild(div)
-    canvas.settings.texts.set(div, text)
-    makeDraggable(div, path)
+    canvasElement.appendChild(element)
+    canvas.settings.texts.set(element, settings)
+    makeDraggable(element, path)
   }
 
 }
@@ -2246,14 +2176,6 @@ const loadTemplates = () => {
 const loadTextLabels = () => {
   const jsonStr = window.localStorage.getItem('textLabels');
   textLabels.value = jsonStr ? JSON.parse(jsonStr) : []
-}
-
-const handleChangeTextType = () => {
-  textLabel.value.content = textLabel.value.type === 'text'
-      ? ''
-      : 'function extendScript() {\n' +
-      '  return Date.now();\n' +
-      '}'
 }
 
 const clearAllEventListener = () => {
@@ -2859,29 +2781,27 @@ const handleDragStart = function (event) {
 
   const component = event.target;
   const componentRect = component.getBoundingClientRect();
-  const dataType = component.getAttribute('type');
-  const text = component.getAttribute('text');
-  const src = component.getAttribute('src');
+
+  const type = component.getAttribute('type');
+  const content = component.getAttribute('text')
+  const expression = component.getAttribute('expression')
+
+  const url = component.getAttribute('src');
   const path = component.getAttribute('path');
   const tagName = component.tagName.toLowerCase();
 
   const offsetX = event.clientX - componentRect.left;
   const offsetY = event.clientY - componentRect.top;
-  const width = componentRect.width + 'px';
-  const height = componentRect.height + 'px';
+  const width = componentRect.width;
+  const height = componentRect.height;
+
+  const data = {
+    settings: {type, content, expression, url, path, tagName, width, height},
+    mouse: {offsetX, offsetY}
+  }
 
   // 关键：设置拖拽数据传输
-  event.dataTransfer.setData('text/plain', JSON.stringify({
-    offsetX,
-    offsetY,
-    text,
-    src,
-    path,
-    dataType,
-    tagName,
-    width,
-    height
-  }));
+  event.dataTransfer.setData('text/plain', JSON.stringify(data));
 
   // 对于图片元素，手动设置拖拽预览
   if (component instanceof HTMLImageElement) {
@@ -2922,9 +2842,9 @@ const monitorPutElements = (canvasElement, canvas) => {
 
     const data = JSON.parse(event.dataTransfer.getData('text/plain'))
 
-    const {offsetX, offsetY} = data
+    const {settings: elementSettings, mouse: {offsetX, offsetY}} = data
 
-    const factory = new DraggableElementFactory(data, metadataOptions.value, projectSettings.value);
+    const factory = new DraggableElementFactory(elementSettings, metadataOptions.value);
 
     const dragElement = await factory.getElement();
 
@@ -2995,12 +2915,11 @@ const monitorPutElements = (canvasElement, canvas) => {
     settings.offsetTopRatio = offsetTopRatio
     settings.offsetBottom = offsetBottom
     settings.offsetBottomRatio = offsetBottomRatio
-
+    settings.tagName = dragElement.tagName.toLowerCase()
     settings.width = elementWidth
     settings.height = elementHeight
 
     if (dragElement instanceof HTMLImageElement) {
-      settings.type = 0
       settings.path = dragElement.getAttribute('path')
       settings.url = dragElement.src
       settings.originalWidth = elementWidth
@@ -3008,24 +2927,11 @@ const monitorPutElements = (canvasElement, canvas) => {
       settings.options.imageHeightRatio = elementHeight / backgroundHeight
       settings.options.imageWidthRatio = elementWidth / backgroundWidth
     } else {
-      settings.type = 1
-      const type = dragElement.getAttribute('type');
-      if (type === 'metadata') {
-        settings.attribute = dragElement.getAttribute('text')
-      }
-      if (type === 'script') {
-        settings.expression = dragElement.getAttribute('text')
-      }
-      settings.content = dragElement.innerText
       settings.type = dragElement.getAttribute('type')
+      settings.expression = dragElement.getAttribute('expression')
+      settings.content = dragElement.innerText
       const fontSize = Number.parseInt(computedStyle.fontSize);
-      settings.options.fontSize = fontSize
-      settings.options.fontFamily = computedStyle.fontFamily.replace(/"/g, '')
-      settings.options.fontColor = computedStyle.color
-      settings.options.fontStyle = computedStyle.fontStyle
-      settings.options.fontWeight = Number.parseInt(computedStyle.fontWeight)
       settings.options.fontSizeRatio = fontSize / backgroundWidth
-      settings.options.textDirection = 0
     }
 
     const elementMapping = (dragElement instanceof HTMLDivElement) ? canvas.settings.texts : canvas.settings.images;

@@ -65,7 +65,6 @@ export class TextSettings {
     constructor() {
         this.type = 'text';
         this.expression = '';
-        this.attribute = '';
         this.content = '';
         this.offsetLeft = 0;
         this.offsetLeftRatio = 0;
@@ -144,6 +143,9 @@ export class TextLabel {
         this.id = '';
         this.tips = '';
         this.type = 'text';
-        this.content = ''
+        this.content = '';
+        this.script = 'function extendScript() {\n' +
+            '  return Date.now();\n' +
+            '}';
     }
 }
