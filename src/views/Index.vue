@@ -3177,11 +3177,11 @@ function makeDraggable(dragElement, path) {
     if (event.key === 'Delete' || event.key === 'Backspace' || event.keyCode === 46 || event.keyCode === 8) {
       // event.preventDefault();
       if (dragElement.getAttribute('selected') === 'true') {
-        if (!dragElement.src && !dragElement.querySelectorAll('input').length) {
+        if ((!dragElement instanceof HTMLImageElement) && !dragElement.querySelectorAll('input').length) {
           CanvasManager.deleteElement(selectedElement.value.path, dragElement)
           dragElement.remove()
         }
-        if (dragElement.src) {
+        if (dragElement instanceof HTMLImageElement) {
           CanvasManager.deleteElement(selectedElement.value.path, dragElement)
           dragElement.remove()
         }
@@ -3199,7 +3199,8 @@ function makeDraggable(dragElement, path) {
         dragElement.style.outline = '1px dashed #f00'
         dragElement.setAttribute('selected', 'true')
         if (dragElement instanceof HTMLImageElement) {
-          textOptions.value = CanvasManager.getSettings(selectedElement.value.path, dragElement).options
+          const settings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
+          imageOptions.value = settings.options
           if (projectSettings.value.others.optionAnchorPoint) {
             openSubMenu('4')
             nextTick(() => {
@@ -3207,7 +3208,8 @@ function makeDraggable(dragElement, path) {
             })
           }
         } else {
-          textOptions.value = CanvasManager.getSettings(selectedElement.value.path, dragElement).options
+          const settings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
+          textOptions.value = settings.options
           if (projectSettings.value.others.optionAnchorPoint) {
             openSubMenu('3')
             nextTick(() => {
@@ -3227,7 +3229,8 @@ function makeDraggable(dragElement, path) {
     }
   })
 
-  if (!dragElement.src) {
+  if (dragElement instanceof HTMLDivElement) {
+
     dragElement.addEventListener('dblclick', (event) => {
       // 双击时清除单击的定时器
       clearTimeout(clickTimeout);
