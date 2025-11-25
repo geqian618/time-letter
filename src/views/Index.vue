@@ -91,49 +91,65 @@
                     </template>
                     <ul class="options metadata">
                       <li class="option">
-                        <div class="label text-mark" draggable="true" type="metadata" text="cameraBrand">相机品牌</div>
+                        <div class="label">
+                          <div class="text-mark" draggable="true" type="metadata" text="cameraBrand">相机品牌</div>
+                        </div>
                         <div class="value">
                           <el-input v-model="metadataOptions.cameraBrand" size="small"/>
                         </div>
                       </li>
                       <li class="option">
-                        <div class="label text-mark" draggable="true" type="metadata" text="cameraModel">相机型号</div>
+                        <div class="label">
+                          <div class="text-mark" draggable="true" type="metadata" text="cameraModel">相机型号</div>
+                        </div>
                         <div class="value">
                           <el-input v-model="metadataOptions.cameraModel" size="small"/>
                         </div>
                       </li>
                       <li class="option">
-                        <div class="label text-mark" draggable="true" type="metadata" text="lensModel">镜头型号</div>
+                        <div class="label">
+                          <div class="text-mark" draggable="true" type="metadata" text="lensModel">镜头型号</div>
+                        </div>
                         <div class="value">
                           <el-input v-model="metadataOptions.lensModel" size="small"/>
                         </div>
                       </li>
                       <li class="option">
-                        <div class="label text-mark" draggable="true" type="metadata" text="focalLength">焦段</div>
+                        <div class="label">
+                          <div class="text-mark" draggable="true" type="metadata" text="focalLength">焦段</div>
+                        </div>
                         <div class="value">
                           <el-input v-model="metadataOptions.focalLength" size="small"/>
                         </div>
                       </li>
                       <li class="option">
-                        <div class="label text-mark" draggable="true" type="metadata" text="iso">IOS</div>
+                        <div class="label">
+                          <div class="text-mark" draggable="true" type="metadata" text="iso">IOS</div>
+                        </div>
                         <div class="value">
                           <el-input v-model="metadataOptions.iso" size="small"/>
                         </div>
                       </li>
                       <li class="option">
-                        <div class="label text-mark" draggable="true" type="metadata" text="shutter">快门</div>
+                        <div class="label">
+                          <div class="text-mark" draggable="true" type="metadata" text="shutter">快门</div>
+                        </div>
                         <div class="value">
                           <el-input v-model="metadataOptions.shutter" size="small"/>
                         </div>
                       </li>
                       <li class="option">
-                        <div class="label text-mark" draggable="true" type="metadata" text="aperture">光圈</div>
+                        <div class="label">
+                          <div class="text-mark" draggable="true" type="metadata" text="aperture">光圈</div>
+                        </div>
                         <div class="value">
                           <el-input v-model="metadataOptions.aperture" size="small"/>
                         </div>
                       </li>
                       <li class="option">
-                        <div class="label text-mark" draggable="true" type="metadata" text="shootingTime">拍摄日期</div>
+                        <div class="label">
+                          <div class="text-mark" draggable="true" type="metadata" text="shootingTime">拍摄日期</div>
+                        </div>
                         <div class="value">
                           <el-input v-model="metadataOptions.shootingTime" size="small"/>
                         </div>
@@ -968,10 +984,6 @@
 
 import {nextTick, onBeforeUnmount, onMounted, ref, watch, computed} from "vue";
 
-import {getDate, getDateTime} from '@/utils/datetime'
-
-import {executeFunctionScript} from '@/utils/script-helper'
-
 import FontLoader from '@/utils/FontLoader'
 
 import _ from 'lodash';
@@ -998,6 +1010,8 @@ import {Canvas} from '@/object/Canvas'
 import CanvasManager from "@/object/CanvasManager";
 
 import {predefineColors} from '@/config/color-configuration'
+
+import DraggableElementFactory from "@/object/DraggableElementFactory";
 
 const filterType = ref(0)
 
@@ -2841,76 +2855,45 @@ function scrollToCenterHorizontal(container, element) {
 }
 
 
-const setDefaultStyle = (dragElement) => {
-  if (dragElement.src) {
-    dragElement.style.width = '50px'
-    dragElement.style.height = 'auto'; // 保持宽高比
-  } else {
-    dragElement.style.width = 'fit-content'
-    dragElement.style.height = 'fit-content'
-    dragElement.style.fontSize = '14px'
-    dragElement.style.lineHeight = '1'
-    dragElement.style.whiteSpace = 'nowrap'
-    dragElement.style.fontStyle = 'normal'
-    dragElement.style.fontWeight = '400'
-    const type = dragElement.getAttribute('type');
-    if (type === 'date') {
-      dragElement.innerHTML = getDate();
-    } else if (type === 'datetime') {
-      dragElement.innerHTML = getDateTime();
-    } else if (type === 'script') {
-      const text = dragElement.getAttribute('text');
-      dragElement.innerHTML = executeFunctionScript(text)
-    } else if (type === 'text') {
-      dragElement.innerHTML = dragElement.getAttribute('text');
-    } else if (type === 'metadata') {
-      const attribute = dragElement.getAttribute('text');
-      let value = metadataOptions.value[attribute];
-      const format = projectSettings.value.metadata.formats[attribute];
-      if (format) {
-        value = format.replace('${' + attribute + '}', value)
-      }
-      dragElement.innerHTML = value;
-    }
-  }
-  dragElement.style.outline = 'none';
-  dragElement.style.cursor = 'move';
-  dragElement.style.userSelect = 'none';
-  dragElement.setAttribute('tabindex', '0')
-  dragElement.setAttribute('copy', '')
-}
-
-
 const handleDragStart = function (event) {
+
   const component = event.target;
   const componentRect = component.getBoundingClientRect();
-  const dragElement = component.cloneNode(true);
-  // 元素与鼠标箭头之间的垂直方向偏移量差
+  const dataType = component.getAttribute('type');
+  const text = component.getAttribute('text');
+  const src = component.getAttribute('src');
+  const path = component.getAttribute('path');
+  const tagName = component.tagName.toLowerCase();
+
   const offsetX = event.clientX - componentRect.left;
   const offsetY = event.clientY - componentRect.top;
+  const width = componentRect.width + 'px';
+  const height = componentRect.height + 'px';
 
-  dragParameters.offsetX = offsetX;
-  dragParameters.offsetY = offsetY;
-  dragParameters.dragElement = dragElement
+  // 关键：设置拖拽数据传输
+  event.dataTransfer.setData('text/plain', JSON.stringify({
+    offsetX,
+    offsetY,
+    text,
+    src,
+    path,
+    dataType,
+    tagName,
+    width,
+    height
+  }));
 
-  setDefaultStyle(dragElement);
-
-  if (dragElement.src) {
-    const dragPreview = dragElement.cloneNode(true);
-    dragPreview.style.position = 'fixed';
-    document.body.appendChild(dragPreview);
-    // 关键：设置自定义拖拽图像
-    event.dataTransfer.setDragImage(dragPreview, offsetX, offsetY);
-    // 拖拽结束后清理
-    const cleanUp = () => {
-      document.body.removeChild(dragPreview);
-      component.removeEventListener('dragend', cleanUp);
-    };
-    component.addEventListener('dragend', cleanUp);
-  } else {
-    // 关键：设置拖拽数据传输
-    event.dataTransfer.setData('text/plain', 'drag-element');
+  // 对于图片元素，手动设置拖拽预览
+  if (component instanceof HTMLImageElement) {
+    // 方法1：使用原图片作为拖拽预览
+    event.dataTransfer.setDragImage(component, offsetX, offsetY);
+    // 或者方法2：设置图片URL数据，让浏览器生成预览
+    //event.dataTransfer.setData('text/uri-list', src);
+    //event.dataTransfer.setData('text/html', `<img src="${src}" width="${width}" height="${height}">`);
   }
+
+  // 设置拖拽效果
+  event.dataTransfer.effectAllowed = 'move';
 }
 
 
@@ -2933,11 +2916,17 @@ const monitorPutElements = (canvasElement, canvas) => {
   );
 
   // 修复放置逻辑
-  canvasElement.addEventListener('drop', function (event) {
+  canvasElement.addEventListener('drop', async function (event) {
 
     event.preventDefault();
 
-    const {offsetX, offsetY, dragElement} = dragParameters
+    const data = JSON.parse(event.dataTransfer.getData('text/plain'))
+
+    const {offsetX, offsetY} = data
+
+    const factory = new DraggableElementFactory(data, metadataOptions.value, projectSettings.value);
+
+    const dragElement = await factory.getElement();
 
     if (!dragElement) return;
 
@@ -2949,122 +2938,101 @@ const monitorPutElements = (canvasElement, canvas) => {
 
     const canvasRect = canvasElement.getBoundingClientRect();
 
-    document.body.append(dragElement);
+    // 关键：必须设为绝对定位
+    dragElement.style.position = 'absolute'
+
+    // 关键：将元素添加到容器
+    canvasElement.appendChild(dragElement);
 
     const computedStyle = window.getComputedStyle(dragElement);
-
     let elementWidth = Number.parseFloat(computedStyle.width)
-
     let elementHeight = Number.parseFloat(computedStyle.height)
 
-    if (dragElement.src) {
-      dragElement.style.width = elementWidth + 'px'
-      dragElement.style.height = elementHeight + 'px'
-    }
+    const elementLeft = (mouseX - canvasRect.left - offsetX) / canvas.scale;
+    const elementTop = (mouseY - canvasRect.top - offsetY) / canvas.scale;
+    const elementRight = canvasElement.offsetWidth - elementLeft - elementWidth;
+    const elementBottom = canvasElement.offsetHeight - elementTop - elementHeight
 
-    dragElement.remove()
+    // 设置元素定位
+    dragElement.style.left = `${elementLeft}px`;
+    dragElement.style.right = `${elementRight}px`;
+    dragElement.style.top = `${elementTop}px`;
+    dragElement.style.bottom = `${elementBottom}px`;
 
-    if (mouseX >= canvasRect.left + offsetX && mouseX + (elementWidth - offsetX) <= canvasRect.right) {
-      if (mouseY >= canvasRect.top + offsetY && mouseY + (elementHeight - offsetY) <= canvasRect.bottom) {
+    const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
+    const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
+    const backgroundLeft = Number.parseFloat(backgroundElement.style.left);
+    const backgroundRight = Number.parseFloat(backgroundElement.style.right);
+    const backgroundTop = Number.parseFloat(backgroundElement.style.top);
+    const backgroundBottom = Number.parseFloat(backgroundElement.style.bottom);
 
-        // 关键：必须设为绝对定位
-        dragElement.style.position = 'absolute'
+    let references = []
 
-        const elementLeft = (mouseX - canvasRect.left - offsetX) / canvas.scale;
-        const elementTop = (mouseY - canvasRect.top - offsetY) / canvas.scale;
-        const elementRight = canvasElement.offsetWidth - elementLeft - elementWidth;
-        const elementBottom = canvasElement.offsetHeight - elementTop - elementHeight
+    let offsetLeft = elementLeft - backgroundLeft
+    let offsetLeftRatio = offsetLeft / backgroundWidth
 
-        // 设置元素定位
-        dragElement.style.left = `${elementLeft}px`;
-        dragElement.style.right = `${elementRight}px`;
-        dragElement.style.top = `${elementTop}px`;
-        dragElement.style.bottom = `${elementBottom}px`;
+    let offsetRight = elementRight - backgroundRight
+    let offsetRightRatio = offsetRight / backgroundWidth
 
-        // 关键：将元素添加到容器
-        canvasElement.appendChild(dragElement);
+    let offsetTop = elementTop - backgroundTop
+    let offsetTopRatio = offsetTop / backgroundHeight
 
-        const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
-        const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
-        const backgroundLeft = Number.parseFloat(backgroundElement.style.left);
-        const backgroundRight = Number.parseFloat(backgroundElement.style.right);
-        const backgroundTop = Number.parseFloat(backgroundElement.style.top);
-        const backgroundBottom = Number.parseFloat(backgroundElement.style.bottom);
+    let offsetBottom = elementBottom - backgroundBottom
+    let offsetBottomRatio = offsetBottom / backgroundHeight
 
-        let references = []
+    elementLeft > elementRight ? references.push('right') : references.push('left')
 
-        let offsetLeft = elementLeft - backgroundLeft
-        let offsetLeftRatio = offsetLeft / backgroundWidth
+    elementTop > elementBottom ? references.push('bottom') : references.push('top')
 
-        let offsetRight = elementRight - backgroundRight
-        let offsetRightRatio = offsetRight / backgroundWidth
+    const settings = (dragElement instanceof HTMLDivElement) ? new TextSettings() : new ImageSettings()
 
-        let offsetTop = elementTop - backgroundTop
-        let offsetTopRatio = offsetTop / backgroundHeight
+    settings.references = references
+    settings.offsetLeft = offsetLeft
+    settings.offsetLeftRatio = offsetLeftRatio
+    settings.offsetRight = offsetRight
+    settings.offsetRightRatio = offsetRightRatio
+    settings.offsetTop = offsetTop
+    settings.offsetTopRatio = offsetTopRatio
+    settings.offsetBottom = offsetBottom
+    settings.offsetBottomRatio = offsetBottomRatio
 
-        let offsetBottom = elementBottom - backgroundBottom
-        let offsetBottomRatio = offsetBottom / backgroundHeight
+    settings.width = elementWidth
+    settings.height = elementHeight
 
-        elementLeft > elementRight ? references.push('right') : references.push('left')
-
-        elementTop > elementBottom ? references.push('bottom') : references.push('top')
-
-        const settings = !dragElement.src ? new TextSettings() : new ImageSettings()
-
-        settings.references = references
-        settings.offsetLeft = offsetLeft
-        settings.offsetLeftRatio = offsetLeftRatio
-        settings.offsetRight = offsetRight
-        settings.offsetRightRatio = offsetRightRatio
-        settings.offsetTop = offsetTop
-        settings.offsetTopRatio = offsetTopRatio
-        settings.offsetBottom = offsetBottom
-        settings.offsetBottomRatio = offsetBottomRatio
-
-        settings.width = elementWidth
-        settings.height = elementHeight
-
-        if (!dragElement.src) {
-          const type = dragElement.getAttribute('type');
-          if (type === 'metadata') {
-            settings.attribute = dragElement.getAttribute('text')
-          }
-          if (type === 'script') {
-            settings.expression = dragElement.getAttribute('text')
-          }
-          settings.content = dragElement.innerText
-          settings.type = dragElement.getAttribute('type')
-          const dragElementStyle = window.getComputedStyle(dragElement);
-          const fontSize = Number.parseFloat(dragElementStyle.fontSize);
-          settings.options.fontSize = fontSize
-          settings.options.fontFamily = dragElementStyle.fontFamily.replace(/"/g, '')
-          settings.options.fontColor = dragElementStyle.color
-          settings.options.fontStyle = dragElementStyle.fontStyle
-          settings.options.fontWeight = Number.parseInt(dragElementStyle.fontWeight)
-          settings.options.fontSizeRatio = fontSize / backgroundWidth
-          settings.options.textDirection = 0
-        } else {
-          settings.path = dragElement.getAttribute('path')
-          settings.url = dragElement.src
-          settings.originalWidth = elementWidth
-          settings.originalHeight = elementHeight
-          settings.options.imageHeightRatio = elementHeight / backgroundHeight
-          settings.options.imageWidthRatio = elementWidth / backgroundWidth
-        }
-
-        const elementMapping = !dragElement.src ? canvas.settings.texts : canvas.settings.images;
-
-        elementMapping.set(dragElement, settings)
-
-        makeDraggable(dragElement, selectedElement.value.path)
+    if (dragElement instanceof HTMLImageElement) {
+      settings.type = 0
+      settings.path = dragElement.getAttribute('path')
+      settings.url = dragElement.src
+      settings.originalWidth = elementWidth
+      settings.originalHeight = elementHeight
+      settings.options.imageHeightRatio = elementHeight / backgroundHeight
+      settings.options.imageWidthRatio = elementWidth / backgroundWidth
+    } else {
+      settings.type = 1
+      const type = dragElement.getAttribute('type');
+      if (type === 'metadata') {
+        settings.attribute = dragElement.getAttribute('text')
       }
+      if (type === 'script') {
+        settings.expression = dragElement.getAttribute('text')
+      }
+      settings.content = dragElement.innerText
+      settings.type = dragElement.getAttribute('type')
+      const fontSize = Number.parseInt(computedStyle.fontSize);
+      settings.options.fontSize = fontSize
+      settings.options.fontFamily = computedStyle.fontFamily.replace(/"/g, '')
+      settings.options.fontColor = computedStyle.color
+      settings.options.fontStyle = computedStyle.fontStyle
+      settings.options.fontWeight = Number.parseInt(computedStyle.fontWeight)
+      settings.options.fontSizeRatio = fontSize / backgroundWidth
+      settings.options.textDirection = 0
     }
 
-    // 重置拖拽元素引用
-    dragParameters.dragElement = null;
-    dragParameters.originalElement = null;
-    dragParameters.offsetX = 0;
-    dragParameters.offsetY = 0;
+    const elementMapping = (dragElement instanceof HTMLDivElement) ? canvas.settings.texts : canvas.settings.images;
+
+    elementMapping.set(dragElement, settings)
+
+    makeDraggable(dragElement, selectedElement.value.path)
 
   });
 
@@ -3593,13 +3561,6 @@ function makeDraggable(dragElement, path) {
                   padding: 10px 0;
                   margin-top: 5px;
 
-                  .text-mark {
-                    width: fit-content;
-                    height: fit-content;
-                    cursor: move;
-                    user-select: none;
-                  }
-
                   .label {
                     display: flex;
                     align-items: center;
@@ -3607,6 +3568,13 @@ function makeDraggable(dragElement, path) {
                     width: 50px;
                     font-size: 12px;
                     color: var(--main-font-color);
+
+                    .text-mark {
+                      width: fit-content;
+                      height: fit-content;
+                      cursor: move;
+                      user-select: none;
+                    }
                   }
 
                   .value {
