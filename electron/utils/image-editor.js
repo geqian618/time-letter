@@ -31,7 +31,7 @@ async function findFilePaths(dirPath, extensions, deepSearch = false) {
     return results;
 }
 
-function drawText(ctx, text, newWidth, newHeight, fontConfig) {
+function drawText(ctx, text, newWidth, newHeight, availableFonts) {
     const fontSize = text.options.fontSizeRatio * newWidth;
     const fontFamily = text.options.fontFamily;
     const fontStyle = text.options.fontStyle;
@@ -53,7 +53,7 @@ function drawText(ctx, text, newWidth, newHeight, fontConfig) {
     const textWidth = metrics.width;
     const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
-    const {offsetX, offsetY} = fontConfig.get(fontFamily) || {offsetX: 0, offsetY: 0};
+    const {offsetX, offsetY} = availableFonts.get(fontFamily) || {offsetX: 0, offsetY: 0};
     let textX = text.offsetLeftRatio * newWidth + offsetX * fontSize
     let textY = text.offsetTopRatio * newHeight + offsetY * fontSize
 
@@ -324,7 +324,7 @@ async function addBorderAndText(settings) {
 
         let {
             // 原始图片路径
-            inputPath,
+            imagePath,
             // 输出目录
             outputDirectory,
             projectSettings: {
@@ -334,7 +334,7 @@ async function addBorderAndText(settings) {
                     outputSize: {longSide, shortSide, width, height, type},
                     isSynchronizeMetadata,
                 },
-                fontConfig
+                availableFonts
             },
             border: {
                 borderLeftRatio,
@@ -353,17 +353,17 @@ async function addBorderAndText(settings) {
         } = settings;
 
 
-        const originalExtname = path.extname(inputPath).slice(1);
+        const originalExtname = path.extname(imagePath).slice(1);
 
         const outputExtname = getExtname(originalExtname, extnameType)
 
-        const outputPath = path.join(outputDirectory, path.parse(inputPath).name + "." + outputExtname)
+        const outputPath = path.join(outputDirectory, path.parse(imagePath).name + "." + outputExtname)
 
         let imageBuffer;
 
         try {
             // 1. 读取图片为 Buffer
-            imageBuffer = await fs.readFile(inputPath);
+            imageBuffer = await fs.readFile(imagePath);
         } catch (err) {
             throw new Error('文件已不存在：' + path)
         }
@@ -488,7 +488,7 @@ async function addBorderAndText(settings) {
                         throw err
                     }
                 } else {
-                    drawText(ctx, element, newWidth, newHeight, fontConfig);
+                    drawText(ctx, element, newWidth, newHeight, availableFonts);
                 }
             }
         }
@@ -503,7 +503,7 @@ async function addBorderAndText(settings) {
         }
 
         if (['jpeg', 'jpg'].includes(originalExtname) && ['jpeg', 'jpg'].includes(outputExtname) && isSynchronizeMetadata) {
-            buffer = await copyExifDataToBuffer(inputPath, buffer)
+            buffer = await copyExifDataToBuffer(imagePath, buffer)
         }
 
         await fs.writeFile(outputPath, buffer);

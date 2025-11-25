@@ -29,11 +29,11 @@ const createThreadPool = async (threads) => {
 }
 
 
-const exportImages = (dataList, progressCallback) => {
+const exportImages = ({projectSettings, outputDirectory, settings}, progressCallback) => {
     // 重置中断标志为 0（未中断）
     Atomics.store(interrupt, 0, 0);
 
-    const total = dataList.length;
+    const total = settings.length;
     let completed = 0;
     let errors = 0;
     // 如果没有回调则使用默认的进度打印函数
@@ -41,22 +41,21 @@ const exportImages = (dataList, progressCallback) => {
         console.log(`进度: ${progress.completed}/${progress.total} 错误: ${progress.errors}`);
     });
 
+    for (const setting of settings) {
+        const {imagePath, settings: {border, texts, images}} = setting;
 
-    for (let data of dataList) {
-        const {outputDirectory, path, projectSettings, settings: {border, texts, images}} = data;
-        const options = {
-            inputPath: path,
+        const parameters = {
             projectSettings,
             outputDirectory,
+            imagePath,
             border,
             texts,
             images,
+            interrupt
         };
 
-        options.interrupt = interrupt
-
         // 执行任务并更新进度
-        threadPool.run(options)
+        threadPool.run(parameters)
             .then(() => {
                 completed++;
                 updateProgress();

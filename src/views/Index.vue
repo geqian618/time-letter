@@ -1484,9 +1484,7 @@ const watchContextMenu = () => {
           const {settings: {border, texts, images}} = CanvasManager.getCanvas(paths[i]);
 
           newSettings.push({
-            path: paths[i],
-            projectSettings: projectSettings.value,
-            outputDirectory: data.outputDirectory,
+            imagePath: paths[i],
             settings: {
               border,
               images: [...images.values()],
@@ -1506,7 +1504,11 @@ const watchContextMenu = () => {
 
         await nextTick()
 
-        window.electronAPI.requestSaveFiles(_.cloneDeep(newSettings))
+        window.electronAPI.requestSaveFiles(_.cloneDeep({
+          projectSettings: projectSettings.value,
+          outputDirectory: data.outputDirectory,
+          settings: newSettings
+        }))
 
         downloadProgressVisible.value = true
 

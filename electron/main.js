@@ -117,8 +117,8 @@ ipcMain.on('open-template-contextMenu', () => {
     templateContextMenu(window).popup()
 })
 
-ipcMain.on('request-save-files', (event, images) => {
-    imageExporter.exportImages(images, (progress) => {
+ipcMain.on('request-save-files', (event, data) => {
+    imageExporter.exportImages(data, (progress) => {
         // console.log(`[进度] ${progress.percentage}% | 完成: ${progress.completed}/${progress.total} | 错误: ${progress.errors}`);
         window.webContents.send('download-progress', {percentage: progress.percentage, hasError: progress.errors > 0})
     });
