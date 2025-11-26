@@ -3023,7 +3023,7 @@ function makeDraggable(dragElement, path) {
     if (event.key === 'Delete' || event.key === 'Backspace' || event.keyCode === 46 || event.keyCode === 8) {
       // event.preventDefault();
       if (dragElement.getAttribute('selected') === 'true') {
-        if ((!dragElement instanceof HTMLImageElement) && !dragElement.querySelectorAll('input').length) {
+        if ((dragElement instanceof HTMLDivElement) && !dragElement.querySelector('input')) {
           CanvasManager.deleteElement(selectedElement.value.path, dragElement)
           dragElement.remove()
         }
@@ -3124,7 +3124,8 @@ function makeDraggable(dragElement, path) {
           return
         }
         dragElement.setAttribute('selected', 'false')
-        textLabel.content = newValue
+        const settings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
+        settings.content = newValue
       });
     })
   }

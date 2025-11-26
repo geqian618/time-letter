@@ -65,9 +65,9 @@ class DraggableElementFactory {
             type,
             expression,
             options: {
-                fontSize = 16,
+                fontSize = 14,
                 fontColor = '#000000',
-                fontFamily = 'Arial, sans-serif',
+                fontFamily = 'Microsoft YaHei',
                 fontStyle = 'normal',
                 fontWeight = 'normal',
                 angle = 0,
