@@ -40,6 +40,7 @@ export class TextOptions {
 // 图片设置类
 export class ImageSettings {
     constructor() {
+        this.tagName = '';
         this.path = '';
         this.url = '';
         this.offsetLeft = 0;
@@ -63,6 +64,7 @@ export class ImageSettings {
 // 文本设置类
 export class TextSettings {
     constructor() {
+        this.tagName = '';
         this.type = 'text';
         this.expression = '';
         this.content = '';

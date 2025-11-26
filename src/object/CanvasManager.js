@@ -32,6 +32,12 @@ const getImages = (key) => {
     return canvases.value.get(key).settings.images;
 }
 
+const getDraggableElements = (key) => {
+    const images = this.getImages(key);
+    const texts = this.getTexts(key);
+    return new Map([...images, ...texts]);
+}
+
 const clearTexts = (key) => {
     return canvases.value.get(key).settings.texts.clear()
 }
@@ -83,6 +89,7 @@ export default {
     getAvailableCanvases,
     getTexts,
     getImages,
+    getDraggableElements,
     getSettings,
     deleteCanvas,
     deleteElement,

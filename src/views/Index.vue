@@ -965,11 +965,21 @@
             <span class="border-label">个性化</span>
             <div class="options">
               <div class="option">
-                <span class="label">选项锚点：</span>
+                <span>选项锚点：</span>
                 <el-switch
                     v-model="projectSettings.others.optionAnchorPoint"
                     class="ml-2"
                     style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+              </div>
+              <div class="option">
+                <span>移到步长：</span>
+                <div class="slider-demo-block">
+                  <el-slider v-model="projectSettings.others.movingStepSize"
+                             :min="1"
+                             :max="100"
+                             size="small"
+                             show-input/>
+                </div>
               </div>
             </div>
           </div>
@@ -1038,9 +1048,12 @@ const templateSettings = ref({})
 const availableCanvas = ref(new Map())
 
 const selectedElement = ref({
-  element: null,
-  path: ''
+  previewElement: null,
+  path: '',
+  draggableElement: null
 });
+
+const selected = ref(null)
 
 const selectedImages = ref(new Map())
 
@@ -1077,7 +1090,6 @@ const menuRef = ref(null)
 const templateRef = ref()
 
 const textLabelRef = ref()
-
 
 const textMarks = ref(null)
 
@@ -1119,6 +1131,8 @@ const saveTemplateForm = ref({});
 const textLabelForm = ref({});
 
 const renameTemplateForm = ref()
+
+let pendingAnimationFrame = null;
 
 const saveTemplateRules = {
   templateName: [
@@ -1192,13 +1206,13 @@ const setDefaultSelectedElement = async () => {
   const paths = Array.from(availableCanvas.value.keys());
   if (!paths.length || !selectedPath) return
   const selectedCanvas = CanvasManager.getCanvas(selectedPath);
-  let nextSelectCanvas, triggerElement
+  let nextSelectCanvas, previewElement
   if (paths.includes(selectedPath)) {
     nextSelectCanvas = availableCanvas.value.get(selectedElement.value.path);
-    triggerElement = nextSelectCanvas.getTriggerElement(previewList.value);
+    previewElement = nextSelectCanvas.getPreviewElement(previewList.value);
   } else {
     nextSelectCanvas = availableCanvas.value.get(paths[0]);
-    triggerElement = nextSelectCanvas.getTriggerElement(previewList.value);
+    previewElement = nextSelectCanvas.getPreviewElement(previewList.value);
     await nextTick()
     selectedCanvas.hide()
     await nextTick()
@@ -1206,11 +1220,11 @@ const setDefaultSelectedElement = async () => {
     await nextTick()
     await renderCanvas(nextSelectCanvas)
   }
-  triggerElement.classList.add('active')
-  triggerElement.setAttribute('selected', 'true')
+  previewElement.classList.add('active')
+  previewElement.setAttribute('selected', 'true')
   selectedElement.value.path = nextSelectCanvas.path
-  selectedElement.value.element = triggerElement
-  selectedImages.value.set(nextSelectCanvas.path, triggerElement)
+  selectedElement.value.previewElement = previewElement
+  selectedImages.value.set(nextSelectCanvas.path, previewElement)
 }
 
 
@@ -1447,7 +1461,7 @@ const watchContextMenu = () => {
           availableCanvas.value.delete(path)
           if (path === selectedElement.value.path) {
             selectedElement.value.path = ''
-            selectedElement.value.element = null
+            selectedElement.value.previewElement = null
           }
         }
         selectedImages.value.clear();
@@ -2190,7 +2204,7 @@ async function handlePreview(event, canvas) {
     }
 
     selectedElement.value.path = event.target.getAttribute('path')
-    selectedElement.value.element = event.target;
+    selectedElement.value.previewElement = event.target;
 
     // 添加当前选中元素到选中列表中
     selectedImages.value.set(canvas.path, event.target)
@@ -2357,7 +2371,7 @@ const handleCtrlClick = (event, canvas) => {
     selectedImages.value.delete(canvas.path)
     if (selectedElement.value.path === canvas.path) {
       selectedElement.value.path = '';
-      selectedElement.value.element = null
+      selectedElement.value.previewElement = null
       canvas.hide()
     }
   } else {
@@ -2615,7 +2629,7 @@ const handleWheel = (e) => {
 
 
 const handleBeforeOne = async () => {
-  const {path: currentPath, element: currentElement} = selectedElement.value;
+  const {path: currentPath, previewElement: currentElement} = selectedElement.value;
   if (!currentPath) return
   const currentCanvas = availableCanvas.value.get(currentPath);
   const beforeCanvas = MapHelper.getBeforeValue(availableCanvas.value, currentPath);
@@ -2641,23 +2655,23 @@ const handleBeforeOne = async () => {
       beforeElement.classList.add('active')
       beforeElement.setAttribute('selected', 'true')
       selectedElement.value.path = beforeCanvas.path
-      selectedElement.value.element = beforeElement
+      selectedElement.value.previewElement = beforeElement
       selectedImages.value.set(beforeCanvas.path, beforeElement)
       // 方式一，较为卡顿，过渡不流畅
-      // selectedElement.value.element.scrollIntoView({
+      // selectedElement.value.previewElement.scrollIntoView({
       //   behavior: 'smooth',
       //   block: 'center', // 垂直方向居中
       //   inline: 'center' // 水平方向居中
       // })
 
       // 方式二，过渡比较流畅
-      scrollToCenterHorizontal(previewList.value, selectedElement.value.element)
+      scrollToCenterHorizontal(previewList.value, selectedElement.value.previewElement)
     }
   }
 }
 
 const handleNextOne = async () => {
-  const {path: currentPath, element: currentElement} = selectedElement.value;
+  const {path: currentPath, previewElement: currentElement} = selectedElement.value;
   if (!currentPath) return
   const currentCanvas = availableCanvas.value.get(currentPath);
   const nextCanvas = MapHelper.getNextValue(availableCanvas.value, currentPath);
@@ -2684,17 +2698,17 @@ const handleNextOne = async () => {
       nextElement.classList.add('active')
       nextElement.setAttribute('selected', 'true')
       selectedElement.value.path = nextCanvas.path
-      selectedElement.value.element = nextElement
+      selectedElement.value.previewElement = nextElement
       selectedImages.value.set(nextCanvas.path, nextElement)
       // 方式一，较为卡顿，过渡不流畅
-      // selectedElement.value.element.scrollIntoView({
+      // selectedElement.value.previewElement.scrollIntoView({
       //   behavior: 'smooth',
       //   block: 'center', // 垂直方向居中
       //   inline: 'center' // 水平方向居中
       // })
 
       // 方式二，过渡比较流畅
-      scrollToCenterHorizontal(previewList.value, selectedElement.value.element)
+      scrollToCenterHorizontal(previewList.value, selectedElement.value.previewElement)
     }
   }
 }
@@ -2735,13 +2749,16 @@ const handleDragStart = function (event) {
   const width = componentRect.width;
   const height = componentRect.height;
 
-  const data = {
-    settings: {type, content, expression, url, path, tagName, width, height},
-    mouse: {offsetX, offsetY}
+  let settings;
+
+  if (component instanceof HTMLImageElement) {
+    settings = {...new ImageSettings(), url, path, tagName, width, height}
+  } else {
+    settings = {...new TextSettings(), type, content, expression, tagName}
   }
 
   // 关键：设置拖拽数据传输
-  event.dataTransfer.setData('text/plain', JSON.stringify(data));
+  event.dataTransfer.setData('text/plain', JSON.stringify({settings, mouse: {offsetX, offsetY}}));
 
   // 对于图片元素，手动设置拖拽预览
   if (component instanceof HTMLImageElement) {
@@ -2844,7 +2861,7 @@ const monitorPutElements = (canvasElement, canvas) => {
 
     elementTop > elementBottom ? references.push('bottom') : references.push('top')
 
-    const settings = (dragElement instanceof HTMLDivElement) ? new TextSettings() : new ImageSettings()
+    const settings = elementSettings
 
     settings.references = references
     settings.offsetLeft = offsetLeft
@@ -2860,16 +2877,11 @@ const monitorPutElements = (canvasElement, canvas) => {
     settings.height = elementHeight
 
     if (dragElement instanceof HTMLImageElement) {
-      settings.path = dragElement.getAttribute('path')
-      settings.url = dragElement.src
       settings.originalWidth = elementWidth
       settings.originalHeight = elementHeight
       settings.options.imageHeightRatio = elementHeight / backgroundHeight
       settings.options.imageWidthRatio = elementWidth / backgroundWidth
     } else {
-      settings.type = dragElement.getAttribute('type')
-      settings.expression = dragElement.getAttribute('expression')
-      settings.content = dragElement.innerText
       const fontSize = Number.parseInt(computedStyle.fontSize);
       settings.options.fontSizeRatio = fontSize / backgroundWidth
     }
@@ -2914,12 +2926,11 @@ const openSubMenu = (index) => {
 function makeDraggable(dragElement, path) {
 
   let clickTimeout = null;
-
   let mouseSetupX, mouseSetupY
-
   const canvas = CanvasManager.getCanvas(path);
   const imagesElement = canvas.getImageElement();
 
+  // 鼠标按下
   dragElement.onmousedown = function dragMouseDown(event) {
 
     event.preventDefault();
@@ -3018,6 +3029,7 @@ function makeDraggable(dragElement, path) {
     }
   }
 
+  // 删除元素
   dragElement.addEventListener('keydown', (event) => {
     // 检测 Delete (46) 或 Backspace (8) 键
     if (event.key === 'Delete' || event.key === 'Backspace' || event.keyCode === 46 || event.keyCode === 8) {
@@ -3035,6 +3047,7 @@ function makeDraggable(dragElement, path) {
     }
   })
 
+  // 选择元素
   dragElement.addEventListener('click', (event) => {
     if (event.clientX === mouseSetupX && event.clientY === mouseSetupY) {
       // 清除之前的定时器（如果有）
@@ -3044,6 +3057,7 @@ function makeDraggable(dragElement, path) {
         dragElement.focus()
         dragElement.style.outline = '1px dashed #f00'
         dragElement.setAttribute('selected', 'true')
+        selectedElement.value.draggableElement = dragElement
         if (dragElement instanceof HTMLImageElement) {
           const settings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
           imageOptions.value = settings.options
@@ -3067,17 +3081,19 @@ function makeDraggable(dragElement, path) {
     }
   })
 
-
+  // 取消选择
   dragElement.parentNode.addEventListener('click', () => {
     if (dragElement.getAttribute('selected') === 'true') {
       dragElement.style.outline = 'none'
       dragElement.setAttribute('selected', 'false')
+      selectedElement.value.draggableElement = null
     }
   })
 
+  // 双击弹出输入框
   if (dragElement instanceof HTMLDivElement) {
-
     dragElement.addEventListener('dblclick', (event) => {
+
       // 双击时清除单击的定时器
       clearTimeout(clickTimeout);
 
@@ -3132,6 +3148,77 @@ function makeDraggable(dragElement, path) {
 }
 
 
+const handleMoveElement = (event) => {
+
+  const validKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+
+  if (!validKeys.includes(event.key)) return;
+
+  event.preventDefault();
+
+  const dragElement = selectedElement.value.draggableElement;
+
+  if (dragElement?.getAttribute('selected') !== 'true') return;
+
+  const step = projectSettings.value.others.movingStepSize;
+
+  // 获取当前位置
+  const left = parseInt(dragElement.style.left) || 0;
+  const top = parseInt(dragElement.style.top) || 0;
+  const right = parseInt(dragElement.style.right) || 0;
+  const bottom = parseInt(dragElement.style.bottom) || 0;
+
+  switch (event.key) {
+    case 'ArrowUp':
+      dragElement.style.top = `${top - step}px`;
+      dragElement.style.bottom = `${bottom + step}px`;
+      break;
+    case 'ArrowDown':
+      dragElement.style.bottom = `${bottom - step}px`;
+      dragElement.style.top = `${top + step}px`;
+      break;
+    case 'ArrowLeft':
+      dragElement.style.left = `${left - step}px`;
+      dragElement.style.right = `${right + step}px`;
+      break;
+    case 'ArrowRight':
+      dragElement.style.right = `${right - step}px`;
+      dragElement.style.left = `${left + step}px`;
+      break;
+  }
+}
+
+
+const handleStopMoveElement = (event) => {
+
+  const validKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+
+  if (!validKeys.includes(event.key)) return;
+
+  const dragElement = selectedElement.value.draggableElement;
+
+  if (dragElement?.getAttribute('selected') !== 'true') return;
+
+  // 取消之前未执行的动画帧
+  if (pendingAnimationFrame) {
+    cancelAnimationFrame(pendingAnimationFrame);
+  }
+
+  // 安排新的执行
+  pendingAnimationFrame = requestAnimationFrame(() => {
+    const updateCanvas = CanvasManager.getCanvas(selectedElement.value.path);
+    const updateSettings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
+    updateElementPosition(updateCanvas, dragElement, updateSettings);
+    pendingAnimationFrame = null;
+  });
+}
+
+const bingEventListener = () => {
+  document.addEventListener('keydown', handleMoveElement);
+  document.addEventListener('keyup', handleStopMoveElement);
+}
+
+
 onMounted(() => {
   monitorScrollbar()
   monitorDraggableLabelElements()
@@ -3146,8 +3233,8 @@ onMounted(() => {
   watchCtrlA()
   watchDownloadProgress()
   editorOutputSettings()
-  // handleResize()
   loadProjectSettings()
+  bingEventListener()
 })
 
 

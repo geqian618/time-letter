@@ -28,7 +28,7 @@ export class Canvas {
         return this.imageElement;
     }
 
-    getTriggerElement(previewList) {
+    getPreviewElement(previewList) {
         const escapedPath = this.path.replace(/\\/g, '\\\\');
         return previewList.querySelector(`[path="${escapedPath}"]`);
     }

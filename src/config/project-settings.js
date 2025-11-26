@@ -33,7 +33,8 @@ const projectSettings = ref({
         downloadThreads: -1
     },
     others: {
-        optionAnchorPoint: true
+        optionAnchorPoint: true,
+        movingStepSize: 1,
     },
     availableFonts: new Map()
 })

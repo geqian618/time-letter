@@ -79,7 +79,7 @@ class DraggableElementFactory {
                     shadowColor = '#000000'
                 } = {}
             } = {}
-        } = this.settings || {};
+        } = this.settings;
 
         this.dragElement.style.width = 'fit-content'
         this.dragElement.style.height = 'fit-content'
@@ -153,6 +153,7 @@ class DraggableElementFactory {
             content = format.replace('${' + attribute + '}', content);
         }
         this.dragElement.innerHTML = content;
+        this.settings.content = content
     }
 
 
