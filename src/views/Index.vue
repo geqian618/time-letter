@@ -2109,7 +2109,6 @@ function updateElementPosition(canvas, element, settings) {
   let offsetBottom = elementBottom - backgroundBottom
   let offsetBottomRatio = offsetBottom / backgroundHeight
 
-
   elementLeft > elementRight ? references.push('right') : references.push('left')
 
   elementTop > elementBottom ? references.push('bottom') : references.push('top')
