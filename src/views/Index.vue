@@ -2244,6 +2244,9 @@ const initializeCanvasLayout = async (canvas) => {
   const offsetRight = canvasWidth - offsetLeft - newImageWidth
   const offsetBottom = canvasHeight - offsetTop - newImageHeight
 
+  canvasElement.style.width = canvasWidth + 'px'
+  canvasElement.style.height = canvasHeight + 'px'
+
   imageElement.style.width = newImageWidth + 'px'
   imageElement.style.height = newImageHeight + 'px'
 
