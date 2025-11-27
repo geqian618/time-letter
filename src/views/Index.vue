@@ -2223,29 +2223,26 @@ const initializeCanvasLayout = async (canvas) => {
   const backgroundElement = canvasElement.querySelector('.image-background');
   const previewContainer = canvasElement.parentNode;
   const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement
-  const {offsetWidth: previewContainerWidth, offsetHeight: previewContainerHeight} = previewContainer;
   const {naturalWidth: imageWidth, naturalHeight: imageHeight} = imageElement
 
+  const {offsetWidth: containerRealWidth, offsetHeight: containerRealHeight} = previewContainer;
+  const {idealWidth: containerIdealWidth, idealHeight: containerIdealHeight} = previewContainer;
+
   // 缩放相关变量
-  let currentScale = 1;
+  let canvasScale = 1;
   const minScale = 0.5;
   const maxScale = 5;
   const scaleStep = 0.1;
 
-  const scaleX = previewContainerWidth / imageWidth;
-  const scaleY = previewContainerHeight / imageHeight;
+  const idealImageScale = Math.min(containerIdealWidth / imageWidth, containerIdealHeight / imageHeight) * 0.8
 
-  const scale = Math.min(scaleX, scaleY) * 0.8;
-  const newImageWidth = imageWidth * scale;
-  const newImageHeight = imageHeight * scale;
+  const newImageWidth = imageWidth * idealImageScale;
+  const newImageHeight = imageHeight * idealImageScale;
 
   const offsetLeft = (canvasWidth - newImageWidth) / 2;
   const offsetTop = (canvasHeight - newImageHeight) / 2;
   const offsetRight = canvasWidth - offsetLeft - newImageWidth
   const offsetBottom = canvasHeight - offsetTop - newImageHeight
-
-  canvasElement.style.width = canvasWidth + 'px'
-  canvasElement.style.height = canvasHeight + 'px'
 
   imageElement.style.width = newImageWidth + 'px'
   imageElement.style.height = newImageHeight + 'px'
@@ -2284,21 +2281,25 @@ const initializeCanvasLayout = async (canvas) => {
 
   await nextTick()
 
+  canvasScale = Math.min(containerRealWidth / containerIdealWidth, containerRealHeight / containerIdealHeight)
+
+  setScale(canvasScale)
+
   // 设置缩放比例
   function setScale(scale) {
     // 限制缩放范围
-    currentScale = Math.min(Math.max(minScale, scale), maxScale);
+    canvasScale = Math.min(Math.max(minScale, scale), maxScale);
     // 应用缩放变换
-    canvasElement.style.transform = `scale(${currentScale})`;
+    canvasElement.style.transform = `scale(${canvasScale})`;
     // 设置变换原点为中心点
     canvasElement.style.transformOrigin = `${centerX}px ${centerY}px`;
 
-    canvas.scale = currentScale
+    canvas.scale = canvasScale
   }
 
   // 缩放函数
   function zoom(direction) {
-    const newScale = direction === 'in' ? currentScale + scaleStep : currentScale - scaleStep;
+    const newScale = direction === 'in' ? canvasScale + scaleStep : canvasScale - scaleStep;
     setScale(newScale);
   }
 }
@@ -2355,7 +2356,7 @@ function moveScrollBarToCenter(canvas) {
   const canvasElement = imageElement.parentNode;
   const previewContainer = canvasElement.parentNode;
   const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement
-  const {clientWidth: previewContainerWidth, clientHeight: previewContainerHeight} = previewContainer
+  const {offsetWidth: previewContainerWidth, offsetHeight: previewContainerHeight} = previewContainer
   // 计算滚动位置，使图形内容居中
   const scrollLeft = (canvasWidth - previewContainerWidth) / 2;
   const scrollTop = (canvasHeight - previewContainerHeight) / 2;
@@ -3215,11 +3216,24 @@ const handleStopMoveElement = (event) => {
   });
 }
 
+
 const bingEventListener = () => {
   document.addEventListener('keydown', handleMoveElement);
   document.addEventListener('keyup', handleStopMoveElement);
 }
 
+const initCanvasSize = () => {
+  setTimeout(() => {
+    // 获取窗口宽高
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    // 设置CSS自定义属性
+    previewContainer.value.style.setProperty('--canvas-width', `${windowWidth}px`);
+    previewContainer.value.style.setProperty('--canvas-height', `${windowHeight}px`);
+    previewContainer.value.idealWidth = Number.parseFloat(previewContainer.value.offsetWidth)
+    previewContainer.value.idealHeight = Number.parseFloat(previewContainer.value.offsetHeight)
+  }, 1000)
+}
 
 onMounted(() => {
   monitorScrollbar()
@@ -3237,6 +3251,7 @@ onMounted(() => {
   editorOutputSettings()
   loadProjectSettings()
   bingEventListener()
+  initCanvasSize()
 })
 
 
@@ -3429,11 +3444,12 @@ onBeforeUnmount(() => {
       height: 100%;
       box-sizing: border-box;
       overflow: auto;
+      --canvas-width: 100vw;
+      --canvas-height: 100vh;
 
       .canvas {
-
-        width: 200%;
-        height: 200%;
+        width: var(--canvas-width);
+        height: var(--canvas-height);
         position: relative;
 
         .image-background {
