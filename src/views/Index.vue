@@ -10,10 +10,10 @@
                   <template #title>
                     <span>模版预设</span>
                   </template>
-                  <div class="templates" v-drag-sort="handleSortingChanged">
+                  <div class="templates" v-drag-sort="handleTemplateSorting">
                     <el-menu-item
                         :data-id="template.templateId"
-                        @contextmenu="openTemplateContextMenu(template)"
+                        @contextmenu="triggerTemplateContextMenu(template)"
                         class="template" v-for="template in templates"
                         :key="template.templateId"
                         :index="template.templateId"
@@ -75,7 +75,7 @@
 
         <div class="page-center" ref="previewContainer">
           <template v-for="([key, canvas]) in CanvasManager.getCanvases()" :key="canvas.path">
-            <div class="canvas" :path="canvas.path" v-show="canvas.visible" @contextmenu="openContextMenu">
+            <div class="canvas" :path="canvas.path" v-show="canvas.visible" @contextmenu="triggerContextMenu">
               <div class="image-background"></div>
               <img :src="canvas.url" :id="canvas.path">
             </div>
@@ -85,7 +85,7 @@
           <div class="settings-details">
             <el-aside>
               <el-scrollbar>
-                <el-menu :default-openeds="['1']" ref="menuRef" @open="handleOpen" @close="handleClose">
+                <el-menu :default-openeds="['1']" ref="menuRef" @open="handleOpenMenu" @close="handleCloseMenu">
                   <el-sub-menu index="1">
                     <template #title>
                       <span>基本</span>
@@ -169,7 +169,7 @@
                         <div class="label">边框类型</div>
                         <div class="value">
                           <el-select
-                              @change="handleBorders"
+                              @change="handleUpdateBorders"
                               v-model="borderOptions.borderType"
                               :options="[{value: 0,label: '通用'}, {value: 1,label: '模糊'}]"
                               size="small"
@@ -179,84 +179,84 @@
                       <li class="option">
                         <div class="label">上边框</div>
                         <div class="value">
-                          <el-slider @change="handleBorders"
+                          <el-slider @change="handleUpdateBorders"
                                      size="small"
                                      :show-tooltip="false"
                                      :min="sliderRange.min"
                                      :max="sliderRange.max"
                                      v-model="borderOptions.borderTop"
                                      placement="top"/>
-                          <input type="number" class="number-input" @input="handleBorders"
+                          <input type="number" class="number-input" @input="handleUpdateBorders"
                                  v-model="borderOptions.borderTop" step="1">
                         </div>
                       </li>
                       <li class="option">
                         <div class="label">左边框</div>
                         <div class="value">
-                          <el-slider @change="handleBorders"
+                          <el-slider @change="handleUpdateBorders"
                                      :show-tooltip="false"
                                      size="small"
                                      :min="sliderRange.min"
                                      :max="sliderRange.max"
                                      v-model="borderOptions.borderLeft"
                                      placement="top"/>
-                          <input type="number" class="number-input" @input="handleBorders"
+                          <input type="number" class="number-input" @input="handleUpdateBorders"
                                  v-model="borderOptions.borderLeft" step="1">
                         </div>
                       </li>
                       <li class="option">
                         <div class="label">右边框</div>
                         <div class="value">
-                          <el-slider @change="handleBorders"
+                          <el-slider @change="handleUpdateBorders"
                                      size="small"
                                      :show-tooltip="false"
                                      :min="sliderRange.min"
                                      :max="sliderRange.max"
                                      v-model="borderOptions.borderRight"
                                      placement="top"/>
-                          <input type="number" class="number-input" @input="handleBorders"
+                          <input type="number" class="number-input" @input="handleUpdateBorders"
                                  v-model="borderOptions.borderRight" step="1">
                         </div>
                       </li>
                       <li class="option">
                         <div class="label">下边框</div>
                         <div class="value">
-                          <el-slider @change="handleBorders"
+                          <el-slider @change="handleUpdateBorders"
                                      size="small"
                                      :show-tooltip="false"
                                      :min="sliderRange.min"
                                      :max="sliderRange.max"
                                      v-model="borderOptions.borderBottom"
                                      placement="top"/>
-                          <input type="number" class="number-input" @input="handleBorders"
+                          <input type="number" class="number-input" @input="handleUpdateBorders"
                                  v-model="borderOptions.borderBottom" step="1">
                         </div>
                       </li>
                       <li class="option">
                         <div class="label">圆角</div>
                         <div class="value">
-                          <el-slider @change="handleBorders"
+                          <el-slider @change="handleUpdateBorders"
                                      size="small"
                                      :show-tooltip="false"
                                      :min="0"
                                      :max="50"
                                      v-model="borderOptions.borderRadius"
                                      placement="top"/>
-                          <input type="number" class="number-input" @input="handleBorders"
+                          <input type="number" class="number-input" @input="handleUpdateBorders"
                                  v-model="borderOptions.borderRadius" step="1">
                         </div>
                       </li>
                       <li class="option">
                         <div class="label">模糊值</div>
                         <div class="value">
-                          <el-slider @change="handleBorders"
+                          <el-slider @change="handleUpdateBorders"
                                      size="small"
                                      :show-tooltip="false"
                                      :min="0"
                                      :max="50"
                                      v-model="borderOptions.borderBlur"
                                      placement="top"/>
-                          <input type="number" class="number-input" @input="handleBorders"
+                          <input type="number" class="number-input" @input="handleUpdateBorders"
                                  v-model="borderOptions.borderBlur" step="1">
                         </div>
                       </li>
@@ -265,7 +265,7 @@
                         <div class="value">
                           <el-color-picker
                               size="small"
-                              @change="handleBorders"
+                              @change="handleUpdateBorders"
                               v-model="borderOptions.borderColor"
                               show-alpha
                               :predefine="predefineColors"/>
@@ -560,7 +560,8 @@
               <img src="../assets/images/左箭头-未激活.png" class="inactive" alt="上一张">
             </el-tooltip>
             <el-tooltip effect="dark" content="上一张" placement="top">
-              <img src="../assets/images/左箭头-激活.png" class="active" @click="handleBeforeOne" alt="上一张">
+              <img src="../assets/images/左箭头-激活.png" class="active" @click="switchBeforePreviewElement"
+                   alt="上一张">
             </el-tooltip>
           </div>
 
@@ -569,7 +570,7 @@
               <img src="../assets/images/右箭头-未激活.png" class="inactive" alt="下一张">
             </el-tooltip>
             <el-tooltip effect="dark" content="下一张" placement="top">
-              <img src="../assets/images/右箭头-激活.png" class="active" @click="handleNextOne" alt="下一张">
+              <img src="../assets/images/右箭头-激活.png" class="active" @click="switchNextPreviewElement" alt="下一张">
             </el-tooltip>
           </div>
 
@@ -578,7 +579,8 @@
               <img src="../assets/images/居中显示-未激活.png" class="inactive small-size" alt="居中">
             </el-tooltip>
             <el-tooltip effect="dark" content="居中" placement="top">
-              <img src="../assets/images/居中显示-激活.png" class="active small-size" @click="handleScrollBarToCenter"
+              <img src="../assets/images/居中显示-激活.png" class="active small-size"
+                   @click="handleScrollBarMoveToCenter"
                    alt="居中">
             </el-tooltip>
           </div>
@@ -597,7 +599,7 @@
           </div>
         </div>
         <div class="preview-list" id="preview-list" tabindex="0" ref="previewList" @wheel="handleMovePreviewList"
-             @contextmenu="openContextMenu">
+             @contextmenu="triggerContextMenu">
           <template :key="key" v-for="([key, canvas]) in availableCanvas">
             <el-popover
                 v-if="canvas.metadata.filename || canvas.metadata.shootingTime || canvas.metadata.resolution || canvas.metadata.fileSize"
@@ -620,7 +622,7 @@
                      @click.meta.exact="handleSelectPreviewElement($event,canvas)"
                      @click.ctrl.exact="handleSelectPreviewElement($event, canvas)"
                      @click.shift.exact="handleSelectMultiplePreviewElements($event,canvas)"
-                     @click="handlePreview($event, canvas)">
+                     @click="switchPreviewImage($event, canvas)">
               </template>
             </el-popover>
             <img v-else
@@ -630,7 +632,7 @@
                  @click.meta.exact="handleSelectPreviewElement($event,canvas)"
                  @click.ctrl.exact="handleSelectPreviewElement($event, canvas)"
                  @click.shift.exact="handleSelectMultiplePreviewElements($event,canvas)"
-                 @click="handlePreview($event, canvas)">
+                 @click="switchPreviewImage($event, canvas)">
           </template>
         </div>
       </div>
@@ -722,7 +724,7 @@
         </el-table-column>
         <el-table-column fixed="right" label="操作" min-width="100">
           <template #default="scope">
-            <el-button link type="primary" size="small" @click="openEditorTextLabel(scope.row)">
+            <el-button link type="primary" size="small" @click="openTextLabelEditorDialog(scope.row)">
               编辑
             </el-button>
             <el-button link type="primary" size="small" @click="deleteTextLabel(scope.row)">删除</el-button>
@@ -1235,7 +1237,7 @@ const clearSelectedPreviewList = async () => {
   selectedPreviewList.value.clear()
 }
 
-const watchInputFonts = () => {
+const watchImportFonts = () => {
   window.electronAPI.watchInputFonts(async (event, {type, data}) => {
     if (data) {
       if (type === 0 || type === -1) {
@@ -1280,7 +1282,7 @@ const removeExpiredFonts = (cacheFonts, availableFonts) => {
   });
 }
 
-const watchInputImages = () => {
+const watchImportImages = () => {
   window.electronAPI.watchInputImage(async (event, data) => {
     if (data) {
       for (let [path, picture] of data) {
@@ -1309,13 +1311,13 @@ const createThreadPool = () => {
   window.electronAPI.createThreadPool(maxThreads)
 }
 
-const openContextMenu = () => {
+const triggerContextMenu = () => {
   if (CanvasManager.isNotEmpty()) {
     window.electronAPI.openContextMenu()
   }
 }
 
-const openTemplateContextMenu = ({templateId, templateName}) => {
+const triggerTemplateContextMenu = ({templateId, templateName}) => {
   if (templates.value.length) {
     oldTemplate.value.templateId = templateId
     oldTemplate.value.templateName = templateName
@@ -1364,8 +1366,8 @@ const handleDownloadProgressClose = () => {
   }, 200)
 }
 
-const watchEditorLabel = () => {
-  window.electronAPI.watchEditorLabel(async (event, result) => {
+const watchLabelResources = () => {
+  window.electronAPI.watchLabelResources(async (event, result) => {
     const {data, type} = result
     if (type === 0) {
       if (result.event === 0) {
@@ -1405,7 +1407,7 @@ const clearFormValidate = (formRef) => {
 }
 
 
-const openEditorTextLabel = (row) => {
+const openTextLabelEditorDialog = (row) => {
   textLabel.value = _.cloneDeep(row)
   handleTextLabelType.value = 1
   customTextLabelDialogVisible.value = true
@@ -1814,6 +1816,7 @@ const deleteTemplate = () => {
 }
 
 const synchronizeTemplate = () => {
+
   if (selectedElement.value && selectedElement.value.path) {
     const {settings: templateSettings} = CanvasManager.getCanvas(selectedElement.value.path);
     const targetSettings = {
@@ -1876,7 +1879,7 @@ const saveTemplates = async () => {
 }
 
 
-const handleSortingChanged = (el, dragaElement, targetElement) => {
+const handleTemplateSorting = (el, dragaElement, targetElement) => {
   let newTemplates = []
   const elements = el.querySelectorAll('.template');
   for (let element of elements) {
@@ -2082,7 +2085,7 @@ function updateElementPosition(canvas, element, settings) {
   settings.offsetBottomRatio = offsetBottomRatio
 }
 
-const refreshPositionInformation = (path) => {
+const refreshCanvasElementPosition = (path) => {
   const canvas = CanvasManager.getCanvas(path);
   canvas.settings.texts.forEach((textLabel, element) => {
     updateElementPosition(canvas, element, textLabel);
@@ -2109,7 +2112,7 @@ const refreshTemplate = async (path) => {
   })
 
   await nextTick()
-  refreshPositionInformation(path)
+  refreshCanvasElementPosition(path)
   canvas.isUpdate = false
 }
 
@@ -2124,7 +2127,7 @@ const loadTextLabels = () => {
   textLabels.value = jsonStr ? JSON.parse(jsonStr) : []
 }
 
-async function handlePreview(event, canvas) {
+async function switchPreviewImage(event, canvas) {
 
   if (!event.ctrlKey && !event.shiftKey) {
     if (!selectedPreviewList.value.has(canvas.path)) {
@@ -2162,7 +2165,7 @@ async function handlePreview(event, canvas) {
   }
 }
 
-const setScrollBarPosition = (canvas) => {
+const updateScrollBarPosition = (canvas) => {
   // 设置滚动位置
   previewContainer.value.scrollLeft = canvas.scrollLeft;
   previewContainer.value.scrollTop = canvas.scrollTop;
@@ -2229,7 +2232,7 @@ const initializeCanvasLayout = async (canvas) => {
   const centerX = canvasWidth / 2;
   const centerY = canvasHeight / 2;
 
-  moveScrollBarToCenter(canvas)
+  scrollBarMoveToCenter(canvas)
 
   // 滚轮缩放事件
   canvasElement.addEventListener('wheel', function (e) {
@@ -2274,7 +2277,7 @@ const renderCanvas = async (canvas) => {
     await initializeCanvasLayout(canvas)
   }
 
-  setScrollBarPosition(canvas)
+  updateScrollBarPosition(canvas)
   metadataOptions.value = canvas.metadata
   borderOptions.value = canvas.settings.border.options
 
@@ -2284,16 +2287,16 @@ const renderCanvas = async (canvas) => {
 }
 
 
-const handleScrollBarToCenter = () => {
+const handleScrollBarMoveToCenter = () => {
   if (selectedElement.value && selectedElement.value.path) {
     const canvas = CanvasManager.getCanvas(selectedElement.value.path);
-    moveScrollBarToCenter(canvas)
+    scrollBarMoveToCenter(canvas)
   }
 }
 
 
 // 初始化时自动滚动到图形内容区域
-function moveScrollBarToCenter(canvas) {
+function scrollBarMoveToCenter(canvas) {
   if (!canvas) return
   const imageElement = canvas.getImageElement();
   const canvasElement = imageElement.parentNode;
@@ -2391,7 +2394,7 @@ const handleSelectMultiplePreviewElements = (event, canvas) => {
 }
 
 
-const handleBorders = async () => {
+const handleUpdateBorders = async () => {
 
   const canvas = CanvasManager.getCanvas(selectedElement.value.path)
   if (!canvas) return
@@ -2486,7 +2489,7 @@ const handleBorders = async () => {
 
     await nextTick()
 
-    refreshPositionInformation(selectedElement.value.path)
+    refreshCanvasElementPosition(selectedElement.value.path)
 
   }
 }
@@ -2576,7 +2579,7 @@ const handleMovePreviewList = (e) => {
 }
 
 
-const handleBeforeOne = async () => {
+const switchBeforePreviewElement = async () => {
   const {path: currentPath, previewElement: currentElement} = selectedElement.value;
   if (!currentPath) return
   const currentCanvas = availableCanvas.value.get(currentPath);
@@ -2610,13 +2613,12 @@ const handleBeforeOne = async () => {
       // })
 
       // 方式二，过渡比较流畅
-      scrollToCenterHorizontal(previewList.value, selectedElement.value.previewElement)
+      scrollBarMoveToHorizontalCenter(previewList.value, selectedElement.value.previewElement)
     }
   }
 }
 
-const handleNextOne = async () => {
-
+const switchNextPreviewElement = async () => {
   const {path: currentPath, previewElement: currentElement} = selectedElement.value;
   if (!currentPath) return
   const currentCanvas = availableCanvas.value.get(currentPath);
@@ -2650,13 +2652,13 @@ const handleNextOne = async () => {
       // })
 
       // 方式二，过渡比较流畅
-      scrollToCenterHorizontal(previewList.value, selectedElement.value.previewElement)
+      scrollBarMoveToHorizontalCenter(previewList.value, selectedElement.value.previewElement)
     }
   }
 }
 
 
-function scrollToCenterHorizontal(container, element) {
+function scrollBarMoveToHorizontalCenter(container, element) {
   if (container._timerId) {
     clearTimeout(container._timerId)
   }
@@ -2673,7 +2675,7 @@ function scrollToCenterHorizontal(container, element) {
 }
 
 // 处理子菜单展开事件
-const handleOpen = (index) => {
+const handleOpenMenu = (index) => {
   // 如果索引不在已展开数组中，则添加
   if (!openedMenus.value.includes(index)) {
     openedMenus.value.push(index)
@@ -2681,7 +2683,7 @@ const handleOpen = (index) => {
 }
 
 // 处理子菜单收起事件
-const handleClose = (index) => {
+const handleCloseMenu = (index) => {
   // 从已展开数组中移除对应索引
   const idx = openedMenus.value.indexOf(index)
   if (idx !== -1) {
@@ -2690,7 +2692,7 @@ const handleClose = (index) => {
 }
 
 // 展开指定索引的子菜单（未展开时才展开）
-const openSubMenu = (index) => {
+const handleOpenSubMenu = (index) => {
   if (menuRef.value && !openedMenus.value.includes(index)) {
     menuRef.value.open(index)
   }
@@ -2911,7 +2913,7 @@ const handleSelectedElement = (dragElement) => {
     if (dragElement instanceof HTMLImageElement) {
       imageOptions.value = settings.options
       if (projectSettings.value.others.optionAnchorPoint) {
-        openSubMenu('4')
+        handleOpenSubMenu('4')
         nextTick(() => {
           document.getElementById('image-options').scrollIntoView({behavior: 'smooth'});
         })
@@ -2919,7 +2921,7 @@ const handleSelectedElement = (dragElement) => {
     } else {
       textOptions.value = settings.options
       if (projectSettings.value.others.optionAnchorPoint) {
-        openSubMenu('3')
+        handleOpenSubMenu('3')
         nextTick(() => {
           document.getElementById('text-options').scrollIntoView({behavior: 'smooth'});
         })
@@ -3231,11 +3233,11 @@ onMounted(() => {
   createThreadPool()
   loadTemplates()
   loadTextLabels()
-  watchInputImages()
-  watchInputFonts()
+  watchImportImages()
+  watchImportFonts()
   watchContextMenu()
   watchTemplateContextMenu()
-  watchEditorLabel()
+  watchLabelResources()
   watchDownloadProgress()
   editorOutputSettings()
   loadProjectSettings()
@@ -3725,6 +3727,7 @@ onBeforeUnmount(() => {
       scroll-behavior: smooth; /* 可选，使滚动更平滑 */
       white-space: nowrap; /* 防止内容换行 */
       outline: none;
+
       img {
         box-sizing: border-box;
         background: grey;

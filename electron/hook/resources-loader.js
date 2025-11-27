@@ -17,7 +17,7 @@ const loadImageLabels = (window) => {
             };
         })
         const data = new Map(files.map(item => [item.path, item]));
-        window.webContents.send('watch-editor-label', {type: 0, data, event: 0})
+        window.webContents.send('watch-label-resources', {type: 0, data, event: 0})
     });
 }
 

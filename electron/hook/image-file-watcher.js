@@ -32,9 +32,9 @@ const fileWatcher = async (window, folderPath) => {
                 extname: pathParsed.ext
             };
             const data = new Map([[image.path, image]])
-            window.webContents.send('watch-editor-label', {type: 0, data, event: 0})
+            window.webContents.send('watch-label-resources', {type: 0, data, event: 0})
         }).on('unlink', filePath => {
-            window.webContents.send('watch-editor-label', {type: 0, data: {filePath}, event: 1})
+            window.webContents.send('watch-label-resources', {type: 0, data: {filePath}, event: 1})
         }).on('error', error => {
             console.error('监控错误:', error);
         });

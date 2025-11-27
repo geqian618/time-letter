@@ -89,13 +89,13 @@ const selectImageLabels = async () => {
             })
         );
         const data = new Map(files.map(item => [item.path, item]));
-        window.webContents.send('watch-editor-label', {type: 0, data, event: 0})
+        window.webContents.send('watch-label-resources', {type: 0, data, event: 0})
     }
 }
 
 
 const customTextLabels = () => {
-    window.webContents.send('watch-editor-label', {type: 1})
+    window.webContents.send('watch-label-resources', {type: 1})
 }
 
 /**
@@ -168,7 +168,7 @@ const mainMenu = (mainWindow) => {
                         {
                             label: '管理',
                             click: () => {
-                                window.webContents.send('watch-editor-label', {type: 3})
+                                window.webContents.send('watch-label-resources', {type: 3})
                             }
                         }
                     ],
