@@ -2833,6 +2833,9 @@ const handleRemoveElement = (event) => {
 // 编辑文本
 const handleEditorElement = (event) => {
 
+  // 双击时清除单击的定时器
+  clearTimeout(clickTimeout);
+
   event.preventDefault();
 
   if (event.target.getAttribute('draggable') !== 'true' || event.target instanceof HTMLImageElement) {
@@ -2848,13 +2851,14 @@ const handleEditorElement = (event) => {
   const input = document.createElement('input');
   input.type = 'text';
   input.value = originalText;
-  input.style.width = 'fit-content'
-  input.style.height = dragElement.style.height
+  input.style.width = (dragElement.offsetWidth * 1.1) + 'px';
+  input.style.height = (dragElement.offsetHeight * 1.2) + 'px';
+  input.style.boxSizing = 'border-box';
   input.style.padding = '0 2px'
   input.style.outline = '1px solid white'
-  input.style.inset = '0 0 0 0'
-  input.style.position = 'absolute'
-  input.style.zIndex = '9999'
+  input.style.zIndex = '99'
+
+  dragElement.innerHTML = ''
 
   dragElement.appendChild(input);
 
@@ -3035,7 +3039,7 @@ const handleDragMoveElement = (event) => {
     document.onmouseup = null;
     document.onmousemove = null;
     const target = event.target;
-    if (!isDragging && target.getAttribute('draggable') === 'true') {
+    if (!isDragging && target.getAttribute('draggable') === 'true' && startX === event.clientX && startY === event.clientY) {
       handleSelectedElement(target)
     }
   }
