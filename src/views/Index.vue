@@ -2835,7 +2835,9 @@ const handleEditorElement = (event) => {
 
   event.preventDefault();
 
-  if (event.target.getAttribute('draggable') !== 'true') return
+  if (event.target.getAttribute('draggable') !== 'true' || event.target instanceof HTMLImageElement) {
+    return
+  }
 
   clearTimeout(clickTimeout);
 
