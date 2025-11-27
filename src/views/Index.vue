@@ -2012,21 +2012,25 @@ const useTemplate = async (targetSettings, path) => {
   for (let settings of images) {
     const factory = new DraggableElementFactory(settings, canvas.metadata);
     const element = await factory.getElement()
-    if (path === selectedElement.value.path) {
-      renderElementPosition(canvas, settings, element);
+    if (element) {
+      if (path === selectedElement.value.path) {
+        renderElementPosition(canvas, settings, element);
+      }
+      canvasElement.appendChild(element)
+      canvas.settings.images.set(element, settings)
     }
-    canvasElement.appendChild(element)
-    canvas.settings.images.set(element, settings)
   }
 
   for (let settings of texts) {
     const factory = new DraggableElementFactory(settings, canvas.metadata);
     const element = await factory.getElement();
-    if (path === selectedElement.value.path) {
-      renderElementPosition(canvas, settings, element)
+    if (element) {
+      if (path === selectedElement.value.path) {
+        renderElementPosition(canvas, settings, element)
+      }
+      canvasElement.appendChild(element)
+      canvas.settings.texts.set(element, settings)
     }
-    canvasElement.appendChild(element)
-    canvas.settings.texts.set(element, settings)
   }
 }
 

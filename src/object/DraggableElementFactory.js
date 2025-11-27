@@ -110,6 +110,7 @@ class DraggableElementFactory {
 
     // 设置通用样式
     #setCommonStyle() {
+        if (!this.dragElement) return
         this.dragElement.style.outline = 'none';
         this.dragElement.style.cursor = 'move';
         this.dragElement.style.userSelect = 'none';
@@ -149,6 +150,10 @@ class DraggableElementFactory {
             return;
         }
         let content = this.metadataOptions[attribute];
+        if (!content) {
+            this.dragElement = null
+            return;
+        }
         const format = projectSettings.value.metadata.formats[attribute];
         if (format) {
             content = format.replace('${' + attribute + '}', content);
