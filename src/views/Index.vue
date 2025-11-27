@@ -596,7 +596,8 @@
             </div>
           </div>
         </div>
-        <div class="image-list" id="image-list" ref="previewList" @wheel="handleWheel" @contextmenu="openContextMenu">
+        <div class="preview-list" id="preview-list" tabindex="0" ref="previewList" @wheel="handleMovePreviewList"
+             @contextmenu="openContextMenu">
           <template :key="key" v-for="([key, canvas]) in availableCanvas">
             <el-popover
                 v-if="canvas.metadata.filename || canvas.metadata.shootingTime || canvas.metadata.resolution || canvas.metadata.fileSize"
@@ -613,23 +614,22 @@
                 </div>
               </template>
               <template #reference>
-                <img class="imageItem"
+                <img class="previewItem"
                      :path="canvas.path"
                      v-lazy="canvas.url"
-                     @click.meta.exact="handleCtrlClick($event,canvas)"
-                     @click.ctrl.exact="handleCtrlClick($event, canvas)"
-                     @click.shift.exact="handleShiftClick($event,canvas)"
+                     @click.meta.exact="handleSelectPreviewElement($event,canvas)"
+                     @click.ctrl.exact="handleSelectPreviewElement($event, canvas)"
+                     @click.shift.exact="handleSelectMultiplePreviewElements($event,canvas)"
                      @click="handlePreview($event, canvas)">
               </template>
             </el-popover>
-
             <img v-else
-                 class="imageItem"
+                 class="previewItem"
                  :path="canvas.path"
                  v-lazy="canvas.url"
-                 @click.meta.exact="handleCtrlClick($event,canvas)"
-                 @click.ctrl.exact="handleCtrlClick($event, canvas)"
-                 @click.shift.exact="handleShiftClick($event,canvas)"
+                 @click.meta.exact="handleSelectPreviewElement($event,canvas)"
+                 @click.ctrl.exact="handleSelectPreviewElement($event, canvas)"
+                 @click.shift.exact="handleSelectMultiplePreviewElements($event,canvas)"
                  @click="handlePreview($event, canvas)">
           </template>
         </div>
@@ -1055,7 +1055,9 @@ const selectedElement = ref({
 
 let clickTimeout = null;
 
-const selectedImages = ref(new Map())
+let scrollTimeout = null;
+
+const selectedPreviewList = ref(new Map())
 
 const newTemplate = ref({
   templateName: '',
@@ -1170,6 +1172,7 @@ const availableFonts = computed(() => {
   return Array.from(projectSettings.value.availableFonts.values())
 })
 
+
 const handleActivateInput = async (row, column, cell) => {
   row.editable = true;
   const input = cell.querySelector('input');
@@ -1190,13 +1193,9 @@ const handleFilterFonts = (search) => {
 
 
 const stopWatchAvailableCanvas = watch(filterType, async () => {
-
-  await clearSelectedImages()
-
+  await clearSelectedPreviewList()
   availableCanvas.value = CanvasManager.getAvailableCanvases(filterType.value)
-
   await nextTick()
-
   setDefaultSelectedElement()
 })
 
@@ -1224,16 +1223,16 @@ const setDefaultSelectedElement = async () => {
   previewElement.setAttribute('selected', 'true')
   selectedElement.value.path = nextSelectCanvas.path
   selectedElement.value.previewElement = previewElement
-  selectedImages.value.set(nextSelectCanvas.path, previewElement)
+  selectedPreviewList.value.set(nextSelectCanvas.path, previewElement)
 }
 
 
-const clearSelectedImages = async () => {
-  selectedImages.value.forEach((element, path) => {
+const clearSelectedPreviewList = async () => {
+  selectedPreviewList.value.forEach((element, path) => {
     element.classList.remove('active')
     element.setAttribute('selected', 'false')
   })
-  selectedImages.value.clear()
+  selectedPreviewList.value.clear()
 }
 
 const watchInputFonts = () => {
@@ -1297,9 +1296,7 @@ const watchInputImages = () => {
             }
             canvas.metadata = metadata
           }
-
           CanvasManager.setCanvas(path, Object.assign(new Canvas(), canvas, picture))
-
           availableCanvas.value = CanvasManager.getAvailableCanvases(filterType.value)
         }
       }
@@ -1311,7 +1308,6 @@ const createThreadPool = () => {
   const maxThreads = projectSettings.value.performance.downloadThreads;
   window.electronAPI.createThreadPool(maxThreads)
 }
-
 
 const openContextMenu = () => {
   if (CanvasManager.isNotEmpty()) {
@@ -1343,7 +1339,6 @@ const editorOutputSettings = () => {
   })
 }
 
-
 const watchDownloadProgress = () => {
   window.electronAPI.downloadProgress((event, data) => {
     downloadProgressPercentage.value = data.percentage
@@ -1355,14 +1350,14 @@ const watchDownloadProgress = () => {
   })
 }
 
-const stopSaveFiles = () => {
+const stopDownloadFiles = () => {
   window.electronAPI.stopSaveFiles()
 }
 
 const handleDownloadProgressClose = () => {
   setTimeout(() => {
     if (downloadProgressPercentage.value !== 100) {
-      stopSaveFiles()
+      stopDownloadFiles()
     } else {
       downloadProgressPercentage.value = 0
     }
@@ -1455,7 +1450,7 @@ const watchContextMenu = () => {
     if (data) {
       const {type} = data;
       if (type === 0) {
-        const selectedPaths = selectedImages.value.keys();
+        const selectedPaths = selectedPreviewList.value.keys();
         for (let path of selectedPaths) {
           CanvasManager.deleteCanvas(path)
           availableCanvas.value.delete(path)
@@ -1464,12 +1459,12 @@ const watchContextMenu = () => {
             selectedElement.value.previewElement = null
           }
         }
-        selectedImages.value.clear();
+        selectedPreviewList.value.clear();
       } else if (type === 1) {
 
         const newSettings = []
 
-        const paths = Array.from(selectedImages.value.keys());
+        const paths = Array.from(selectedPreviewList.value.keys());
 
         const selectedCanvas = CanvasManager.getCanvas(selectedElement.value.path);
 
@@ -1480,11 +1475,8 @@ const watchContextMenu = () => {
           const nextCanvas = CanvasManager.getCanvas(paths[i]);
 
           beforeCanvas.hide()
-
           await nextTick()
-
           nextCanvas.show()
-
           await nextTick()
 
           if (!nextCanvas.completed) {
@@ -1533,21 +1525,34 @@ const watchContextMenu = () => {
         synchronousMode.value = data.method
         synchronizeTemplate()
       } else if (type === 4) {
-        const paths = Array.from(selectedImages.value.keys());
-        paths.forEach(path => clearAllLabels(path))
+        const paths = Array.from(selectedPreviewList.value.keys());
+        paths.forEach(path => clearCanvasLabels(path))
       } else if (type === 5) {
-        const paths = Array.from(selectedImages.value.keys());
-        paths.forEach(path => resetSettings(path))
+        const paths = Array.from(selectedPreviewList.value.keys());
+        paths.forEach(path => clearCanvas(path))
       }
     }
   });
 }
 
-const resetSettings = (path) => {
+const clearCanvas = (path) => {
   const canvas = clearAllLabels(path);
   canvas.settings.border = new BorderSettings()
   renderBorders(path)
 }
+
+const clearCanvasLabels = (path) => {
+  const canvas = CanvasManager.getCanvas(path);
+  for (let element of canvas.settings.images.keys()) {
+    element.remove()
+  }
+  for (let element of canvas.settings.texts.keys()) {
+    element.remove()
+  }
+  canvas.settings.texts.clear()
+  canvas.settings.images.clear()
+}
+
 
 const resetMetadataSettings = () => {
   projectSettings.value.metadata = _.cloneDeep(originalMetadata)
@@ -1574,33 +1579,6 @@ const handleFocalLength = (type) => {
   }
 }
 
-const clearAllLabels = (path) => {
-  const canvas = CanvasManager.getCanvas(path);
-  for (let element of canvas.settings.images.keys()) {
-    element.remove()
-  }
-  for (let element of canvas.settings.texts.keys()) {
-    element.remove()
-  }
-  canvas.settings.texts.clear()
-  canvas.settings.images.clear()
-  return canvas
-}
-
-const watchCtrlA = () => {
-  window.addEventListener('keydown', event => {
-    if (event.ctrlKey && event.key === 'a') {
-      event.preventDefault();
-      if (selectedImages.value.size) {
-        const elements = document.querySelectorAll('img.imageItem');
-        elements.forEach(element => {
-          element.classList.add('active');
-          selectedImages.value.set(element.getAttribute('path'), element)
-        })
-      }
-    }
-  });
-}
 
 const stopProjectSettingsWatch = watch(projectSettings, (newVal, oldVal) => {
   const settings = _.cloneDeep(newVal);
@@ -1804,17 +1782,6 @@ const stopWatchImageZIndex = watch(() => imageOptions.value.zIndex, (newVal, old
   }
 })
 
-// const stopWatchPhotoMetadata = watch(() => metadataOptions, (newVal, oldVal) => {
-//   if (selectedElement.value.path) {
-//     const canvas = CanvasManager.getCanvas(selectedElement.value.path);
-//     canvas.metadata = _.cloneDeep(newVal)
-//   }
-// }, {
-//   //深度监视（监视属性变化）
-//   deep: true,
-// })
-
-
 const renameTemplate = () => {
   if (!renameTemplateForm) return
   renameTemplateForm.value.validate(async (valid, fields) => {
@@ -1861,7 +1828,7 @@ const synchronizeTemplate = () => {
       })
     }
 
-    selectedImages.value.forEach((image, path) => {
+    selectedPreviewList.value.forEach((image, path) => {
       if (selectedElement.value.path !== path) {
         let {settings: originalSettings} = CanvasManager.getCanvas(path);
         for (let element of originalSettings.images.keys()) {
@@ -1921,9 +1888,7 @@ const handleSortingChanged = (el, dragaElement, targetElement) => {
       }
     }
   }
-
   templates.value = newTemplates
-
   localStorage.setItem('templates', JSON.stringify(newTemplates))
 }
 
@@ -1937,7 +1902,7 @@ const openEnableTemplateDialog = ({settings}) => {
 
 
 const enableTemplate = () => {
-  for (let path of selectedImages.value.keys()) {
+  for (let path of selectedPreviewList.value.keys()) {
     let {settings: originalSettings} = CanvasManager.getCanvas(path);
     for (let element of originalSettings.images.keys()) {
       element.remove()
@@ -2060,7 +2025,6 @@ const useTemplate = async (targetSettings, path) => {
     canvasElement.appendChild(element)
     canvas.settings.texts.set(element, settings)
   }
-
 }
 
 
@@ -2145,9 +2109,7 @@ const refreshTemplate = async (path) => {
   })
 
   await nextTick()
-
   refreshPositionInformation(path)
-
   canvas.isUpdate = false
 }
 
@@ -2163,14 +2125,15 @@ const loadTextLabels = () => {
 }
 
 async function handlePreview(event, canvas) {
+
   if (!event.ctrlKey && !event.shiftKey) {
-    if (!selectedImages.value.has(canvas.path)) {
+    if (!selectedPreviewList.value.has(canvas.path)) {
       // 清空选中元素
-      const selectedElements = selectedImages.value.values();
+      const selectedElements = selectedPreviewList.value.values();
       for (let element of selectedElements) {
         element.classList.remove('active')
       }
-      selectedImages.value.clear()
+      selectedPreviewList.value.clear()
     }
 
     const beforePath = selectedElement.value.path;
@@ -2194,7 +2157,7 @@ async function handlePreview(event, canvas) {
     selectedElement.value.previewElement = event.target;
 
     // 添加当前选中元素到选中列表中
-    selectedImages.value.set(canvas.path, event.target)
+    selectedPreviewList.value.set(canvas.path, event.target)
     event.target.classList.add('active')
   }
 }
@@ -2320,26 +2283,6 @@ const renderCanvas = async (canvas) => {
   }
 }
 
-const monitorScrollbar = () => {
-  let scrollTimeout = null;
-  previewContainer.value.addEventListener('scroll', event => {
-    const canvas = CanvasManager.getCanvas(selectedElement.value.path);
-    if (!canvas) return
-
-    // 清除之前的定时器
-    if (scrollTimeout) {
-      clearTimeout(scrollTimeout);
-    }
-
-    // 设置新的定时器（防抖：100ms）
-    scrollTimeout = setTimeout(() => {
-      const target = event.target;
-      // 设置滚动条参数到 image 对象
-      canvas.scrollTop = target.scrollTop;
-      canvas.scrollLeft = target.scrollLeft;
-    }, 100);
-  });
-}
 
 const handleScrollBarToCenter = () => {
   if (selectedElement.value && selectedElement.value.path) {
@@ -2367,11 +2310,12 @@ function moveScrollBarToCenter(canvas) {
   canvas.scrollTop = Math.max(0, scrollTop);
 }
 
-const handleCtrlClick = (event, canvas) => {
+
+const handleSelectPreviewElement = (event, canvas) => {
   const element = event.target;
   if (element.classList.contains('active')) {
     element.classList.remove('active');
-    selectedImages.value.delete(canvas.path)
+    selectedPreviewList.value.delete(canvas.path)
     if (selectedElement.value.path === canvas.path) {
       selectedElement.value.path = '';
       selectedElement.value.previewElement = null
@@ -2379,14 +2323,14 @@ const handleCtrlClick = (event, canvas) => {
     }
   } else {
     element.classList.add('active');
-    selectedImages.value.set(canvas.path, element)
+    selectedPreviewList.value.set(canvas.path, element)
   }
 }
 
 
-const handleShiftClick = (event, canvas) => {
-  if (selectedImages.value.size) {
-    const elements = document.documentElement.querySelectorAll('img.imageItem');
+const handleSelectMultiplePreviewElements = (event, canvas) => {
+  if (selectedPreviewList.value.size) {
+    const elements = document.documentElement.querySelectorAll('img.previewItem');
     let index = -1;
     const beforeElements = [];
     const afterElements = [];
@@ -2414,13 +2358,13 @@ const handleShiftClick = (event, canvas) => {
           const original = usefulElement.originalElement;
           if (!usefulElement.active) {
             original.classList.add('active')
-            selectedImages.value.set(original.getAttribute('path'), original)
+            selectedPreviewList.value.set(original.getAttribute('path'), original)
           }
         }
         for (let afterElement of afterElements) {
           const original = afterElement.originalElement;
           if (afterElement.active) {
-            selectedImages.value.delete(original.getAttribute('path'))
+            selectedPreviewList.value.delete(original.getAttribute('path'))
             original.classList.remove('active')
           }
         }
@@ -2436,7 +2380,7 @@ const handleShiftClick = (event, canvas) => {
           const original = usefulElement.originalElement;
           if (!usefulElement.active) {
             original.classList.add('active')
-            selectedImages.value.set(original.getAttribute('path'), original)
+            selectedPreviewList.value.set(original.getAttribute('path'), original)
           }
         }
         return
@@ -2549,6 +2493,7 @@ const handleBorders = async () => {
 
 
 const renderBorders = async (path) => {
+
   const canvas = CanvasManager.getCanvas(path)
   const imageElement = canvas.getImageElement();
   if (canvas.path === selectedElement.value.path) {
@@ -2615,7 +2560,7 @@ const renderBorders = async (path) => {
 }
 
 
-const handleWheel = (e) => {
+const handleMovePreviewList = (e) => {
   // 1. 阻止默认的垂直滚动行为
   e.preventDefault();
   // 2. 获取滚轮滚动方向（deltaY > 0 向下滚，< 0 向上滚）
@@ -2641,15 +2586,12 @@ const handleBeforeOne = async () => {
     if (currentElement) {
       currentElement.setAttribute('selected', 'false')
       currentElement.classList.remove('active')
-      selectedImages.value.delete(currentPath)
+      selectedPreviewList.value.delete(currentPath)
     }
 
     await nextTick()
-
     beforeCanvas.show()
-
     await nextTick()
-
     await renderCanvas(beforeCanvas)
 
     const beforeElement = currentElement.previousElementSibling || currentElement.parentNode.lastElementChild;
@@ -2659,7 +2601,7 @@ const handleBeforeOne = async () => {
       beforeElement.setAttribute('selected', 'true')
       selectedElement.value.path = beforeCanvas.path
       selectedElement.value.previewElement = beforeElement
-      selectedImages.value.set(beforeCanvas.path, beforeElement)
+      selectedPreviewList.value.set(beforeCanvas.path, beforeElement)
       // 方式一，较为卡顿，过渡不流畅
       // selectedElement.value.previewElement.scrollIntoView({
       //   behavior: 'smooth',
@@ -2674,6 +2616,7 @@ const handleBeforeOne = async () => {
 }
 
 const handleNextOne = async () => {
+
   const {path: currentPath, previewElement: currentElement} = selectedElement.value;
   if (!currentPath) return
   const currentCanvas = availableCanvas.value.get(currentPath);
@@ -2682,17 +2625,13 @@ const handleNextOne = async () => {
     if (currentElement) {
       currentElement.setAttribute('selected', 'false')
       currentElement.classList.remove('active')
-      selectedImages.value.delete(currentPath)
+      selectedPreviewList.value.delete(currentPath)
     }
 
     currentCanvas.hide()
-
     await nextTick()
-
     nextCanvas.show()
-
     await nextTick()
-
     await renderCanvas(nextCanvas)
 
     const nextElement = currentElement.nextElementSibling || currentElement.parentNode.firstElementChild;
@@ -2702,7 +2641,7 @@ const handleNextOne = async () => {
       nextElement.setAttribute('selected', 'true')
       selectedElement.value.path = nextCanvas.path
       selectedElement.value.previewElement = nextElement
-      selectedImages.value.set(nextCanvas.path, nextElement)
+      selectedPreviewList.value.set(nextCanvas.path, nextElement)
       // 方式一，较为卡顿，过渡不流畅
       // selectedElement.value.previewElement.scrollIntoView({
       //   behavior: 'smooth',
@@ -2757,6 +2696,39 @@ const openSubMenu = (index) => {
   }
 }
 
+
+const handleSelectAllPreviewElements = (event) => {
+  if (event.ctrlKey && event.key === 'a') {
+    event.preventDefault();
+    if (selectedPreviewList.value.size) {
+      const elements = document.querySelectorAll('img.previewItem');
+      elements.forEach(element => {
+        element.classList.add('active');
+        selectedPreviewList.value.set(element.getAttribute('path'), element)
+      })
+    }
+  }
+}
+
+const handleMoveScrollbar = (event) => {
+  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+  if (!canvas) return
+
+  // 清除之前的定时器
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout);
+  }
+
+  // 设置新的定时器（防抖：100ms）
+  scrollTimeout = setTimeout(() => {
+    const target = event.target;
+    // 设置滚动条参数到 image 对象
+    canvas.scrollTop = target.scrollTop;
+    canvas.scrollLeft = target.scrollLeft;
+  }, 100);
+
+}
+
 const handleKeyDownMoveElement = (event) => {
 
   const validKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
@@ -2796,7 +2768,6 @@ const handleKeyDownMoveElement = (event) => {
       break;
   }
 }
-
 
 const handleKeyUpStopMoveElement = (event) => {
 
@@ -3224,6 +3195,9 @@ const bingEventListener = () => {
   previewContainer.value.addEventListener('dragover', handleDragover);
   previewContainer.value.addEventListener('dragleave', handleDragleave);
 
+  previewContainer.value.addEventListener('scroll', handleMoveScrollbar);
+  previewList.value.addEventListener('keydown', handleSelectAllPreviewElements);
+
   previewContainer.value.addEventListener('mousedown', handleDragMoveElement);
   previewContainer.value.addEventListener('keydown', handleKeyDownMoveElement);
   previewContainer.value.addEventListener('keyup', handleKeyUpStopMoveElement);
@@ -3241,6 +3215,9 @@ const unbindEventListener = () => {
   previewContainer.value.removeEventListener('dragover', handleDragover);
   previewContainer.value.removeEventListener('dragleave', handleDragleave);
 
+  previewContainer.value.removeEventListener('scroll', handleMoveScrollbar);
+  previewList.value.removeEventListener('keydown', handleSelectAllPreviewElements);
+
   previewContainer.value.removeEventListener('mousedown', handleDragMoveElement);
   previewContainer.value.removeEventListener('keydown', handleKeyDownMoveElement);
   previewContainer.value.removeEventListener('keyup', handleKeyUpStopMoveElement);
@@ -3251,7 +3228,6 @@ const unbindEventListener = () => {
 
 
 onMounted(() => {
-  monitorScrollbar()
   createThreadPool()
   loadTemplates()
   loadTextLabels()
@@ -3260,7 +3236,6 @@ onMounted(() => {
   watchContextMenu()
   watchTemplateContextMenu()
   watchEditorLabel()
-  watchCtrlA()
   watchDownloadProgress()
   editorOutputSettings()
   loadProjectSettings()
@@ -3739,7 +3714,7 @@ onBeforeUnmount(() => {
       }
     }
 
-    .image-list {
+    .preview-list {
       box-sizing: border-box;
       width: 100%;
       height: 75%;
@@ -3749,7 +3724,7 @@ onBeforeUnmount(() => {
       overflow-x: auto;
       scroll-behavior: smooth; /* 可选，使滚动更平滑 */
       white-space: nowrap; /* 防止内容换行 */
-
+      outline: none;
       img {
         box-sizing: border-box;
         background: grey;
