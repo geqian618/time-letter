@@ -1053,7 +1053,7 @@ const selectedElement = ref({
   draggableElement: null
 });
 
-const selected = ref(null)
+let clickTimeout = null;
 
 const selectedImages = ref(new Map())
 
@@ -2043,28 +2043,22 @@ const useTemplate = async (targetSettings, path) => {
 
   for (let settings of images) {
     const factory = new DraggableElementFactory(settings, canvas.metadata);
-    const element = await factory.getElement();
-
+    const element = await factory.getElement()
     if (path === selectedElement.value.path) {
       renderElementPosition(canvas, settings, element);
     }
-
     canvasElement.appendChild(element)
     canvas.settings.images.set(element, settings)
-    makeDraggable(element, path)
   }
 
   for (let settings of texts) {
     const factory = new DraggableElementFactory(settings, canvas.metadata);
     const element = await factory.getElement();
-
     if (path === selectedElement.value.path) {
       renderElementPosition(canvas, settings, element)
     }
-
     canvasElement.appendChild(element)
     canvas.settings.texts.set(element, settings)
-    makeDraggable(element, path)
   }
 
 }
@@ -2168,12 +2162,6 @@ const loadTextLabels = () => {
   textLabels.value = jsonStr ? JSON.parse(jsonStr) : []
 }
 
-const clearAllEventListener = () => {
-  document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
-    element.removeEventListener('dragstart', handleDragStart)
-  });
-}
-
 async function handlePreview(event, canvas) {
   if (!event.ctrlKey && !event.shiftKey) {
     if (!selectedImages.value.has(canvas.path)) {
@@ -2216,6 +2204,20 @@ const setScrollBarPosition = (canvas) => {
   previewContainer.value.scrollLeft = canvas.scrollLeft;
   previewContainer.value.scrollTop = canvas.scrollTop;
 }
+
+const initCanvasSize = () => {
+  setTimeout(() => {
+    // 获取窗口宽高
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    // 设置CSS自定义属性
+    previewContainer.value.style.setProperty('--canvas-width', `${windowWidth}px`);
+    previewContainer.value.style.setProperty('--canvas-height', `${windowHeight}px`);
+    previewContainer.value.idealWidth = Number.parseFloat(previewContainer.value.offsetWidth)
+    previewContainer.value.idealHeight = Number.parseFloat(previewContainer.value.offsetHeight)
+  }, 1000)
+}
+
 
 const initializeCanvasLayout = async (canvas) => {
   const imageElement = canvas.getImageElement();
@@ -2265,8 +2267,6 @@ const initializeCanvasLayout = async (canvas) => {
   const centerY = canvasHeight / 2;
 
   moveScrollBarToCenter(canvas)
-
-  monitorPutElements(canvasElement, canvas);
 
   // 滚轮缩放事件
   canvasElement.addEventListener('wheel', function (e) {
@@ -2733,6 +2733,334 @@ function scrollToCenterHorizontal(container, element) {
   }, 200)
 }
 
+// 处理子菜单展开事件
+const handleOpen = (index) => {
+  // 如果索引不在已展开数组中，则添加
+  if (!openedMenus.value.includes(index)) {
+    openedMenus.value.push(index)
+  }
+}
+
+// 处理子菜单收起事件
+const handleClose = (index) => {
+  // 从已展开数组中移除对应索引
+  const idx = openedMenus.value.indexOf(index)
+  if (idx !== -1) {
+    openedMenus.value.splice(idx, 1)
+  }
+}
+
+// 展开指定索引的子菜单（未展开时才展开）
+const openSubMenu = (index) => {
+  if (menuRef.value && !openedMenus.value.includes(index)) {
+    menuRef.value.open(index)
+  }
+}
+
+const handleKeyDownMoveElement = (event) => {
+
+  const validKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+
+  if (!validKeys.includes(event.key)) return;
+
+  event.preventDefault();
+
+  const dragElement = selectedElement.value.draggableElement;
+
+  if (dragElement?.getAttribute('selected') !== 'true') return;
+
+  const step = projectSettings.value.others.movingStepSize;
+
+  // 获取当前位置
+  const left = parseInt(dragElement.style.left) || 0;
+  const top = parseInt(dragElement.style.top) || 0;
+  const right = parseInt(dragElement.style.right) || 0;
+  const bottom = parseInt(dragElement.style.bottom) || 0;
+
+  switch (event.key) {
+    case 'ArrowUp':
+      dragElement.style.top = `${top - step}px`;
+      dragElement.style.bottom = `${bottom + step}px`;
+      break;
+    case 'ArrowDown':
+      dragElement.style.bottom = `${bottom - step}px`;
+      dragElement.style.top = `${top + step}px`;
+      break;
+    case 'ArrowLeft':
+      dragElement.style.left = `${left - step}px`;
+      dragElement.style.right = `${right + step}px`;
+      break;
+    case 'ArrowRight':
+      dragElement.style.right = `${right - step}px`;
+      dragElement.style.left = `${left + step}px`;
+      break;
+  }
+}
+
+
+const handleKeyUpStopMoveElement = (event) => {
+
+  const validKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+
+  if (!validKeys.includes(event.key)) return;
+
+  const dragElement = selectedElement.value.draggableElement;
+
+  if (dragElement?.getAttribute('selected') !== 'true') return;
+
+  // 取消之前未执行的动画帧
+  if (pendingAnimationFrame) {
+    cancelAnimationFrame(pendingAnimationFrame);
+  }
+
+  // 安排新的执行
+  pendingAnimationFrame = requestAnimationFrame(() => {
+    const updateCanvas = CanvasManager.getCanvas(selectedElement.value.path);
+    const updateSettings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
+    updateElementPosition(updateCanvas, dragElement, updateSettings);
+    pendingAnimationFrame = null;
+  });
+}
+
+// 取消选择
+const handleCancelSelectedElement = (event) => {
+  const dragElement = selectedElement.value.draggableElement;
+  if (dragElement === null || event.target === selectedElement.value.draggableElement) return;
+  if (dragElement.getAttribute('selected') === 'true') {
+    dragElement.style.outline = 'none'
+    dragElement.setAttribute('selected', 'false')
+    selectedElement.value.draggableElement = null
+  }
+}
+
+// 删除元素
+const handleRemoveElement = (event) => {
+  const dragElement = selectedElement.value.draggableElement;
+  if (dragElement === null || dragElement.getAttribute('selected') !== 'true') return;
+  // 检测 Delete (46) 或 Backspace (8) 键
+  if (event.key === 'Delete' || event.key === 'Backspace' || event.keyCode === 46 || event.keyCode === 8) {
+    // event.preventDefault();
+    if (dragElement.getAttribute('selected') === 'true') {
+      if ((dragElement instanceof HTMLDivElement) && !dragElement.querySelector('input')) {
+        CanvasManager.deleteElement(selectedElement.value.path, dragElement)
+        dragElement.remove()
+      }
+      if (dragElement instanceof HTMLImageElement) {
+        CanvasManager.deleteElement(selectedElement.value.path, dragElement)
+        dragElement.remove()
+      }
+    }
+  }
+}
+
+// 编辑文本
+const handleEditorElement = (event) => {
+
+  event.preventDefault();
+
+  if (event.target.getAttribute('draggable') !== 'true') return
+
+  clearTimeout(clickTimeout);
+
+  const dragElement = event.target;
+
+  const originalText = dragElement.textContent;
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = originalText;
+  input.style.width = 'fit-content'
+  input.style.height = dragElement.style.height
+  input.style.padding = '0 2px'
+  input.style.outline = '1px solid white'
+  input.style.inset = '0 0 0 0'
+  input.style.position = 'absolute'
+  input.style.zIndex = '9999'
+
+  dragElement.appendChild(input);
+
+  input.focus();
+  input.select();
+
+  // 添加全局点击监听器
+  const handleDocumentClick = (e) => {
+    if (!dragElement.contains(e.target)) {
+      // 点击了输入框外部，触发 blur
+      input.blur();
+    }
+  };
+
+  // 添加键盘事件
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      input.blur();
+    }
+    if (e.key === 'Escape') {
+      // ESC 键恢复原始文本
+      dragElement.innerHTML = originalText;
+      input.remove();
+      document.removeEventListener('click', handleDocumentClick);
+    }
+  });
+
+  // 失去焦点时保存
+  input.addEventListener('blur', function () {
+    const newValue = input.value;
+    input.remove();
+    dragElement.innerHTML = newValue ? newValue : '';
+    if (!newValue) {
+      dragElement.remove();
+      CanvasManager.deleteElement(selectedElement.value.path, dragElement);
+    } else {
+      const settings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
+      settings.content = newValue;
+    }
+    // 移除全局监听器
+    document.removeEventListener('click', handleDocumentClick);
+  });
+
+  // 添加全局点击监听
+  setTimeout(() => {
+    document.addEventListener('click', handleDocumentClick);
+  }, 0);
+
+}
+
+// 选择元素
+const handleSelectedElement = (dragElement) => {
+  // 清除之前的定时器（如果有）
+  clearTimeout(clickTimeout);
+  // 设置新的定时器
+  clickTimeout = setTimeout(function () {
+    dragElement.focus()
+    dragElement.style.outline = '1px dashed #f00'
+    dragElement.setAttribute('selected', 'true')
+    selectedElement.value.draggableElement = dragElement
+    const settings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
+    if (dragElement instanceof HTMLImageElement) {
+      imageOptions.value = settings.options
+      if (projectSettings.value.others.optionAnchorPoint) {
+        openSubMenu('4')
+        nextTick(() => {
+          document.getElementById('image-options').scrollIntoView({behavior: 'smooth'});
+        })
+      }
+    } else {
+      textOptions.value = settings.options
+      if (projectSettings.value.others.optionAnchorPoint) {
+        openSubMenu('3')
+        nextTick(() => {
+          document.getElementById('text-options').scrollIntoView({behavior: 'smooth'});
+        })
+      }
+    }
+  }, 200); // 200毫秒内没有再次点击，则视为单击
+}
+
+const handleDragMoveElement = (event) => {
+
+  event.preventDefault();
+
+  if (event.target.getAttribute('draggable') !== 'true') return
+
+  const dragElement = event.target;
+
+  let isDragging = false;
+
+  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+
+  const imagesElement = canvas.getImageElement();
+
+  const canvasElement = imagesElement.parentNode;
+
+  // 记录初始鼠标位置和元素位置
+  let startX = event.clientX;
+  let startY = event.clientY;
+
+  const elementWidth = parseFloat(window.getComputedStyle(dragElement).width);
+  const elementHeight = parseFloat(window.getComputedStyle(dragElement).height);
+  let initialLeft = parseFloat(dragElement.style.left) || canvasElement.offsetWidth - parseFloat(dragElement.style.right) - elementWidth;
+  let initialTop = parseFloat(dragElement.style.top) || canvasElement.offsetHeight - parseFloat(dragElement.style.bottom) - elementHeight;
+
+  document.onmousemove = function elementDrag(event) {
+
+    event.preventDefault();
+
+    if (dragElement.getAttribute('selected') === 'true') {
+      return
+    }
+
+    isDragging = true
+
+    const targetX = event.clientX;
+
+    const targetY = event.clientY;
+
+    const backgroundElement = canvasElement.querySelector('.image-background');
+
+    const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement
+
+    // 计算移动距离（考虑旋转后的坐标系）
+    const dx = (targetX - startX) / canvas.scale;
+    const dy = (targetY - startY) / canvas.scale;
+
+    // 计算新位置
+    const elementLeft = initialLeft + dx;
+    const elementTop = initialTop + dy;
+    const elementRight = canvasWidth - elementLeft - elementWidth;
+    const elementBottom = canvasHeight - elementTop - elementHeight
+
+    dragElement.style.left = elementLeft + 'px';
+    dragElement.style.top = elementTop + 'px';
+    dragElement.style.right = elementRight + 'px';
+    dragElement.style.bottom = elementBottom + 'px';
+
+    const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
+    const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
+    const backgroundLeft = Number.parseFloat(backgroundElement.style.left);
+    const backgroundRight = Number.parseFloat(backgroundElement.style.right);
+    const backgroundTop = Number.parseFloat(backgroundElement.style.top);
+    const backgroundBottom = Number.parseFloat(backgroundElement.style.bottom);
+
+    let references = []
+
+    let offsetLeft = elementLeft - backgroundLeft
+    let offsetLeftRatio = offsetLeft / backgroundWidth
+
+    let offsetRight = elementRight - backgroundRight
+    let offsetRightRatio = offsetRight / backgroundWidth
+
+    let offsetTop = elementTop - backgroundTop
+    let offsetTopRatio = offsetTop / backgroundHeight
+
+    let offsetBottom = elementBottom - backgroundBottom
+    let offsetBottomRatio = offsetBottom / backgroundHeight
+
+    elementLeft > elementRight ? references.push('right') : references.push('left')
+
+    elementTop > elementBottom ? references.push('bottom') : references.push('top')
+
+    const settings = (dragElement instanceof HTMLDivElement) ? canvas.settings.texts.get(dragElement) : canvas.settings.images.get(dragElement)
+
+    settings.references = references
+    settings.offsetLeft = offsetLeft
+    settings.offsetLeftRatio = offsetLeftRatio
+    settings.offsetRight = offsetRight
+    settings.offsetRightRatio = offsetRightRatio
+    settings.offsetTop = offsetTop
+    settings.offsetTopRatio = offsetTopRatio
+    settings.offsetBottom = offsetBottom
+    settings.offsetBottomRatio = offsetBottomRatio
+  }
+  document.onmouseup = function closeDragElement(event) {
+    document.onmouseup = null;
+    document.onmousemove = null;
+    const target = event.target;
+    if (!isDragging && target.getAttribute('draggable') === 'true') {
+      handleSelectedElement(target)
+    }
+  }
+}
 
 const handleDragStart = function (event) {
 
@@ -2776,468 +3104,154 @@ const handleDragStart = function (event) {
   event.dataTransfer.effectAllowed = 'move';
 }
 
-
-const monitorDraggableLabelElements = () => {
-  // 设置拖拽事件m
-  document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
-    element.addEventListener('dragstart', handleDragStart);
-  });
-}
-
-const monitorPutElements = (canvasElement, canvas) => {
-
-  canvasElement.addEventListener('dragover', event =>
-      event.preventDefault()
-  );
-
-  canvasElement.addEventListener('dragleave', () => {
-        // imageElement.style.borderColor = '#95a5a6'
-      }
-  );
-
-  // 修复放置逻辑
-  canvasElement.addEventListener('drop', async function (event) {
-
-    event.preventDefault();
-
-    const data = JSON.parse(event.dataTransfer.getData('text/plain'))
-
-    const {settings: elementSettings, mouse: {offsetX, offsetY}} = data
-
-    const factory = new DraggableElementFactory(elementSettings, metadataOptions.value);
-
-    const dragElement = await factory.getElement();
-
-    if (!dragElement) return;
-
-    const mouseX = event.clientX;
-
-    const mouseY = event.clientY;
-
-    const backgroundElement = canvasElement.querySelector('.image-background');
-
-    const canvasRect = canvasElement.getBoundingClientRect();
-
-    // 关键：必须设为绝对定位
-    dragElement.style.position = 'absolute'
-
-    // 关键：将元素添加到容器
-    canvasElement.appendChild(dragElement);
-
-    const computedStyle = window.getComputedStyle(dragElement);
-    let elementWidth = Number.parseFloat(computedStyle.width)
-    let elementHeight = Number.parseFloat(computedStyle.height)
-
-    const elementLeft = (mouseX - canvasRect.left - offsetX) / canvas.scale;
-    const elementTop = (mouseY - canvasRect.top - offsetY) / canvas.scale;
-    const elementRight = canvasElement.offsetWidth - elementLeft - elementWidth;
-    const elementBottom = canvasElement.offsetHeight - elementTop - elementHeight
-
-    // 设置元素定位
-    dragElement.style.left = `${elementLeft}px`;
-    dragElement.style.right = `${elementRight}px`;
-    dragElement.style.top = `${elementTop}px`;
-    dragElement.style.bottom = `${elementBottom}px`;
-
-    const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
-    const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
-    const backgroundLeft = Number.parseFloat(backgroundElement.style.left);
-    const backgroundRight = Number.parseFloat(backgroundElement.style.right);
-    const backgroundTop = Number.parseFloat(backgroundElement.style.top);
-    const backgroundBottom = Number.parseFloat(backgroundElement.style.bottom);
-
-    let references = []
-
-    let offsetLeft = elementLeft - backgroundLeft
-    let offsetLeftRatio = offsetLeft / backgroundWidth
-
-    let offsetRight = elementRight - backgroundRight
-    let offsetRightRatio = offsetRight / backgroundWidth
-
-    let offsetTop = elementTop - backgroundTop
-    let offsetTopRatio = offsetTop / backgroundHeight
-
-    let offsetBottom = elementBottom - backgroundBottom
-    let offsetBottomRatio = offsetBottom / backgroundHeight
-
-    elementLeft > elementRight ? references.push('right') : references.push('left')
-
-    elementTop > elementBottom ? references.push('bottom') : references.push('top')
-
-    const settings = elementSettings
-
-    settings.references = references
-    settings.offsetLeft = offsetLeft
-    settings.offsetLeftRatio = offsetLeftRatio
-    settings.offsetRight = offsetRight
-    settings.offsetRightRatio = offsetRightRatio
-    settings.offsetTop = offsetTop
-    settings.offsetTopRatio = offsetTopRatio
-    settings.offsetBottom = offsetBottom
-    settings.offsetBottomRatio = offsetBottomRatio
-    settings.tagName = dragElement.tagName.toLowerCase()
-    settings.width = elementWidth
-    settings.height = elementHeight
-
-    if (dragElement instanceof HTMLImageElement) {
-      settings.originalWidth = elementWidth
-      settings.originalHeight = elementHeight
-      settings.options.imageHeightRatio = elementHeight / backgroundHeight
-      settings.options.imageWidthRatio = elementWidth / backgroundWidth
-    } else {
-      const fontSize = Number.parseInt(computedStyle.fontSize);
-      settings.options.fontSizeRatio = fontSize / backgroundWidth
-    }
-
-    const elementMapping = (dragElement instanceof HTMLDivElement) ? canvas.settings.texts : canvas.settings.images;
-
-    elementMapping.set(dragElement, settings)
-
-    makeDraggable(dragElement, selectedElement.value.path)
-
-  });
-
-};
-
-
-// 处理子菜单展开事件
-const handleOpen = (index) => {
-  // 如果索引不在已展开数组中，则添加
-  if (!openedMenus.value.includes(index)) {
-    openedMenus.value.push(index)
-  }
-}
-
-// 处理子菜单收起事件
-const handleClose = (index) => {
-  // 从已展开数组中移除对应索引
-  const idx = openedMenus.value.indexOf(index)
-  if (idx !== -1) {
-    openedMenus.value.splice(idx, 1)
-  }
-}
-
-// 展开指定索引的子菜单（未展开时才展开）
-const openSubMenu = (index) => {
-  if (menuRef.value && !openedMenus.value.includes(index)) {
-    menuRef.value.open(index)
-  }
-}
-
-
-// 使形状可拖动
-function makeDraggable(dragElement, path) {
-
-  let clickTimeout = null;
-  let mouseSetupX, mouseSetupY
-  const canvas = CanvasManager.getCanvas(path);
-  const imagesElement = canvas.getImageElement();
-
-  // 鼠标按下
-  dragElement.onmousedown = function dragMouseDown(event) {
-
-    event.preventDefault();
-
-    const canvasElement = imagesElement.parentNode;
-
-    // 记录初始鼠标位置和元素位置
-    let startX = event.clientX;
-    let startY = event.clientY;
-
-    mouseSetupX = event.clientX
-    mouseSetupY = event.clientY
-
-    const elementWidth = parseFloat(window.getComputedStyle(dragElement).width);
-    const elementHeight = parseFloat(window.getComputedStyle(dragElement).height);
-    let initialLeft = parseFloat(dragElement.style.left) || canvasElement.offsetWidth - parseFloat(dragElement.style.right) - elementWidth;
-    let initialTop = parseFloat(dragElement.style.top) || canvasElement.offsetHeight - parseFloat(dragElement.style.bottom) - elementHeight;
-
-    // 获取鼠标位置
-    // mouseOffsetLeft = (startX - dragElementRect.left) / image.scale
-    // mouseOffsetRight = (dragElementRect.right - startX) / image.scale
-    // mouseOffsetTop = (startY - dragElementRect.top) / image.scale
-    // mouseOffsetBottom = (dragElementRect.bottom - startY) / image.scale
-
-    document.onmousemove = function elementDrag(event) {
-
-      event.preventDefault();
-
-      if (dragElement.getAttribute('selected') === 'true') {
-        return
-      }
-
-      const mouseX = event.clientX;
-
-      const mouseY = event.clientY;
-
-      const backgroundElement = canvasElement.querySelector('.image-background');
-
-      const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement
-
-      // 计算移动距离（考虑旋转后的坐标系）
-      const dx = (mouseX - startX) / canvas.scale;
-      const dy = (mouseY - startY) / canvas.scale;
-
-      // 计算新位置
-      const elementLeft = initialLeft + dx;
-      const elementTop = initialTop + dy;
-      const elementRight = canvasWidth - elementLeft - elementWidth;
-      const elementBottom = canvasHeight - elementTop - elementHeight
-
-      dragElement.style.left = elementLeft + 'px';
-      dragElement.style.top = elementTop + 'px';
-      dragElement.style.right = elementRight + 'px';
-      dragElement.style.bottom = elementBottom + 'px';
-
-      const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
-      const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
-      const backgroundLeft = Number.parseFloat(backgroundElement.style.left);
-      const backgroundRight = Number.parseFloat(backgroundElement.style.right);
-      const backgroundTop = Number.parseFloat(backgroundElement.style.top);
-      const backgroundBottom = Number.parseFloat(backgroundElement.style.bottom);
-
-      let references = []
-
-      let offsetLeft = elementLeft - backgroundLeft
-      let offsetLeftRatio = offsetLeft / backgroundWidth
-
-      let offsetRight = elementRight - backgroundRight
-      let offsetRightRatio = offsetRight / backgroundWidth
-
-      let offsetTop = elementTop - backgroundTop
-      let offsetTopRatio = offsetTop / backgroundHeight
-
-      let offsetBottom = elementBottom - backgroundBottom
-      let offsetBottomRatio = offsetBottom / backgroundHeight
-
-      elementLeft > elementRight ? references.push('right') : references.push('left')
-
-      elementTop > elementBottom ? references.push('bottom') : references.push('top')
-
-      const settings = (dragElement instanceof HTMLDivElement) ? canvas.settings.texts.get(dragElement) : canvas.settings.images.get(dragElement)
-
-      settings.references = references
-      settings.offsetLeft = offsetLeft
-      settings.offsetLeftRatio = offsetLeftRatio
-      settings.offsetRight = offsetRight
-      settings.offsetRightRatio = offsetRightRatio
-      settings.offsetTop = offsetTop
-      settings.offsetTopRatio = offsetTopRatio
-      settings.offsetBottom = offsetBottom
-      settings.offsetBottomRatio = offsetBottomRatio
-    }
-    document.onmouseup = function closeDragElement() {
-      document.onmouseup = null;
-      document.onmousemove = null;
-    }
-  }
-
-  // 删除元素
-  dragElement.addEventListener('keydown', (event) => {
-    // 检测 Delete (46) 或 Backspace (8) 键
-    if (event.key === 'Delete' || event.key === 'Backspace' || event.keyCode === 46 || event.keyCode === 8) {
-      // event.preventDefault();
-      if (dragElement.getAttribute('selected') === 'true') {
-        if ((dragElement instanceof HTMLDivElement) && !dragElement.querySelector('input')) {
-          CanvasManager.deleteElement(selectedElement.value.path, dragElement)
-          dragElement.remove()
-        }
-        if (dragElement instanceof HTMLImageElement) {
-          CanvasManager.deleteElement(selectedElement.value.path, dragElement)
-          dragElement.remove()
-        }
-      }
-    }
-  })
-
-  // 选择元素
-  dragElement.addEventListener('click', (event) => {
-    if (event.clientX === mouseSetupX && event.clientY === mouseSetupY) {
-      // 清除之前的定时器（如果有）
-      clearTimeout(clickTimeout);
-      // 设置新的定时器
-      clickTimeout = setTimeout(function () {
-        dragElement.focus()
-        dragElement.style.outline = '1px dashed #f00'
-        dragElement.setAttribute('selected', 'true')
-        selectedElement.value.draggableElement = dragElement
-        if (dragElement instanceof HTMLImageElement) {
-          const settings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
-          imageOptions.value = settings.options
-          if (projectSettings.value.others.optionAnchorPoint) {
-            openSubMenu('4')
-            nextTick(() => {
-              document.getElementById('image-options').scrollIntoView({behavior: 'smooth'});
-            })
-          }
-        } else {
-          const settings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
-          textOptions.value = settings.options
-          if (projectSettings.value.others.optionAnchorPoint) {
-            openSubMenu('3')
-            nextTick(() => {
-              document.getElementById('text-options').scrollIntoView({behavior: 'smooth'});
-            })
-          }
-        }
-      }, 200); // 300毫秒内没有再次点击，则视为单击
-    }
-  })
-
-  // 取消选择
-  dragElement.parentNode.addEventListener('click', () => {
-    if (dragElement.getAttribute('selected') === 'true') {
-      dragElement.style.outline = 'none'
-      dragElement.setAttribute('selected', 'false')
-      selectedElement.value.draggableElement = null
-    }
-  })
-
-  // 双击弹出输入框
-  if (dragElement instanceof HTMLDivElement) {
-    dragElement.addEventListener('dblclick', (event) => {
-
-      // 双击时清除单击的定时器
-      clearTimeout(clickTimeout);
-
-      dragElement.setAttribute('selected', 'true')
-
-      // 保存原始文本
-      const originalText = dragElement.textContent;
-
-      // 创建输入框
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.value = originalText;
-      input.style.width = 'fit-content'
-      input.style.height = dragElement.style.height
-      input.style.padding = '0 2px'
-      input.style.outline = '1px solid white'
-
-      // 清空元素内容并添加输入框
-      dragElement.innerHTML = '';
-
-      dragElement.appendChild(input);
-
-      // 自动聚焦并全选文本
-      input.focus();
-      input.select();
-
-      // 绑定保存事件
-      input.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
-          input.blur()
-        }
-      });
-
-      // 失去焦点时保存
-      input.addEventListener('blur', function () {
-        const newValue = input.value;
-        const dragElement = input.parentNode
-        const type = dragElement.getAttribute('type');
-        input.remove()
-        dragElement.innerHTML = newValue ? newValue : ''
-        if (!newValue) {
-          dragElement.remove();
-          CanvasManager.deleteElement(selectedElement.value.path, dragElement)
-          return
-        }
-        dragElement.setAttribute('selected', 'false')
-        const settings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
-        settings.content = newValue
-      });
-    })
-  }
-}
-
-
-const handleMoveElement = (event) => {
-
-  const validKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
-
-  if (!validKeys.includes(event.key)) return;
+const handleDropElement = async function (event) {
 
   event.preventDefault();
 
-  const dragElement = selectedElement.value.draggableElement;
+  const data = JSON.parse(event.dataTransfer.getData('text/plain'))
 
-  if (dragElement?.getAttribute('selected') !== 'true') return;
+  const {settings: elementSettings, mouse: {offsetX, offsetY}} = data
 
-  const step = projectSettings.value.others.movingStepSize;
+  const factory = new DraggableElementFactory(elementSettings, metadataOptions.value);
 
-  // 获取当前位置
-  const left = parseInt(dragElement.style.left) || 0;
-  const top = parseInt(dragElement.style.top) || 0;
-  const right = parseInt(dragElement.style.right) || 0;
-  const bottom = parseInt(dragElement.style.bottom) || 0;
+  const dragElement = await factory.getElement();
 
-  switch (event.key) {
-    case 'ArrowUp':
-      dragElement.style.top = `${top - step}px`;
-      dragElement.style.bottom = `${bottom + step}px`;
-      break;
-    case 'ArrowDown':
-      dragElement.style.bottom = `${bottom - step}px`;
-      dragElement.style.top = `${top + step}px`;
-      break;
-    case 'ArrowLeft':
-      dragElement.style.left = `${left - step}px`;
-      dragElement.style.right = `${right + step}px`;
-      break;
-    case 'ArrowRight':
-      dragElement.style.right = `${right - step}px`;
-      dragElement.style.left = `${left + step}px`;
-      break;
+  if (!dragElement) return;
+
+  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+
+  const imageElement = canvas.getImageElement();
+
+  const canvasElement = imageElement.parentNode;
+
+  const backgroundElement = canvasElement.querySelector('.image-background');
+
+  const canvasRect = canvasElement.getBoundingClientRect();
+
+  const mouseX = event.clientX;
+
+  const mouseY = event.clientY;
+
+  // 关键：将元素添加到容器
+  canvasElement.appendChild(dragElement);
+
+  const computedStyle = window.getComputedStyle(dragElement);
+  let elementWidth = Number.parseFloat(computedStyle.width)
+  let elementHeight = Number.parseFloat(computedStyle.height)
+
+  const elementLeft = (mouseX - canvasRect.left - offsetX) / canvas.scale;
+  const elementTop = (mouseY - canvasRect.top - offsetY) / canvas.scale;
+  const elementRight = canvasElement.offsetWidth - elementLeft - elementWidth;
+  const elementBottom = canvasElement.offsetHeight - elementTop - elementHeight
+
+  // 设置元素定位
+  dragElement.style.left = `${elementLeft}px`;
+  dragElement.style.right = `${elementRight}px`;
+  dragElement.style.top = `${elementTop}px`;
+  dragElement.style.bottom = `${elementBottom}px`;
+
+  const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
+  const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
+  const backgroundLeft = Number.parseFloat(backgroundElement.style.left);
+  const backgroundRight = Number.parseFloat(backgroundElement.style.right);
+  const backgroundTop = Number.parseFloat(backgroundElement.style.top);
+  const backgroundBottom = Number.parseFloat(backgroundElement.style.bottom);
+
+  let references = []
+
+  let offsetLeft = elementLeft - backgroundLeft
+  let offsetLeftRatio = offsetLeft / backgroundWidth
+
+  let offsetRight = elementRight - backgroundRight
+  let offsetRightRatio = offsetRight / backgroundWidth
+
+  let offsetTop = elementTop - backgroundTop
+  let offsetTopRatio = offsetTop / backgroundHeight
+
+  let offsetBottom = elementBottom - backgroundBottom
+  let offsetBottomRatio = offsetBottom / backgroundHeight
+
+  elementLeft > elementRight ? references.push('right') : references.push('left')
+
+  elementTop > elementBottom ? references.push('bottom') : references.push('top')
+
+  const settings = elementSettings
+
+  settings.references = references
+  settings.offsetLeft = offsetLeft
+  settings.offsetLeftRatio = offsetLeftRatio
+  settings.offsetRight = offsetRight
+  settings.offsetRightRatio = offsetRightRatio
+  settings.offsetTop = offsetTop
+  settings.offsetTopRatio = offsetTopRatio
+  settings.offsetBottom = offsetBottom
+  settings.offsetBottomRatio = offsetBottomRatio
+  settings.tagName = dragElement.tagName.toLowerCase()
+  settings.width = elementWidth
+  settings.height = elementHeight
+
+  if (dragElement instanceof HTMLImageElement) {
+    settings.originalWidth = elementWidth
+    settings.originalHeight = elementHeight
+    settings.options.imageHeightRatio = elementHeight / backgroundHeight
+    settings.options.imageWidthRatio = elementWidth / backgroundWidth
+  } else {
+    const fontSize = Number.parseInt(computedStyle.fontSize);
+    settings.options.fontSizeRatio = fontSize / backgroundWidth
   }
+
+  const elementMapping = (dragElement instanceof HTMLDivElement) ? canvas.settings.texts : canvas.settings.images;
+
+  elementMapping.set(dragElement, settings)
 }
 
+const handleDragover = (event) => {
+  // 允许放置
+  event.preventDefault();
+}
 
-const handleStopMoveElement = (event) => {
-
-  const validKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
-
-  if (!validKeys.includes(event.key)) return;
-
-  const dragElement = selectedElement.value.draggableElement;
-
-  if (dragElement?.getAttribute('selected') !== 'true') return;
-
-  // 取消之前未执行的动画帧
-  if (pendingAnimationFrame) {
-    cancelAnimationFrame(pendingAnimationFrame);
-  }
-
-  // 安排新的执行
-  pendingAnimationFrame = requestAnimationFrame(() => {
-    const updateCanvas = CanvasManager.getCanvas(selectedElement.value.path);
-    const updateSettings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
-    updateElementPosition(updateCanvas, dragElement, updateSettings);
-    pendingAnimationFrame = null;
-  });
+const handleDragleave = (event) => {
+  event.preventDefault();
 }
 
 
 const bingEventListener = () => {
-  document.addEventListener('keydown', handleMoveElement);
-  document.addEventListener('keyup', handleStopMoveElement);
+
+  document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
+    element.addEventListener('dragstart', handleDragStart);
+  });
+  previewContainer.value.addEventListener('drop', handleDropElement);
+  previewContainer.value.addEventListener('dragover', handleDragover);
+  previewContainer.value.addEventListener('dragleave', handleDragleave);
+
+  previewContainer.value.addEventListener('mousedown', handleDragMoveElement);
+  previewContainer.value.addEventListener('keydown', handleKeyDownMoveElement);
+  previewContainer.value.addEventListener('keyup', handleKeyUpStopMoveElement);
+  previewContainer.value.addEventListener('keydown', handleRemoveElement);
+  previewContainer.value.addEventListener('click', handleCancelSelectedElement);
+  previewContainer.value.addEventListener('dblclick', handleEditorElement);
 }
 
-const initCanvasSize = () => {
-  setTimeout(() => {
-    // 获取窗口宽高
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    // 设置CSS自定义属性
-    previewContainer.value.style.setProperty('--canvas-width', `${windowWidth}px`);
-    previewContainer.value.style.setProperty('--canvas-height', `${windowHeight}px`);
-    previewContainer.value.idealWidth = Number.parseFloat(previewContainer.value.offsetWidth)
-    previewContainer.value.idealHeight = Number.parseFloat(previewContainer.value.offsetHeight)
-  }, 1000)
+const unbindEventListener = () => {
+
+  document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
+    element.removeEventListener('dragstart', handleDragStart)
+  });
+  previewContainer.value.removeEventListener('drop', handleDropElement);
+  previewContainer.value.removeEventListener('dragover', handleDragover);
+  previewContainer.value.removeEventListener('dragleave', handleDragleave);
+
+  previewContainer.value.removeEventListener('mousedown', handleDragMoveElement);
+  previewContainer.value.removeEventListener('keydown', handleKeyDownMoveElement);
+  previewContainer.value.removeEventListener('keyup', handleKeyUpStopMoveElement);
+  previewContainer.value.removeEventListener('keydown', handleRemoveElement);
+  previewContainer.value.removeEventListener('click', handleCancelSelectedElement);
+  previewContainer.value.removeEventListener('dblclick', handleEditorElement);
 }
+
 
 onMounted(() => {
   monitorScrollbar()
-  monitorDraggableLabelElements()
   createThreadPool()
   loadTemplates()
   loadTextLabels()
@@ -3256,7 +3270,6 @@ onMounted(() => {
 
 
 onBeforeUnmount(() => {
-  clearAllEventListener()
   stopWatchAvailableCanvas()
   stopTextSettingsWatch()
   stopProjectSettingsWatch()
@@ -3265,6 +3278,7 @@ onBeforeUnmount(() => {
   stopImageAlphaWatch()
   stopImageScaleWatch()
   stopImageAngleWatch()
+  unbindEventListener()
 })
 
 

@@ -117,6 +117,7 @@ class DraggableElementFactory {
         this.dragElement.setAttribute('copy', '');
         // 关键：必须设为绝对定位
         this.dragElement.style.position = 'absolute';
+        this.dragElement.setAttribute('draggable', 'true')
     }
 
     // 设置内容
