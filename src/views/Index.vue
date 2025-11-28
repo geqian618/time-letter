@@ -2861,13 +2861,9 @@ const handleEditorElement = (event) => {
 
   dragElement.style.outline = '1px solid #3F4141FF';
   dragElement.style.outlineOffset = '3px';
-  // 添加阴影效果
-  dragElement.style.boxShadow = '0 0 0 4px rgba(99, 102, 241, 0.1)';
   // 添加过渡动画
   dragElement.style.transition = 'all 0.1s ease-in-out';
   dragElement.style.overflow = 'hidden';
-  // 轻微背景色
-  dragElement.style.background = 'rgba(99, 102, 241, 0.02)';
 
   // 聚焦但不全选
   dragElement.focus();
@@ -2900,10 +2896,8 @@ const handleEditorElement = (event) => {
     dragElement.style.outline = 'none';
     dragElement.style.outlineOffset = '';
     dragElement.style.borderRadius = '';
-    dragElement.style.boxShadow = 'none';
     dragElement.style.transition = '';
     dragElement.style.overflow = '';
-    dragElement.style.background = '';
 
     // 移除事件监听器
     dragElement.removeEventListener('keydown', handleKeydown);

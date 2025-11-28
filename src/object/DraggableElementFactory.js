@@ -41,12 +41,7 @@ class DraggableElementFactory {
             } = {}
         } = this.settings || {};
 
-        this.dragElement.style.outline = 'none';
-        this.dragElement.style.cursor = 'move';
-        this.dragElement.style.userSelect = 'none';
         this.dragElement.src = url
-        // 关键：必须设为绝对定位
-        this.dragElement.style.position = 'absolute';
         this.dragElement.style.width = width + 'px';
         this.dragElement.style.height = height + 'px'
         this.dragElement.style.opacity = alpha / 10
@@ -90,6 +85,7 @@ class DraggableElementFactory {
         this.dragElement.style.fontFamily = fontFamily
         this.dragElement.style.fontStyle = fontStyle
         this.dragElement.style.fontWeight = fontWeight
+        this.dragElement.style.backgroundColor = 'transparent'
 
         this.dragElement.style.transformOrigin = 'center center'
         this.dragElement.style.transform = `rotate(${angle}deg)`
@@ -115,7 +111,6 @@ class DraggableElementFactory {
         this.dragElement.style.cursor = 'move';
         this.dragElement.style.userSelect = 'none';
         this.dragElement.setAttribute('tabindex', '0')
-        this.dragElement.setAttribute('copy', '');
         // 关键：必须设为绝对定位
         this.dragElement.style.position = 'absolute';
         this.dragElement.setAttribute('draggable', 'true')
