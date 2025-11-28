@@ -2838,59 +2838,74 @@ const handleEditorElement = (event) => {
 
   event.preventDefault();
 
-  if (event.target.getAttribute('draggable') !== 'true' || event.target instanceof HTMLImageElement) {
-    return
+  // 检查元素是否可拖动、不是图片，并且没有在编辑中
+  if (event.target.getAttribute('draggable') !== 'true' || event.target instanceof HTMLImageElement || event.target.contentEditable === 'true') {
+    return;
   }
-
-  clearTimeout(clickTimeout);
 
   const dragElement = event.target;
 
-  dragElement.setAttribute('selected', 'false')
-  dragElement.style.outline = 'none'
+  // 清除选中状态
+  dragElement.setAttribute('selected', 'false');
+  dragElement.style.outline = 'none';
 
+  // 保存原始文本
   const originalText = dragElement.textContent;
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.value = originalText;
-  input.style.width = (dragElement.offsetWidth * 1.1) + 'px';
-  input.style.height = (dragElement.offsetHeight * 1.2) + 'px';
-  input.style.boxSizing = 'border-box';
-  input.style.padding = '0 2px'
-  input.style.outline = '1px solid white'
-  input.style.zIndex = '99'
 
-  dragElement.innerHTML = ''
+  // 直接让div变为可编辑状态
+  dragElement.contentEditable = true;
 
-  dragElement.appendChild(input);
+  dragElement.style.outline = '1px solid #3F4141FF';
+  dragElement.style.outlineOffset = '3px';
+  // 添加阴影效果
+  dragElement.style.boxShadow = '0 0 0 4px rgba(99, 102, 241, 0.1)';
+  // 添加过渡动画
+  dragElement.style.transition = 'all 0.1s ease-in-out';
+  dragElement.style.overflow = 'hidden';
+  // 轻微背景色
+  dragElement.style.background = 'rgba(99, 102, 241, 0.02)';
 
-  input.focus();
-  input.select();
+  // 聚焦但不全选
+  dragElement.focus();
 
-  // 添加全局点击监听器
-  const handleDocumentClick = (e) => {
-    if (!dragElement.contains(e.target)) {
-      // 点击了输入框外部，触发 blur
-      input.blur();
+  // 将光标移动到文本末尾
+  const range = document.createRange();
+  const selection = window.getSelection();
+  range.selectNodeContents(dragElement);
+  // false 表示移动到末尾
+  range.collapse(false);
+  selection.removeAllRanges();
+  selection.addRange(range);
+
+  // 定义事件处理函数（使用命名函数以便移除）
+  const handleKeydown = function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      dragElement.blur();
+    } else if (e.key === 'Escape') {
+      dragElement.textContent = originalText;
+      dragElement.blur();
     }
   };
 
-  // 添加键盘事件
-  input.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') {
-      input.blur();
-    } else if (e.key === 'Escape') {
-      // ESC 键恢复原始文本
-      input.value = originalText;
-      input.blur();
-    }
-  });
+  const handleBlur = function () {
 
-  // 失去焦点时保存
-  input.addEventListener('blur', function () {
-    const newValue = input.value;
-    input.remove();
-    dragElement.innerHTML = newValue ? newValue : '';
+    const newValue = dragElement.textContent.trim();
+    // 移除编辑状态
+    dragElement.contentEditable = false;
+    dragElement.style.outline = 'none';
+    dragElement.style.outlineOffset = '';
+    dragElement.style.borderRadius = '';
+    dragElement.style.boxShadow = 'none';
+    dragElement.style.transition = '';
+    dragElement.style.overflow = '';
+    dragElement.style.background = '';
+
+    // 移除事件监听器
+    dragElement.removeEventListener('keydown', handleKeydown);
+    dragElement.removeEventListener('blur', handleBlur);
+    document.removeEventListener('click', handleDocumentClick);
+
     if (!newValue) {
       dragElement.remove();
       CanvasManager.deleteElement(selectedElement.value.path, dragElement);
@@ -2898,19 +2913,28 @@ const handleEditorElement = (event) => {
       const settings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
       settings.content = newValue;
     }
-    // 移除全局监听器
-    document.removeEventListener('click', handleDocumentClick);
-  });
+  };
+
+  const handleClick = (e) => {
+    if (!dragElement.contains(e.target)) {
+      dragElement.blur();
+    }
+  };
+
+  // 添加事件监听器
+  dragElement.addEventListener('keydown', handleKeydown);
+  dragElement.addEventListener('blur', handleBlur);
 
   // 添加全局点击监听
   setTimeout(() => {
-    document.addEventListener('click', handleDocumentClick);
+    document.addEventListener('click', handleClick);
   }, 0);
 
-}
+};
 
 // 选择元素
 const handleSelectedElement = (dragElement) => {
+  if (dragElement.contentEditable === 'true') return
   // 清除之前的定时器（如果有）
   clearTimeout(clickTimeout);
   // 设置新的定时器
