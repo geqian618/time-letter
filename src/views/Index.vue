@@ -2879,12 +2879,10 @@ const handleEditorElement = (event) => {
   input.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {
       input.blur();
-    }
-    if (e.key === 'Escape') {
+    } else if (e.key === 'Escape') {
       // ESC 键恢复原始文本
-      dragElement.innerHTML = originalText;
-      input.remove();
-      document.removeEventListener('click', handleDocumentClick);
+      input.value = originalText;
+      input.blur();
     }
   });
 
