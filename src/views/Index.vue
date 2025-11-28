@@ -2802,7 +2802,7 @@ const handleKeyUpStopMoveElement = (event) => {
 // 取消选择
 const handleCancelSelectedElement = (event) => {
   const dragElement = selectedElement.value.draggableElement;
-  if (dragElement === null || event.target === selectedElement.value.draggableElement) return;
+  if (dragElement === null) return;
   if (dragElement.getAttribute('selected') === 'true') {
     dragElement.style.outline = 'none'
     dragElement.setAttribute('selected', 'false')
@@ -2843,18 +2843,21 @@ const handleEditorElement = (event) => {
 
   const dragElement = event.target;
 
-  const originalText = dragElement.textContent;
+  dragElement.setAttribute('selected', 'false')
+  dragElement.style.outline = 'none'
 
+  const originalText = dragElement.textContent;
   const input = document.createElement('input');
   input.type = 'text';
   input.value = originalText;
-  input.style.width = 'fit-content'
-  input.style.height = dragElement.style.height
+  input.style.width = (dragElement.offsetWidth * 1.1) + 'px';
+  input.style.height = (dragElement.offsetHeight * 1.2) + 'px';
+  input.style.boxSizing = 'border-box';
   input.style.padding = '0 2px'
   input.style.outline = '1px solid white'
-  input.style.inset = '0 0 0 0'
-  input.style.position = 'absolute'
-  input.style.zIndex = '9999'
+  input.style.zIndex = '99'
+
+  dragElement.innerHTML = ''
 
   dragElement.appendChild(input);
 
