@@ -1656,6 +1656,7 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 
       await nextTick()
 
+      settings.options = _.cloneDeep(newVal)
       settings.width = newElementWidth
       settings.height = newElementHeight
       settings.options.fontSizeRatio = newVal.fontSize / backgroundWidth
@@ -1676,11 +1677,12 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVal) => {
   const canvas = CanvasManager.getCanvas(selectedElement.value.path);
   if (!canvas) return
-  const elements = Array.from(canvas.settings.images.keys());
-  for (let element of elements) {
+  const elements = canvas.settings.images;
+  for (let [element, settings] of elements) {
     if (element.getAttribute('selected') === 'true') {
       element.style.transformOrigin = 'center center'
       element.style.transform = `rotate(${newVal}deg)`;
+      settings.options.angle = newVal
     }
   }
 });
@@ -1688,10 +1690,11 @@ const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVa
 const stopImageAlphaWatch = watch(() => imageOptions.value.alpha, (newVal, oldVal) => {
   const canvas = CanvasManager.getCanvas(selectedElement.value.path);
   if (!canvas) return
-  const elements = Array.from(canvas.settings.images.keys());
-  for (let element of elements) {
+  const elements = canvas.settings.images;
+  for (let [element, settings] of elements) {
     if (element.getAttribute('selected') === 'true') {
       element.style.opacity = newVal / 10
+      settings.options.alpha = newVal
     }
   }
 });
@@ -1699,17 +1702,18 @@ const stopImageAlphaWatch = watch(() => imageOptions.value.alpha, (newVal, oldVa
 const stopImageBoxShadowWatch = watch(() => imageOptions.value.boxShadow, (newVal, oldVal) => {
   const canvas = CanvasManager.getCanvas(selectedElement.value.path);
   if (!canvas) return
-  const elements = Array.from(canvas.settings.images.keys());
-  for (let element of elements) {
+  const elements = canvas.settings.images;
+  for (let [element, settings] of elements) {
     if (element.getAttribute('selected') === 'true') {
+
       const {offsetX, offsetY, blur, shadowColor} = newVal;
       element.style.boxShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
 
       const {offsetWidth, offsetHeight} = element;
-      const imageSettings = canvas.settings.images.get(element);
-      imageSettings.options.boxShadow.offsetXRatio = offsetX / offsetWidth
-      imageSettings.options.boxShadow.offsetYRatio = offsetY / offsetHeight
-      imageSettings.options.boxShadow.blurRatio = blur / offsetWidth
+      settings.options.boxShadow = _.cloneDeep(newVal)
+      settings.options.boxShadow.offsetXRatio = offsetX / offsetWidth
+      settings.options.boxShadow.offsetYRatio = offsetY / offsetHeight
+      settings.options.boxShadow.blurRatio = blur / offsetWidth
     }
   }
 }, {
@@ -1724,10 +1728,11 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
   const backgroundElement = canvas.getImageElement().parentNode.querySelector('.image-background');
   const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
   const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
-  for (let [element, imageSettings] of canvas.settings.images) {
+  const elements = canvas.settings.images;
+  for (let [element, settings] of elements) {
     if (element.getAttribute('selected') === 'true') {
 
-      const {originalWidth, originalHeight} = imageSettings;
+      const {originalWidth, originalHeight} = settings;
 
       const computedStyle = window.getComputedStyle(element);
       let elementWidth = Number.parseFloat(computedStyle.width);
@@ -1759,12 +1764,13 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
 
       await nextTick();
 
-      imageSettings.width = elementWidth
-      imageSettings.height = elementHeight
-      imageSettings.options.imageWidthRatio = elementWidth / backgroundWidth
-      imageSettings.options.imageHeightRatio = elementHeight / backgroundHeight
+      settings.width = elementWidth
+      settings.height = elementHeight
+      settings.options.scale = newVal
+      settings.options.imageWidthRatio = elementWidth / backgroundWidth
+      settings.options.imageHeightRatio = elementHeight / backgroundHeight
 
-      updateElementPosition(canvas, element, imageSettings)
+      updateElementPosition(canvas, element, settings)
     }
   }
 });
@@ -1773,13 +1779,11 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
 const stopWatchImageZIndex = watch(() => imageOptions.value.zIndex, (newVal, oldVal) => {
   const canvas = CanvasManager.getCanvas(selectedElement.value.path);
   if (!canvas) return
-  const elements = Array.from(canvas.settings.images.keys());
-  for (let element of elements) {
+  const elements = canvas.settings.images;
+  for (let [element, settings] of elements) {
     if (element.getAttribute('selected') === 'true') {
       element.style.zIndex = newVal
-
-      const imageSettings = canvas.settings.images.get(element);
-      imageSettings.options.zIndex = newVal;
+      settings.options.zIndex = newVal;
     }
   }
 })
@@ -2904,7 +2908,7 @@ const handleEditorElement = (event) => {
     // 移除事件监听器
     dragElement.removeEventListener('keydown', handleKeydown);
     dragElement.removeEventListener('blur', handleBlur);
-    document.removeEventListener('click', handleDocumentClick);
+    document.removeEventListener('click', handleClick);
 
     if (!newValue) {
       dragElement.remove();
@@ -2945,7 +2949,7 @@ const handleSelectedElement = (dragElement) => {
     selectedElement.value.draggableElement = dragElement
     const settings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
     if (dragElement instanceof HTMLImageElement) {
-      imageOptions.value = settings.options
+      imageOptions.value = _.cloneDeep(settings.options)
       if (projectSettings.value.others.optionAnchorPoint) {
         handleOpenSubMenu('4')
         nextTick(() => {
@@ -2953,7 +2957,7 @@ const handleSelectedElement = (dragElement) => {
         })
       }
     } else {
-      textOptions.value = settings.options
+      textOptions.value = _.cloneDeep(settings.options)
       if (projectSettings.value.others.optionAnchorPoint) {
         handleOpenSubMenu('3')
         nextTick(() => {
