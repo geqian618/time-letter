@@ -1037,6 +1037,8 @@ import {Canvas} from '@/object/Canvas'
 
 import CanvasManager from "@/object/CanvasManager";
 
+import StorageManager from "@/object/StorageManager";
+
 import {predefineColors} from '@/config/color-configuration'
 
 import DraggableElementFactory from "@/object/DraggableElementFactory";
@@ -1048,12 +1050,6 @@ const matchFonts = ref([])
 const templateSettings = ref({})
 
 const availableCanvas = ref(new Map())
-
-const selectedElement = ref({
-  previewElement: null,
-  path: '',
-  draggableElement: null
-});
 
 const scaleOptions = {
   minScale: 0.5,
@@ -1209,13 +1205,13 @@ const stopWatchAvailableCanvas = watch(filterType, async () => {
 
 
 const setDefaultSelectedElement = async () => {
-  const selectedPath = selectedElement.value.path;
+  const selectedPath = CanvasManager.getSelectedPath();
   const paths = Array.from(availableCanvas.value.keys());
   if (!paths.length || !selectedPath) return
   const selectedCanvas = CanvasManager.getCanvas(selectedPath);
   let nextSelectCanvas, previewElement
   if (paths.includes(selectedPath)) {
-    nextSelectCanvas = availableCanvas.value.get(selectedElement.value.path);
+    nextSelectCanvas = availableCanvas.value.get(selectedPath);
     previewElement = nextSelectCanvas.getPreviewElement(previewList.value);
   } else {
     nextSelectCanvas = availableCanvas.value.get(paths[0]);
@@ -1229,8 +1225,8 @@ const setDefaultSelectedElement = async () => {
   }
   previewElement.classList.add('active')
   previewElement.setAttribute('selected', 'true')
-  selectedElement.value.path = nextSelectCanvas.path
-  selectedElement.value.previewElement = previewElement
+
+  CanvasManager.setSelectedObject({path: nextSelectCanvas.path, previewElement})
   selectedPreviewList.value.set(nextSelectCanvas.path, previewElement)
 }
 
@@ -1424,7 +1420,7 @@ const deleteTextLabel = (row) => {
   for (let i = 0; i < textLabels.value.length; i++) {
     if (textLabels.value[i].id === row.id) {
       textLabels.value.splice(i, 1)
-      window.localStorage.setItem('textLabels', JSON.stringify(textLabels.value))
+      StorageManager.saveTextLabels(textLabels.value)
       return
     }
   }
@@ -1446,7 +1442,7 @@ const saveTextLabel = async () => {
           }
         }
       }
-      window.localStorage.setItem('textLabels', JSON.stringify(textLabels.value))
+      StorageManager.saveTextLabels(textLabels.value)
       textLabel.value = new TextLabel()
       customTextLabelDialogVisible.value = false;
     }
@@ -1462,9 +1458,8 @@ const watchContextMenu = () => {
         for (let path of selectedPaths) {
           CanvasManager.deleteCanvas(path)
           availableCanvas.value.delete(path)
-          if (path === selectedElement.value.path) {
-            selectedElement.value.path = ''
-            selectedElement.value.previewElement = null
+          if (path === CanvasManager.getSelectedPath()) {
+            CanvasManager.setSelectedObject({path: '', previewElement: null})
           }
         }
         selectedPreviewList.value.clear();
@@ -1474,7 +1469,7 @@ const watchContextMenu = () => {
 
         const paths = Array.from(selectedPreviewList.value.keys());
 
-        const selectedCanvas = CanvasManager.getCanvas(selectedElement.value.path);
+        const selectedCanvas = CanvasManager.getCanvas(CanvasManager.getSelectedPath());
 
         let beforeCanvas = selectedCanvas;
 
@@ -1565,7 +1560,7 @@ const clearCanvasLabels = (path) => {
 
 const resetMetadataSettings = () => {
   projectSettings.value.metadata = _.cloneDeep(originalMetadata)
-  localStorage.setItem('projectSettings', JSON.stringify(projectSettings.value))
+  StorageManager.saveProjectSettings(projectSettings.value)
 }
 
 
@@ -1581,7 +1576,7 @@ const handleFocalLength = (type) => {
         metadata.focalLength = Number.parseInt(metadata.originalFocalLength * projectSettings.value.metadata.other.conversionMultiple)
       }
 
-      if (path === selectedElement.value.path) {
+      if (path === CanvasManager.getSelectedPath()) {
         metadataOptions.value = metadata
       }
     }
@@ -1592,7 +1587,7 @@ const handleFocalLength = (type) => {
 const stopProjectSettingsWatch = watch(projectSettings, (newVal, oldVal) => {
   const settings = _.cloneDeep(newVal);
   settings.availableFonts = Array.from(settings.availableFonts.entries())
-  localStorage.setItem('projectSettings', JSON.stringify(settings))
+  StorageManager.saveProjectSettings(settings)
 }, {
   //深度监视（监视属性变化）
   deep: true,
@@ -1602,20 +1597,19 @@ const stopProjectSettingsWatch = watch(projectSettings, (newVal, oldVal) => {
 
 
 const loadProjectSettings = () => {
-  const jsonStr = localStorage.getItem('projectSettings');
-  if (jsonStr) {
-    const userConfig = JSON.parse(jsonStr);
+  const userConfig = StorageManager.getProjectSettings();
+  if (userConfig) {
     const newUserConfig = _.merge({}, projectSettings.value, userConfig);
     newUserConfig.availableFonts = new Map(newUserConfig.availableFonts)
     projectSettings.value = newUserConfig
-    localStorage.setItem('projectSettings', JSON.stringify(newUserConfig))
+    StorageManager.saveProjectSettings(newUserConfig)
   }
 }
 
 
 const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
   //停止监听 stopWatch();
-  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+  const canvas = CanvasManager.getCurrentCanvas();
   if (!canvas) return
   const imageElement = canvas.getImageElement();
   const backgroundElement = imageElement.parentNode.querySelector('.image-background');
@@ -1682,7 +1676,7 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
 });
 
 const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVal) => {
-  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+  const canvas = CanvasManager.getCurrentCanvas();
   if (!canvas) return
   const elements = canvas.settings.images;
   for (let [element, settings] of elements) {
@@ -1695,7 +1689,7 @@ const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVa
 });
 
 const stopImageAlphaWatch = watch(() => imageOptions.value.alpha, (newVal, oldVal) => {
-  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+  const canvas = CanvasManager.getCurrentCanvas();
   if (!canvas) return
   const elements = canvas.settings.images;
   for (let [element, settings] of elements) {
@@ -1707,7 +1701,7 @@ const stopImageAlphaWatch = watch(() => imageOptions.value.alpha, (newVal, oldVa
 });
 
 const stopImageBoxShadowWatch = watch(() => imageOptions.value.boxShadow, (newVal, oldVal) => {
-  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+  const canvas = CanvasManager.getCurrentCanvas();
   if (!canvas) return
   const elements = canvas.settings.images;
   for (let [element, settings] of elements) {
@@ -1730,7 +1724,7 @@ const stopImageBoxShadowWatch = watch(() => imageOptions.value.boxShadow, (newVa
 
 
 const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal, oldVal) => {
-  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+  const canvas = CanvasManager.getCurrentCanvas();
   if (!canvas) return
   const backgroundElement = canvas.getImageElement().parentNode.querySelector('.image-background');
   const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
@@ -1784,7 +1778,7 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
 
 
 const stopWatchImageZIndex = watch(() => imageOptions.value.zIndex, (newVal, oldVal) => {
-  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+  const canvas = CanvasManager.getCurrentCanvas();
   if (!canvas) return
   const elements = canvas.settings.images;
   for (let [element, settings] of elements) {
@@ -1803,7 +1797,7 @@ const renameTemplate = () => {
         for (let i = 0; i < templates.value.length; i++) {
           if (templates.value[i].id === oldTemplate.value.templateId) {
             templates.value[i].templateName = oldTemplate.value.templateName
-            window.localStorage.setItem('templates', JSON.stringify(templates.value))
+            StorageManager.saveTemplates(templates.value)
             renameDialogVisible.value = false
             return
           }
@@ -1819,7 +1813,7 @@ const deleteTemplate = () => {
     for (let i = 0; i < templates.value.length; i++) {
       if (templates.value[i].templateId === oldTemplate.value.templateId) {
         templates.value.splice(i, 1)
-        window.localStorage.setItem('templates', JSON.stringify(templates.value))
+        StorageManager.saveTemplates(templates.value)
         return
       }
     }
@@ -1828,8 +1822,8 @@ const deleteTemplate = () => {
 
 const synchronizeTemplate = () => {
 
-  if (selectedElement.value && selectedElement.value.path) {
-    const {settings: templateSettings} = CanvasManager.getCanvas(selectedElement.value.path);
+  if (!CanvasManager.getSelectedPath()) {
+    const {settings: templateSettings} = CanvasManager.getCurrentCanvas();
     const targetSettings = {
       border: templateSettings.border,
       images: Array.from(templateSettings.images.values()).map(item => {
@@ -1843,7 +1837,7 @@ const synchronizeTemplate = () => {
     }
 
     selectedPreviewList.value.forEach((image, path) => {
-      if (selectedElement.value.path !== path) {
+      if (CanvasManager.getSelectedPath() !== path) {
         let {settings: originalSettings} = CanvasManager.getCanvas(path);
         for (let element of originalSettings.images.keys()) {
           element.remove()
@@ -1865,7 +1859,7 @@ const saveTemplates = async () => {
 
   saveTemplateForm.value.validate(async (valid, fields) => {
     if (valid) {
-      const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+      const canvas = CanvasManager.getCurrentCanvas();
       const {border, images, texts} = _.cloneDeep(canvas.settings)
       const newTemplates = [...templates.value];
       // 清空模版列表，重新生成列表
@@ -1882,7 +1876,7 @@ const saveTemplates = async () => {
         }
       })
       templates.value = newTemplates
-      window.localStorage.setItem('templates', JSON.stringify(templates.value))
+      StorageManager.saveTemplates(templates.value)
       newTemplate.value.templateName = ''
       saveTemplateDialogVisible.value = false
     }
@@ -1903,12 +1897,12 @@ const handleTemplateSorting = (el, dragaElement, targetElement) => {
     }
   }
   templates.value = newTemplates
-  localStorage.setItem('templates', JSON.stringify(newTemplates))
+  StorageManager.saveTemplates(templates.value)
 }
 
 
 const openEnableTemplateDialog = ({settings}) => {
-  if (CanvasManager.isNotEmpty() && selectedElement.value.path) {
+  if (CanvasManager.isNotEmpty() && CanvasManager.getSelectedPath()) {
     templateSettings.value = settings
     enableTemplateDialogVisible.value = true
   }
@@ -2016,7 +2010,7 @@ const useTemplate = async (targetSettings, path) => {
   canvas.settings.border = targetSettings.border
   canvas.isUpdate = true
 
-  if (path === selectedElement.value.path) {
+  if (path === CanvasManager.getSelectedPath()) {
     await renderBorders(path)
   }
 
@@ -2024,7 +2018,7 @@ const useTemplate = async (targetSettings, path) => {
     const factory = new DraggableElementFactory(settings, canvas.metadata);
     const element = await factory.getElement()
     if (element) {
-      if (path === selectedElement.value.path) {
+      if (path === CanvasManager.getSelectedPath()) {
         renderElementPosition(canvas, settings, element);
       }
       canvasElement.appendChild(element)
@@ -2036,7 +2030,7 @@ const useTemplate = async (targetSettings, path) => {
     const factory = new DraggableElementFactory(settings, canvas.metadata);
     const element = await factory.getElement();
     if (element) {
-      if (path === selectedElement.value.path) {
+      if (path === CanvasManager.getSelectedPath()) {
         renderElementPosition(canvas, settings, element)
       }
       canvasElement.appendChild(element)
@@ -2133,13 +2127,11 @@ const refreshTemplate = async (path) => {
 
 
 const loadTemplates = () => {
-  const jsonStr = window.localStorage.getItem('templates');
-  templates.value = jsonStr ? JSON.parse(jsonStr) : []
+  templates.value = StorageManager.getTemplates()
 }
 
 const loadTextLabels = () => {
-  const jsonStr = window.localStorage.getItem('textLabels');
-  textLabels.value = jsonStr ? JSON.parse(jsonStr) : []
+  textLabels.value = StorageManager.getTextLabels()
 }
 
 async function switchPreviewImage(event, canvas) {
@@ -2154,11 +2146,11 @@ async function switchPreviewImage(event, canvas) {
       selectedPreviewList.value.clear()
     }
 
-    const beforePath = selectedElement.value.path;
+    const beforePath = CanvasManager.getSelectedPath();
 
     // 前一次预览元素与当前预览元素不同，隐藏前一次预览元素
     if (beforePath && beforePath !== canvas.path) {
-      const beforePath = selectedElement.value.path;
+      const beforePath = CanvasManager.getSelectedPath();
       const beforeCanvas = CanvasManager.getCanvas(beforePath);
       beforeCanvas.hide()
       await nextTick()
@@ -2171,8 +2163,8 @@ async function switchPreviewImage(event, canvas) {
       await renderCanvas(canvas)
     }
 
-    selectedElement.value.path = event.target.getAttribute('path')
-    selectedElement.value.previewElement = event.target;
+
+    CanvasManager.setSelectedObject({path: event.target.getAttribute('path'), previewElement: event.target})
 
     // 添加当前选中元素到选中列表中
     selectedPreviewList.value.set(canvas.path, event.target)
@@ -2180,7 +2172,7 @@ async function switchPreviewImage(event, canvas) {
   }
 }
 
-const updateScrollBarPosition = (canvas) => {
+const setScrollBarPosition = (canvas) => {
   // 设置滚动位置
   previewContainer.value.scrollLeft = canvas.scrollLeft;
   previewContainer.value.scrollTop = canvas.scrollTop;
@@ -2278,7 +2270,7 @@ function setScale(canvas, scale) {
 
 // 缩放函数
 function zoom(direction) {
-  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+  const canvas = CanvasManager.getCurrentCanvas();
   if (!canvas) return
   const {scaleStep} = scaleOptions;
   const newScale = direction === 'in' ? canvas.scale + scaleStep : canvas.scale - scaleStep;
@@ -2292,7 +2284,7 @@ const renderCanvas = async (canvas) => {
     await initializeCanvasLayout(canvas)
   }
 
-  updateScrollBarPosition(canvas)
+  setScrollBarPosition(canvas)
   metadataOptions.value = canvas.metadata
   borderOptions.value = canvas.settings.border.options
 
@@ -2303,8 +2295,8 @@ const renderCanvas = async (canvas) => {
 
 
 const handleScrollBarMoveToCenter = () => {
-  if (selectedElement.value && selectedElement.value.path) {
-    const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+  if (CanvasManager.getSelectedPath()) {
+    const canvas = CanvasManager.getCurrentCanvas();
     scrollBarMoveToCenter(canvas)
   }
 }
@@ -2334,9 +2326,8 @@ const handleSelectPreviewElement = (event, canvas) => {
   if (element.classList.contains('active')) {
     element.classList.remove('active');
     selectedPreviewList.value.delete(canvas.path)
-    if (selectedElement.value.path === canvas.path) {
-      selectedElement.value.path = '';
-      selectedElement.value.previewElement = null
+    if (CanvasManager.getSelectedPath() === canvas.path) {
+      CanvasManager.setSelectedObject({path: '', previewElement: null})
       canvas.hide()
     }
   } else {
@@ -2411,7 +2402,7 @@ const handleSelectMultiplePreviewElements = (event, canvas) => {
 
 const handleUpdateBorders = async () => {
 
-  const canvas = CanvasManager.getCanvas(selectedElement.value.path)
+  const canvas = CanvasManager.getCurrentCanvas()
   if (!canvas) return
 
   const imageElement = canvas.getImageElement();
@@ -2504,7 +2495,7 @@ const handleUpdateBorders = async () => {
 
     await nextTick()
 
-    refreshCanvasElementPosition(selectedElement.value.path)
+    refreshCanvasElementPosition(CanvasManager.getSelectedPath())
 
   }
 }
@@ -2514,7 +2505,7 @@ const renderBorders = async (path) => {
 
   const canvas = CanvasManager.getCanvas(path)
   const imageElement = canvas.getImageElement();
-  if (canvas.path === selectedElement.value.path) {
+  if (canvas.path === CanvasManager.getSelectedPath()) {
     borderOptions.value = canvas.settings.border.options
   }
 
@@ -2578,24 +2569,8 @@ const renderBorders = async (path) => {
 }
 
 
-const handleMovePreviewList = (e) => {
-  // 1. 阻止默认的垂直滚动行为
-  e.preventDefault();
-  // 2. 获取滚轮滚动方向（deltaY > 0 向下滚，< 0 向上滚）
-  // 3. 转换为水平滚动：向下滚向右移动，向上滚向左移动
-  const scrollAmount = e.deltaY * 1.8; // 调整滚动速度
-  // 4. 应用滚动
-  if (previewList.value) {
-    previewList.value.scrollBy({
-      left: scrollAmount,
-      behavior: 'auto' // 平滑滚动效果
-    });
-  }
-}
-
-
 const switchBeforePreviewElement = async () => {
-  const {path: currentPath, previewElement: currentElement} = selectedElement.value;
+  const {path: currentPath, previewElement: currentElement} = CanvasManager.getSelectedObject();
   if (!currentPath) return
   const currentCanvas = availableCanvas.value.get(currentPath);
   const beforeCanvas = MapHelper.getBeforeValue(availableCanvas.value, currentPath);
@@ -2617,8 +2592,8 @@ const switchBeforePreviewElement = async () => {
       metadataOptions.value = beforeCanvas.metadata
       beforeElement.classList.add('active')
       beforeElement.setAttribute('selected', 'true')
-      selectedElement.value.path = beforeCanvas.path
-      selectedElement.value.previewElement = beforeElement
+
+      CanvasManager.setSelectedObject({path: beforeCanvas.path, previewElement: beforeElement})
       selectedPreviewList.value.set(beforeCanvas.path, beforeElement)
       // 方式一，较为卡顿，过渡不流畅
       // selectedElement.value.previewElement.scrollIntoView({
@@ -2628,13 +2603,13 @@ const switchBeforePreviewElement = async () => {
       // })
 
       // 方式二，过渡比较流畅
-      scrollBarMoveToHorizontalCenter(previewList.value, selectedElement.value.previewElement)
+      scrollBarMoveToHorizontalCenter(previewList.value, beforeElement)
     }
   }
 }
 
 const switchNextPreviewElement = async () => {
-  const {path: currentPath, previewElement: currentElement} = selectedElement.value;
+  const {path: currentPath, previewElement: currentElement} = CanvasManager.getSelectedObject();
   if (!currentPath) return
   const currentCanvas = availableCanvas.value.get(currentPath);
   const nextCanvas = MapHelper.getNextValue(availableCanvas.value, currentPath);
@@ -2656,8 +2631,7 @@ const switchNextPreviewElement = async () => {
       metadataOptions.value = nextCanvas.metadata
       nextElement.classList.add('active')
       nextElement.setAttribute('selected', 'true')
-      selectedElement.value.path = nextCanvas.path
-      selectedElement.value.previewElement = nextElement
+      CanvasManager.setSelectedObject({path: nextCanvas.path, previewElement: nextElement})
       selectedPreviewList.value.set(nextCanvas.path, nextElement)
       // 方式一，较为卡顿，过渡不流畅
       // selectedElement.value.previewElement.scrollIntoView({
@@ -2667,7 +2641,7 @@ const switchNextPreviewElement = async () => {
       // })
 
       // 方式二，过渡比较流畅
-      scrollBarMoveToHorizontalCenter(previewList.value, selectedElement.value.previewElement)
+      scrollBarMoveToHorizontalCenter(previewList.value, nextElement)
     }
   }
 }
@@ -2714,6 +2688,21 @@ const handleOpenSubMenu = (index) => {
 }
 
 
+const handleMovePreviewList = (e) => {
+  // 1. 阻止默认的垂直滚动行为
+  e.preventDefault();
+  // 2. 获取滚轮滚动方向（deltaY > 0 向下滚，< 0 向上滚）
+  // 3. 转换为水平滚动：向下滚向右移动，向上滚向左移动
+  const scrollAmount = e.deltaY * 1.8; // 调整滚动速度
+  // 4. 应用滚动
+  if (previewList.value) {
+    previewList.value.scrollBy({
+      left: scrollAmount,
+      behavior: 'auto' // 平滑滚动效果
+    });
+  }
+}
+
 const handleSelectAllPreviewElements = (event) => {
   if (event.ctrlKey && event.key === 'a') {
     event.preventDefault();
@@ -2728,7 +2717,7 @@ const handleSelectAllPreviewElements = (event) => {
 }
 
 const handleMoveScrollbar = (event) => {
-  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+  const canvas = CanvasManager.getCurrentCanvas();
   if (!canvas) return
 
   // 清除之前的定时器
@@ -2754,7 +2743,7 @@ const handleKeyDownMoveElement = (event) => {
 
   event.preventDefault();
 
-  const dragElement = selectedElement.value.draggableElement;
+  const dragElement = CanvasManager.getSelectedObject().draggableElement;
 
   if (dragElement?.getAttribute('selected') !== 'true') return;
 
@@ -2792,7 +2781,7 @@ const handleKeyUpStopMoveElement = (event) => {
 
   if (!validKeys.includes(event.key)) return;
 
-  const dragElement = selectedElement.value.draggableElement;
+  const dragElement = CanvasManager.getSelectedObject().draggableElement;
 
   if (dragElement?.getAttribute('selected') !== 'true') return;
 
@@ -2803,8 +2792,8 @@ const handleKeyUpStopMoveElement = (event) => {
 
   // 安排新的执行
   pendingAnimationFrame = requestAnimationFrame(() => {
-    const updateCanvas = CanvasManager.getCanvas(selectedElement.value.path);
-    const updateSettings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
+    const updateCanvas = CanvasManager.getCurrentCanvas();
+    const updateSettings = CanvasManager.getSettingsFromCurrentCanvas(dragElement);
     updateElementPosition(updateCanvas, dragElement, updateSettings);
     pendingAnimationFrame = null;
   });
@@ -2812,29 +2801,29 @@ const handleKeyUpStopMoveElement = (event) => {
 
 // 取消选择
 const handleCancelSelectedElement = (event) => {
-  const dragElement = selectedElement.value.draggableElement;
+  const dragElement = CanvasManager.getSelectedObject().draggableElement;
   if (dragElement === null) return;
   if (dragElement.getAttribute('selected') === 'true') {
     dragElement.style.outline = 'none'
     dragElement.setAttribute('selected', 'false')
-    selectedElement.value.draggableElement = null
+    CanvasManager.setSelectedObject({draggableElement: null})
   }
 }
 
 // 删除元素
 const handleRemoveElement = (event) => {
-  const dragElement = selectedElement.value.draggableElement;
+  const dragElement = CanvasManager.getSelectedObject().draggableElement;
   if (dragElement === null || dragElement.getAttribute('selected') !== 'true') return;
   // 检测 Delete (46) 或 Backspace (8) 键
   if (event.key === 'Delete' || event.key === 'Backspace' || event.keyCode === 46 || event.keyCode === 8) {
     // event.preventDefault();
     if (dragElement.getAttribute('selected') === 'true') {
       if ((dragElement instanceof HTMLDivElement) && !dragElement.querySelector('input')) {
-        CanvasManager.deleteElement(selectedElement.value.path, dragElement)
+        CanvasManager.deleteElement(CanvasManager.getSelectedPath(), dragElement)
         dragElement.remove()
       }
       if (dragElement instanceof HTMLImageElement) {
-        CanvasManager.deleteElement(selectedElement.value.path, dragElement)
+        CanvasManager.deleteElement(CanvasManager.getSelectedPath(), dragElement)
         dragElement.remove()
       }
     }
@@ -2913,9 +2902,9 @@ const handleEditorElement = (event) => {
 
     if (!newValue) {
       dragElement.remove();
-      CanvasManager.deleteElement(selectedElement.value.path, dragElement);
+      CanvasManager.deleteElement(CanvasManager.getSelectedPath(), dragElement);
     } else {
-      const settings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
+      const settings = CanvasManager.getSettingsFromCurrentCanvas(dragElement);
       settings.content = newValue;
     }
   };
@@ -2947,8 +2936,8 @@ const handleSelectedElement = (dragElement) => {
     dragElement.focus()
     dragElement.style.outline = '1px dashed #f00'
     dragElement.setAttribute('selected', 'true')
-    selectedElement.value.draggableElement = dragElement
-    const settings = CanvasManager.getSettings(selectedElement.value.path, dragElement);
+    CanvasManager.setSelectedObject({draggableElement: dragElement})
+    const settings = CanvasManager.getSettingsFromCurrentCanvas(dragElement);
     if (dragElement instanceof HTMLImageElement) {
       imageOptions.value = _.cloneDeep(settings.options)
       if (projectSettings.value.others.optionAnchorPoint) {
@@ -2979,7 +2968,7 @@ const handleDragMoveElement = (event) => {
 
   let isDragging = false;
 
-  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+  const canvas = CanvasManager.getCurrentCanvas();
 
   const imagesElement = canvas.getImageElement();
 
@@ -3130,7 +3119,7 @@ const handleDropElement = async function (event) {
 
   if (!dragElement) return;
 
-  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+  const canvas = CanvasManager.getCurrentCanvas();
 
   const imageElement = canvas.getImageElement();
 
