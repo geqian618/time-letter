@@ -73,7 +73,7 @@
           </el-aside>
         </div>
 
-        <div class="page-center" ref="previewContainer">
+        <div class="preview-container" id="preview-container" ref="previewContainer">
           <template v-for="([key, canvas]) in CanvasManager.getCanvases()" :key="canvas.path">
             <div class="canvas" :path="canvas.path" v-show="canvas.visible" @contextmenu="triggerContextMenu">
               <div class="image-background"></div>
@@ -1054,6 +1054,12 @@ const selectedElement = ref({
   path: '',
   draggableElement: null
 });
+
+const scaleOptions = {
+  minScale: 0.5,
+  maxScale: 5,
+  scaleStep: 0.1
+}
 
 let clickTimeout = null;
 
@@ -2205,12 +2211,6 @@ const initializeCanvasLayout = async (canvas) => {
   const {offsetWidth: containerRealWidth, offsetHeight: containerRealHeight} = previewContainer;
   const {idealWidth: containerIdealWidth, idealHeight: containerIdealHeight} = previewContainer;
 
-  // 缩放相关变量
-  let canvasScale = 1;
-  const minScale = 0.5;
-  const maxScale = 5;
-  const scaleStep = 0.1;
-
   const idealImageScale = Math.min(containerIdealWidth / imageWidth, containerIdealHeight / imageHeight) * 0.8
 
   const newImageWidth = imageWidth * idealImageScale;
@@ -2237,46 +2237,52 @@ const initializeCanvasLayout = async (canvas) => {
   backgroundElement.style.right = offsetRight + 'px'
   backgroundElement.style.bottom = offsetBottom + 'px'
 
-  // 计算居中位置
-  const centerX = canvasWidth / 2;
-  const centerY = canvasHeight / 2;
-
   scrollBarMoveToCenter(canvas)
-
-  // 滚轮缩放事件
-  canvasElement.addEventListener('wheel', function (e) {
-    // 阻止默认滚动行为
-    e.preventDefault();
-    // 根据滚轮方向确定缩放方向
-    const direction = e.deltaY < 0 ? 'in' : 'out';
-    zoom(direction);
-  }, {passive: false});
 
   canvas.completed = true
 
   await nextTick()
 
-  canvasScale = Math.min(containerRealWidth / containerIdealWidth, containerRealHeight / containerIdealHeight)
+  const canvasScale = Math.min(containerRealWidth / containerIdealWidth, containerRealHeight / containerIdealHeight)
 
-  setScale(canvasScale)
+  setScale(canvas, canvasScale)
+}
 
-  // 设置缩放比例
-  function setScale(scale) {
-    // 限制缩放范围
-    canvasScale = Math.min(Math.max(minScale, scale), maxScale);
-    // 应用缩放变换
-    canvasElement.style.transform = `scale(${canvasScale})`;
-    // 设置变换原点为中心点
-    canvasElement.style.transformOrigin = `${centerX}px ${centerY}px`;
+// 设置缩放比例
+function setScale(canvas, scale) {
 
-    canvas.scale = canvasScale
-  }
+  if (!canvas || !scale) return
 
-  // 缩放函数
-  function zoom(direction) {
-    const newScale = direction === 'in' ? canvasScale + scaleStep : canvasScale - scaleStep;
-    setScale(newScale);
-  }
+  const imageElement = canvas.getImageElement();
+
+  const canvasElement = imageElement.parentNode;
+
+  const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement
+
+  const {minScale, maxScale} = scaleOptions;
+
+  const centerX = canvasWidth / 2
+  const centerY = canvasHeight / 2
+
+  // 限制缩放范围
+  const canvasScale = Math.min(Math.max(minScale, scale), maxScale);
+
+  // 应用缩放变换
+  canvasElement.style.transform = `scale(${canvasScale})`;
+  // 设置变换原点为中心点
+  canvasElement.style.transformOrigin = `${centerX}px ${centerY}px`;
+
+  canvas.scale = canvasScale
+
+}
+
+// 缩放函数
+function zoom(direction) {
+  const canvas = CanvasManager.getCanvas(selectedElement.value.path);
+  if (!canvas) return
+  const {scaleStep} = scaleOptions;
+  const newScale = direction === 'in' ? canvas.scale + scaleStep : canvas.scale - scaleStep;
+  setScale(canvas, newScale);
 }
 
 
@@ -3221,7 +3227,19 @@ const handleDragleave = (event) => {
 }
 
 
-const bingEventListener = () => {
+// 处理 canvas 缩放
+const handleCanvasResize = (event) => {
+  const target = event.target;
+  if (target.getAttribute('id') !== 'preview-container') {
+    // 阻止默认滚动行为
+    event.preventDefault();
+    // 根据滚轮方向确定缩放方向
+    const direction = event.deltaY < 0 ? 'in' : 'out';
+    zoom(direction);
+  }
+}
+
+const bindEventListener = () => {
 
   document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
     element.addEventListener('dragstart', handleDragStart);
@@ -3239,6 +3257,7 @@ const bingEventListener = () => {
   previewContainer.value.addEventListener('keydown', handleRemoveElement);
   previewContainer.value.addEventListener('click', handleCancelSelectedElement);
   previewContainer.value.addEventListener('dblclick', handleEditorElement);
+  previewContainer.value.addEventListener('wheel', handleCanvasResize, {passive: false});
 }
 
 const unbindEventListener = () => {
@@ -3259,6 +3278,7 @@ const unbindEventListener = () => {
   previewContainer.value.removeEventListener('keydown', handleRemoveElement);
   previewContainer.value.removeEventListener('click', handleCancelSelectedElement);
   previewContainer.value.removeEventListener('dblclick', handleEditorElement);
+  previewContainer.value.removeEventListener('wheel', handleCanvasResize, {passive: false});
 }
 
 
@@ -3274,7 +3294,7 @@ onMounted(() => {
   watchDownloadProgress()
   editorOutputSettings()
   loadProjectSettings()
-  bingEventListener()
+  bindEventListener()
   initCanvasSize()
 })
 
@@ -3462,9 +3482,9 @@ onBeforeUnmount(() => {
 
     }
 
-    .page-center {
+    .preview-container {
       background: var(--preview-background-color);
-      width: var(--page-center-width);
+      width: var(--preview-container-width);
       height: 100%;
       box-sizing: border-box;
       overflow: auto;
