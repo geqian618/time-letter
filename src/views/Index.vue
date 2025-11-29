@@ -1538,7 +1538,8 @@ const watchContextMenu = () => {
 }
 
 const clearCanvas = (path) => {
-  const canvas = clearAllLabels(path);
+  const canvas = CanvasManager.getCanvas(path);
+  clearCanvasLabels(path);
   canvas.settings.border = new BorderSettings()
   renderBorders(path)
 }
