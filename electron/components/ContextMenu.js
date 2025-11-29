@@ -6,6 +6,13 @@ const contextMenu = (mainWindow) => {
     window = mainWindow;
     return Menu.buildFromTemplate([
         {
+            label: '删除图片',
+            accelerator: 'ctrl+d',
+            click: () => {
+                window.webContents.send('watch-contextMenu', {type: 0});
+            }
+        },
+        {
             label: '清空画布',
             accelerator: 'ctrl+l',
             click: () => {
@@ -17,13 +24,6 @@ const contextMenu = (mainWindow) => {
             accelerator: 'ctrl+r',
             click: () => {
                 window.webContents.send('watch-contextMenu', {type: 5});
-            }
-        },
-        {
-            label: '删除图片',
-            accelerator: 'ctrl+d',
-            click: () => {
-                window.webContents.send('watch-contextMenu', {type: 0});
             }
         },
         {
