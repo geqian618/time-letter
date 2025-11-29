@@ -2991,7 +2991,7 @@ const handleDragMoveElement = (event) => {
 
     event.preventDefault();
 
-    if (dragElement.getAttribute('selected') === 'true') {
+    if (dragElement.getAttribute('selected') === 'true' || dragElement.contentEditable === 'true') {
       return
     }
 
