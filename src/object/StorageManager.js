@@ -3,8 +3,15 @@ const saveTemplates = (templates) => {
 }
 
 const getTemplates = () => {
-    const json = window.localStorage.getItem('templates');
-    return json ? JSON.parse(json) : []
+    try {
+        const json = window.localStorage.getItem('templates');
+        if (json === null || json === 'undefined') {
+            return null;
+        }
+        return JSON.parse(json);
+    } catch (e) {
+        return null;
+    }
 }
 
 const saveTextLabels = (textLabels) => {
@@ -12,8 +19,15 @@ const saveTextLabels = (textLabels) => {
 }
 
 const getTextLabels = () => {
-    const json = window.localStorage.getItem('textLabels');
-    return json ? JSON.parse(json) : []
+    try {
+        const json = window.localStorage.getItem('textLabels');
+        if (json === null || json === 'undefined') {
+            return null;
+        }
+        return JSON.parse(json);
+    } catch (e) {
+        return null;
+    }
 }
 
 const saveProjectSettings = (settings) => {
@@ -22,8 +36,15 @@ const saveProjectSettings = (settings) => {
 
 
 const getProjectSettings = () => {
-    const json = window.localStorage.getItem('projectSettings');
-    return json ? JSON.parse(json) : null
+    try {
+        const json = window.localStorage.getItem('projectSettings');
+        if (json === null || json === 'undefined') {
+            return null;
+        }
+        return JSON.parse(json);
+    } catch (e) {
+        return null;
+    }
 }
 
 
