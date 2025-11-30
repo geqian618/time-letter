@@ -2826,15 +2826,15 @@ const handleRemoveElement = (event) => {
 // 编辑文本
 const handleEditorElement = (event) => {
 
-  event.preventDefault();
-
-  // 双击时清除单击的定时器
-  clearTimeout(clickTimeout);
-
   // 检查元素是否可拖动、不是图片，并且没有在编辑中
   if (event.target.getAttribute('draggable') !== 'true' || event.target instanceof HTMLImageElement || event.target.contentEditable === 'true') {
     return;
   }
+
+  event.preventDefault();
+
+  // 双击时清除单击的定时器
+  clearTimeout(clickTimeout);
 
   const dragElement = event.target;
 
@@ -2943,17 +2943,38 @@ const handleEditorElement = (event) => {
     }
 
     e.stopPropagation();
-
     e.preventDefault();
 
     // 获取当前鼠标位置的范围
-    const range = setCursorPosition(e.clientX, e.clientY);
+    const currentRange = setCursorPosition(e.clientX, e.clientY);
 
     // 如果有有效的范围并且有选择起点，扩展选择
-    if (range && selectionStart) {
+    if (currentRange && selectionStart) {
       const selection = window.getSelection();
-      const newRange = selectionStart.cloneRange();
-      newRange.setEnd(range.endContainer, range.endOffset);
+
+      // 创建一个新的范围，从起点到当前点
+      const newRange = document.createRange();
+
+      // 比较起点和当前点的位置，确保范围方向正确
+      const startPoint = selectionStart.cloneRange();
+      const endPoint = currentRange.cloneRange();
+
+      // 获取起点和终点的位置信息
+      startPoint.collapse(true);
+      endPoint.collapse(true);
+
+      // 比较起点和终点的位置
+      const compareResult = startPoint.compareBoundaryPoints(Range.START_TO_START, endPoint);
+
+      if (compareResult <= 0) {
+        // 从左到右选择
+        newRange.setStart(startPoint.startContainer, startPoint.startOffset);
+        newRange.setEnd(endPoint.startContainer, endPoint.startOffset);
+      } else {
+        // 从右到左选择
+        newRange.setStart(endPoint.startContainer, endPoint.startOffset);
+        newRange.setEnd(startPoint.startContainer, startPoint.startOffset);
+      }
 
       selection.removeAllRanges();
       selection.addRange(newRange);
@@ -2982,7 +3003,7 @@ const handleEditorElement = (event) => {
     isSelecting = false;
   };
 
-  // 定义事件处理函数（使用命名函数以便移除）
+  // 处理键盘按键事件
   const handleKeydown = function (e) {
 
     // 方向键处理：允许默认行为（移动光标）
@@ -3036,7 +3057,6 @@ const handleEditorElement = (event) => {
     dragElement.contentEditable = 'false';
     dragElement.style.outline = 'none';
     dragElement.style.outlineOffset = '';
-    dragElement.style.borderRadius = '';
     dragElement.style.transition = '';
     dragElement.style.overflow = '';
 
