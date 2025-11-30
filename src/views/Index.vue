@@ -2832,61 +2832,56 @@ const handleEditorElement = (event) => {
   }
 
   event.preventDefault();
-
-  // 双击时清除单击的定时器
   clearTimeout(clickTimeout);
 
   const dragElement = event.target;
-
-  // 清除选中状态
   dragElement.setAttribute('selected', 'false');
   dragElement.style.outline = 'none';
 
-  // 保存原始文本
   const originalText = dragElement.textContent;
-
-  // 直接让div变为可编辑状态
   dragElement.contentEditable = 'true';
 
   dragElement.style.outline = '1px solid #3F4141FF';
   dragElement.style.outlineOffset = '3px';
-  // 添加过渡动画
   dragElement.style.transition = 'all 0.1s ease-in-out';
   dragElement.style.overflow = 'hidden';
 
-  // 聚焦但不全选
   dragElement.focus();
 
-  // 将光标移动到文本末尾
   setTimeout(() => {
     const range = document.createRange();
     const selection = window.getSelection();
     range.selectNodeContents(dragElement);
-    // false 表示移动到末尾
     range.collapse(false);
     selection.removeAllRanges();
     selection.addRange(range);
   }, 0);
 
-  // 文本选择相关的变量
   let isSelecting = false;
   let selectionStart = null;
   let mouseDownTime = 0;
   let hasSelectionChanged = false;
 
-  // 统一的处理光标定位函数
+
+  // 修改：增强的光标定位函数，处理边界情况
   const setCursorPosition = function (x, y) {
+
+    const bounds = dragElement.getBoundingClientRect();
+
+    // 限制坐标在元素边界内
+    const clampedX = Math.max(bounds.left, Math.min(x, bounds.right - 1));
+    const clampedY = Math.max(bounds.top, Math.min(y, bounds.bottom - 1));
 
     let range = null;
 
     // 优先使用现代浏览器的 API
     if (document.caretRangeFromPoint) {
-      range = document.caretRangeFromPoint(x, y);
+      range = document.caretRangeFromPoint(clampedX, clampedY);
     }
 
     // 兼容旧版 Firefox
-    if (document.caretPositionFromPoint) {
-      const pos = document.caretPositionFromPoint(x, y);
+    if (!range && document.caretPositionFromPoint) {
+      const pos = document.caretPositionFromPoint(clampedX, clampedY);
       if (pos) {
         range = document.createRange();
         range.setStart(pos.offsetNode, pos.offset);
@@ -2894,7 +2889,11 @@ const handleEditorElement = (event) => {
       }
     }
 
-    // 如果有有效的范围，设置光标位置
+    // 新增：如果无法获取有效范围，尝试手动计算
+    if (!range) {
+      range = manuallyFindCursorPosition(dragElement, clampedX, clampedY);
+    }
+
     if (range) {
       const selection = window.getSelection();
       selection.removeAllRanges();
@@ -2905,39 +2904,69 @@ const handleEditorElement = (event) => {
     return null;
   };
 
-  // 处理鼠标按下事件 - 开始选择或定位光标
-  const handleMouseDown = function (e) {
+  // 新增：手动计算光标位置
+  const manuallyFindCursorPosition = function (element, x, y) {
 
-    // 只有在编辑模式下才处理鼠标按下
-    if (dragElement.contentEditable !== 'true') {
-      return;
-    }
+    const textNodes = getTextNodes(element);
+    const range = document.createRange();
 
-    // 阻止事件冒泡，避免触发全局点击事件
-    e.stopPropagation();
-
-    // 记录鼠标按下的时间
-    mouseDownTime = Date.now();
-    hasSelectionChanged = false;
-
-    // 如果点击的是文本，开始选择模式
-    if (e.target === dragElement || dragElement.contains(e.target)) {
-
-      isSelecting = true;
-
-      // 设置选择起点
-      const range = setCursorPosition(e.clientX, e.clientY);
-
-      if (range) {
-        selectionStart = range.cloneRange();
+    for (const node of textNodes) {
+      const rect = getTextNodeRect(node);
+      if (!rect) {
+        continue
+      }
+      // 检查是否在文本节点范围内
+      if (y >= rect.top && y <= rect.bottom && x >= rect.left && x <= rect.right) {
+        // 在文本节点内，尝试找到最接近的位置
+        const text = node.textContent;
+        const estimatedIndex = estimateCursorPosition(text, rect, x);
+        range.setStart(node, Math.min(estimatedIndex, text.length));
+        range.collapse(true);
+        return range;
       }
     }
+
+    // 如果没找到，选择元素末尾
+    range.selectNodeContents(element);
+    range.collapse(false);
+    return range;
   };
 
-  // 处理鼠标移动事件 - 扩展选择
+  // 新增：获取所有文本节点
+  const getTextNodes = function (element) {
+    const walker = document.createTreeWalker(
+        element,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+    );
+
+    const textNodes = [];
+    let node;
+    while (node = walker.nextNode()) {
+      textNodes.push(node);
+    }
+    return textNodes;
+  };
+
+  // 新增：获取文本节点的矩形区域
+  const getTextNodeRect = function (textNode) {
+    const range = document.createRange();
+    range.selectNodeContents(textNode);
+    const rect = range.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0 ? rect : null;
+  };
+
+  // 新增：估算光标在文本中的位置
+  const estimateCursorPosition = function (text, rect, x) {
+    const avgCharWidth = rect.width / text.length;
+    const relativeX = x - rect.left;
+    return Math.round(relativeX / avgCharWidth);
+  };
+
+  // 修改：增强的鼠标移动处理
   const handleMouseMove = function (e) {
 
-    // 只有在编辑模式且鼠标按下时才处理鼠标移动选择
     if (!isSelecting || dragElement.contentEditable !== 'true') {
       return;
     }
@@ -2945,33 +2974,37 @@ const handleEditorElement = (event) => {
     e.stopPropagation();
     e.preventDefault();
 
-    // 获取当前鼠标位置的范围
-    const currentRange = setCursorPosition(e.clientX, e.clientY);
+    const bounds = dragElement.getBoundingClientRect();
+    let clientX = e.clientX;
+    let clientY = e.clientY;
 
-    // 如果有有效的范围并且有选择起点，扩展选择
+    // 检查是否超出右边界
+    const isBeyondRight = clientX > bounds.right;
+    const isBeyondLeft = clientX < bounds.left;
+
+    if (isBeyondRight || isBeyondLeft) {
+      // 超出边界时，使用边界内的位置
+      clientX = isBeyondRight ? bounds.right - 1 : bounds.left + 1;
+    }
+
+    const currentRange = setCursorPosition(clientX, clientY);
+
     if (currentRange && selectionStart) {
       const selection = window.getSelection();
-
-      // 创建一个新的范围，从起点到当前点
       const newRange = document.createRange();
 
-      // 比较起点和当前点的位置，确保范围方向正确
       const startPoint = selectionStart.cloneRange();
       const endPoint = currentRange.cloneRange();
 
-      // 获取起点和终点的位置信息
       startPoint.collapse(true);
       endPoint.collapse(true);
 
-      // 比较起点和终点的位置
       const compareResult = startPoint.compareBoundaryPoints(Range.START_TO_START, endPoint);
 
       if (compareResult <= 0) {
-        // 从左到右选择
         newRange.setStart(startPoint.startContainer, startPoint.startOffset);
         newRange.setEnd(endPoint.startContainer, endPoint.startOffset);
       } else {
-        // 从右到左选择
         newRange.setStart(endPoint.startContainer, endPoint.startOffset);
         newRange.setEnd(startPoint.startContainer, startPoint.startOffset);
       }
@@ -2982,24 +3015,38 @@ const handleEditorElement = (event) => {
     }
   };
 
-  // 处理鼠标抬起事件 - 结束选择
+  // 其他事件处理函数保持不变
+  const handleMouseDown = function (e) {
+
+    if (dragElement.contentEditable !== 'true') {
+      return;
+    }
+
+    e.stopPropagation();
+    mouseDownTime = Date.now();
+    hasSelectionChanged = false;
+
+    if (e.target === dragElement || dragElement.contains(e.target)) {
+      isSelecting = true;
+      const range = setCursorPosition(e.clientX, e.clientY);
+      if (range) {
+        selectionStart = range.cloneRange();
+      }
+    }
+  };
+
   const handleMouseUp = function (e) {
 
-    // 只有在编辑模式下且正在选择时才处理
     if (dragElement.contentEditable !== 'true' || !isSelecting) {
       return;
     }
 
-    // 计算鼠标按下到抬起的时间
     const clickDuration = Date.now() - mouseDownTime;
-
-    // 如果是拖拽选择（有选择变化或者时间长），保持选择状态
     if (hasSelectionChanged || clickDuration > 200) {
       e.stopPropagation();
       e.preventDefault();
     }
 
-    // 如果是短时间点击，光标已经在按下时定位好了，不需要额外处理
     isSelecting = false;
   };
 
@@ -3079,8 +3126,10 @@ const handleEditorElement = (event) => {
   };
 
   const handleClick = (e) => {
-    if (!dragElement.contains(e.target)) {
+    if (!dragElement.contains(e.target) && !hasSelectionChanged) {
       dragElement.blur();
+    } else {
+      hasSelectionChanged = false
     }
   };
 
@@ -3088,13 +3137,10 @@ const handleEditorElement = (event) => {
   dragElement.addEventListener('keydown', handleKeydown);
   dragElement.addEventListener('blur', handleBlur);
   dragElement.addEventListener('input', handleInput);
-
-  // 添加鼠标事件监听器用于文本选择和光标定位
   dragElement.addEventListener('mousedown', handleMouseDown);
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('mouseup', handleMouseUp);
 
-  // 添加全局点击监听
   setTimeout(() => {
     document.addEventListener('click', handleClick);
   }, 0);
