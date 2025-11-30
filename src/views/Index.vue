@@ -1355,7 +1355,7 @@ const watchDownloadProgress = () => {
 }
 
 const stopDownloadFiles = () => {
-  window.electronAPI.stopSaveFiles()
+  window.electronAPI.stopExportFiles()
 }
 
 const handleDownloadProgressClose = () => {
@@ -1513,7 +1513,7 @@ const watchContextMenu = () => {
 
         await nextTick()
 
-        window.electronAPI.requestSaveFiles(_.cloneDeep({
+        window.electronAPI.requestExportFiles(_.cloneDeep({
           projectSettings: projectSettings.value,
           outputDirectory: data.outputDirectory,
           settings: newSettings

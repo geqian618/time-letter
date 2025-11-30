@@ -316,12 +316,6 @@ function createRoundedPath(ctx, x, y, width, height, borderRadius) {
 
 async function addBorderAndText(settings) {
     try {
-        // 创建视图来访问共享内存
-        const interruptView = new Int32Array(settings.interrupt);
-        if (Atomics.load(interruptView, 0) === 1) {
-            return;
-        }
-
         let {
             // 原始图片路径
             imagePath,

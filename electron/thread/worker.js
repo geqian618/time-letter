@@ -1,12 +1,17 @@
 const imageEditor = require("../utils/image-editor");
 
-module.exports = async (parameters) => {
+module.exports = async (data) => {
     try {
-        return await imageEditor.addBorderAndText(parameters);
+        return await imageEditor.addBorderAndText(data);
     } catch (error) {
-        // 错误会自动传递给线程池的调用方
         throw error;
+    } finally {
+        // 显式清理大对象引用
+        for (let key in data) {
+            if (data[key] && typeof data[key] === 'object') {
+                data[key] = null;
+            }
+        }
     }
-}
-
+};
 
