@@ -14,11 +14,9 @@ import 'element-plus/dist/index.css'
 
 import VueLazyload from 'vue3-lazyload'
 
-import draggable from "@/directive/draggable.js";
+import inputFocus from '@/directive/input-focus.js';
 
-import inputFocus from "@/directive/input-focus.js";
-
-import dragSort from "@/directive/drag-sort.js";
+import dragSort from '@/directive/drag-sort.js';
 
 
 const app = createApp(App)
@@ -27,7 +25,6 @@ app.use(router)
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
 app.use(pinia)
-
 
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component);
@@ -46,8 +43,6 @@ app.use(VueLazyload, {
         rootMargin: '0px 50% 0px 50%' // 横向扩展触发区域
     }
 })
-
-app.directive('draggable', draggable)
 
 app.directive('dragSort', dragSort)
 
