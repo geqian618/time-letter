@@ -2903,7 +2903,9 @@ const handleEditorElement = (event) => {
       e.preventDefault();
       dragElement.textContent = originalText;
       dragElement.blur();
+      return;
     }
+
     // 对于其他按键，不需要特别处理，contentEditable会处理光标位置
   };
 
