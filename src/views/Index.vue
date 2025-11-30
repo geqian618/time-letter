@@ -1466,17 +1466,21 @@ const watchContextMenu = () => {
 
           const nextCanvas = CanvasManager.getCanvas(paths[i]);
 
-          beforeCanvas.hide()
-          await nextTick()
-          nextCanvas.show()
-          await nextTick()
+          if (!nextCanvas.completed || nextCanvas.isUpdate) {
 
-          if (!nextCanvas.completed) {
-            await initializeCanvasLayout(nextCanvas)
-          }
+            beforeCanvas.hide()
+            await nextTick()
+            nextCanvas.show()
+            await nextTick()
 
-          if (nextCanvas.isUpdate) {
-            await refreshTemplate(nextCanvas.path)
+            if (!nextCanvas.completed) {
+              await initializeCanvasLayout(nextCanvas)
+            }
+
+            if (nextCanvas.isUpdate) {
+              await refreshTemplate(nextCanvas.path)
+            }
+
           }
 
           const {settings: {border, texts, images}} = CanvasManager.getCanvas(paths[i]);
