@@ -1018,7 +1018,8 @@ import {
   TextSettings,
   TextOptions,
   ImageOptions,
-  BorderOptions, FontSettings
+  BorderOptions,
+  FontSettings
 } from '@/object/Configuration'
 
 import {Canvas} from '@/object/Canvas'

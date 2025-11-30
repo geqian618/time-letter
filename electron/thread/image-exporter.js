@@ -34,8 +34,8 @@ const createThreadPool = async (threads) => {
     threadPool = new Piscina({
         filename: path.resolve(__dirname, 'worker.js'),
         maxThreads,
-        minThreads: Math.min(2, maxThreads),
-        idleTimeout: 30000,
+        minThreads: 0,
+        idleTimeout: 10000,
     });
 
     console.log(`Thread pool created with ${maxThreads} max threads`);
@@ -107,11 +107,11 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
     await Promise.allSettled(workers);
 
     // 所有任务完成后，清理线程池
-    setTimeout(() => {
-        if (threadPool) {
-            threadPool.destroy();
-        }
-    }, 10000);
+    // setTimeout(() => {
+    //     if (threadPool) {
+    //         threadPool.destroy();
+    //     }
+    // }, 10000);
 
     function updateProgress() {
         progressCallback({
