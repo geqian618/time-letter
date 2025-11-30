@@ -2984,6 +2984,7 @@ const handleEditorElement = (event) => {
 
   // 定义事件处理函数（使用命名函数以便移除）
   const handleKeydown = function (e) {
+
     // 方向键处理：允许默认行为（移动光标）
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' ||
         e.key === 'ArrowUp' || e.key === 'ArrowDown' ||
@@ -3028,7 +3029,9 @@ const handleEditorElement = (event) => {
   };
 
   const handleBlur = function () {
+
     const newValue = dragElement.textContent.trim();
+
     // 移除编辑状态
     dragElement.contentEditable = 'false';
     dragElement.style.outline = 'none';
