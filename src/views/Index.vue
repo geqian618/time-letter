@@ -2869,7 +2869,6 @@ const handleEditorElement = (event) => {
 
   // 定义事件处理函数（使用命名函数以便移除）
   const handleKeydown = function (e) {
-
     // 方向键处理：允许默认行为（移动光标）
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' ||
         e.key === 'ArrowUp' || e.key === 'ArrowDown' ||
@@ -2909,6 +2908,47 @@ const handleEditorElement = (event) => {
     // 对于其他按键，不需要特别处理，contentEditable会处理光标位置
   };
 
+  // 处理文本点击，移动光标到点击位置
+  const handleTextClick = function (e) {
+
+    // 只有在编辑模式下才处理点击移动光标
+    if (dragElement.contentEditable !== 'true') {
+      return;
+    }
+
+    // 阻止事件冒泡，避免触发全局点击事件
+    e.stopPropagation();
+
+    // 获取点击位置
+    const clickX = e.clientX;
+    const clickY = e.clientY;
+
+    // 创建从点击位置开始的选择
+    let range = null;
+
+    // 优先使用现代浏览器的 API
+    if (document.caretRangeFromPoint) {
+      range = document.caretRangeFromPoint(clickX, clickY);
+    }
+
+    // 兼容旧版 Firefox
+    if (document.caretPositionFromPoint) {
+      const pos = document.caretPositionFromPoint(clickX, clickY);
+      if (pos) {
+        range = document.createRange();
+        range.setStart(pos.offsetNode, pos.offset);
+        range.collapse(true);
+      }
+    }
+
+    // 如果有有效的范围，设置光标位置
+    if (range) {
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+  };
+
   const handleInput = function (e) {
 
   };
@@ -2927,6 +2967,7 @@ const handleEditorElement = (event) => {
     dragElement.removeEventListener('keydown', handleKeydown);
     dragElement.removeEventListener('blur', handleBlur);
     dragElement.removeEventListener('input', handleInput);
+    dragElement.removeEventListener('click', handleTextClick);
     document.removeEventListener('click', handleClick);
 
     if (!newValue) {
@@ -2948,6 +2989,7 @@ const handleEditorElement = (event) => {
   dragElement.addEventListener('keydown', handleKeydown);
   dragElement.addEventListener('blur', handleBlur);
   dragElement.addEventListener('input', handleInput);
+  dragElement.addEventListener('click', handleTextClick);
 
   // 添加全局点击监听
   setTimeout(() => {
