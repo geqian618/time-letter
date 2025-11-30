@@ -2825,7 +2825,6 @@ const handleRemoveElement = (event) => {
 
 // 编辑文本
 const handleEditorElement = (event) => {
-
   // 双击时清除单击的定时器
   clearTimeout(clickTimeout);
 
@@ -2846,7 +2845,7 @@ const handleEditorElement = (event) => {
   const originalText = dragElement.textContent;
 
   // 直接让div变为可编辑状态
-  dragElement.contentEditable = true;
+  dragElement.contentEditable = 'true';
 
   dragElement.style.outline = '1px solid #3F4141FF';
   dragElement.style.outlineOffset = '3px';
@@ -2858,30 +2857,64 @@ const handleEditorElement = (event) => {
   dragElement.focus();
 
   // 将光标移动到文本末尾
-  const range = document.createRange();
-  const selection = window.getSelection();
-  range.selectNodeContents(dragElement);
-  // false 表示移动到末尾
-  range.collapse(false);
-  selection.removeAllRanges();
-  selection.addRange(range);
+  setTimeout(() => {
+    const range = document.createRange();
+    const selection = window.getSelection();
+    range.selectNodeContents(dragElement);
+    // false 表示移动到末尾
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }, 0);
 
   // 定义事件处理函数（使用命名函数以便移除）
   const handleKeydown = function (e) {
+
+    // 方向键处理：允许默认行为（移动光标）
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' ||
+        e.key === 'ArrowUp' || e.key === 'ArrowDown' ||
+        e.key === 'Home' || e.key === 'End') {
+      // 停止立即传播，防止其他事件监听器阻止默认行为
+      e.stopImmediatePropagation();
+      // 不阻止默认行为，让光标移动
+      return;
+    }
+
+    // Ctrl + 方向键组合（词级移动）
+    if (e.ctrlKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      e.stopImmediatePropagation();
+      return;
+    }
+
+    // Shift + 方向键（选择文本）
+    if (e.shiftKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' ||
+        e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      e.stopImmediatePropagation();
+      return;
+    }
+
     if (e.key === 'Enter') {
       e.preventDefault();
       dragElement.blur();
-    } else if (e.key === 'Escape') {
+      return;
+    }
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
       dragElement.textContent = originalText;
       dragElement.blur();
     }
+    // 对于其他按键，不需要特别处理，contentEditable会处理光标位置
+  };
+
+  const handleInput = function (e) {
+
   };
 
   const handleBlur = function () {
-
     const newValue = dragElement.textContent.trim();
     // 移除编辑状态
-    dragElement.contentEditable = false;
+    dragElement.contentEditable = 'false';
     dragElement.style.outline = 'none';
     dragElement.style.outlineOffset = '';
     dragElement.style.borderRadius = '';
@@ -2891,11 +2924,12 @@ const handleEditorElement = (event) => {
     // 移除事件监听器
     dragElement.removeEventListener('keydown', handleKeydown);
     dragElement.removeEventListener('blur', handleBlur);
+    dragElement.removeEventListener('input', handleInput);
     document.removeEventListener('click', handleClick);
 
     if (!newValue) {
-      dragElement.remove();
       CanvasManager.deleteElement(CanvasManager.getSelectedPath(), dragElement);
+      dragElement.remove();
     } else {
       const settings = CanvasManager.getSettingsFromCurrentCanvas(dragElement);
       settings.content = newValue;
@@ -2911,12 +2945,12 @@ const handleEditorElement = (event) => {
   // 添加事件监听器
   dragElement.addEventListener('keydown', handleKeydown);
   dragElement.addEventListener('blur', handleBlur);
+  dragElement.addEventListener('input', handleInput);
 
   // 添加全局点击监听
   setTimeout(() => {
     document.addEventListener('click', handleClick);
   }, 0);
-
 };
 
 // 选择元素
@@ -2984,6 +3018,8 @@ const handleDragMoveElement = (event) => {
       return
     }
 
+    dragElement.style.cursor = 'move';
+
     isDragging = true
 
     const targetX = event.clientX;
@@ -3049,6 +3085,7 @@ const handleDragMoveElement = (event) => {
   document.onmouseup = function closeDragElement(event) {
     document.onmouseup = null;
     document.onmousemove = null;
+    dragElement.style.cursor = 'default';
     const target = event.target;
     if (!isDragging && target.getAttribute('draggable') === 'true' && startX === event.clientX && startY === event.clientY) {
       handleSelectedElement(target)
