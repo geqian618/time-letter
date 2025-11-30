@@ -316,7 +316,7 @@ function createRoundedPath(ctx, x, y, width, height, borderRadius) {
 
 async function addBorderAndText(settings) {
     try {
-        let {
+        const {
             // 原始图片路径
             imagePath,
             // 输出目录
@@ -366,63 +366,26 @@ async function addBorderAndText(settings) {
 
         let borderLeft, borderRight, borderTop, borderBottom, borderBlur, borderRadius
 
-        let newWidth, newHeight, imageWidth, imageHeight;
+        let newWidth, newHeight;
 
         const widthRatio = 1 + borderLeftRatio + borderRightRatio
 
         const heightRatio = 1 + borderTopRatio + borderBottomRatio
 
-        if (type === 0) { // 原始尺寸，不含边框
-            imageWidth = image.width;
-            imageHeight = image.height;
-        } else if (type === 1) { //原始尺寸，含边框
-            imageWidth = image.width / widthRatio;
-            imageHeight = image.height / widthRatio;
-        } else if (type === 2) { // 长边固定，不包含边框
-            if (image.height > image.width) {
-                imageHeight = longSide;
-                imageWidth = longSide * image.width / image.height
-            } else {
-                imageWidth = longSide
-                imageHeight = longSide * image.height / image.width;
-            }
-        } else if (type === 3) { // 长边固定，包含边框
-            if (image.height > image.width) {
-                imageHeight = longSide / heightRatio;
-                imageWidth = longSide * image.width / image.height / heightRatio
-            } else {
-                imageWidth = longSide / widthRatio
-                imageHeight = longSide * image.height / image.width / widthRatio;
-            }
-        } else if (type === 4) { // 短边固定，不包含边框
-            if (image.height < image.width) {
-                imageHeight = shortSide;
-                imageWidth = shortSide * image.width / image.height
-            } else {
-                imageWidth = shortSide
-                imageHeight = longSide * image.height / image.width;
-            }
-        } else if (type === 5) { // 短边固定，包含边框
-            if (image.height < image.width) {
-                imageHeight = shortSide / heightRatio;
-                imageWidth = shortSide * image.width / image.height / heightRatio
-            } else {
-                imageWidth = shortSide / widthRatio
-                imageHeight = longSide * image.height / image.width / widthRatio
-            }
-        } else if (type === 6) { // 宽固定，不包含边框
-            imageWidth = width;
-            imageHeight = image.height * width / image.width
-        } else if (type === 7) {// 宽固定，包含边框
-            imageWidth = width / widthRatio;
-            imageHeight = image.height * width / image.width / widthRatio
-        } else if (type === 8) { // 高固定，不包含边框
-            imageHeight = height;
-            imageWidth = image.width * height / image.height
-        } else if (type === 9) { // 高固定，包含边框
-            imageHeight = height / heightRatio;
-            imageWidth = image.width * height / image.height / heightRatio
+        const strategy = resizeStrategies[type];
+
+        if (!strategy) {
+            throw new Error(`Unknown resize type: ${type}`);
         }
+
+        let {width: imageWidth, height: imageHeight} = strategy(image, {
+            widthRatio,
+            heightRatio,
+            longSide,
+            shortSide,
+            width,
+            height
+        });
 
         // 边框值为比率
         borderLeft = borderLeftRatio * imageWidth
@@ -488,13 +451,10 @@ async function addBorderAndText(settings) {
         }
 
         // 7. 保存图片 (使用 Buffer 写入)
-        let buffer;
+        let buffer = outputExtname === 'png'
+            ? canvas.toBuffer('image/png')
+            : canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 100 : quality);
 
-        if (outputExtname === 'png') {
-            buffer = canvas.toBuffer('image/png');
-        } else {
-            buffer = canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 100 : quality);
-        }
 
         if (['jpeg', 'jpg'].includes(originalExtname) && ['jpeg', 'jpg'].includes(outputExtname) && isSynchronizeMetadata) {
             buffer = await copyExifDataToBuffer(imagePath, buffer)
@@ -506,8 +466,81 @@ async function addBorderAndText(settings) {
         console.error('处理图片时出错:', error);
         throw error;
     }
-
 }
+
+// 定义策略配置
+const resizeStrategies = {
+    // 原始尺寸，不含边框
+    0: (image) => ({
+        width: image.width,
+        height: image.height
+    }),
+
+    // 原始尺寸，含边框
+    1: (image, {widthRatio}) => ({
+        width: image.width / widthRatio,
+        height: image.height / widthRatio
+    }),
+
+    // 长边固定，不包含边框
+    2: (image, {longSide}) => ({
+        width: image.height > image.width ?
+            longSide * image.width / image.height : longSide,
+        height: image.height > image.width ?
+            longSide : longSide * image.height / image.width
+    }),
+
+    // 长边固定，包含边框
+    3: (image, {longSide, widthRatio, heightRatio}) => ({
+        width: image.height > image.width ?
+            longSide * image.width / image.height / heightRatio :
+            longSide / widthRatio,
+        height: image.height > image.width ?
+            longSide / heightRatio :
+            longSide * image.height / image.width / widthRatio
+    }),
+
+    // 短边固定，不包含边框
+    4: (image, {shortSide, longSide}) => ({
+        width: image.height < image.width ?
+            shortSide * image.width / image.height : shortSide,
+        height: image.height < image.width ?
+            shortSide : longSide * image.height / image.width
+    }),
+
+    // 短边固定，包含边框
+    5: (image, {shortSide, longSide, widthRatio, heightRatio}) => ({
+        width: image.height < image.width ?
+            shortSide * image.width / image.height / heightRatio :
+            shortSide / widthRatio,
+        height: image.height < image.width ?
+            shortSide / heightRatio :
+            longSide * image.height / image.width / widthRatio
+    }),
+
+    // 宽固定，不包含边框
+    6: (image, {width}) => ({
+        width: width,
+        height: image.height * width / image.width
+    }),
+
+    // 宽固定，包含边框
+    7: (image, {width, widthRatio}) => ({
+        width: width / widthRatio,
+        height: image.height * width / image.width / widthRatio
+    }),
+
+    // 高固定，不包含边框
+    8: (image, {height}) => ({
+        width: image.width * height / image.height,
+        height: height
+    }),
+    // 高固定，包含边框
+    9: (image, {height, heightRatio}) => ({
+        width: image.width * height / image.height / heightRatio,
+        height: height / heightRatio
+    })
+};
 
 module.exports = {addBorderAndText}
 

@@ -769,45 +769,33 @@
                       :value="item.value"/>
                 </el-select>
               </div>
-              <!--            <div class="option" v-show="[6,7].includes(projectSettings.outputSettings.outputSize.type)">-->
-              <!--              <span>宽度：</span>-->
-              <!--              <el-input v-model="projectSettings.outputSettings.outputSize.width" size="small"-->
-              <!--                        placeholder="宽度"/>-->
-              <!--              <span>px</span>-->
-              <!--            </div>-->
-              <!--            <div class="option" v-show="[6,7].includes(projectSettings.outputSettings.outputSize.type)">-->
-              <!--              <span>高度：</span>-->
-              <!--              <el-input v-model="projectSettings.outputSettings.outputSize.height" size="small"-->
-              <!--                        placeholder="高度"/>-->
-              <!--              <span>px</span>-->
-              <!--            </div>-->
               <div class="option" v-show="[2,3].includes(projectSettings.outputSettings.outputSize.type)">
                 <span>长边尺寸：</span>
                 <el-input v-model.number="projectSettings.outputSettings.outputSize.longSide"
                           size="small"
                           placeholder="长边"/>
-                <span>px</span>
+                <span>&nbsp;px</span>
               </div>
               <div class="option" v-show="[4,5].includes(projectSettings.outputSettings.outputSize.type)">
                 <span>短边尺寸：</span>
                 <el-input v-model.number="projectSettings.outputSettings.outputSize.shortSide"
                           size="small"
                           placeholder="短边"/>
-                <span>px</span>
+                <span>&nbsp;px</span>
               </div>
               <div class="option" v-show="[6,7].includes(projectSettings.outputSettings.outputSize.type)">
                 <span>宽尺寸：</span>
                 <el-input v-model.number="projectSettings.outputSettings.outputSize.width"
                           size="small"
                           placeholder="宽尺寸"/>
-                <span>px</span>
+                <span>&nbsp;px</span>
               </div>
               <div class="option" v-show="[8,9].includes(projectSettings.outputSettings.outputSize.type)">
                 <span>高尺寸：</span>
                 <el-input v-model.number="projectSettings.outputSettings.outputSize.height"
                           size="small"
                           placeholder="高尺寸"/>
-                <span>px</span>
+                <span>&nbsp;px</span>
               </div>
             </div>
           </div>

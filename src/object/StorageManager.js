@@ -15,7 +15,7 @@ const getTemplates = () => {
 }
 
 const saveTextLabels = (textLabels) => {
-    window.localStorage.setItem('textLabels', JSON.stringify(textLabels.value))
+    window.localStorage.setItem('textLabels', JSON.stringify(textLabels))
 }
 
 const getTextLabels = () => {
@@ -31,7 +31,7 @@ const getTextLabels = () => {
 }
 
 const saveProjectSettings = (settings) => {
-    window.localStorage.setItem('projectSettings', JSON.stringify(settings.value))
+    window.localStorage.setItem('projectSettings', JSON.stringify(settings))
 }
 
 
