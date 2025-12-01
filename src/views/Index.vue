@@ -2861,9 +2861,9 @@ const handleEditorElement = (event) => {
   let selectionStart = null;
   let mouseDownTime = 0;
   let hasSelectionChanged = false;
+  let mousedownX, mousedownY;
 
-
-  // 修改：增强的光标定位函数，处理边界情况
+  // 强的光标定位函数，处理边界情况
   const setCursorPosition = function (x, y) {
 
     const bounds = dragElement.getBoundingClientRect();
@@ -2889,7 +2889,7 @@ const handleEditorElement = (event) => {
       }
     }
 
-    // 新增：如果无法获取有效范围，尝试手动计算
+    // 如果无法获取有效范围，尝试手动计算
     if (!range) {
       range = manuallyFindCursorPosition(dragElement, clampedX, clampedY);
     }
@@ -2904,7 +2904,7 @@ const handleEditorElement = (event) => {
     return null;
   };
 
-  // 新增：手动计算光标位置
+  // 手动计算光标位置
   const manuallyFindCursorPosition = function (element, x, y) {
 
     const textNodes = getTextNodes(element);
@@ -2964,12 +2964,31 @@ const handleEditorElement = (event) => {
     return Math.round(relativeX / avgCharWidth);
   };
 
+
+  // 其他事件处理函数保持不变
+  const handleMouseDown = function (e) {
+
+    mousedownX = e.clientX;
+    mousedownY = e.clientY;
+
+    e.stopPropagation();
+    mouseDownTime = Date.now();
+    hasSelectionChanged = false;
+
+    if (e.target === dragElement || dragElement.contains(e.target)) {
+      isSelecting = true;
+      const range = setCursorPosition(e.clientX, e.clientY);
+      if (range) {
+        selectionStart = range.cloneRange();
+      }
+    }
+  };
+
+
   // 修改：增强的鼠标移动处理
   const handleMouseMove = function (e) {
 
-    if (!isSelecting || dragElement.contentEditable !== 'true') {
-      return;
-    }
+    if (!isSelecting) return;
 
     e.stopPropagation();
     e.preventDefault();
@@ -3015,30 +3034,10 @@ const handleEditorElement = (event) => {
     }
   };
 
-  // 其他事件处理函数保持不变
-  const handleMouseDown = function (e) {
-
-    if (dragElement.contentEditable !== 'true') {
-      return;
-    }
-
-    e.stopPropagation();
-    mouseDownTime = Date.now();
-    hasSelectionChanged = false;
-
-    if (e.target === dragElement || dragElement.contains(e.target)) {
-      isSelecting = true;
-      const range = setCursorPosition(e.clientX, e.clientY);
-      if (range) {
-        selectionStart = range.cloneRange();
-      }
-    }
-  };
-
   const handleMouseUp = function (e) {
 
-    if (dragElement.contentEditable !== 'true' || !isSelecting) {
-      return;
+    if (!isSelecting) {
+      dragElement.blur()
     }
 
     const clickDuration = Date.now() - mouseDownTime;
@@ -3046,7 +3045,6 @@ const handleEditorElement = (event) => {
       e.stopPropagation();
       e.preventDefault();
     }
-
     isSelecting = false;
   };
 
@@ -3111,10 +3109,9 @@ const handleEditorElement = (event) => {
     dragElement.removeEventListener('keydown', handleKeydown);
     dragElement.removeEventListener('blur', handleBlur);
     dragElement.removeEventListener('input', handleInput);
-    dragElement.removeEventListener('mousedown', handleMouseDown);
+    document.removeEventListener('mousedown', handleMouseDown);
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', handleMouseUp);
-    document.removeEventListener('click', handleClick);
 
     if (!newValue) {
       CanvasManager.deleteElement(CanvasManager.getSelectedPath(), dragElement);
@@ -3125,25 +3122,14 @@ const handleEditorElement = (event) => {
     }
   };
 
-  const handleClick = (e) => {
-    if (!dragElement.contains(e.target) && !hasSelectionChanged) {
-      dragElement.blur();
-    } else {
-      hasSelectionChanged = false
-    }
-  };
 
   // 添加事件监听器
   dragElement.addEventListener('keydown', handleKeydown);
   dragElement.addEventListener('blur', handleBlur);
   dragElement.addEventListener('input', handleInput);
-  dragElement.addEventListener('mousedown', handleMouseDown);
+  document.addEventListener('mousedown', handleMouseDown);
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('mouseup', handleMouseUp);
-
-  setTimeout(() => {
-    document.addEventListener('click', handleClick);
-  }, 0);
 };
 
 // 选择元素
