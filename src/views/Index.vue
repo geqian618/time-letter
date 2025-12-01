@@ -1815,7 +1815,7 @@ const deleteTemplate = () => {
 
 const synchronizeTemplate = () => {
 
-  if (!CanvasManager.getSelectedPath()) {
+  if (CanvasManager.getSelectedPath()) {
     const {settings: templateSettings} = CanvasManager.getCurrentCanvas();
     const targetSettings = {
       border: templateSettings.border,
