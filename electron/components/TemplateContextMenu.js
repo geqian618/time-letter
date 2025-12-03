@@ -2,7 +2,7 @@ const {Menu, dialog, app} = require('electron')
 
 let window;
 
-const contextMenu = (mainWindow) => {
+const createTemplateContextMenu = (mainWindow) => {
     window = mainWindow;
     return Menu.buildFromTemplate([
         {
@@ -22,5 +22,4 @@ const contextMenu = (mainWindow) => {
     ])
 };
 
-
-module.exports = contextMenu
+module.exports = createTemplateContextMenu

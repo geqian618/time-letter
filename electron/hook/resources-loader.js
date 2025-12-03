@@ -4,7 +4,6 @@ const {getResourcePath, localPathToProtocolUrl} = require('../utils/path-helper'
 const resourcesPath = getResourcePath()
 const {reloadFonts} = require('./font-manager')
 
-
 const loadImageLabels = (window) => {
     fs.readdir(resourcesPath, (err, filenames) => {
         const files = filenames.map((filename) => {

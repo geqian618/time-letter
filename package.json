@@ -5,7 +5,7 @@
   "private": true,
   "main": "electron/main.js",
   "scripts": {
-    "electron:serve": "cross-env NODE_ENV=development nodemon --exec electron . --watch ./ --ext .js,.ts,.css,.html,.vue",
+    "electron:serve": "chcp 65001 && cross-env NODE_ENV=development nodemon --exec electron . --watch ./ --ext .js,.ts,.css,.html,.vue",
     "electron:build": "vite build && electron-builder",
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
