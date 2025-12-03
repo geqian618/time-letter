@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const {getResourcePath, localPathToProtocolUrl} = require('../utils/path-helper')
+const {getResourcePath, localPathToProtocolUrl} = require('./path-helper')
 const resourcesPath = getResourcePath()
 const {reloadFonts} = require('./font-manager')
 

@@ -1,7 +1,7 @@
 const {GlobalFonts} = require("@napi-rs/canvas");
 const fs = require("fs");
 const path = require("path");
-const {getFontPath, localPathToProtocolUrl} = require("../utils/path-helper");
+const {getFontPath, localPathToProtocolUrl} = require("./path-helper");
 const fontPath = getFontPath();
 const loadedFonts = new Map();
 

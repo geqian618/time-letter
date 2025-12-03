@@ -1,6 +1,6 @@
 const chokidar = require('chokidar')
 const path = require('path');
-const {registerFonts} = require('./font-manager');
+const {registerFonts} = require('../utils/font-manager');
 const {localPathToProtocolUrl} = require('../utils/path-helper');
 
 let watcher;

@@ -8,9 +8,9 @@ const imageExporter = require('./thread/image-exporter')
 const {getResourcePath, getFontPath} = require('./utils/path-helper')
 
 // 钩子和组件
-const resourcesLoader = require('./hook/resources-loader')
-const imageWatcher = require('./hook/image-file-watcher')
-const fontWatcher = require('./hook/font-file-watcher')
+const resourcesLoader = require('./utils/resources-loader')
+const imageWatcher = require('./components/image-file-watcher')
+const fontWatcher = require('./components/font-file-watcher')
 const createTray = require('./components/Tray')
 const createApplicationMenu = require('./components/ApplicationMenu')
 const createContextMenu = require('./components/ContextMenu')

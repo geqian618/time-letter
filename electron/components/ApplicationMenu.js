@@ -5,7 +5,7 @@ const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('../utils
 const resourcesPath = getResourcePath()
 const fontPath = getFontPath()
 const {createChildWindow} = require('../components/ChildWindow')
-const {registerFonts} = require('../hook/font-manager')
+const {registerFonts} = require('../utils/font-manager')
 
 /**
  * mainMenu 定义为函数，主进程可以传参到菜单中
