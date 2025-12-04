@@ -75,12 +75,14 @@
     },
     "files": [
       "dist/**/*",
-      "electron/**/*"
+      "electron/**/*",
+      "!electron/resources/resources",
+      "!electron/resources/fonts"
     ],
     "extraResources": [
       {
-        "from": "electron/resources/images",
-        "to": "./images"
+        "from": "electron/resources/resources",
+        "to": "./resources"
       },
       {
         "from": "electron/resources/fonts",

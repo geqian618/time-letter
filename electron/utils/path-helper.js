@@ -2,8 +2,8 @@ const path = require('path');
 
 const getResourcePath = () => {
     return process.env.NODE_ENV === 'development'
-        ? path.join(process.cwd(), 'electron', 'resources', 'images')
-        : path.join(process.resourcesPath, 'images')
+        ? path.join(process.cwd(), 'electron', 'resources', 'resources')
+        : path.join(process.resourcesPath, 'resources')
 
 }
 

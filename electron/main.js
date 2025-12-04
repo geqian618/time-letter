@@ -18,7 +18,7 @@ const createTemplateContextMenu = require('./components/TemplateContextMenu')
 
 // 配置常量
 const {APP_NAME, APP_ICON_PATH, APP_VERSION} = require('./constant/ProjectConstants')
-const environment = process.env.NODE_ENV || 'development'
+const environment = process.env.NODE_ENV
 const isDev = environment === 'development'
 const resourcesPath = getResourcePath()
 const fontPath = getFontPath()
@@ -76,12 +76,13 @@ const createMainWindow = () => {
  * 加载应用内容
  */
 const loadAppContent = (window) => {
-
-    const url = isDev
-        ? 'http://localhost:5173/'
-        : `file://${path.join(__dirname, '../dist/index.html')}`
-
-    window.loadURL(url)
+    if (isDev) {
+        // 开发环境加载 URL
+        window.loadURL('http://localhost:5173/')
+    } else {
+        // 生产环境加载本地文件系统中的文件
+        window.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
+    }
 }
 
 /**
