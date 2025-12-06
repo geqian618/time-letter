@@ -1242,7 +1242,6 @@ const watchImportFonts = () => {
               // 加载字体
               FontLoader.loadFont(family, font.url)
               if (type === 0) {
-                console.log(data)
                 setTimeout(() => {
                   Notification.success(`字体 ${family} 加载成功`, '提示')
                 }, 100)
