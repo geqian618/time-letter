@@ -1242,6 +1242,7 @@ const watchImportFonts = () => {
               // 加载字体
               FontLoader.loadFont(family, font.url)
               if (type === 0) {
+                console.log(data)
                 setTimeout(() => {
                   Notification.success(`字体 ${family} 加载成功`, '提示')
                 }, 100)
@@ -1259,8 +1260,8 @@ const watchImportFonts = () => {
           }
         }
       } else if (type === 1) {
-        const fontFamily = data.fontFamily;
-        projectSettings.value.availableFonts.delete(fontFamily)
+        const family = data.family;
+        projectSettings.value.availableFonts.delete(family)
       }
     }
   })

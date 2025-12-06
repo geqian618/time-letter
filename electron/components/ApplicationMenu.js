@@ -5,7 +5,7 @@ const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('../utils
 const resourcesPath = getResourcePath()
 const fontPath = getFontPath()
 const {createChildWindow} = require('../components/ChildWindow')
-const {registerFonts} = require('../utils/font-manager')
+const {registerFont} = require('../utils/font-manager')
 
 /**
  * mainMenu 定义为函数，主进程可以传参到菜单中
@@ -180,8 +180,8 @@ const selectFonts = async () => {
                 return [font.family, font]
             })
         );
-        fonts.forEach(([family, font]) => registerFonts(font))
-        window.webContents.send('watch-input-font', {type: 0, data: fonts})
+        fonts.forEach(([family, font]) => registerFont(font))
+        window.webContents.send('watch-input-font', {type: 0, data: new Map(fonts)})
     }
 }
 

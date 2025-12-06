@@ -19,7 +19,7 @@ const reloadFonts = () => {
 
     loadedFonts.clear()
     GlobalFonts.families.forEach(font => loadedFonts.set(font.family, font))
-    fonts.forEach(([family, font]) => registerFonts(font))
+    fonts.forEach(([family, font]) => registerFont(font))
     return loadedFonts;
 }
 
@@ -37,16 +37,21 @@ const reloadExtendFonts = () => {
     });
 }
 
-const registerFonts = (font) => {
+const registerFont = (font) => {
     if (!GlobalFonts.has(font.family)) {
         GlobalFonts.registerFromPath(font.path, font.family);
     }
     loadedFonts.set(font.family, font)
 }
 
-const removeFonts = (family) => {
+const removeFont = (family) => {
     loadedFonts.delete(family)
 }
 
 
-module.exports = {reloadFonts, reloadExtendFonts, registerFonts, removeFonts}
+const hasFont = (family) => {
+    return loadedFonts.has(family)
+}
+
+
+module.exports = {reloadFonts, reloadExtendFonts, registerFont, removeFont, hasFont}
