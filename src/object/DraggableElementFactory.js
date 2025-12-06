@@ -132,28 +132,26 @@ class DraggableElementFactory {
                 this.dragElement.innerHTML = content;
                 break;
             case 'metadata':
-                this.#setMetadataContent(expression);
+                this.dragElement.innerHTML = this.#getMetadataContent(expression);
                 break;
         }
+        this.dragElement.innerHTML ? this.settings.content = this.dragElement.innerHTML : this.dragElement = null
     }
 
     // 设置元数据内容
-    #setMetadataContent(attribute) {
+    #getMetadataContent(attribute) {
         if (!this.metadataOptions || !projectSettings.value) {
             console.warn('Metadata dependencies not set');
-            return;
+            return null;
         }
         let content = this.metadataOptions[attribute];
         if (!content) {
-            this.dragElement = null
-            return;
+            return null;
         }
         const format = projectSettings.value.metadata.formats[attribute];
         if (format) {
-            content = format.replace('${' + attribute + '}', content);
+            return format.replace('${' + attribute + '}', content);
         }
-        this.dragElement.innerHTML = content;
-        this.settings.content = content
     }
 
 

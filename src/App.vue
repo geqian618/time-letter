@@ -9,6 +9,8 @@ import {RouterView} from 'vue-router'
 
 <style>
 
+
+
 * {
   padding: 0;
   margin: 0;

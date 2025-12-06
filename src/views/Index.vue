@@ -81,6 +81,7 @@
             </div>
           </template>
         </div>
+
         <div class="page-right">
           <div class="settings-details">
             <el-aside>
@@ -2420,6 +2421,7 @@ const handleUpdateBorders = async () => {
         backgroundElement.removeAttribute('blur-border')
         backgroundElement.style.background = borderColor
         backgroundElement.style.boxShadow = ''
+        imageElement.style.boxShadow = ''
       } else if (borderType === 1) {
         backgroundElement.setAttribute('blur-border', '')
         backgroundElement.style.background = `url('${canvas.url}') center / cover`
@@ -4198,8 +4200,6 @@ onBeforeUnmount(() => {
 
       }
     }
-
-
   }
 }
 
