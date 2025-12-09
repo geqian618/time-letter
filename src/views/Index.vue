@@ -161,7 +161,7 @@
                       </li>
                     </ul>
                   </el-sub-menu>
-                  <el-sub-menu index="4">
+                  <el-sub-menu index="5">
                     <template #title>
                       <span>主图</span>
                     </template>
