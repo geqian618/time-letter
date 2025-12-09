@@ -1567,8 +1567,6 @@ const watchContextMenu = () => {
             }
           })
 
-          console.log(newSettings)
-
           if (i === paths.length - 1) {
             nextCanvas.hide()
             await nextTick();
@@ -1683,9 +1681,6 @@ const stoPhotographSettingsWatch = watch(photographOptions, async (newVal, oldVa
   if (!canvas) return
   const imageElement = canvas.getImageElement();
   if (imageElement) {
-
-    console.log(newVal)
-
     const {borderRadius, boxShadow: {offsetX, offsetY, blur, shadowColor}} = newVal;
     imageElement.style.borderRadius = `${borderRadius}px`
     imageElement.style.boxShadow = `${offsetX}px ${offsetY}px ${blur}px ${shadowColor}`
