@@ -230,9 +230,12 @@ const getExtname = (originalExtname, extnameType) => {
  */
 function drawPhotograph(ctx, img, x, y, width, height, photograph) {
 
-    const {borderRadiusRatio, boxShadow: {offsetXRatio, offsetYRatio, blurRatio, shadowColor}} = photograph.options
+    const {
+        borderRadiusRatio = 0,
+        boxShadow: {offsetXRatio = 0, offsetYRatio = 0, blurRatio = 0, shadowColor = 0}
+    } = photograph.options
 
-    const borderRadius = borderRadiusRatio * img.width;
+    const borderRadius = borderRadiusRatio * width;
 
     // 保存上下文状态
     ctx.save();
@@ -240,9 +243,9 @@ function drawPhotograph(ctx, img, x, y, width, height, photograph) {
     // ============== 方法1：先绘制阴影，再绘制图片 ==============
     // 设置阴影
     ctx.shadowColor = shadowColor;
-    ctx.shadowBlur = img.width * blurRatio;
-    ctx.shadowOffsetX = img.width * offsetXRatio;
-    ctx.shadowOffsetY = img.height * offsetYRatio;
+    ctx.shadowBlur = width * blurRatio;
+    ctx.shadowOffsetX = width * offsetXRatio;
+    ctx.shadowOffsetY = height * offsetYRatio;
 
     // 创建圆角路径用于绘制阴影
     createRoundedPath(ctx, x, y, width, height, borderRadius);
@@ -341,7 +344,7 @@ async function addBorderAndText(settings) {
                 borderTopRatio,
                 borderBottomRatio,
                 borderBlurRatio,
-                borderRadiusRatio,
+                borderRadiusRatio: backgroundRadiusRatio,
                 options: {
                     borderColor,
                     borderType,
@@ -369,7 +372,7 @@ async function addBorderAndText(settings) {
 
         const image = await loadImage(imageBuffer);
 
-        let borderLeft, borderRight, borderTop, borderBottom, borderBlur, borderRadius
+        let borderLeft, borderRight, borderTop, borderBottom, borderBlur
 
         let newWidth, newHeight;
 
@@ -398,7 +401,6 @@ async function addBorderAndText(settings) {
         borderTop = borderTopRatio * imageHeight
         borderBottom = borderBottomRatio * imageHeight
         borderBlur = borderBlurRatio * imageWidth
-        borderRadius = borderRadiusRatio * imageWidth
 
         // 2. 计算新画布尺寸
         newWidth = Math.round(imageWidth + borderLeft + borderRight);
@@ -425,7 +427,7 @@ async function addBorderAndText(settings) {
                 const backgroundBuffer = await createBlurFilterFromBuffer(imageBuffer, borderBlur);
                 const background = await loadImage(backgroundBuffer);
                 // 绘制背景图片（居中）
-                drawPhotograph(ctx, background, 0, 0, newWidth, newHeight, photograph)
+                drawPhotograph(ctx, background, 0, 0, newWidth, newHeight, {borderRadiusRatio: backgroundRadiusRatio})
             }
         }
 
