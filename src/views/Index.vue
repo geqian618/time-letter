@@ -163,7 +163,7 @@
                   </el-sub-menu>
                   <el-sub-menu index="4">
                     <template #title>
-                      <span>主体</span>
+                      <span>主图</span>
                     </template>
                     <ul class="options">
                       <li class="option">
@@ -1921,6 +1921,7 @@ const synchronizeTemplate = () => {
     const {settings: templateSettings} = CanvasManager.getCurrentCanvas();
     const targetSettings = {
       border: templateSettings.border,
+      photograph: templateSettings.photograph,
       images: Array.from(templateSettings.images.values()).map(item => {
         item.synchronousMode = synchronousMode.value
         return item
@@ -2105,6 +2106,8 @@ const useTemplate = async (targetSettings, path) => {
 
   canvas.settings.border = targetSettings.border
   canvas.settings.photograph = targetSettings.photograph
+  canvas.settings.images = new Map()
+  canvas.settings.texts = new Map()
   canvas.isUpdate = true
 
   if (path === CanvasManager.getSelectedPath()) {
