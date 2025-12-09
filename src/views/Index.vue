@@ -1887,7 +1887,7 @@ const renameTemplate = () => {
     if (valid) {
       if (templates.value && templates.value.length) {
         for (let i = 0; i < templates.value.length; i++) {
-          if (templates.value[i].id === oldTemplate.value.templateId) {
+          if (templates.value[i].templateId === oldTemplate.value.templateId) {
             templates.value[i].templateName = oldTemplate.value.templateName
             StorageManager.saveTemplates(templates.value)
             renameDialogVisible.value = false
