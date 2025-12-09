@@ -2598,7 +2598,7 @@ const handleUpdateBorders = async () => {
   }
 }
 
-const renderPhotograph = (path) => {
+const renderPhotograph = async (path) => {
   //停止监听 stopWatch();
   const canvas = CanvasManager.getCanvas(path);
   if (!canvas) return
@@ -2611,6 +2611,9 @@ const renderPhotograph = (path) => {
     const {borderRadius, boxShadow: {offsetX, offsetY, blur, shadowColor}} = photograph.options;
     imageElement.style.borderRadius = `${borderRadius}px`
     imageElement.style.boxShadow = `${offsetX}px ${offsetY}px ${blur}px ${shadowColor}`
+
+    await nextTick();
+
     const {offsetWidth, offsetHeight} = imageElement;
     photograph.options.borderRadiusRatio = borderRadius / offsetWidth
     photograph.options.boxShadow.offsetXRatio = offsetX / offsetWidth
