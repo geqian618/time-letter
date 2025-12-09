@@ -224,21 +224,25 @@ const getExtname = (originalExtname, extnameType) => {
  * @param {number} y - 图片左上角y坐标
  * @param {number} width - 图片宽度
  * @param {number} height - 图片高度
- * @param {number|object} borderRadius - 圆角大小
+ * @param {number|object} photograph - 图片信息
  *   数字类型：统一设置四个角的圆角半径
  *   对象类型：分别设置四个角的半径 { topLeft, topRight, bottomRight, bottomLeft }
  */
-function drawRoundedImage(ctx, img, x, y, width, height, borderRadius) {
+function drawPhotograph(ctx, img, x, y, width, height, photograph) {
+
+    const {borderRadiusRatio, boxShadow: {offsetXRatio, offsetYRatio, blurRatio, shadowColor}} = photograph.options
+
+    const borderRadius = borderRadiusRatio * img.width;
 
     // 保存上下文状态
     ctx.save();
 
     // ============== 方法1：先绘制阴影，再绘制图片 ==============
     // 设置阴影
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-    ctx.shadowBlur = 150;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
+    ctx.shadowColor = shadowColor;
+    ctx.shadowBlur = img.width * blurRatio;
+    ctx.shadowOffsetX = img.width * offsetXRatio;
+    ctx.shadowOffsetY = img.height * offsetYRatio;
 
     // 创建圆角路径用于绘制阴影
     createRoundedPath(ctx, x, y, width, height, borderRadius);
@@ -330,6 +334,7 @@ async function addBorderAndText(settings) {
                 },
                 availableFonts
             },
+            photograph,
             border: {
                 borderLeftRatio,
                 borderRightRatio,
@@ -419,18 +424,15 @@ async function addBorderAndText(settings) {
                 borderBlur = Math.min(Math.max(0.3, borderBlur), 1000)
                 const backgroundBuffer = await createBlurFilterFromBuffer(imageBuffer, borderBlur);
                 const background = await loadImage(backgroundBuffer);
-                // 绘制原始图片（居中）
-                drawRoundedImage(ctx, background, 0, 0, newWidth, newHeight, borderRadius)
+                // 绘制背景图片（居中）
+                drawPhotograph(ctx, background, 0, 0, newWidth, newHeight, photograph)
             }
         }
 
-        if (borderRadius > 0) {
-            // 5. 绘制原始图片（居中）
-            drawRoundedImage(ctx, image, borderLeft, borderTop, imageWidth, imageHeight, borderRadius);
-        } else {
-            // 5. 绘制原始图片（居中）
-            ctx.drawImage(image, borderLeft, borderTop, imageWidth, imageHeight);
-        }
+
+        // 绘制主图片
+        drawPhotograph(ctx, image, borderLeft, borderTop, imageWidth, imageHeight, photograph);
+
 
         let elements = [...texts, ...images];
 

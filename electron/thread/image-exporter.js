@@ -73,7 +73,7 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
         }
 
         const setting = queue.shift();
-        const {imagePath, settings: {border, texts, images}} = setting;
+        const {imagePath, settings: {border, photograph, texts, images}} = setting;
 
         try {
             const params = {
@@ -81,6 +81,7 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
                 outputDirectory,
                 imagePath,
                 border,
+                photograph,
                 texts,
                 images,
             };

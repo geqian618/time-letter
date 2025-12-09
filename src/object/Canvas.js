@@ -1,4 +1,4 @@
-import {BorderSettings} from '@/object/Configuration'
+import {BorderSettings, PhotographOptions, PhotographSettings} from '@/object/Configuration'
 
 export class Canvas {
     constructor() {
@@ -15,6 +15,7 @@ export class Canvas {
         this.filename = '';
         this.extname = '';
         this.settings = {
+            photograph: new PhotographSettings(),
             border: new BorderSettings(),
             texts: new Map(),
             images: new Map(),

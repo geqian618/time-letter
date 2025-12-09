@@ -161,6 +161,74 @@
                       </li>
                     </ul>
                   </el-sub-menu>
+                  <el-sub-menu index="4">
+                    <template #title>
+                      <span>主体</span>
+                    </template>
+                    <ul class="options">
+                      <li class="option">
+                        <div class="label">圆角</div>
+                        <div class="value">
+                          <el-slider size="small"
+                                     :show-tooltip="false"
+                                     :min="0"
+                                     :max="50"
+                                     v-model="photographOptions.borderRadius"
+                                     placement="top"/>
+                          <input type="number" class="number-input" v-model="photographOptions.borderRadius" step="1">
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">X轴偏移</div>
+                        <div class="value">
+                          <el-slider @change=""
+                                     size="small"
+                                     :min="-50"
+                                     :max="50"
+                                     v-model="photographOptions.boxShadow.offsetX"
+                                     placement="top"/>
+                          <input type="number" class="number-input" v-model="photographOptions.boxShadow.offsetX"
+                                 step="1">
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">Y轴偏移</div>
+                        <div class="value">
+                          <el-slider
+                              v-model="photographOptions.boxShadow.offsetY"
+                              :min="-50"
+                              :max="50"
+                              show-alpha
+                              size="small"
+                              :predefine="predefineColors"/>
+                          <input type="number" class="number-input" v-model="photographOptions.boxShadow.offsetY"
+                                 step="1">
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">模糊程度</div>
+                        <div class="value">
+                          <el-slider
+                              v-model="photographOptions.boxShadow.blur"
+                              show-alpha
+                              size="small"
+                              :predefine="predefineColors"/>
+                          <input type="number" class="number-input" v-model="photographOptions.boxShadow.blur" step="1">
+                        </div>
+                      </li>
+                      <li class="option">
+                        <div class="label">阴影颜色</div>
+                        <div class="value">
+                          <el-color-picker
+                              @change=""
+                              v-model="photographOptions.boxShadow.shadowColor"
+                              show-alpha
+                              size="small"
+                              :predefine="predefineColors"/>
+                        </div>
+                      </li>
+                    </ul>
+                  </el-sub-menu>
                   <el-sub-menu index="2">
                     <template #title>
                       <span>边框</span>
@@ -247,7 +315,7 @@
                                  v-model="borderOptions.borderRadius" step="1">
                         </div>
                       </li>
-                      <li class="option">
+                      <li class="option" v-show="borderOptions.borderType === 1">
                         <div class="label">模糊值</div>
                         <div class="value">
                           <el-slider @change="handleUpdateBorders"
@@ -261,7 +329,7 @@
                                  v-model="borderOptions.borderBlur" step="1">
                         </div>
                       </li>
-                      <li class="option">
+                      <li class="option" v-show="borderOptions.borderType === 0">
                         <div class="label">边框颜色</div>
                         <div class="value">
                           <el-color-picker
@@ -1020,7 +1088,8 @@ import {
   TextOptions,
   ImageOptions,
   BorderOptions,
-  FontSettings
+  FontSettings,
+  PhotographOptions
 } from '@/object/Configuration'
 
 import {Canvas} from '@/object/Canvas'
@@ -1063,6 +1132,8 @@ const oldTemplate = ref({
 })
 
 const templates = ref([])
+
+const photographOptions = ref(new PhotographOptions())
 
 const textOptions = ref(new TextOptions())
 
@@ -1484,16 +1555,19 @@ const watchContextMenu = () => {
 
           }
 
-          const {settings: {border, texts, images}} = CanvasManager.getCanvas(paths[i]);
+          const {settings: {border, photograph, texts, images}} = CanvasManager.getCanvas(paths[i]);
 
           newSettings.push({
             imagePath: paths[i],
             settings: {
               border,
+              photograph,
               images: [...images.values()],
               texts: [...texts.values()],
             }
           })
+
+          console.log(newSettings)
 
           if (i === paths.length - 1) {
             nextCanvas.hide()
@@ -1537,6 +1611,7 @@ const clearCanvas = (path) => {
   clearCanvasLabels(path);
   canvas.settings.border = new BorderSettings()
   renderBorders(path)
+  renderPhotograph(path)
 }
 
 const clearCanvasLabels = (path) => {
@@ -1599,6 +1674,31 @@ const loadProjectSettings = () => {
     StorageManager.saveProjectSettings(newUserConfig)
   }
 }
+
+
+const stoPhotographSettingsWatch = watch(photographOptions, async (newVal, oldVal) => {
+  //停止监听 stopWatch();
+  const canvas = CanvasManager.getCurrentCanvas();
+  if (!canvas) return
+  const imageElement = canvas.getImageElement();
+  if (imageElement) {
+
+    console.log(newVal)
+
+    const {borderRadius, boxShadow: {offsetX, offsetY, blur, shadowColor}} = newVal;
+    imageElement.style.borderRadius = `${borderRadius}px`
+    imageElement.style.boxShadow = `${offsetX}px ${offsetY}px ${blur}px ${shadowColor}`
+    const {offsetWidth, offsetHeight} = imageElement;
+    const photograph = canvas.settings.photograph;
+    photograph.options = _.cloneDeep(newVal)
+    photograph.options.borderRadiusRatio = borderRadius / offsetWidth
+    photograph.options.boxShadow.offsetXRatio = offsetX / offsetWidth
+    photograph.options.boxShadow.offsetYRatio = offsetY / offsetHeight
+    photograph.options.boxShadow.blurRatio = blur / offsetWidth
+  }
+}, {
+  deep: true
+});
 
 
 const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
@@ -1854,7 +1954,7 @@ const saveTemplates = async () => {
   saveTemplateForm.value.validate(async (valid, fields) => {
     if (valid) {
       const canvas = CanvasManager.getCurrentCanvas();
-      const {border, images, texts} = _.cloneDeep(canvas.settings)
+      const {border, photograph, images, texts} = _.cloneDeep(canvas.settings)
       const newTemplates = [...templates.value];
       // 清空模版列表，重新生成列表
       templates.value = []
@@ -1865,6 +1965,7 @@ const saveTemplates = async () => {
         templateName: newTemplate.value.templateName,
         settings: {
           border: border,
+          photograph,
           images: Array.from(images.values()),
           texts: Array.from(texts.values())
         }
@@ -2002,9 +2103,11 @@ const useTemplate = async (targetSettings, path) => {
   const canvasElement = canvas.getImageElement().parentNode
 
   canvas.settings.border = targetSettings.border
+  canvas.settings.photograph = targetSettings.photograph
   canvas.isUpdate = true
 
   if (path === CanvasManager.getSelectedPath()) {
+    renderPhotograph(path)
     await renderBorders(path)
   }
 
@@ -2103,6 +2206,8 @@ const refreshCanvasElementPosition = (path) => {
 const refreshTemplate = async (path) => {
 
   const canvas = CanvasManager.getCanvas(path);
+
+  renderPhotograph(path)
 
   await renderBorders(path)
 
@@ -2281,6 +2386,7 @@ const renderCanvas = async (canvas) => {
   setScrollBarPosition(canvas)
   metadataOptions.value = canvas.metadata
   borderOptions.value = canvas.settings.border.options
+  photographOptions.value = canvas.settings.photograph.options
 
   if (canvas.isUpdate) {
     await refreshTemplate(canvas.path)
@@ -2426,7 +2532,6 @@ const handleUpdateBorders = async () => {
         backgroundElement.setAttribute('blur-border', '')
         backgroundElement.style.background = `url('${canvas.url}') center / cover`
         backgroundElement.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.4)'
-        imageElement.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.4)'
       }
     }
 
@@ -2464,7 +2569,6 @@ const handleUpdateBorders = async () => {
 
 
     if (borderRadius !== oldBorder.borderRadius) {
-      imageElement.style.borderRadius = borderRadius + 'px'
       backgroundElement.style.borderRadius = borderRadius + 'px'
     }
 
@@ -2495,15 +2599,37 @@ const handleUpdateBorders = async () => {
   }
 }
 
+const renderPhotograph = (path) => {
+  //停止监听 stopWatch();
+  const canvas = CanvasManager.getCanvas(path);
+  if (!canvas) return
+  if (path === CanvasManager.getSelectedPath()) {
+    photographOptions.value = canvas.settings.photograph.options
+  }
+  const imageElement = canvas.getImageElement();
+  if (imageElement) {
+    const photograph = canvas.settings.photograph;
+    const {borderRadius, boxShadow: {offsetX, offsetY, blur, shadowColor}} = photograph.options;
+    imageElement.style.borderRadius = `${borderRadius}px`
+    imageElement.style.boxShadow = `${offsetX}px ${offsetY}px ${blur}px ${shadowColor}`
+    const {offsetWidth, offsetHeight} = imageElement;
+    photograph.options.borderRadiusRatio = borderRadius / offsetWidth
+    photograph.options.boxShadow.offsetXRatio = offsetX / offsetWidth
+    photograph.options.boxShadow.offsetYRatio = offsetY / offsetHeight
+    photograph.options.boxShadow.blurRatio = blur / offsetWidth
+  }
+}
+
 
 const renderBorders = async (path) => {
-
   const canvas = CanvasManager.getCanvas(path)
-  const imageElement = canvas.getImageElement();
+  if (!canvas) return
+
   if (canvas.path === CanvasManager.getSelectedPath()) {
     borderOptions.value = canvas.settings.border.options
   }
 
+  const imageElement = canvas.getImageElement();
   if (imageElement && imageElement.complete && imageElement.naturalWidth > 0) {
     const backgroundElement = imageElement.parentNode.querySelector('.image-background');
     let {
@@ -2521,16 +2647,13 @@ const renderBorders = async (path) => {
       backgroundElement.style.background = borderColor
       backgroundElement.removeAttribute('blur-border')
       backgroundElement.style.boxShadow = ''
-      imageElement.style.boxShadow = ''
     } else if (borderType === 1) {
       backgroundElement.setAttribute('blur-border', '')
       backgroundElement.style.background = `url('${canvas.url}') center / cover`
       backgroundElement.style.setProperty('--blur-intensity', borderBlur + 'px');
       backgroundElement.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.4)'
-      imageElement.style.boxShadow = '0 0 20px rgba(0, 0, 0, 0.4)'
     }
 
-    imageElement.style.borderRadius = borderRadius + 'px'
     backgroundElement.style.borderRadius = borderRadius + 'px'
 
     const imageWidth = Number.parseFloat(imageElement.style.width);
@@ -3504,6 +3627,7 @@ onBeforeUnmount(() => {
   stopTextSettingsWatch()
   stopProjectSettingsWatch()
   stopImageBoxShadowWatch()
+  stoPhotographSettingsWatch()
   stopWatchImageZIndex()
   stopImageAlphaWatch()
   stopImageScaleWatch()

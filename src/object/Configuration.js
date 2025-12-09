@@ -22,6 +22,15 @@ export class ImageOptions {
     }
 }
 
+// 图片选项类
+export class PhotographOptions {
+    constructor() {
+        this.borderRadius = 0;
+        this.borderRadiusRatio = 0;
+        this.boxShadow = new ShadowSettings();
+    }
+}
+
 // 文本选项类
 export class TextOptions {
     constructor() {
@@ -79,6 +88,13 @@ export class TextSettings {
         this.references = [];
         this.synchronousMode = 0;
         this.options = new TextOptions();
+    }
+}
+
+// 文本设置类
+export class PhotographSettings {
+    constructor() {
+        this.options = new PhotographOptions();
     }
 }
 
