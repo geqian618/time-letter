@@ -1532,46 +1532,48 @@ const watchContextMenu = () => {
 
         const selectedCanvas = CanvasManager.getCanvas(CanvasManager.getSelectedPath());
 
-        let beforeCanvas = selectedCanvas;
+        if (selectedCanvas) {
+          selectedCanvas.hide();
+          await nextTick()
+        }
+
+        let currentCanvas = null;
 
         for (let i = 0; i < paths.length; i++) {
+          try {
 
-          const nextCanvas = CanvasManager.getCanvas(paths[i]);
+            currentCanvas = CanvasManager.getCanvas(paths[i]);
 
-          if (!nextCanvas.completed || nextCanvas.isUpdate) {
+            if (!currentCanvas.completed || currentCanvas.isUpdate) {
 
-            beforeCanvas.hide()
-            await nextTick()
-            nextCanvas.show()
-            await nextTick()
+              currentCanvas.show()
+              await nextTick()
 
-            if (!nextCanvas.completed) {
-              await initializeCanvasLayout(nextCanvas)
+              if (!currentCanvas.completed) {
+                await initializeCanvasLayout(currentCanvas)
+              }
+
+              if (currentCanvas.isUpdate) {
+                await refreshTemplate(currentCanvas.path)
+              }
+
             }
 
-            if (nextCanvas.isUpdate) {
-              await refreshTemplate(nextCanvas.path)
-            }
+            const {settings: {border, photograph, texts, images}} = currentCanvas;
 
-          }
+            newSettings.push({
+              imagePath: paths[i],
+              settings: {
+                border,
+                photograph,
+                images: [...images.values()],
+                texts: [...texts.values()],
+              }
+            })
 
-          const {settings: {border, photograph, texts, images}} = CanvasManager.getCanvas(paths[i]);
-
-          newSettings.push({
-            imagePath: paths[i],
-            settings: {
-              border,
-              photograph,
-              images: [...images.values()],
-              texts: [...texts.values()],
-            }
-          })
-
-          if (i === paths.length - 1) {
-            nextCanvas.hide()
+          } finally {
+            currentCanvas.hide()
             await nextTick();
-          } else {
-            beforeCanvas = nextCanvas;
           }
         }
 
