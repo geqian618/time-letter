@@ -1089,7 +1089,7 @@ import {
   ImageOptions,
   BorderOptions,
   FontSettings,
-  PhotographOptions
+  PhotographOptions, PhotographSettings
 } from '@/object/Configuration'
 
 import {Canvas} from '@/object/Canvas'
@@ -1610,6 +1610,7 @@ const clearCanvas = (path) => {
   const canvas = CanvasManager.getCanvas(path);
   clearCanvasLabels(path);
   canvas.settings.border = new BorderSettings()
+  canvas.settings.photograph = new PhotographSettings()
   renderBorders(path)
   renderPhotograph(path)
 }
