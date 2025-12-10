@@ -2604,6 +2604,7 @@ const renderPhotograph = async (path) => {
   if (!canvas) return
   if (path === CanvasManager.getSelectedPath()) {
     photographOptions.value = canvas.settings.photograph.options
+    return
   }
   const imageElement = canvas.getImageElement();
   if (imageElement) {
