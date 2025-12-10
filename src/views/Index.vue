@@ -2108,7 +2108,7 @@ const useTemplate = async (targetSettings, path) => {
   canvas.isUpdate = true
 
   if (path === CanvasManager.getSelectedPath()) {
-    renderPhotograph(path)
+    await renderPhotograph(path)
     await renderBorders(path)
   }
 
@@ -2208,8 +2208,6 @@ const refreshTemplate = async (path) => {
 
   const canvas = CanvasManager.getCanvas(path);
 
-  renderPhotograph(path)
-
   await renderBorders(path)
 
   canvas.settings.texts.forEach((settings, element) => {
@@ -2235,7 +2233,6 @@ const loadTextLabels = () => {
 }
 
 async function switchPreviewImage(event, canvas) {
-
   if (!event.ctrlKey && !event.shiftKey) {
     if (!selectedPreviewList.value.has(canvas.path)) {
       // 清空选中元素
@@ -2258,17 +2255,16 @@ async function switchPreviewImage(event, canvas) {
 
     // 没有预览元素或前一次预览元素与当前预览元素不同时显示，多次点击预览同一元素不重复渲染
     if (!beforePath || beforePath !== canvas.path) {
+      // 更改新的选择元素
+      CanvasManager.setSelectedObject({path: event.target.getAttribute('path'), previewElement: event.target})
+      // 添加当前选中元素到选中列表中
+      selectedPreviewList.value.set(canvas.path, event.target)
+      // 设置选择样式
+      event.target.classList.add('active')
       canvas.show();
       await nextTick()
       await renderCanvas(canvas)
     }
-
-
-    CanvasManager.setSelectedObject({path: event.target.getAttribute('path'), previewElement: event.target})
-
-    // 添加当前选中元素到选中列表中
-    selectedPreviewList.value.set(canvas.path, event.target)
-    event.target.classList.add('active')
   }
 }
 
