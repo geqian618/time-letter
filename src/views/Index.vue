@@ -2210,6 +2210,8 @@ const refreshTemplate = async (path) => {
 
   await renderBorders(path)
 
+  await renderPhotograph(path)
+
   canvas.settings.texts.forEach((settings, element) => {
     renderElementPosition(canvas, settings, element)
   })
