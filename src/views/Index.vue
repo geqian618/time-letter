@@ -2693,36 +2693,28 @@ const switchBeforePreviewElement = async () => {
   const currentCanvas = availableCanvas.value.get(currentPath);
   const beforeCanvas = MapHelper.getBeforeValue(availableCanvas.value, currentPath);
   if (currentCanvas && beforeCanvas) {
-    currentCanvas.hide()
     if (currentElement) {
       currentElement.setAttribute('selected', 'false')
       currentElement.classList.remove('active')
       selectedPreviewList.value.delete(currentPath)
+      currentCanvas.hide()
+      await nextTick()
     }
 
-    await nextTick()
+    const beforeElement = currentElement.previousElementSibling || currentElement.parentNode.lastElementChild;
+    metadataOptions.value = beforeCanvas.metadata
+    beforeElement.classList.add('active')
+    beforeElement.setAttribute('selected', 'true')
+
+    CanvasManager.setSelectedObject({path: beforeCanvas.path, previewElement: beforeElement})
+    selectedPreviewList.value.set(beforeCanvas.path, beforeElement)
+
     beforeCanvas.show()
     await nextTick()
     await renderCanvas(beforeCanvas)
 
-    const beforeElement = currentElement.previousElementSibling || currentElement.parentNode.lastElementChild;
-    if (beforeElement) {
-      metadataOptions.value = beforeCanvas.metadata
-      beforeElement.classList.add('active')
-      beforeElement.setAttribute('selected', 'true')
-
-      CanvasManager.setSelectedObject({path: beforeCanvas.path, previewElement: beforeElement})
-      selectedPreviewList.value.set(beforeCanvas.path, beforeElement)
-      // 方式一，较为卡顿，过渡不流畅
-      // selectedElement.value.previewElement.scrollIntoView({
-      //   behavior: 'smooth',
-      //   block: 'center', // 垂直方向居中
-      //   inline: 'center' // 水平方向居中
-      // })
-
-      // 方式二，过渡比较流畅
-      scrollBarMoveToHorizontalCenter(previewList.value, beforeElement)
-    }
+    // 方式二，过渡比较流畅
+    scrollBarMoveToHorizontalCenter(previewList.value, beforeElement)
   }
 }
 
@@ -2736,31 +2728,23 @@ const switchNextPreviewElement = async () => {
       currentElement.setAttribute('selected', 'false')
       currentElement.classList.remove('active')
       selectedPreviewList.value.delete(currentPath)
+      currentCanvas.hide()
+      await nextTick()
     }
 
-    currentCanvas.hide()
-    await nextTick()
+    const nextElement = currentElement.nextElementSibling || currentElement.parentNode.firstElementChild;
+    metadataOptions.value = nextCanvas.metadata
+    nextElement.classList.add('active')
+    nextElement.setAttribute('selected', 'true')
+    CanvasManager.setSelectedObject({path: nextCanvas.path, previewElement: nextElement})
+    selectedPreviewList.value.set(nextCanvas.path, nextElement)
+
     nextCanvas.show()
     await nextTick()
     await renderCanvas(nextCanvas)
 
-    const nextElement = currentElement.nextElementSibling || currentElement.parentNode.firstElementChild;
-    if (nextElement) {
-      metadataOptions.value = nextCanvas.metadata
-      nextElement.classList.add('active')
-      nextElement.setAttribute('selected', 'true')
-      CanvasManager.setSelectedObject({path: nextCanvas.path, previewElement: nextElement})
-      selectedPreviewList.value.set(nextCanvas.path, nextElement)
-      // 方式一，较为卡顿，过渡不流畅
-      // selectedElement.value.previewElement.scrollIntoView({
-      //   behavior: 'smooth',
-      //   block: 'center', // 垂直方向居中
-      //   inline: 'center' // 水平方向居中
-      // })
-
-      // 方式二，过渡比较流畅
-      scrollBarMoveToHorizontalCenter(previewList.value, nextElement)
-    }
+    // 方式二，过渡比较流畅
+    scrollBarMoveToHorizontalCenter(previewList.value, nextElement)
   }
 }
 
