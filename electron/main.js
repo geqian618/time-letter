@@ -120,6 +120,13 @@ const setupWindowEvents = (window) => {
         window.show()
     })
 
+
+    // 窗口显示时
+    window.on('show', () => {
+        // 显示后立即聚焦
+        window.focus();
+    })
+
     // 右键菜单
     // window.webContents.on('context-menu', () => {
     //   contextMenu.popup()
