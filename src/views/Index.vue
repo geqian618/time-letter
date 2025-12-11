@@ -255,7 +255,7 @@
                         <div class="label">边框类型</div>
                         <div class="value">
                           <el-select
-                              @input="handleUpdateBorders"
+                              @change="handleUpdateBorders"
                               v-model="borderOptions.borderType"
                               :options="[{value: 0,label: '通用'}, {value: 1,label: '模糊'}]"
                               size="small"
@@ -272,8 +272,10 @@
                                      :max="sliderRange.max"
                                      v-model="borderOptions.borderTop"
                                      placement="top"/>
-                          <input type="number" class="number-input" @input="handleUpdateBorders"
-                                 v-model="borderOptions.borderTop" step="1">
+                          <input type="number" class="number-input"
+                                 @input="handleUpdateBorders"
+                                 v-model="borderOptions.borderTop"
+                                 step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -286,8 +288,10 @@
                                      :max="sliderRange.max"
                                      v-model="borderOptions.borderLeft"
                                      placement="top"/>
-                          <input type="number" class="number-input" @input="handleUpdateBorders"
-                                 v-model="borderOptions.borderLeft" step="1">
+                          <input type="number" class="number-input"
+                                 @input="handleUpdateBorders"
+                                 v-model="borderOptions.borderLeft"
+                                 step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -300,8 +304,11 @@
                                      :max="sliderRange.max"
                                      v-model="borderOptions.borderRight"
                                      placement="top"/>
-                          <input type="number" class="number-input" @input="handleUpdateBorders"
-                                 v-model="borderOptions.borderRight" step="1">
+                          <input type="number"
+                                 class="number-input"
+                                 @input="handleUpdateBorders"
+                                 v-model="borderOptions.borderRight"
+                                 step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -314,8 +321,11 @@
                                      :max="sliderRange.max"
                                      v-model="borderOptions.borderBottom"
                                      placement="top"/>
-                          <input type="number" class="number-input" @input="handleUpdateBorders"
-                                 v-model="borderOptions.borderBottom" step="1">
+                          <input type="number"
+                                 class="number-input"
+                                 @input="handleUpdateBorders"
+                                 v-model="borderOptions.borderBottom"
+                                 step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -328,8 +338,11 @@
                                      :max="50"
                                      v-model="borderOptions.borderRadius"
                                      placement="top"/>
-                          <input type="number" class="number-input" @input="handleUpdateBorders"
-                                 v-model="borderOptions.borderRadius" step="1">
+                          <input type="number"
+                                 class="number-input"
+                                 @input="handleUpdateBorders"
+                                 v-model="borderOptions.borderRadius"
+                                 step="1">
                         </div>
                       </li>
                       <li class="option" v-show="borderOptions.borderType === 1">
@@ -342,8 +355,11 @@
                                      :max="50"
                                      v-model="borderOptions.borderBlur"
                                      placement="top"/>
-                          <input type="number" class="number-input" @input="handleUpdateBorders"
-                                 v-model="borderOptions.borderBlur" step="1">
+                          <input type="number"
+                                 class="number-input"
+                                 @input="handleUpdateBorders"
+                                 v-model="borderOptions.borderBlur"
+                                 step="1">
                         </div>
                       </li>
                       <li class="option" v-show="borderOptions.borderType === 0">
