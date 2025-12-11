@@ -230,10 +230,7 @@ const getExtname = (originalExtname, extnameType) => {
  */
 function drawPhotograph(ctx, img, x, y, width, height, options) {
 
-    const {
-        borderRadiusRatio = 0,
-        boxShadow: {offsetXRatio = 0, offsetYRatio = 0, blurRatio = 0, shadowColor = 0} = {}
-    } = options
+    const {borderRadiusRatio = 0, offsetXRatio = 0, offsetYRatio = 0, blurRatio = 0, shadowColor = 0} = options
 
     const borderRadius = borderRadiusRatio * width;
 
@@ -433,7 +430,7 @@ async function addBorderAndText(settings) {
 
 
         // 绘制主图片
-        drawPhotograph(ctx, image, borderLeft, borderTop, imageWidth, imageHeight, photograph.options);
+        drawPhotograph(ctx, image, borderLeft, borderTop, imageWidth, imageHeight, photograph);
 
 
         let elements = [...texts, ...images];
