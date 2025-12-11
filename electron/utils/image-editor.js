@@ -417,8 +417,9 @@ async function addBorderAndText(settings) {
         if (borderLeftRatio + borderRightRatio + borderTopRatio + borderBottomRatio !== 0) {
             // 4. 绘制边框背景
             if (borderType === 0) {
+                createRoundedPath(ctx, 0, 0, newWidth, newHeight, newWidth * backgroundRadiusRatio);
                 ctx.fillStyle = borderColor;
-                ctx.fillRect(0, 0, newWidth, newHeight);
+                ctx.fill();
             } else {
                 borderBlur = Math.min(Math.max(0.3, borderBlur), 1000)
                 const backgroundBuffer = await createBlurFilterFromBuffer(imageBuffer, borderBlur);
