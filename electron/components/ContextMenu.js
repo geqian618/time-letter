@@ -6,7 +6,7 @@ const createContextMenu = (mainWindow) => {
     window = mainWindow;
     return Menu.buildFromTemplate([
         {
-            label: '删除图片',
+            label: '移除图片',
             accelerator: 'ctrl+d',
             click: () => {
                 window.webContents.send('watch-contextMenu', {type: 0});

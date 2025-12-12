@@ -2101,7 +2101,7 @@ function renderElementPosition(canvas, settings, element) {
   element.style.right = right + 'px'
   element.style.bottom = bottom + 'px'
 
-  if (element.src) {
+  if (element instanceof HTMLImageElement) {
     settings.options.imageWidthRatio = settings.width / backgroundWidth
     settings.options.imageHeightRatio = settings.height / backgroundHeight
   } else {
