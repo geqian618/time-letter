@@ -2219,7 +2219,7 @@ function updateElementPosition(canvas, element, settings) {
   settings.offsetBottom = offsetBottom
   settings.offsetBottomRatio = offsetBottomRatio
   settings.centerX = centerX
-  settings.clientY = clientY
+  settings.clientY = centerY
   settings.centerXRatio = centerXRatio
   settings.centerYRatio = centerYRatio
 }
