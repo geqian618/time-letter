@@ -2066,13 +2066,13 @@ function renderElementPosition(canvas, settings, element) {
     synchronousMode
   } = settings
 
-  let newOffsetX = synchronousMode === 1 ? centerXRatio * backgroundWidth - width / 2 : centerX - width / 2;
-  let newOffsetY = synchronousMode === 1 ? centerYRatio * backgroundHeight - height / 2 : centerY - height / 2;
+  let offsetX = synchronousMode === 1 ? centerXRatio * backgroundWidth - width / 2 : centerX - width / 2;
+  let offsetY = synchronousMode === 1 ? centerYRatio * backgroundHeight - height / 2 : centerY - height / 2;
 
-  let left = backgroundLeft + newOffsetX;
-  let right = backgroundRight + newOffsetX;
-  let top = backgroundTop + newOffsetY;
-  let bottom = backgroundBottom + newOffsetY;
+  let left = backgroundLeft + offsetX;
+  let right = backgroundRight + offsetX;
+  let top = backgroundTop + offsetY;
+  let bottom = backgroundBottom + offsetY;
 
   if (references.includes('left')) {
     right = canvasWidth - left - width
