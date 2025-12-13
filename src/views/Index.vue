@@ -2059,26 +2059,20 @@ function renderElementPosition(canvas, settings, element) {
     width,
     height,
     references,
-    offsetLeft,
-    offsetLeftRatio,
-    offsetRight,
-    offsetRightRatio,
-    offsetTop,
-    offsetTopRatio,
-    offsetBottom,
-    offsetBottomRatio,
+    centerX,
+    centerXRatio,
+    centerY,
+    centerYRatio,
     synchronousMode
   } = settings
 
-  let newOffsetLeft = synchronousMode === 1 ? offsetLeftRatio * backgroundWidth : offsetLeft;
-  let newOffsetRight = synchronousMode === 1 ? offsetRightRatio * backgroundWidth : offsetRight;
-  let newOffsetTop = synchronousMode === 1 ? offsetTopRatio * backgroundHeight : offsetTop;
-  let newOffsetBottom = synchronousMode === 1 ? offsetBottomRatio * backgroundHeight : offsetBottom;
+  let newOffsetX = synchronousMode === 1 ? centerXRatio * backgroundWidth - width / 2 : centerX - width / 2;
+  let newOffsetY = synchronousMode === 1 ? centerYRatio * backgroundHeight - height / 2 : centerY - height / 2;
 
-  let left = backgroundLeft + newOffsetLeft;
-  let right = backgroundRight + newOffsetRight;
-  let top = backgroundTop + newOffsetTop;
-  let bottom = backgroundBottom + newOffsetBottom;
+  let left = backgroundLeft + newOffsetX;
+  let right = backgroundRight + newOffsetX;
+  let top = backgroundTop + newOffsetY;
+  let bottom = backgroundBottom + newOffsetY;
 
   if (references.includes('left')) {
     right = canvasWidth - left - width
@@ -2165,8 +2159,8 @@ function updateElementPosition(canvas, element, settings) {
 
   const computedStyle = window.getComputedStyle(element);
 
-  const elementWidth = canvas.width;
-  const elementHeight = canvas.height;
+  const elementWidth = parseFloat(computedStyle.width);
+  const elementHeight = parseFloat(computedStyle.height);
 
   const elementLeft = parseFloat(element.style.left) || parseFloat(computedStyle.left);
   const elementTop = parseFloat(element.style.top) || parseFloat(computedStyle.top);
@@ -2194,9 +2188,9 @@ function updateElementPosition(canvas, element, settings) {
   let offsetBottom = elementBottom - backgroundBottom
   let offsetBottomRatio = offsetBottom / backgroundHeight
 
-  elementLeft > elementRight ? references.push('right') : references.push('left')
+  offsetLeft > offsetRight ? references.push('right') : references.push('left')
 
-  elementTop > elementBottom ? references.push('bottom') : references.push('top')
+  offsetTop > offsetBottom ? references.push('bottom') : references.push('top')
 
   settings.references = references
   settings.offsetLeft = offsetLeft
@@ -3278,9 +3272,26 @@ const handleDragMoveElement = (event) => {
     let offsetBottom = elementBottom - backgroundBottom
     let offsetBottomRatio = offsetBottom / backgroundHeight
 
-    elementLeft > elementRight ? references.push('right') : references.push('left')
+    let centerX, centerY, centerXRatio, centerYRatio
 
-    elementTop > elementBottom ? references.push('bottom') : references.push('top')
+    if (offsetLeft > offsetRight) {
+      references.push('right')
+      centerX = offsetRight + elementWidth / 2
+    } else {
+      references.push('left')
+      centerX = offsetLeft + elementWidth / 2
+    }
+
+    if (offsetTop > offsetBottom) {
+      references.push('bottom')
+      centerY = offsetBottom + elementHeight / 2
+    } else {
+      references.push('top')
+      centerY = offsetTop + elementHeight / 2
+    }
+
+    centerXRatio = centerX / backgroundWidth;
+    centerYRatio = centerY / backgroundHeight;
 
     const settings = (dragElement instanceof HTMLDivElement) ? canvas.settings.texts.get(dragElement) : canvas.settings.images.get(dragElement)
 
@@ -3293,6 +3304,10 @@ const handleDragMoveElement = (event) => {
     settings.offsetTopRatio = offsetTopRatio
     settings.offsetBottom = offsetBottom
     settings.offsetBottomRatio = offsetBottomRatio
+    settings.centerX = centerX
+    settings.centerXRatio = centerXRatio
+    settings.centerY = centerY
+    settings.centerYRatio = centerYRatio
   }
   document.onmouseup = function closeDragElement(event) {
     document.onmouseup = null;
@@ -3414,9 +3429,26 @@ const handleDropElement = async function (event) {
   let offsetBottom = elementBottom - backgroundBottom
   let offsetBottomRatio = offsetBottom / backgroundHeight
 
-  elementLeft > elementRight ? references.push('right') : references.push('left')
+  let centerX, centerY, centerXRatio, centerYRatio
 
-  elementTop > elementBottom ? references.push('bottom') : references.push('top')
+  if (offsetLeft > offsetRight) {
+    references.push('right')
+    centerX = offsetRight + elementWidth / 2
+  } else {
+    references.push('left')
+    centerX = offsetLeft + elementWidth / 2
+  }
+
+  if (offsetTop > offsetBottom) {
+    references.push('bottom')
+    centerY = offsetBottom + elementHeight / 2
+  } else {
+    references.push('top')
+    centerY = offsetTop + elementHeight / 2
+  }
+
+  centerXRatio = centerX / backgroundWidth;
+  centerYRatio = centerY / backgroundHeight;
 
   const settings = elementSettings
 
@@ -3429,6 +3461,10 @@ const handleDropElement = async function (event) {
   settings.offsetTopRatio = offsetTopRatio
   settings.offsetBottom = offsetBottom
   settings.offsetBottomRatio = offsetBottomRatio
+  settings.centerX = centerX
+  settings.centerXRatio = centerXRatio
+  settings.centerY = centerY
+  settings.centerYRatio = centerYRatio
   settings.tagName = dragElement.tagName.toLowerCase()
   settings.width = elementWidth
   settings.height = elementHeight
