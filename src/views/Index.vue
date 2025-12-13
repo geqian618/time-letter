@@ -2219,7 +2219,7 @@ function updateElementPosition(canvas, element, settings) {
   settings.offsetBottom = offsetBottom
   settings.offsetBottomRatio = offsetBottomRatio
   settings.centerX = centerX
-  settings.clientY = centerY
+  settings.centerY = centerY
   settings.centerXRatio = centerXRatio
   settings.centerYRatio = centerYRatio
 }
@@ -3325,8 +3325,8 @@ const handleDragMoveElement = (event) => {
     settings.offsetBottom = offsetBottom
     settings.offsetBottomRatio = offsetBottomRatio
     settings.centerX = centerX
-    settings.centerXRatio = centerXRatio
     settings.centerY = centerY
+    settings.centerXRatio = centerXRatio
     settings.centerYRatio = centerYRatio
   }
   document.onmouseup = function closeDragElement(event) {
@@ -3481,8 +3481,8 @@ const handleDropElement = async function (event) {
   settings.offsetBottom = offsetBottom
   settings.offsetBottomRatio = offsetBottomRatio
   settings.centerX = centerX
-  settings.centerXRatio = centerXRatio
   settings.centerY = centerY
+  settings.centerXRatio = centerXRatio
   settings.centerYRatio = centerYRatio
   settings.tagName = dragElement.tagName.toLowerCase()
   settings.width = elementWidth
