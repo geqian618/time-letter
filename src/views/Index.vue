@@ -2176,6 +2176,8 @@ function updateElementPosition(canvas, element, settings) {
 
   let references = []
 
+  let centerX, centerY, centerXRatio, centerYRatio
+
   let offsetLeft = elementLeft - backgroundLeft
   let offsetLeftRatio = offsetLeft / backgroundWidth
 
@@ -2188,9 +2190,24 @@ function updateElementPosition(canvas, element, settings) {
   let offsetBottom = elementBottom - backgroundBottom
   let offsetBottomRatio = offsetBottom / backgroundHeight
 
-  offsetLeft > offsetRight ? references.push('right') : references.push('left')
+  if (offsetLeft > offsetRight) {
+    references.push('right')
+    centerX = offsetRight + elementWidth / 2
+  } else {
+    references.push('left')
+    centerX = offsetLeft + elementWidth / 2
+  }
 
-  offsetTop > offsetBottom ? references.push('bottom') : references.push('top')
+  if (offsetTop > offsetBottom) {
+    references.push('bottom')
+    centerY = offsetBottom + elementHeight / 2
+  } else {
+    references.push('top')
+    centerY = offsetTop + elementHeight / 2
+  }
+
+  centerXRatio = centerX / backgroundWidth;
+  centerYRatio = centerY / backgroundHeight;
 
   settings.references = references
   settings.offsetLeft = offsetLeft
@@ -2201,6 +2218,10 @@ function updateElementPosition(canvas, element, settings) {
   settings.offsetTopRatio = offsetTopRatio
   settings.offsetBottom = offsetBottom
   settings.offsetBottomRatio = offsetBottomRatio
+  settings.centerX = centerX
+  settings.clientY = clientY
+  settings.centerXRatio = centerXRatio
+  settings.centerYRatio = centerYRatio
 }
 
 const refreshCanvasElementPosition = (path) => {
@@ -3259,6 +3280,7 @@ const handleDragMoveElement = (event) => {
     const backgroundBottom = Number.parseFloat(backgroundElement.style.bottom);
 
     let references = []
+    let centerX, centerY, centerXRatio, centerYRatio
 
     let offsetLeft = elementLeft - backgroundLeft
     let offsetLeftRatio = offsetLeft / backgroundWidth
@@ -3271,8 +3293,6 @@ const handleDragMoveElement = (event) => {
 
     let offsetBottom = elementBottom - backgroundBottom
     let offsetBottomRatio = offsetBottom / backgroundHeight
-
-    let centerX, centerY, centerXRatio, centerYRatio
 
     if (offsetLeft > offsetRight) {
       references.push('right')
@@ -3416,6 +3436,7 @@ const handleDropElement = async function (event) {
   const backgroundBottom = Number.parseFloat(backgroundElement.style.bottom);
 
   let references = []
+  let centerX, centerY, centerXRatio, centerYRatio
 
   let offsetLeft = elementLeft - backgroundLeft
   let offsetLeftRatio = offsetLeft / backgroundWidth
@@ -3428,8 +3449,6 @@ const handleDropElement = async function (event) {
 
   let offsetBottom = elementBottom - backgroundBottom
   let offsetBottomRatio = offsetBottom / backgroundHeight
-
-  let centerX, centerY, centerXRatio, centerYRatio
 
   if (offsetLeft > offsetRight) {
     references.push('right')
