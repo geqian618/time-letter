@@ -44,7 +44,7 @@ class DraggableElementFactory {
         this.dragElement.src = url
         this.dragElement.style.width = width + 'px';
         this.dragElement.style.height = height + 'px'
-        this.dragElement.style.opacity = alpha / 10
+        this.dragElement.style.opacity = alpha
 
         this.dragElement.style.transformOrigin = 'center center'
         this.dragElement.style.transform = `rotate(${angle}deg)`
