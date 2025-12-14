@@ -144,7 +144,7 @@ async function drawImage(ctx, image, newWidth, newHeight) {
 
     const path = image.path;
 
-    const alpha = image.options.alpha ? image.options.alpha / 10 : 1;
+    const alpha = image.options.alpha || 1;
 
     const width = image.options.imageWidthRatio * newWidth;
 

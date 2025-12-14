@@ -14,9 +14,9 @@ export class ShadowSettings {
 // 图片选项类
 export class ImageOptions {
     constructor() {
-        this.scale = 10;
+        this.scale = 1;
         this.angle = 0;
-        this.alpha = 10;
+        this.alpha = 1;
         this.zIndex = 0;
         this.boxShadow = new ShadowSettings();
     }

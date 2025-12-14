@@ -553,23 +553,25 @@
                       <li class="option">
                         <div class="label">缩放</div>
                         <div class="value">
-                          <el-slider :min="1"
-                                     :max="100"
+                          <el-slider :min="0.1"
+                                     :max="20"
+                                     step="0.1"
                                      size="small"
                                      v-model="imageOptions.scale"
                                      placement="top"/>
-                          <input type="number" class="number-input" v-model="imageOptions.scale" step="1">
+                          <input type="number" class="number-input" v-model="imageOptions.scale" step="0.1">
                         </div>
                       </li>
                       <li class="option">
                         <div class="label">不透明度</div>
                         <div class="value">
-                          <el-slider :min="0"
-                                     :max="10"
+                          <el-slider :min="0.1"
+                                     :max="1"
+                                     step="0.1"
                                      size="small"
                                      v-model="imageOptions.alpha"
                                      placement="top"/>
-                          <input type="number" class="number-input" v-model="imageOptions.alpha" step="1">
+                          <input type="number" class="number-input" v-model="imageOptions.alpha" step="0.1">
                         </div>
                       </li>
                       <li class="option">
@@ -1801,7 +1803,7 @@ const stopImageAlphaWatch = watch(() => imageOptions.value.alpha, (newVal, oldVa
   const elements = canvas.settings.images;
   for (let [element, settings] of elements) {
     if (element.getAttribute('selected') === 'true') {
-      element.style.opacity = newVal / 10
+      element.style.opacity = newVal
       settings.options.alpha = newVal
     }
   }
@@ -1850,7 +1852,7 @@ const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal,
       let elementTop = Number.parseFloat(computedStyle.top);
       let elementBottom = Number.parseFloat(computedStyle.bottom);
 
-      let scale = (newVal - elementWidth / originalWidth * 10) / 10;
+      let scale = newVal - elementWidth / originalWidth;
 
       const increaseWidth = originalWidth * scale;
       const increaseHeight = originalHeight * scale;
