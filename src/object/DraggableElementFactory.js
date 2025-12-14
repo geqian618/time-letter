@@ -99,6 +99,7 @@ class DraggableElementFactory {
 
         this.dragElement.style.textShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
 
+        this.dragElement.spellcheck = false;
         this.dragElement.setAttribute('type', type)
         this.dragElement.setAttribute('expression', expression)
     }
