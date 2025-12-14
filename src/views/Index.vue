@@ -3369,14 +3369,12 @@ const handleDragStart = function (event) {
   // 关键：设置拖拽数据传输
   event.dataTransfer.setData('text/plain', JSON.stringify({settings, mouse: {offsetX, offsetY}}));
 
-  // 对于图片元素，手动设置拖拽预览
-  if (component instanceof HTMLImageElement) {
-    // 方法1：使用原图片作为拖拽预览
-    event.dataTransfer.setDragImage(component, offsetX, offsetY);
-    // 或者方法2：设置图片URL数据，让浏览器生成预览
-    //event.dataTransfer.setData('text/uri-list', src);
-    //event.dataTransfer.setData('text/html', `<img src="${src}" width="${width}" height="${height}">`);
-  }
+  // 手动设置拖拽预览
+  // 方法1：使用原图片作为拖拽预览
+  event.dataTransfer.setDragImage(component, offsetX, offsetY);
+  // 或者方法2：设置图片URL数据，让浏览器生成预览
+  //event.dataTransfer.setData('text/uri-list', src);
+  //event.dataTransfer.setData('text/html', `<img src="${src}" width="${width}" height="${height}">`);
 
   // 设置拖拽效果
   event.dataTransfer.effectAllowed = 'move';
