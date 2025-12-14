@@ -3408,6 +3408,9 @@ const handleDropElement = async function (event) {
 
   const mouseY = event.clientY;
 
+  dragElement.style.width = Number.parseFloat(dragElement.style.width) / canvas.scale + 'px';
+  dragElement.style.height = Number.parseFloat(dragElement.style.height) / canvas.scale + 'px';
+
   // 关键：将元素添加到容器
   canvasElement.appendChild(dragElement);
 
