@@ -565,13 +565,13 @@
                       <li class="option">
                         <div class="label">不透明度</div>
                         <div class="value">
-                          <el-slider :min="0.1"
+                          <el-slider :min="0.01"
                                      :max="1"
-                                     step="0.1"
+                                     step="0.01"
                                      size="small"
                                      v-model="imageOptions.alpha"
                                      placement="top"/>
-                          <input type="number" class="number-input" v-model="imageOptions.alpha" step="0.1">
+                          <input type="number" class="number-input" v-model="imageOptions.alpha" step="0.01">
                         </div>
                       </li>
                       <li class="option">
