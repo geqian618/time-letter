@@ -110,9 +110,9 @@ class DraggableElementFactory {
         if (!this.dragElement) return
         this.dragElement.style.outline = 'none';
         this.dragElement.style.userSelect = 'none';
-        this.dragElement.setAttribute('tabindex', '0')
         // 关键：必须设为绝对定位
         this.dragElement.style.position = 'absolute';
+        this.dragElement.setAttribute('tabindex', '0')
         this.dragElement.setAttribute('draggable', 'true')
     }
 

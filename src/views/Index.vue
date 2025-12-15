@@ -3528,6 +3528,61 @@ const handleCanvasResize = (event) => {
   }
 }
 
+const handleDragMoveCanvas = (event) => {
+  // 阻止默认滚动行为
+  event.preventDefault();
+  const canvas = CanvasManager.getCurrentCanvas();
+  if (!canvas || event.code !== 'Space') return;
+
+  // 设置光标为抓手
+  document.body.style.cursor = 'grab';
+
+  document.onmousedown = function (event) {
+
+    event.preventDefault();
+
+    // 拖拽开始时设置光标为正在抓取的状态
+    document.body.style.cursor = 'grabbing';
+
+    // 记录初始滚动位置和鼠标位置
+    const initialScrollLeft = canvas.scrollLeft;
+    const initialScrollTop = canvas.scrollTop;
+    const startX = event.clientX;
+    const startY = event.clientY;
+
+    document.onmousemove = function (event) {
+      // 计算鼠标移动的距离
+      const offsetX = event.clientX - startX;
+      const offsetY = event.clientY - startY;
+
+      // 应用鼠标移动的距离到滚动位置
+      canvas.scrollLeft = initialScrollLeft - offsetX;
+      canvas.scrollTop = initialScrollTop - offsetY;
+
+      // 更新滚动条位置
+      setScrollBarPosition(canvas);
+    };
+
+    document.onmouseup = function (event) {
+      // 拖拽结束，恢复光标为抓手的准备状态（空格键仍按住）
+      document.body.style.cursor = '';
+      document.onmousemove = null;
+      document.onmouseup = null;
+    };
+  };
+
+  document.onkeyup = function (event) {
+    if (event.code === 'Space') {
+      // 空格键释放，恢复原始光标样式
+      document.body.style.cursor = '';
+      document.onmousedown = null;
+      document.onmousemove = null;
+      document.onmouseup = null;
+      document.onkeyup = null;
+    }
+  };
+};
+
 const bindEventListener = () => {
 
   document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
@@ -3547,6 +3602,8 @@ const bindEventListener = () => {
   previewContainer.value.addEventListener('click', handleCancelSelectedElement);
   previewContainer.value.addEventListener('dblclick', handleEditorElement);
   previewContainer.value.addEventListener('wheel', handleCanvasResize, {passive: false});
+
+  document.addEventListener('keydown', handleDragMoveCanvas)
 }
 
 const unbindEventListener = () => {
@@ -3568,6 +3625,8 @@ const unbindEventListener = () => {
   previewContainer.value.removeEventListener('click', handleCancelSelectedElement);
   previewContainer.value.removeEventListener('dblclick', handleEditorElement);
   previewContainer.value.removeEventListener('wheel', handleCanvasResize, {passive: false});
+
+  document.removeEventListener('keydown', handleDragMoveCanvas)
 }
 
 
