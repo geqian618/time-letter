@@ -3544,9 +3544,13 @@ const handleDragMoveCanvas = (event) => {
     // 拖拽开始时设置光标为正在抓取的状态
     document.body.style.cursor = 'grabbing';
 
+    const {scrollWidth, scrollHeight, clientWidth, clientHeight} = previewContainer.value
+
     // 记录初始滚动位置和鼠标位置
     const initialScrollLeft = canvas.scrollLeft;
     const initialScrollTop = canvas.scrollTop;
+    const maxScrollLeft = Math.max(0, scrollWidth - clientWidth);
+    const maxScrollTop = Math.max(0, scrollHeight - clientHeight);
     const startX = event.clientX;
     const startY = event.clientY;
 
@@ -3555,12 +3559,15 @@ const handleDragMoveCanvas = (event) => {
       const offsetX = event.clientX - startX;
       const offsetY = event.clientY - startY;
 
-      // 应用鼠标移动的距离到滚动位置
-      canvas.scrollLeft = initialScrollLeft - offsetX;
-      canvas.scrollTop = initialScrollTop - offsetY;
+      // 限制滚动位置在边界内
+      const newScrollLeft = Math.max(0, Math.min(initialScrollLeft - offsetX, maxScrollLeft));
+      const newScrollTop = Math.max(0, Math.min(initialScrollTop - offsetY, maxScrollTop));
 
-      // 更新滚动条位置
-      setScrollBarPosition(canvas);
+      // 应用鼠标移动的距离到滚动位置
+      canvas.scrollLeft = newScrollLeft;
+      canvas.scrollTop = newScrollTop;
+
+      setScrollBarPosition(canvas)
     };
 
     document.onmouseup = function (event) {
