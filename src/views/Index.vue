@@ -3334,7 +3334,7 @@ const handleDragMoveElement = (event) => {
   document.onmouseup = function closeDragElement(event) {
     document.onmouseup = null;
     document.onmousemove = null;
-    dragElement.style.cursor = 'auto';
+    dragElement.style.cursor = '';
     const target = event.target;
     if (!isDragging && target.getAttribute('draggable') === 'true' && startX === event.clientX && startY === event.clientY) {
       handleSelectedElement(target)
