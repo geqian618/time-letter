@@ -3560,12 +3560,12 @@ const handleDragMoveCanvas = (event) => {
       const offsetY = event.clientY - startY;
 
       // 限制滚动位置在边界内
-      const newScrollLeft = Math.max(0, Math.min(initialScrollLeft - offsetX, maxScrollLeft));
-      const newScrollTop = Math.max(0, Math.min(initialScrollTop - offsetY, maxScrollTop));
+      const scrollLeft = Math.max(0, Math.min(initialScrollLeft - offsetX, maxScrollLeft));
+      const scrollTop = Math.max(0, Math.min(initialScrollTop - offsetY, maxScrollTop));
 
       // 应用鼠标移动的距离到滚动位置
-      canvas.scrollLeft = newScrollLeft;
-      canvas.scrollTop = newScrollTop;
+      canvas.scrollLeft = scrollLeft;
+      canvas.scrollTop = scrollTop;
 
       setScrollBarPosition(canvas)
     };
