@@ -224,13 +224,18 @@ const getExtname = (originalExtname, extnameType) => {
  * @param {number} y - 图片左上角y坐标
  * @param {number} width - 图片宽度
  * @param {number} height - 图片高度
- * @param {number|object} options - 图片信息
+ * @param {number|object} photograph - 图片信息
  *   数字类型：统一设置四个角的圆角半径
  *   对象类型：分别设置四个角的半径 { topLeft, topRight, bottomRight, bottomLeft }
  */
-function drawPhotograph(ctx, img, x, y, width, height, options) {
-
-    const {borderRadiusRatio = 0, offsetXRatio = 0, offsetYRatio = 0, blurRatio = 0, shadowColor = 0} = options
+function drawPhotograph(ctx, img, x, y, width, height, photograph) {
+    const {
+        borderRadiusRatio = 0,
+        offsetXRatio = 0,
+        offsetYRatio = 0,
+        blurRatio = 0,
+        options: {boxShadow: {shadowColor = '#fff'} = {}} = {}
+    } = photograph
 
     const borderRadius = borderRadiusRatio * width;
 

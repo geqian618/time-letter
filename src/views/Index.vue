@@ -1155,6 +1155,8 @@ let clickTimeout = null;
 
 let scrollTimeout = null;
 
+let isCanvasDraggingMode = false
+
 const selectedPreviewList = ref(new Map())
 
 const newTemplate = ref({
@@ -1235,6 +1237,7 @@ const textLabelForm = ref({});
 const renameTemplateForm = ref()
 
 let pendingAnimationFrame = null;
+
 
 const saveTemplateRules = {
   templateName: [
@@ -3532,63 +3535,67 @@ const handleDragMoveCanvas = (event) => {
   // 阻止默认滚动行为
   event.preventDefault();
   const canvas = CanvasManager.getCurrentCanvas();
-  if (!canvas || event.code !== 'Space') return;
+  if (!canvas) return;
+  // 拖拽开始时设置光标为正在抓取的状态
+  previewContainer.value.style.cursor = 'grabbing';
+  const {scrollWidth, scrollHeight, clientWidth, clientHeight} = previewContainer.value
+  // 记录初始滚动位置和鼠标位置
+  const initialScrollLeft = canvas.scrollLeft;
+  const initialScrollTop = canvas.scrollTop;
+  const maxScrollLeft = Math.max(0, scrollWidth - clientWidth);
+  const maxScrollTop = Math.max(0, scrollHeight - clientHeight);
+  const startX = event.clientX;
+  const startY = event.clientY;
 
-  // 设置光标为抓手
-  document.body.style.cursor = 'grab';
+  previewContainer.value.onmousemove = function (event) {
+    // 取消拖拽模式，不更改滚动条位置
+    if (!isCanvasDraggingMode) return
 
-  document.onmousedown = function (event) {
+    // 计算鼠标移动的距离
+    const offsetX = event.clientX - startX;
+    const offsetY = event.clientY - startY;
 
-    event.preventDefault();
+    // 限制滚动位置在边界内
+    const scrollLeft = Math.max(0, Math.min(initialScrollLeft - offsetX, maxScrollLeft));
+    const scrollTop = Math.max(0, Math.min(initialScrollTop - offsetY, maxScrollTop));
 
-    // 拖拽开始时设置光标为正在抓取的状态
-    document.body.style.cursor = 'grabbing';
+    // 应用鼠标移动的距离到滚动位置
+    canvas.scrollLeft = scrollLeft;
+    canvas.scrollTop = scrollTop;
 
-    const {scrollWidth, scrollHeight, clientWidth, clientHeight} = previewContainer.value
-
-    // 记录初始滚动位置和鼠标位置
-    const initialScrollLeft = canvas.scrollLeft;
-    const initialScrollTop = canvas.scrollTop;
-    const maxScrollLeft = Math.max(0, scrollWidth - clientWidth);
-    const maxScrollTop = Math.max(0, scrollHeight - clientHeight);
-    const startX = event.clientX;
-    const startY = event.clientY;
-
-    document.onmousemove = function (event) {
-      // 计算鼠标移动的距离
-      const offsetX = event.clientX - startX;
-      const offsetY = event.clientY - startY;
-
-      // 限制滚动位置在边界内
-      const scrollLeft = Math.max(0, Math.min(initialScrollLeft - offsetX, maxScrollLeft));
-      const scrollTop = Math.max(0, Math.min(initialScrollTop - offsetY, maxScrollTop));
-
-      // 应用鼠标移动的距离到滚动位置
-      canvas.scrollLeft = scrollLeft;
-      canvas.scrollTop = scrollTop;
-
-      setScrollBarPosition(canvas)
-    };
-
-    document.onmouseup = function (event) {
-      // 拖拽结束，恢复光标为抓手的准备状态（空格键仍按住）
-      document.body.style.cursor = '';
-      document.onmousemove = null;
-      document.onmouseup = null;
-    };
+    setScrollBarPosition(canvas)
   };
 
-  document.onkeyup = function (event) {
-    if (event.code === 'Space') {
-      // 空格键释放，恢复原始光标样式
-      document.body.style.cursor = '';
-      document.onmousedown = null;
-      document.onmousemove = null;
-      document.onmouseup = null;
-      document.onkeyup = null;
-    }
+  previewContainer.value.onmouseup = function (event) {
+    // 拖拽结束，恢复光标为抓手的准备状态（空格键仍按住）
+    previewContainer.value.style.cursor = '';
+    previewContainer.value.onmousemove = null;
+    previewContainer.value.onmouseup = null;
   };
 };
+
+
+const triggerDragCanvas = (event) => {
+  if (event.code === 'Space') {
+    event.preventDefault();
+    isCanvasDraggingMode = true;
+    // 设置全局样式提示用户
+    previewContainer.value.style.cursor = 'grab';
+    document.onkeyup = function (event) {
+      if (event.code === 'Space') {
+        isCanvasDraggingMode = false;
+        previewContainer.value.style.cursor = '';
+        document.onkeyup = null
+      }
+    }
+  }
+}
+
+
+const handleCanvasMouseDown = (event) => {
+  isCanvasDraggingMode ? handleDragMoveCanvas(event) : handleDragMoveElement(event)
+}
+
 
 const bindEventListener = () => {
 
@@ -3602,7 +3609,7 @@ const bindEventListener = () => {
   previewContainer.value.addEventListener('scroll', handleMoveScrollbar);
   previewList.value.addEventListener('keydown', handleSelectAllPreviewElements);
 
-  previewContainer.value.addEventListener('mousedown', handleDragMoveElement);
+  previewContainer.value.addEventListener('mousedown', handleCanvasMouseDown);
   previewContainer.value.addEventListener('keydown', handleKeyDownMoveElement);
   previewContainer.value.addEventListener('keyup', handleKeyUpStopMoveElement);
   previewContainer.value.addEventListener('keydown', handleRemoveElement);
@@ -3610,7 +3617,8 @@ const bindEventListener = () => {
   previewContainer.value.addEventListener('dblclick', handleEditorElement);
   previewContainer.value.addEventListener('wheel', handleCanvasResize, {passive: false});
 
-  document.addEventListener('keydown', handleDragMoveCanvas)
+  // 键盘事件设置模式
+  document.addEventListener('keydown', triggerDragCanvas);
 }
 
 const unbindEventListener = () => {
@@ -3625,7 +3633,7 @@ const unbindEventListener = () => {
   previewContainer.value.removeEventListener('scroll', handleMoveScrollbar);
   previewList.value.removeEventListener('keydown', handleSelectAllPreviewElements);
 
-  previewContainer.value.removeEventListener('mousedown', handleDragMoveElement);
+  previewContainer.value.removeEventListener('mousedown', handleCanvasMouseDown);
   previewContainer.value.removeEventListener('keydown', handleKeyDownMoveElement);
   previewContainer.value.removeEventListener('keyup', handleKeyUpStopMoveElement);
   previewContainer.value.removeEventListener('keydown', handleRemoveElement);
@@ -3633,7 +3641,8 @@ const unbindEventListener = () => {
   previewContainer.value.removeEventListener('dblclick', handleEditorElement);
   previewContainer.value.removeEventListener('wheel', handleCanvasResize, {passive: false});
 
-  document.removeEventListener('keydown', handleDragMoveCanvas)
+  // 键盘事件设置模式
+  document.removeEventListener('keydown', triggerDragCanvas);
 }
 
 
