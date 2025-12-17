@@ -3515,11 +3515,25 @@ const handleDropElement = async function (event) {
 
 
 const handleDropFiles = (event) => {
+
   const json = event.dataTransfer.getData('text/plain');
-  if (json) return
-  const files = Array.from(event.dataTransfer.files || [])
-  const paths = files.map(file => file.path);
-  window.electronAPI.requestImportFiles(paths)
+  if (json) return;
+
+  const files = Array.from(event.dataTransfer.files || []);
+
+  // 允许的文件扩展名（不区分大小写）
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+
+  // 过滤文件，只保留指定格式文件
+  const paths = files.filter(file => {
+    const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    return allowedExtensions.includes(extension);
+  }).map(file => file.path);
+
+  // 如果有符合条件的文件，发送请求
+  if (paths.length > 0) {
+    window.electronAPI.requestImportFiles(paths);
+  }
 }
 
 const handleDragover = (event) => {
