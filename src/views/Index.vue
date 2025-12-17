@@ -3563,7 +3563,9 @@ const handleDragMoveCanvas = (event) => {
     canvas.scrollLeft = scrollLeft;
     canvas.scrollTop = scrollTop;
 
-    setScrollBarPosition(canvas)
+    // 设置滚动位置
+    previewContainer.value.scrollLeft = scrollLeft;
+    previewContainer.value.scrollTop = scrollTop;
   };
 
   previewContainer.value.onmouseup = function (event) {
