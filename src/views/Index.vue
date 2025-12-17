@@ -3389,7 +3389,11 @@ const handleDropElement = async function (event) {
 
   event.preventDefault();
 
-  const data = JSON.parse(event.dataTransfer.getData('text/plain'))
+  const json = event.dataTransfer.getData('text/plain');
+
+  if (!json) return
+
+  const data = JSON.parse(json)
 
   const {settings: elementSettings, mouse: {offsetX, offsetY}} = data
 
@@ -3509,6 +3513,15 @@ const handleDropElement = async function (event) {
   elementMapping.set(dragElement, settings)
 }
 
+
+const handleDropFiles = (event) => {
+  const json = event.dataTransfer.getData('text/plain');
+  if (json) return
+  const files = Array.from(event.dataTransfer.files || [])
+  const paths = files.map(file => file.path);
+  window.electronAPI.requestImportFiles(paths)
+}
+
 const handleDragover = (event) => {
   // 允许放置
   event.preventDefault();
@@ -3548,6 +3561,7 @@ const handleDragMoveCanvas = (event) => {
   const startY = event.clientY;
 
   previewContainer.value.onmousemove = function (event) {
+
     // 取消拖拽模式，不更改滚动条位置
     if (!isCanvasDraggingMode) return
 
@@ -3605,6 +3619,7 @@ const bindEventListener = () => {
     element.addEventListener('dragstart', handleDragStart);
   });
   previewContainer.value.addEventListener('drop', handleDropElement);
+  previewContainer.value.addEventListener('drop', handleDropFiles);
   previewContainer.value.addEventListener('dragover', handleDragover);
   previewContainer.value.addEventListener('dragleave', handleDragleave);
 
@@ -3629,6 +3644,7 @@ const unbindEventListener = () => {
     element.removeEventListener('dragstart', handleDragStart)
   });
   previewContainer.value.removeEventListener('drop', handleDropElement);
+  previewContainer.value.removeEventListener('drop', handleDropFiles);
   previewContainer.value.removeEventListener('dragover', handleDragover);
   previewContainer.value.removeEventListener('dragleave', handleDragleave);
 

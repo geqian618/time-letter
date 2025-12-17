@@ -5,7 +5,7 @@ const path = require('path')
 // 工具模块
 const imageParser = require('./utils/image-parser')
 const imageExporter = require('./thread/image-exporter')
-const {getResourcePath, getFontPath} = require('./utils/path-helper')
+const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('./utils/path-helper')
 
 // 钩子和组件
 const resourcesLoader = require('./utils/resources-loader')
@@ -181,6 +181,25 @@ const setupIpcHandlers = () => {
                 hasError: progress.errors > 0
             })
         })
+    })
+
+    // 拖拽导入图片
+    ipcMain.on('request-import-files', async (event, paths) => {
+        if (paths && paths.length) {
+            const files = await Promise.all(
+                paths.map(async (filePath) => {
+                    const extname = path.extname(filePath).slice(1);
+                    return {
+                        filename: path.basename(filePath),
+                        url: localPathToProtocolUrl(filePath),
+                        path: filePath,
+                        extname: extname
+                    };
+                })
+            );
+            const data = new Map(files.map(item => [item.path, item]));
+            mainWindow.webContents.send('watch-input-image', data)
+        }
     })
 
     // 停止导出

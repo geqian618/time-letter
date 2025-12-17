@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     requestExportFiles: (args) => ipcRenderer.send('request-export-files', args),
     stopExportFiles: () => ipcRenderer.send('stop-export-files'),
     createThreadPool: (args) => ipcRenderer.send('create-thread-pool', args),
+    requestImportFiles: (args) => ipcRenderer.send('request-import-files', args),
     downloadProgress: (callback) => ipcRenderer.on('download-progress', callback),
     editorOutputSettings: (callback) => ipcRenderer.on('editor-output-settings', callback)
 });
