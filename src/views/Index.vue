@@ -3517,6 +3517,7 @@ const handleDropElement = async function (event) {
 const handleDropFiles = (event) => {
 
   const json = event.dataTransfer.getData('text/plain');
+
   if (json) return;
 
   const files = Array.from(event.dataTransfer.files || []);
@@ -3534,6 +3535,7 @@ const handleDropFiles = (event) => {
   if (paths.length > 0) {
     window.electronAPI.requestImportFiles(paths);
   }
+
 }
 
 const handleDragover = (event) => {
