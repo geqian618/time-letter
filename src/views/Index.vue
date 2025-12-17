@@ -3389,11 +3389,9 @@ const handleDropElement = async function (event) {
 
   event.preventDefault();
 
-  const json = event.dataTransfer.getData('text/plain');
+  if (!CanvasManager.getCurrentCanvas() || !event.dataTransfer.types.includes('text/plain')) return
 
-  if (!json) return
-
-  const data = JSON.parse(json)
+  const data = JSON.parse(event.dataTransfer.getData('text/plain'))
 
   const {settings: elementSettings, mouse: {offsetX, offsetY}} = data
 
@@ -3516,9 +3514,7 @@ const handleDropElement = async function (event) {
 
 const handleDropFiles = (event) => {
 
-  const json = event.dataTransfer.getData('text/plain');
-
-  if (json) return;
+  if (event.dataTransfer.types.includes('text/plain')) return
 
   const files = Array.from(event.dataTransfer.files || []);
 
