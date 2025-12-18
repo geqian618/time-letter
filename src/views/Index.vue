@@ -16,7 +16,7 @@
                         @contextmenu="triggerTemplateContextMenu(template)"
                         class="template" v-for="template in templates"
                         :key="template.templateId"
-                        :index="template.templateId"
+                        :index="String(template.templateId)"
                         @click="openEnableTemplateDialog(template)">
                       {{ template.templateName }}
                     </el-menu-item>
@@ -29,7 +29,8 @@
                   <div class="image-marks" ref="imageMarks">
                     <img class="image-mark" v-for="([key, label]) in imageLabels"
                          :path="label.path"
-                         :key="label.path" draggable="true"
+                         :key="label.path"
+                         draggable="true"
                          :src="label.url">
                   </div>
                 </el-sub-menu>
@@ -54,8 +55,12 @@
                           <img draggable="false" src="../assets/icon/datetime.svg">
                         </div>
                       </el-tooltip>
-                      <el-tooltip v-for="(textLabel) in textLabels" :key="textLabel.id" class="box-item" effect="dark"
-                                  :content="textLabel.tips" placement="top">
+                      <el-tooltip v-for="(textLabel) in textLabels"
+                                  :key="textLabel.id"
+                                  class="box-item"
+                                  effect="dark"
+                                  :content="textLabel.tips"
+                                  placement="top">
                         <div class="text-mark"
                              :id="textLabel.id"
                              draggable="true"
@@ -439,7 +444,7 @@
                               :max="900"
                               v-model="textOptions.fontWeight"
                               show-alpha
-                              step="100"
+                              :step="100"
                               size="small"
                               :predefine="predefineColors"/>
                           <input type="number" class="number-input" v-model="textOptions.fontWeight" step="100">
@@ -555,7 +560,7 @@
                         <div class="value">
                           <el-slider :min="0.1"
                                      :max="20"
-                                     step="0.1"
+                                     :step="0.1"
                                      size="small"
                                      v-model="imageOptions.scale"
                                      placement="top"/>
@@ -567,7 +572,7 @@
                         <div class="value">
                           <el-slider :min="0.01"
                                      :max="1"
-                                     step="0.01"
+                                     :step="0.01"
                                      size="small"
                                      v-model="imageOptions.alpha"
                                      placement="top"/>
@@ -1037,7 +1042,7 @@
                        v-show="scope.row.editable"
                        style="height: 100%;width: 60px;background-color: transparent;outline: none;border: none"
                        v-model="scope.row.offsetX"
-                       step="0.01">
+                       :step="0.01">
                 <div v-show="!scope.row.editable">{{ scope.row.offsetX }}</div>
               </template>
             </el-table-column>
@@ -1048,7 +1053,7 @@
                        v-show="scope.row.editable"
                        style="height: 100%;width: 60px;background-color: transparent;outline: none;border: none"
                        v-model="scope.row.offsetY"
-                       step="0.01">
+                       :step="0.01">
                 <div v-show="!scope.row.editable">{{ scope.row.offsetY }}</div>
               </template>
             </el-table-column>
@@ -1065,12 +1070,29 @@
                     class="ml-2"
                     style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
               </div>
+            </div>
+          </div>
+          <div class="border-box">
+            <span class="border-label">画布</span>
+            <div class="options">
               <div class="option">
                 <span>移到步长：</span>
                 <div class="slider-demo-block">
                   <el-slider v-model="projectSettings.others.movingStepSize"
                              :min="1"
                              :max="100"
+                             size="small"
+                             show-input/>
+                </div>
+              </div>
+              <div class="option">
+                <span>默认缩放：</span>
+                <div class="slider-demo-block">
+                  <el-slider v-model="projectSettings.others.defaultScale"
+                             @change="handleCanvasScale"
+                             :min="0.05"
+                             :max="1"
+                             :step="0.05"
                              size="small"
                              show-input/>
                 </div>
@@ -1901,6 +1923,17 @@ const stopWatchImageZIndex = watch(() => imageOptions.value.zIndex, (newVal, old
   }
 })
 
+
+const handleCanvasScale = () => {
+  const newScale = projectSettings.value.others.defaultScale;
+  const canvases = CanvasManager.getCanvases();
+  canvases.forEach(canvas => {
+    if (canvas.completed) {
+      setScale(canvas, newScale)
+    }
+  })
+}
+
 const renameTemplate = () => {
   if (!renameTemplateForm) return
   renameTemplateForm.value.validate(async (valid, fields) => {
@@ -2338,10 +2371,12 @@ const initializeCanvasLayout = async (canvas) => {
   const {offsetWidth: containerRealWidth, offsetHeight: containerRealHeight} = previewContainer;
   const {idealWidth: containerIdealWidth, idealHeight: containerIdealHeight} = previewContainer;
 
-  const idealImageScale = Math.min(containerIdealWidth / imageWidth, containerIdealHeight / imageHeight) * 0.8
+  const {defaultScale} = projectSettings.value.others;
 
-  const newImageWidth = imageWidth * idealImageScale;
-  const newImageHeight = imageHeight * idealImageScale;
+  const baseScale = Math.min(containerIdealWidth / imageWidth, containerIdealHeight / imageHeight)
+
+  const newImageWidth = imageWidth * baseScale;
+  const newImageHeight = imageHeight * baseScale;
 
   const offsetLeft = (canvasWidth - newImageWidth) / 2;
   const offsetTop = (canvasHeight - newImageHeight) / 2;
@@ -2372,7 +2407,7 @@ const initializeCanvasLayout = async (canvas) => {
 
   const canvasScale = Math.min(containerRealWidth / containerIdealWidth, containerRealHeight / containerIdealHeight)
 
-  setScale(canvas, canvasScale)
+  setScale(canvas, canvasScale * defaultScale)
 }
 
 // 设置缩放比例
@@ -2384,7 +2419,11 @@ function setScale(canvas, scale) {
 
   const canvasElement = imageElement.parentNode;
 
-  const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement
+  const computedStyle = window.getComputedStyle(canvasElement);
+
+  const canvasWidth = Number.parseFloat(computedStyle.width);
+
+  const canvasHeight = Number.parseFloat(computedStyle.height);
 
   const {minScale, maxScale} = scaleOptions;
 
@@ -4386,7 +4425,7 @@ onBeforeUnmount(() => {
               }
 
               .el-slider__input {
-                width: 85px;
+                width: 90px;
               }
             }
           }
