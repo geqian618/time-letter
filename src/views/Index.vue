@@ -24,7 +24,7 @@
                 </el-sub-menu>
                 <el-sub-menu index="2" class="image-mark-options">
                   <template #title>
-                    <span>图片标签</span>
+                    <span>图片库</span>
                   </template>
                   <div class="image-marks" ref="imageMarks">
                     <img class="image-mark" v-for="([key, label]) in imageLabels"
@@ -35,7 +35,7 @@
                 </el-sub-menu>
                 <el-sub-menu index="3" class="text-marks-options">
                   <template #title>
-                    <span>文本标签</span>
+                    <span>文本库</span>
                   </template>
                   <el-scrollbar class="scrollBar">
                     <div class="text-marks" ref="textMarks">
@@ -163,7 +163,7 @@
                   </el-sub-menu>
                   <el-sub-menu index="5">
                     <template #title>
-                      <span>主图</span>
+                      <span>前景</span>
                     </template>
                     <ul class="options">
                       <li class="option">
