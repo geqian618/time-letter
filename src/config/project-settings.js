@@ -35,7 +35,7 @@ const projectSettings = ref({
     others: {
         optionAnchorPoint: true,
         movingStepSize: 1,
-        defaultScale: 1
+        defaultCanvasScale: 0.75
     },
     availableFonts: new Map()
 })

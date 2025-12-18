@@ -1088,7 +1088,7 @@
               <div class="option">
                 <span>默认缩放：</span>
                 <div class="slider-demo-block">
-                  <el-slider v-model="projectSettings.others.defaultScale"
+                  <el-slider v-model="projectSettings.others.defaultCanvasScale"
                              @change="handleCanvasScale"
                              :min="0.05"
                              :max="1"
@@ -1925,7 +1925,7 @@ const stopWatchImageZIndex = watch(() => imageOptions.value.zIndex, (newVal, old
 
 
 const handleCanvasScale = () => {
-  const newScale = projectSettings.value.others.defaultScale;
+  const newScale = projectSettings.value.others.defaultCanvasScale;
   const canvases = CanvasManager.getCanvases();
   canvases.forEach(canvas => {
     if (canvas.completed) {
@@ -2371,7 +2371,7 @@ const initializeCanvasLayout = async (canvas) => {
   const {offsetWidth: containerRealWidth, offsetHeight: containerRealHeight} = previewContainer;
   const {idealWidth: containerIdealWidth, idealHeight: containerIdealHeight} = previewContainer;
 
-  const {defaultScale} = projectSettings.value.others;
+  const {defaultCanvasScale} = projectSettings.value.others;
 
   const baseScale = Math.min(containerIdealWidth / imageWidth, containerIdealHeight / imageHeight)
 
@@ -2407,7 +2407,7 @@ const initializeCanvasLayout = async (canvas) => {
 
   const canvasScale = Math.min(containerRealWidth / containerIdealWidth, containerRealHeight / containerIdealHeight)
 
-  setScale(canvas, canvasScale * defaultScale)
+  setScale(canvas, canvasScale * defaultCanvasScale)
 }
 
 // 设置缩放比例
