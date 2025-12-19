@@ -127,6 +127,13 @@ const setupWindowEvents = (window) => {
         window.focus();
     })
 
+    // 窗口已关闭
+    window.on('close', () => {
+        if (window) {
+            window = null
+        }
+    })
+
     // 右键菜单
     // window.webContents.on('context-menu', () => {
     //   contextMenu.popup()
