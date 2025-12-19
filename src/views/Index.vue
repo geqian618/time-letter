@@ -1097,6 +1097,14 @@
                              show-input/>
                 </div>
               </div>
+              <div class="option">
+                <span>启用滚动条：</span>
+                <el-switch
+                    @change="renderCanvasScrollbar"
+                    v-model="projectSettings.others.enableScrollbar"
+                    class="ml-2"
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+              </div>
             </div>
           </div>
         </el-tab-pane>
@@ -2351,12 +2359,18 @@ const initCanvasSize = () => {
     // 获取窗口宽高
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
+
     // 设置CSS自定义属性
-    previewContainer.value.style.setProperty('--canvas-width', `${windowWidth}px`);
-    previewContainer.value.style.setProperty('--canvas-height', `${windowHeight}px`);
+    previewContainer.value.style.setProperty('--canvas-width', `${windowWidth * 1.5}px`);
+    previewContainer.value.style.setProperty('--canvas-height', `${windowHeight * 1.5}px`);
     previewContainer.value.idealWidth = Number.parseFloat(previewContainer.value.offsetWidth)
     previewContainer.value.idealHeight = Number.parseFloat(previewContainer.value.offsetHeight)
+    renderCanvasScrollbar()
   }, 1000)
+}
+
+const renderCanvasScrollbar = () => {
+  previewContainer.value.style.overflow = projectSettings.value.others.enableScrollbar ? 'auto' : 'hidden'
 }
 
 
@@ -3633,11 +3647,11 @@ const handleDragMoveCanvas = (event) => {
     previewContainer.value.scrollTop = scrollTop;
   };
 
-  previewContainer.value.onmouseup = function (event) {
+  document.onmouseup = function (event) {
     // 拖拽结束，恢复光标为抓手的准备状态（空格键仍按住）
     previewContainer.value.style.cursor = '';
     previewContainer.value.onmousemove = null;
-    previewContainer.value.onmouseup = null;
+    document.onmouseup = null;
   };
 };
 
