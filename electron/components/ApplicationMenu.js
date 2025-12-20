@@ -42,7 +42,7 @@ const createApplicationMenu = (mainWindow) => {
             submenu: [
                 {
                     label: '偏好设置',
-                    click: outputSettings,
+                    click: editorOutputSettings,
                 },
             ]
         },
@@ -235,7 +235,7 @@ const saveFiles = async () => {
 }
 
 
-const outputSettings = () => {
+const editorOutputSettings = () => {
     window.webContents.send('editor-output-settings')
 }
 
