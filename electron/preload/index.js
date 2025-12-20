@@ -1,7 +1,7 @@
 const {contextBridge, ipcRenderer} = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-    parsePhotoMetadata: async (args) => await ipcRenderer.invoke('parse-photo-metadata', args),
+    parsePhotoMetadata: (args) => ipcRenderer.invoke('parse-photo-metadata', args),
     watchInputImage: (callback) => ipcRenderer.on('watch-input-image', callback),
     watchInputFonts: (callback) => ipcRenderer.on('watch-input-font', callback),
     watchLabelResources: (callback) => ipcRenderer.on('watch-label-resources', callback),
