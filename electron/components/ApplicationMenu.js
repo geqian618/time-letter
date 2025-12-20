@@ -2,10 +2,11 @@ const {dialog, Menu, shell} = require('electron');
 const path = require('path')
 const fs = require('fs')
 const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('../utils/path-helper')
-const resourcesPath = getResourcePath()
-const fontPath = getFontPath()
 const {createChildWindow} = require('../components/ChildWindow')
 const {registerFont} = require('../utils/font-manager')
+
+const resourcesPath = getResourcePath()
+const fontPath = getFontPath()
 
 /**
  * mainMenu 定义为函数，主进程可以传参到菜单中
