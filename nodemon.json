@@ -1,0 +1,11 @@
+{
+  "watch": [
+    "electron"
+  ],
+  "ext": "js,ts,css,html,vue",
+  "ignore": [
+    "node_modules",
+    "dist"
+  ],
+  "exec": "npm run electron:start"
+}
