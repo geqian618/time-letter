@@ -81,7 +81,8 @@ const loadAppContent = (window) => {
         window.loadURL('http://localhost:5173/')
     } else {
         // 生产环境加载本地文件系统中的文件
-        window.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
+        // window.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
+        window.loadFile(path.join(__dirname, '../dist/index.html'))
     }
 }
 
