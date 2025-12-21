@@ -113,7 +113,10 @@ const createApplicationMenu = (mainWindow) => {
             submenu: [
                 {
                     label: '控制台',
-                    role: 'toggleDevTools'
+                    // role: 'toggleDevTools',
+                    click: (menuItem, browserWindow, event) => {
+                        browserWindow.webContents.openDevTools({mode: "detach"})
+                    }
                 },
                 {
                     label: '关于',
