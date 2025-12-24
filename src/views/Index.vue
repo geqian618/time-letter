@@ -103,7 +103,7 @@
                           </div>
                         </div>
                         <div class="value">
-                          <el-input v-model="metadataOptions.cameraBrand" size="small"/>
+                          <el-input spellcheck="false" v-model="metadataOptions.cameraBrand" size="small"/>
                         </div>
                       </li>
                       <li class="option">
@@ -112,7 +112,7 @@
                           </div>
                         </div>
                         <div class="value">
-                          <el-input v-model="metadataOptions.cameraModel" size="small"/>
+                          <el-input spellcheck="false" v-model="metadataOptions.cameraModel" size="small"/>
                         </div>
                       </li>
                       <li class="option">
@@ -120,7 +120,7 @@
                           <div class="text-mark" draggable="true" type="metadata" expression="lensModel">镜头型号</div>
                         </div>
                         <div class="value">
-                          <el-input v-model="metadataOptions.lensModel" size="small"/>
+                          <el-input spellcheck="false" v-model="metadataOptions.lensModel" size="small"/>
                         </div>
                       </li>
                       <li class="option">
@@ -128,7 +128,7 @@
                           <div class="text-mark" draggable="true" type="metadata" expression="focalLength">焦段</div>
                         </div>
                         <div class="value">
-                          <el-input v-model="metadataOptions.focalLength" size="small"/>
+                          <el-input spellcheck="false" v-model="metadataOptions.focalLength" size="small"/>
                         </div>
                       </li>
                       <li class="option">
@@ -136,7 +136,7 @@
                           <div class="text-mark" draggable="true" type="metadata" expression="iso">IOS</div>
                         </div>
                         <div class="value">
-                          <el-input v-model="metadataOptions.iso" size="small"/>
+                          <el-input spellcheck="false" v-model="metadataOptions.iso" size="small"/>
                         </div>
                       </li>
                       <li class="option">
@@ -144,7 +144,7 @@
                           <div class="text-mark" draggable="true" type="metadata" expression="shutter">快门</div>
                         </div>
                         <div class="value">
-                          <el-input v-model="metadataOptions.shutter" size="small"/>
+                          <el-input spellcheck="false" v-model="metadataOptions.shutter" size="small"/>
                         </div>
                       </li>
                       <li class="option">
@@ -152,7 +152,7 @@
                           <div class="text-mark" draggable="true" type="metadata" expression="aperture">光圈</div>
                         </div>
                         <div class="value">
-                          <el-input v-model="metadataOptions.aperture" size="small"/>
+                          <el-input spellcheck="false" v-model="metadataOptions.aperture" size="small"/>
                         </div>
                       </li>
                       <li class="option">
@@ -161,7 +161,7 @@
                           </div>
                         </div>
                         <div class="value">
-                          <el-input v-model="metadataOptions.shootingTime" size="small"/>
+                          <el-input spellcheck="false" v-model="metadataOptions.shootingTime" size="small"/>
                         </div>
                       </li>
                     </ul>
@@ -478,7 +478,6 @@
                         <div class="label">字体颜色</div>
                         <div class="value">
                           <el-color-picker
-                              @change=""
                               v-model="textOptions.fontColor"
                               show-alpha
                               size="small"
@@ -503,8 +502,7 @@
                       <li class="option">
                         <div class="label">X轴偏移</div>
                         <div class="value">
-                          <el-slider @change=""
-                                     size="small"
+                          <el-slider size="small"
                                      :min="-50"
                                      :max="50"
                                      v-model="textOptions.textShadow.offsetX"
@@ -4077,7 +4075,7 @@ onBeforeUnmount(() => {
 
                     :deep(.el-input) {
                       width: calc(100% - 5px);
-
+                      font-size: 10px;
                       .el-input__wrapper {
                         background: #F0F0F0;
                       }
