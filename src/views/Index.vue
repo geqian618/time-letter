@@ -1098,7 +1098,7 @@
                 </div>
               </div>
               <div class="option">
-                <span>启用滚动条：</span>
+                <span>显示滚动条：</span>
                 <el-switch
                     @change="renderCanvasScrollbar"
                     v-model="projectSettings.others.enableScrollbar"
@@ -3833,7 +3833,7 @@ onBeforeUnmount(() => {
           :deep(.el-sub-menu) {
 
             .el-sub-menu__title {
-              height: 45px;
+              height: 40px;
             }
 
             span, svg {
@@ -3987,7 +3987,7 @@ onBeforeUnmount(() => {
             :deep(.el-sub-menu) {
 
               .el-sub-menu__title {
-                height: 45px;
+                height: 40px;
               }
 
               span, svg {
