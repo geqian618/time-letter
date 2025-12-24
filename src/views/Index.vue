@@ -384,7 +384,7 @@
                     <template #title>
                       <span>文本</span>
                     </template>
-                    <div class="group-title">基本</div>
+                    <div class="group-title">基本属性</div>
                     <ul class="options">
                       <li class="option">
                         <div class="label">排列方向</div>
@@ -553,7 +553,7 @@
                     <template #title>
                       <span>图片</span>
                     </template>
-                    <div class="group-title">基本</div>
+                    <div class="group-title">基本属性</div>
                     <ul class="options">
                       <li class="option">
                         <div class="label">缩放</div>
@@ -604,7 +604,7 @@
                       </li>
                     </ul>
 
-                    <div class="group-title">图片阴影</div>
+                    <div class="group-title">阴影</div>
                     <ul class="options">
                       <li class="option">
                         <div class="label">X轴偏移</div>
@@ -4016,7 +4016,7 @@ onBeforeUnmount(() => {
                 display: flex;
                 justify-content: center;
                 align-items: end;
-                border-top: 1px dashed #a2a4a6;
+                border-top: 1px solid #818080;
               }
 
               .group-title:first-child {
@@ -4036,7 +4036,7 @@ onBeforeUnmount(() => {
                   justify-content: start;
                   align-items: center;
                   padding: 10px 0;
-                  margin-top: 5px;
+                  margin-top: 2px;
 
                   .label {
                     display: flex;
