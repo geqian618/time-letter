@@ -328,6 +328,8 @@ async function addBorderAndText(settings) {
         const {
             // 原始图片路径
             imagePath,
+            // 下标（数组中的顺序）
+            index,
             // 输出目录
             outputDirectory,
             projectSettings: {
@@ -336,6 +338,7 @@ async function addBorderAndText(settings) {
                     extname: extnameType,
                     outputSize: {longSide, shortSide, width, height, type},
                     isSynchronizeMetadata,
+                    fileNaming: {basename, prefix, suffix}
                 },
                 availableFonts
             },
@@ -357,11 +360,16 @@ async function addBorderAndText(settings) {
         } = settings;
 
 
-        const originalExtname = path.extname(imagePath).slice(1);
+        const parsedPath = path.parse(imagePath);
+        const originalName = parsedPath.name;
+        const originalExtname = parsedPath.ext.slice(1);
+
+        let filename = basename === 0 ? originalName : basename === 1 ? String(index) : crypto.randomUUID().replaceAll('-', '')
+        filename = prefix + filename + suffix;
 
         const outputExtname = getExtname(originalExtname, extnameType)
 
-        const outputPath = path.join(outputDirectory, path.parse(imagePath).name + "." + outputExtname)
+        const outputPath = path.join(outputDirectory, filename + "." + outputExtname)
 
         let imageBuffer;
 

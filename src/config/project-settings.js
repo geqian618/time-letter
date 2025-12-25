@@ -11,7 +11,12 @@ const projectSettings = ref({
         },
         extname: 0,
         quality: 100,
-        isSynchronizeMetadata: true
+        isSynchronizeMetadata: true,
+        fileNaming: {
+            basename: 0,
+            prefix: '',
+            suffix: ''
+        }
     },
     metadata: {
         formats: {

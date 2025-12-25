@@ -858,16 +858,17 @@
     <el-dialog v-model="outputSettingsVisible"
                title="偏好设置"
                top="10vh"
-               width="800">
+               width="750">
       <el-tabs type="border-card" class="demo-tabs">
         <el-tab-pane label="导出">
           <div class="border-box">
             <span class="border-label">图片尺寸</span>
             <div class="options">
               <div class="option">
-                <span>调整方式：</span>
+                <span class="label">调整方式：</span>
                 <el-select v-model="projectSettings.outputSettings.outputSize.type"
                            placeholder="Select"
+                           class="value"
                            size="small">
                   <el-option
                       v-for="item in outputSizeOptions"
@@ -877,30 +878,34 @@
                 </el-select>
               </div>
               <div class="option" v-show="[2,3].includes(projectSettings.outputSettings.outputSize.type)">
-                <span>长边尺寸：</span>
+                <span class="label">长边尺寸：</span>
                 <el-input v-model.number="projectSettings.outputSettings.outputSize.longSide"
                           size="small"
+                          class="value"
                           placeholder="长边"/>
                 <span>&nbsp;px</span>
               </div>
               <div class="option" v-show="[4,5].includes(projectSettings.outputSettings.outputSize.type)">
-                <span>短边尺寸：</span>
+                <span class="label">短边尺寸：</span>
                 <el-input v-model.number="projectSettings.outputSettings.outputSize.shortSide"
                           size="small"
+                          class="value"
                           placeholder="短边"/>
                 <span>&nbsp;px</span>
               </div>
               <div class="option" v-show="[6,7].includes(projectSettings.outputSettings.outputSize.type)">
-                <span>宽尺寸：</span>
+                <span class="label">宽尺寸：</span>
                 <el-input v-model.number="projectSettings.outputSettings.outputSize.width"
                           size="small"
+                          class="value"
                           placeholder="宽尺寸"/>
                 <span>&nbsp;px</span>
               </div>
               <div class="option" v-show="[8,9].includes(projectSettings.outputSettings.outputSize.type)">
-                <span>高尺寸：</span>
+                <span class="label">高尺寸：</span>
                 <el-input v-model.number="projectSettings.outputSettings.outputSize.height"
                           size="small"
+                          class="value"
                           placeholder="高尺寸"/>
                 <span>&nbsp;px</span>
               </div>
@@ -910,8 +915,8 @@
             <span class="border-label">图片设置</span>
             <div class="options">
               <div class="option">
-                <span>输出格式：</span>
-                <el-select v-model="projectSettings.outputSettings.extname" size="small">
+                <span class="label">输出格式：</span>
+                <el-select class="value" v-model="projectSettings.outputSettings.extname" size="small">
                   <el-option
                       v-for="item in [{label:'原格式', value: 0}, {label:'JPEG', value:1}, {label:'PNG', value: 2}, {label:'WEBP', value: 3}]"
                       :key="item.value"
@@ -920,9 +925,10 @@
                 </el-select>
               </div>
               <div class="option" v-show="[1,3].includes(projectSettings.outputSettings.extname) ">
-                <span>图片品质：</span>
+                <span class="label">图片品质：</span>
                 <div class="slider-demo-block">
                   <el-slider v-model="projectSettings.outputSettings.quality"
+                             class="value"
                              :min="1"
                              :max="100"
                              size="small"
@@ -933,8 +939,33 @@
                 <span class="label">同步元数据：</span>
                 <el-switch
                     v-model="projectSettings.outputSettings.isSynchronizeMetadata"
-                    class="ml-2"
+                    class="value"
                     style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+              </div>
+            </div>
+          </div>
+          <div class="border-box">
+            <span class="border-label">重命名</span>
+            <div class="options">
+              <div class="option">
+                <span class="label">命名方式：</span>
+                <el-select class="value" v-model="projectSettings.outputSettings.fileNaming.basename" size="small">
+                  <el-option
+                      v-for="item in [{label:'原名称', value: 0}, {label:'序号', value: 1}, {label:'随机名称', value: 2}]"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"/>
+                </el-select>
+              </div>
+              <div class="option">
+                <span class="label">前缀：</span>
+                <el-input class="value" v-model="projectSettings.outputSettings.fileNaming.prefix"
+                          size="small"></el-input>
+              </div>
+              <div class="option">
+                <span class="label">后缀：</span>
+                <el-input class="value" v-model="projectSettings.outputSettings.fileNaming.suffix"
+                          size="small"></el-input>
               </div>
             </div>
           </div>
@@ -942,56 +973,57 @@
         <el-tab-pane label="元数据">
           <div class="border-box">
             <span class="border-label">格式化</span>
-            <div class="items">
-              <div class="item">
+            <div class="options">
+              <div class="option">
                 <span class="label">相机品牌：</span>
-                <el-input class="value" v-model="projectSettings.metadata.formats.cameraBrand"></el-input>
+                <el-input class="metadata-input" v-model="projectSettings.metadata.formats.cameraBrand"></el-input>
               </div>
-              <div class="item">
+              <div class="option">
                 <span class="label">相机型号：</span>
-                <el-input class="value" v-model="projectSettings.metadata.formats.cameraModel"></el-input>
+                <el-input class="metadata-input" v-model="projectSettings.metadata.formats.cameraModel"></el-input>
               </div>
-              <div class="item">
+              <div class="option">
                 <span class="label">镜头型号：</span>
-                <el-input class="value" v-model="projectSettings.metadata.formats.lensModel"></el-input>
+                <el-input class="metadata-input" v-model="projectSettings.metadata.formats.lensModel"></el-input>
               </div>
-              <div class="item">
+              <div class="option">
                 <span class="label">焦段：</span>
-                <el-input class="value" v-model="projectSettings.metadata.formats.focalLength"></el-input>
+                <el-input class="metadata-input" v-model="projectSettings.metadata.formats.focalLength"></el-input>
               </div>
-              <div class="item">
+              <div class="option">
                 <span class="label">ISO：</span>
-                <el-input class="value" v-model="projectSettings.metadata.formats.iso"></el-input>
+                <el-input class="metadata-input" v-model="projectSettings.metadata.formats.iso"></el-input>
               </div>
-              <div class="item">
+              <div class="option">
                 <span class="label">快门：</span>
-                <el-input class="value" v-model="projectSettings.metadata.formats.shutter"></el-input>
+                <el-input class="metadata-input" v-model="projectSettings.metadata.formats.shutter"></el-input>
               </div>
-              <div class="item">
+              <div class="option">
                 <span class="label">光圈：</span>
-                <el-input class="value" v-model="projectSettings.metadata.formats.aperture"></el-input>
+                <el-input class="metadata-input" v-model="projectSettings.metadata.formats.aperture"></el-input>
               </div>
-              <div class="item">
+              <div class="option">
                 <span class="label">拍摄日期：</span>
-                <el-input class="value" v-model="projectSettings.metadata.formats.shootingTime"></el-input>
+                <el-input class="metadata-input" v-model="projectSettings.metadata.formats.shootingTime"></el-input>
               </div>
             </div>
           </div>
 
           <div class="border-box">
             <span class="border-label">焦距转换</span>
-            <div class="items">
-              <div class="item">
+            <div class="options">
+              <div class="option">
                 <span class="label">等效焦距：</span>
                 <el-switch
                     @change="handleFocalLength(0)"
                     v-model="projectSettings.metadata.other.enableEquivalentFocalSegment"
-                    class="ml-2"
+                    class="value"
                     style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
               </div>
-              <div class="item">
+              <div class="option">
                 <span class="label">转换倍数：</span>
-                <el-input class="value" style="width: 100px" @change="handleFocalLength(1)"
+                <el-input class="value"
+                          @change="handleFocalLength(1)"
                           v-model="projectSettings.metadata.other.conversionMultiple">
                 </el-input>
               </div>
@@ -1006,8 +1038,10 @@
             <span class="border-label">下载</span>
             <div class="options">
               <div class="option">
-                <span>线程数：</span>
-                <el-select @change="createThreadPool" v-model="projectSettings.performance.downloadThreads"
+                <span class="label">线程数：</span>
+                <el-select class="value"
+                           @change="createThreadPool"
+                           v-model="projectSettings.performance.downloadThreads"
                            size="small">
                   <el-option
                       v-for="item in downloadThreadsOptions"
@@ -1062,10 +1096,10 @@
             <span class="border-label">个性化</span>
             <div class="options">
               <div class="option">
-                <span>选项锚点：</span>
+                <span class="label">选项锚点：</span>
                 <el-switch
                     v-model="projectSettings.others.optionAnchorPoint"
-                    class="ml-2"
+                    class="value"
                     style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
               </div>
             </div>
@@ -1074,9 +1108,10 @@
             <span class="border-label">画布</span>
             <div class="options">
               <div class="option">
-                <span>移到步长：</span>
+                <span class="label">移到步长：</span>
                 <div class="slider-demo-block">
                   <el-slider v-model="projectSettings.others.movingStepSize"
+                             class="value"
                              :min="1"
                              :max="100"
                              size="small"
@@ -1084,10 +1119,11 @@
                 </div>
               </div>
               <div class="option">
-                <span>默认缩放：</span>
+                <span class="label">默认缩放：</span>
                 <div class="slider-demo-block">
                   <el-slider v-model="projectSettings.others.defaultCanvasScale"
                              @change="handleCanvasScale"
+                             class="value"
                              :min="0.05"
                              :max="1"
                              :step="0.05"
@@ -1096,11 +1132,11 @@
                 </div>
               </div>
               <div class="option">
-                <span>显示滚动条：</span>
+                <span class="label">显示滚动条：</span>
                 <el-switch
                     @change="renderCanvasScrollbar"
                     v-model="projectSettings.others.enableScrollbar"
-                    class="ml-2"
+                    class="value"
                     style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
               </div>
             </div>
@@ -1625,10 +1661,11 @@ const watchContextMenu = () => {
 
             }
 
-            const {settings: {border, photograph, texts, images}} = currentCanvas;
+            const {settings: {border, photograph, texts, images}, metadata} = currentCanvas;
 
             newSettings.push({
               imagePath: paths[i],
+              index: i + 1,
               settings: {
                 border,
                 photograph,
@@ -1636,6 +1673,7 @@ const watchContextMenu = () => {
                 texts: [...texts.values()],
               }
             })
+
 
           } finally {
             currentCanvas.hide()
@@ -4076,6 +4114,7 @@ onBeforeUnmount(() => {
                     :deep(.el-input) {
                       width: calc(100% - 5px);
                       font-size: 10px;
+
                       .el-input__wrapper {
                         background: #F0F0F0;
                       }
@@ -4376,8 +4415,8 @@ onBeforeUnmount(() => {
         position: relative;
         border: 1px solid #e4e4e5;
         border-radius: 2px;
-        padding: 15px 20px 20px;
-        margin: 30px 0;
+        padding: 15px 10px;
+        margin: 20px 0;
 
         .border-label {
           position: absolute;
@@ -4387,26 +4426,6 @@ onBeforeUnmount(() => {
           padding: 0 12px;
           font-size: 13px;
           color: #7c7b7b;
-        }
-
-
-        .items {
-          width: 100%;
-
-          .item {
-            display: flex;
-            align-items: center;
-            margin: 8px;
-
-            .label {
-              width: 80px;
-              text-align: right;
-            }
-
-            .value {
-              width: 80%;
-            }
-          }
         }
 
         .options {
@@ -4419,18 +4438,34 @@ onBeforeUnmount(() => {
             align-items: center;
             height: 40px;
 
+            .label {
+              font-size: 13px;
+              width: 80px;
+              text-align: right;
+            }
+
+            .value {
+              width: 150px;
+            }
+
+            .metadata-input {
+              width: calc(100% - 100px);
+            }
+
             .el-select {
-              width: 155px !important;
+              .el-select__wrapper {
+                height: 28px;
+              }
             }
 
             .el-input {
-              width: 155px;
+              height: 28px;
             }
 
             .el-slider {
               --el-slider-button-size: 13px;
               --el-slider-height: 6px;
-              width: 200px;
+              width: 220px;
 
               .show-input {
                 margin-right: 10px;
@@ -4443,6 +4478,10 @@ onBeforeUnmount(() => {
           }
         }
 
+      }
+
+      .border-box:last-child {
+        margin-bottom: 0;
       }
     }
   }

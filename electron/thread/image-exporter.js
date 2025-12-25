@@ -67,19 +67,19 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
     const queue = [...settings];
 
     async function processNext() {
-
         if (Atomics.load(interrupt, 0) === 1 || queue.length === 0) {
             return;
         }
 
         const setting = queue.shift();
-        const {imagePath, settings: {border, photograph, texts, images}} = setting;
+        const {imagePath, index, settings: {border, photograph, texts, images}} = setting;
 
         try {
             const params = {
                 projectSettings,
                 outputDirectory,
                 imagePath,
+                index,
                 border,
                 photograph,
                 texts,
