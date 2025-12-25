@@ -945,7 +945,7 @@
             </div>
           </div>
           <div class="border-box">
-            <span class="border-label">重命名</span>
+            <span class="border-label">文件命名</span>
             <div class="options">
               <div class="option">
                 <span class="label">命名方式：</span>
