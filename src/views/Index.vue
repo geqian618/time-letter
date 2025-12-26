@@ -2837,7 +2837,7 @@ const handleMovePreviewList = (e) => {
   if (previewList.value) {
     previewList.value.scrollBy({
       left: scrollAmount,
-      behavior: 'auto' // 平滑滚动效果
+      behavior: 'smooth' // 平滑滚动效果
     });
   }
 }
