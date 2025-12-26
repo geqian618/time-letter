@@ -51,6 +51,7 @@ class DraggableElementFactory {
 
         this.dragElement.style.boxShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
 
+        this.dragElement.style.display = 'block'
         this.dragElement.setAttribute('path', path)
     }
 

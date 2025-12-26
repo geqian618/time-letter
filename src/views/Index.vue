@@ -3804,6 +3804,7 @@ onBeforeUnmount(() => {
   width: 100vw;
   height: 100vh;
   border: 1px solid var(--border-color);
+  border-top: none;
 
   .page-main {
     width: 100%;
@@ -3996,6 +3997,7 @@ onBeforeUnmount(() => {
 
         img {
           position: absolute;
+          display: block;
         }
       }
     }

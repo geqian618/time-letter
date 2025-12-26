@@ -10,13 +10,10 @@ import {RouterView} from 'vue-router'
 <style>
 
 
-
 * {
   padding: 0;
   margin: 0;
   box-sizing: border-box;
-  scrollbar-width: thin; /* 设置滚动条宽度 */
-  scrollbar-color: #888 #f1f1f1; /* 设置滑块和轨道的颜色 */
   user-select: none;
 }
 
@@ -33,6 +30,42 @@ import {RouterView} from 'vue-router'
   --main-font-color: #A9A9A9;
   --preview-background-color: #737373;
   --dialog-main-background-color: #FFFFFF;
+}
+
+
+/* 只在支持标准属性但不支持WebKit伪元素的浏览器中应用 */
+@supports (scrollbar-width: thin) and (not selector(::-webkit-scrollbar)) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #888 #f1f1f1;
+  }
+}
+
+/* 设置滚动条宽度与高度 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+/* 设置轨道背景颜色、圆角等 */
+::-webkit-scrollbar-track {
+  background-color: #b4b3b3;
+}
+
+/* 设置滑块样式 */
+::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background-color: #efefef;
+}
+
+/* 设置滚动条角落（右下角）的样式 */
+::-webkit-scrollbar-corner {
+  background-color: #b4b3b3;
+}
+
+/* 鼠标经过滑块 */
+::-webkit-scrollbar-thumb:hover {
+
 }
 
 </style>
