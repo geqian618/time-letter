@@ -3992,7 +3992,8 @@ onBeforeUnmount(() => {
           left: 0;
           right: 0;
           bottom: 0;
-          backdrop-filter: blur(var(--blur-intensity, 10px));
+          backdrop-filter: blur(var(--blur-intensity));
+          border-radius: inherit;
         }
 
         img {
