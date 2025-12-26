@@ -1212,7 +1212,7 @@ const availableCanvas = ref(new Map())
 const scaleOptions = {
   minScale: 0.5,
   maxScale: 5,
-  scaleStep: 0.1
+  scaleStep: 0.05
 }
 
 let clickTimeout = null;
@@ -2458,6 +2458,10 @@ const initializeCanvasLayout = async (canvas) => {
   const canvasScale = Math.min(containerRealWidth / containerIdealWidth, containerRealHeight / containerIdealHeight)
 
   setScale(canvas, canvasScale * defaultCanvasScale)
+
+  setTimeout(() => {
+    canvasElement.style.transition = 'transform 0.2s';
+  }, 0)
 }
 
 // 设置缩放比例
@@ -3979,6 +3983,8 @@ onBeforeUnmount(() => {
         width: var(--canvas-width);
         height: var(--canvas-height);
         position: relative;
+        will-change: transform;
+        transition: none;
 
         .image-background {
           overflow: hidden;
