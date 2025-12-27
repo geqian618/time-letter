@@ -1,4 +1,4 @@
-window.useThrottle = function useThrottle(action, delay) {
+export function useThrottle(action, delay) {
     let timer = null;
     return function (...args) {  // 接收参数
         if (!timer) {
