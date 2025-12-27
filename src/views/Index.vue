@@ -1168,6 +1168,8 @@
 
 import {nextTick, onBeforeUnmount, onMounted, ref, watch, computed} from "vue";
 
+import {useThrottle} from '@/utils/throttle'
+
 import FontLoader from '@/utils/FontLoader'
 
 import _ from 'lodash';
@@ -2827,12 +2829,12 @@ const handleOpenSubMenu = (index) => {
 }
 
 
-const handleMovePreviewList = (e) => {
+const handleMovePreviewList = useThrottle((e) => {
   // 1. 阻止默认的垂直滚动行为
   e.preventDefault();
   // 2. 获取滚轮滚动方向（deltaY > 0 向下滚，< 0 向上滚）
   // 3. 转换为水平滚动：向下滚向右移动，向上滚向左移动
-  const scrollAmount = e.deltaY * 1.8; // 调整滚动速度
+  const scrollAmount = e.deltaY * 5; // 调整滚动速度
   // 4. 应用滚动
   if (previewList.value) {
     previewList.value.scrollBy({
@@ -2840,7 +2842,8 @@ const handleMovePreviewList = (e) => {
       behavior: 'smooth' // 平滑滚动效果
     });
   }
-}
+}, 200);
+
 
 const handleSelectAllPreviewElements = (event) => {
   if (event.ctrlKey && event.key === 'a') {
