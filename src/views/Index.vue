@@ -705,7 +705,11 @@
             </div>
           </div>
         </div>
-        <div class="preview-list" id="preview-list" tabindex="0" ref="previewList" @wheel="handleMovePreviewList"
+        <div class="preview-list"
+             id="preview-list"
+             tabindex="0"
+             ref="previewList"
+             @wheel="handleMovePreviewList"
              @contextmenu="triggerContextMenu">
           <template :key="key" v-for="([key, canvas]) in availableCanvas">
             <el-popover
@@ -771,9 +775,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="customTextLabelDialogVisible = false">取消</el-button>
-          <el-button type="info" @click="saveTextLabel">
-            确认
-          </el-button>
+          <el-button type="info" @click="saveTextLabel">确认</el-button>
         </div>
       </template>
     </el-dialog>
@@ -793,9 +795,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="saveTemplateDialogVisible = false">取消</el-button>
-          <el-button type="info" @click="saveTemplates">
-            确认
-          </el-button>
+          <el-button type="info" @click="saveTemplates">确认</el-button>
         </div>
       </template>
     </el-dialog>
@@ -812,9 +812,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="renameDialogVisible = false">取消</el-button>
-          <el-button type="info" @click="renameTemplate">
-            确认
-          </el-button>
+          <el-button type="info" @click="renameTemplate">确认</el-button>
         </div>
       </template>
     </el-dialog>
@@ -831,9 +829,7 @@
         </el-table-column>
         <el-table-column fixed="right" label="操作" min-width="100">
           <template #default="scope">
-            <el-button link type="primary" size="small" @click="openTextLabelEditorDialog(scope.row)">
-              编辑
-            </el-button>
+            <el-button link type="primary" size="small" @click="openTextLabelEditorDialog(scope.row)">编辑</el-button>
             <el-button link type="primary" size="small" @click="deleteTextLabel(scope.row)">删除</el-button>
           </template>
         </el-table-column>
