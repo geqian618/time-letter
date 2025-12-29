@@ -5,7 +5,7 @@
   "private": true,
   "main": "electron/main.js",
   "scripts": {
-    "electron:serve": "concurrently -n \"VITE,ELECTRON\" -c \"blue,green\" -k \"npm run vite:start\" \"nodemon\"",
+    "electron:serve": "concurrently -n \"VITE,ELECTRON\" -c \"blue,green\" -k \"npm run vite:start\" \"npm run electron:start\"",
     "electron:start": "wait-on http://localhost:5173 && chcp 65001 && cross-env NODE_ENV=development electron .",
     "vite:start": "vite",
     "vite:build": "vite build",
