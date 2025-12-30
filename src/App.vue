@@ -35,16 +35,12 @@ import {RouterView} from 'vue-router'
 
 /* 拖拽预览添加特定样式 */
 [draggable="true"] {
-
   -webkit-user-drag: element;
-
   /* 改善渲染性能 */
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-
   /* 强制 GPU 加速 */
   transform: translateZ(0);
-
   /* 进一步优化 */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
