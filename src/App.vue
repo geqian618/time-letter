@@ -33,6 +33,21 @@ import {RouterView} from 'vue-router'
 }
 
 
+/* 拖拽预览添加特定样式 */
+[draggable="true"] {
+  -webkit-user-drag: element;
+  /* 防止拖拽时出现边框 */
+  outline: none !important;
+  border: none !important;
+  /* 改善渲染性能 */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  /* 强制 GPU 加速 */
+  transform: translateZ(0);
+}
+
+
 /* 只在支持标准属性但不支持WebKit伪元素的浏览器中应用 */
 @supports (scrollbar-width: thin) and (not selector(::-webkit-scrollbar)) {
   * {
