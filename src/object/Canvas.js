@@ -1,4 +1,4 @@
-import {BorderSettings, PhotographOptions, PhotographSettings} from '@/object/Configuration'
+import {BorderSettings, PhotographSettings} from '@/object/Configuration'
 
 export class Canvas {
     constructor() {
