@@ -2,14 +2,16 @@
 const fontSet = new Set();
 
 const loadFont = async (fontFamily, path) => {
+
     // 如果字体已经加载过，直接返回
     if (fontSet.has(fontFamily)) {
         console.log(`字体 "${fontFamily}" 已加载，跳过重复加载`);
         return;
     }
-    // 定义字体
-    const fontFace = new FontFace(fontFamily, `url('${path}') format('truetype')`);
+
     try {
+        // 定义字体
+        const fontFace = new FontFace(fontFamily, `url(${path}) format('truetype')`);
         // 加载字体
         const font = await fontFace.load();
         // 将字体添加到文档中
@@ -22,4 +24,4 @@ const loadFont = async (fontFamily, path) => {
     }
 }
 
-export default { loadFont }
+export default {loadFont}
