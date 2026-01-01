@@ -11,11 +11,18 @@ const loadFont = async (fontFamily, path) => {
 
     try {
         // 定义字体
-        const fontFace = new FontFace(fontFamily, `url(${path}) format('truetype')`);
+        const fontFace = new FontFace(
+            fontFamily,
+            `url('${path}')`,
+            {
+                format: 'truetype',
+                display: 'swap'
+            }
+        );
         // 加载字体
-        const font = await fontFace.load();
+        const loadedFace = await fontFace.load();
         // 将字体添加到文档中
-        document.fonts.add(font);
+        document.fonts.add(loadedFace);
         // 记录已加载的字体
         fontSet.add(fontFamily);
         console.log(`字体 "${fontFamily}" 加载成功`);
