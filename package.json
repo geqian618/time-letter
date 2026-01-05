@@ -22,6 +22,7 @@
     "electron-win-state": "^1.1.22",
     "element-plus": "^2.10.5",
     "exif": "^0.6.0",
+    "fabric": "^7.1.0",
     "lodash": "^4.17.21",
     "normalize.css": "^8.0.1",
     "p-limit": "^6.2.0",

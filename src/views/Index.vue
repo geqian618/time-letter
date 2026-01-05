@@ -79,12 +79,9 @@
         </div>
 
         <div class="preview-container" id="preview-container" ref="previewContainer">
-          <template v-for="([key, canvas]) in CanvasManager.getCanvases()" :key="canvas.path">
-            <div class="canvas" :path="canvas.path" v-show="canvas.visible" @contextmenu="triggerContextMenu">
-              <div class="image-background"></div>
-              <img :src="canvas.url" :id="canvas.path">
-            </div>
-          </template>
+          <div class="canvas-wrapper" ref="canvasWrapper">
+            <canvas id="canvas" ref="canvasElement"></canvas>
+          </div>
         </div>
 
         <div class="page-right">
@@ -1164,6 +1161,10 @@
 
 import {nextTick, onBeforeUnmount, onMounted, ref, watch, computed} from "vue";
 
+import FixedImage from "../component/FixedImage";
+
+import {Canvas as FabricCanvas, IText, Image} from 'fabric'
+
 import {useThrottle} from '@/utils/throttle'
 
 import FontLoader from '@/utils/FontLoader'
@@ -1213,6 +1214,8 @@ const scaleOptions = {
   scaleStep: 0.05
 }
 
+let fabricCanvas = null;
+
 let clickTimeout = null;
 
 let scrollTimeout = null;
@@ -1248,6 +1251,10 @@ const sliderRange = ref({
 })
 
 const previewContainer = ref(null)
+
+const canvasWrapper = ref(null)
+
+const canvasElement = ref(null)
 
 const previewList = ref(null);
 
@@ -2347,6 +2354,7 @@ const loadTextLabels = () => {
 }
 
 async function switchPreviewImage(event, canvas) {
+
   if (!event.ctrlKey && !event.shiftKey) {
     if (!selectedPreviewList.value.has(canvas.path)) {
       // 清空选中元素
@@ -2361,10 +2369,7 @@ async function switchPreviewImage(event, canvas) {
 
     // 前一次预览元素与当前预览元素不同，隐藏前一次预览元素
     if (beforePath && beforePath !== canvas.path) {
-      const beforePath = CanvasManager.getSelectedPath();
-      const beforeCanvas = CanvasManager.getCanvas(beforePath);
-      beforeCanvas.hide()
-      await nextTick()
+      fabricCanvas.clear()
     }
 
     // 没有预览元素或前一次预览元素与当前预览元素不同时显示，多次点击预览同一元素不重复渲染
@@ -2375,9 +2380,31 @@ async function switchPreviewImage(event, canvas) {
       selectedPreviewList.value.set(canvas.path, event.target)
       // 设置选择样式
       event.target.classList.add('active')
-      canvas.show();
-      await nextTick()
-      await renderCanvas(canvas)
+
+      if (!canvas.data) {
+        const image = await FixedImage.fromURL(canvas.url, {crossOrigin: 'anonymous'});
+        const width = image.width;
+        const height = image.height;
+        const {clientWidth, clientHeight} = previewContainer.value;
+        const scale = Math.min(clientHeight / height, clientWidth / width) * projectSettings.value.others.defaultCanvasScale;
+        // 设置画布宽高等于缩放后的图片尺寸
+        fabricCanvas.setDimensions({
+          width: width,
+          height: height
+        });
+        // 将图片添加到画布并居中
+        fabricCanvas.centerObject(image);
+        fabricCanvas.add(image);
+        const center = fabricCanvas.getCenterPoint();
+        fabricCanvas.zoomToPoint(center, scale)
+
+        fabricCanvas.renderAll()
+      } else {
+        const {json, width, height} = canvas.data;
+        fabricCanvas.setDimensions({width, height});
+        await fabricCanvas.loadFromJSON(json)
+        fabricCanvas.renderAll()
+      }
     }
   }
 }
@@ -2395,11 +2422,48 @@ const initCanvasSize = () => {
     const windowHeight = window.innerHeight;
 
     // 设置CSS自定义属性
-    previewContainer.value.style.setProperty('--canvas-width', `${windowWidth * 1.5}px`);
-    previewContainer.value.style.setProperty('--canvas-height', `${windowHeight * 1.5}px`);
-    previewContainer.value.idealWidth = Number.parseFloat(previewContainer.value.offsetWidth)
-    previewContainer.value.idealHeight = Number.parseFloat(previewContainer.value.offsetHeight)
+    canvasWrapper.value.style.setProperty('--canvas-width', `${windowWidth * 1.5}px`);
+    canvasWrapper.value.style.setProperty('--canvas-height', `${windowHeight * 1.5}px`);
+    canvasWrapper.value.idealWidth = Number.parseFloat(previewContainer.value.offsetWidth)
+    canvasWrapper.value.idealHeight = Number.parseFloat(previewContainer.value.offsetHeight)
     renderCanvasScrollbar()
+
+    const canvas = document.querySelector('#canvas');
+
+    fabricCanvas = new FabricCanvas(canvas);
+
+    fabricCanvas.on('object:added', (event) => {
+      const currentCanvas = CanvasManager.getCurrentCanvas();
+      currentCanvas.data = {
+        json: fabricCanvas.toJSON(),
+        width: fabricCanvas.width,
+        height: fabricCanvas.height
+      }
+      console.log('添加元素', currentCanvas.data)
+    })
+
+    fabricCanvas.on('object:modified', (event) => {
+      const currentCanvas = CanvasManager.getCurrentCanvas();
+      currentCanvas.data = {
+        json: fabricCanvas.toJSON(),
+        width: fabricCanvas.width,
+        height: fabricCanvas.height
+      }
+      console.log('修改元素', currentCanvas.data)
+    })
+
+
+    fabricCanvas.on('mouse:wheel', function (opt) {
+      var delta = opt.e.deltaY;
+      var zoom = fabricCanvas.getZoom();
+      zoom *= 0.999 ** delta;
+      if (zoom > 20) zoom = 20;
+      if (zoom < 0.01) zoom = 0.01;
+      fabricCanvas.zoomToPoint(fabricCanvas.getCenterPoint(), zoom);
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
+    });
+
   }, 1000)
 }
 
@@ -2467,11 +2531,7 @@ function setScale(canvas, scale) {
 
   if (!canvas || !scale) return
 
-  const imageElement = canvas.getImageElement();
-
-  const canvasElement = imageElement.parentNode;
-
-  const computedStyle = window.getComputedStyle(canvasElement);
+  const computedStyle = window.getComputedStyle(canvasWrapper.value);
 
   const canvasWidth = Number.parseFloat(computedStyle.width);
 
@@ -2486,9 +2546,9 @@ function setScale(canvas, scale) {
   const canvasScale = Math.min(Math.max(minScale, scale), maxScale);
 
   // 应用缩放变换
-  canvasElement.style.transform = `scale(${canvasScale})`;
+  canvasWrapper.value.style.transform = `scale(${canvasScale})`;
   // 设置变换原点为中心点
-  canvasElement.style.transformOrigin = `${centerX}px ${centerY}px`;
+  canvasWrapper.value.style.transformOrigin = `${centerX}px ${centerY}px`;
 
   canvas.scale = canvasScale
 
@@ -2533,17 +2593,14 @@ const handleScrollBarMoveToCenter = () => {
 // 初始化时自动滚动到图形内容区域
 function scrollBarMoveToCenter(canvas) {
   if (!canvas) return
-  const imageElement = canvas.getImageElement();
-  const canvasElement = imageElement.parentNode;
-  const previewContainer = canvasElement.parentNode;
-  const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement
-  const {offsetWidth: previewContainerWidth, offsetHeight: previewContainerHeight} = previewContainer
+  const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasWrapper.value
+  const {offsetWidth: previewContainerWidth, offsetHeight: previewContainerHeight} = previewContainer.value
   // 计算滚动位置，使图形内容居中
   const scrollLeft = (canvasWidth - previewContainerWidth) / 2;
   const scrollTop = (canvasHeight - previewContainerHeight) / 2;
   // 设置滚动位置
-  previewContainer.scrollLeft = Math.max(0, scrollLeft);
-  previewContainer.scrollTop = Math.max(0, scrollTop);
+  previewContainer.value.scrollLeft = Math.max(0, scrollLeft);
+  previewContainer.value.scrollTop = Math.max(0, scrollTop);
   canvas.scrollLeft = Math.max(0, scrollLeft);
   canvas.scrollTop = Math.max(0, scrollTop);
 }
@@ -3493,114 +3550,17 @@ const handleDropElement = async function (event) {
 
   if (!dragElement) return;
 
-  const canvas = CanvasManager.getCurrentCanvas();
+  const canvasRect = canvasElement.value.getBoundingClientRect();
 
-  const imageElement = canvas.getImageElement();
+  const left = event.clientX - canvasRect.left;
 
-  const canvasElement = imageElement.parentNode;
+  const top = event.clientY - canvasRect.top;
 
-  const backgroundElement = canvasElement.querySelector('.image-background');
+  dragElement.set({left, top})
 
-  const canvasRect = canvasElement.getBoundingClientRect();
+  fabricCanvas.add(dragElement)
 
-  const mouseX = event.clientX;
-
-  const mouseY = event.clientY;
-
-  dragElement.style.width = Number.parseFloat(dragElement.style.width) / canvas.scale + 'px';
-  dragElement.style.height = Number.parseFloat(dragElement.style.height) / canvas.scale + 'px';
-
-  // 关键：将元素添加到容器
-  canvasElement.appendChild(dragElement);
-
-  const computedStyle = window.getComputedStyle(dragElement);
-  let elementWidth = Number.parseFloat(computedStyle.width)
-  let elementHeight = Number.parseFloat(computedStyle.height)
-
-  const elementLeft = (mouseX - canvasRect.left - offsetX) / canvas.scale;
-  const elementTop = (mouseY - canvasRect.top - offsetY) / canvas.scale;
-  const elementRight = canvasElement.offsetWidth - elementLeft - elementWidth;
-  const elementBottom = canvasElement.offsetHeight - elementTop - elementHeight
-
-  // 设置元素定位
-  dragElement.style.left = `${elementLeft}px`;
-  dragElement.style.right = `${elementRight}px`;
-  dragElement.style.top = `${elementTop}px`;
-  dragElement.style.bottom = `${elementBottom}px`;
-
-  const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
-  const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
-  const backgroundLeft = Number.parseFloat(backgroundElement.style.left);
-  const backgroundRight = Number.parseFloat(backgroundElement.style.right);
-  const backgroundTop = Number.parseFloat(backgroundElement.style.top);
-  const backgroundBottom = Number.parseFloat(backgroundElement.style.bottom);
-
-  let references = []
-  let centerX, centerY, centerXRatio, centerYRatio
-
-  let offsetLeft = elementLeft - backgroundLeft
-  let offsetLeftRatio = offsetLeft / backgroundWidth
-
-  let offsetRight = elementRight - backgroundRight
-  let offsetRightRatio = offsetRight / backgroundWidth
-
-  let offsetTop = elementTop - backgroundTop
-  let offsetTopRatio = offsetTop / backgroundHeight
-
-  let offsetBottom = elementBottom - backgroundBottom
-  let offsetBottomRatio = offsetBottom / backgroundHeight
-
-  if (offsetLeft > offsetRight) {
-    references.push('right')
-    centerX = offsetRight + elementWidth / 2
-  } else {
-    references.push('left')
-    centerX = offsetLeft + elementWidth / 2
-  }
-
-  if (offsetTop > offsetBottom) {
-    references.push('bottom')
-    centerY = offsetBottom + elementHeight / 2
-  } else {
-    references.push('top')
-    centerY = offsetTop + elementHeight / 2
-  }
-
-  centerXRatio = centerX / backgroundWidth;
-  centerYRatio = centerY / backgroundHeight;
-
-  const settings = elementSettings
-
-  settings.references = references
-  settings.offsetLeft = offsetLeft
-  settings.offsetLeftRatio = offsetLeftRatio
-  settings.offsetRight = offsetRight
-  settings.offsetRightRatio = offsetRightRatio
-  settings.offsetTop = offsetTop
-  settings.offsetTopRatio = offsetTopRatio
-  settings.offsetBottom = offsetBottom
-  settings.offsetBottomRatio = offsetBottomRatio
-  settings.centerX = centerX
-  settings.centerY = centerY
-  settings.centerXRatio = centerXRatio
-  settings.centerYRatio = centerYRatio
-  settings.tagName = dragElement.tagName.toLowerCase()
-  settings.width = elementWidth
-  settings.height = elementHeight
-
-  if (dragElement instanceof HTMLImageElement) {
-    settings.originalWidth = elementWidth
-    settings.originalHeight = elementHeight
-    settings.options.imageHeightRatio = elementHeight / backgroundHeight
-    settings.options.imageWidthRatio = elementWidth / backgroundWidth
-  } else {
-    const fontSize = Number.parseInt(computedStyle.fontSize);
-    settings.options.fontSizeRatio = fontSize / backgroundWidth
-  }
-
-  const elementMapping = (dragElement instanceof HTMLDivElement) ? canvas.settings.texts : canvas.settings.images;
-
-  elementMapping.set(dragElement, settings)
+  fabricCanvas.renderAll()
 }
 
 
@@ -3625,6 +3585,32 @@ const handleDropFiles = (event) => {
   }
 
 }
+
+
+const exportCanvas = (canvas, filename = 'canvas-image.jpg') => {
+
+  // 1. 保存当前的视口变换状态
+  const originalViewportTransform = canvas.viewportTransform.slice();
+
+  // 2. 重置视口（缩放为1，无平移）
+  canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+
+  const dataURL = canvas.toDataURL({
+    multiplier: 1,
+    format: 'jpeg',
+    quality: 1.0
+  });
+
+  const link = document.createElement('a');
+  link.href = dataURL;
+  link.download = filename;
+  link.click();
+  // 4. 恢复原始视口状态
+  canvas.setViewportTransform(originalViewportTransform);
+  // 重绘画布
+  canvas.requestRenderAll();
+}
+
 
 const handleDragover = (event) => {
   // 允许放置
@@ -3712,17 +3698,13 @@ const triggerDragCanvas = (event) => {
 }
 
 
-const handleCanvasMouseDown = (event) => {
-  isCanvasDraggingMode ? handleDragMoveCanvas(event) : handleDragMoveElement(event)
-}
-
-
 const bindEventListener = () => {
 
   document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
     element.addEventListener('dragstart', handleDragStart);
   });
   previewContainer.value.addEventListener('drop', handleDropElement);
+
   previewContainer.value.addEventListener('drop', handleDropFiles);
   previewContainer.value.addEventListener('dragover', handleDragover);
   previewContainer.value.addEventListener('dragleave', handleDragleave);
@@ -3730,13 +3712,8 @@ const bindEventListener = () => {
   previewContainer.value.addEventListener('scroll', handleMoveScrollbar);
   previewList.value.addEventListener('keydown', handleSelectAllPreviewElements);
 
-  previewContainer.value.addEventListener('mousedown', handleCanvasMouseDown);
-  previewContainer.value.addEventListener('keydown', handleKeyDownMoveElement);
-  previewContainer.value.addEventListener('keyup', handleKeyUpStopMoveElement);
-  previewContainer.value.addEventListener('keydown', handleRemoveElement);
-  previewContainer.value.addEventListener('click', handleCancelSelectedElement);
-  previewContainer.value.addEventListener('dblclick', handleEditorElement);
-  previewContainer.value.addEventListener('wheel', handleCanvasResize, {passive: false});
+  previewContainer.value.addEventListener('mousedown', handleDragMoveCanvas);
+  // previewContainer.value.addEventListener('wheel', handleCanvasResize, {passive: false});
 
   // 键盘事件设置模式
   document.addEventListener('keydown', triggerDragCanvas);
@@ -3755,13 +3732,8 @@ const unbindEventListener = () => {
   previewContainer.value.removeEventListener('scroll', handleMoveScrollbar);
   previewList.value.removeEventListener('keydown', handleSelectAllPreviewElements);
 
-  previewContainer.value.removeEventListener('mousedown', handleCanvasMouseDown);
-  previewContainer.value.removeEventListener('keydown', handleKeyDownMoveElement);
-  previewContainer.value.removeEventListener('keyup', handleKeyUpStopMoveElement);
-  previewContainer.value.removeEventListener('keydown', handleRemoveElement);
-  previewContainer.value.removeEventListener('click', handleCancelSelectedElement);
-  previewContainer.value.removeEventListener('dblclick', handleEditorElement);
-  previewContainer.value.removeEventListener('wheel', handleCanvasResize, {passive: false});
+  previewContainer.value.removeEventListener('mousedown', handleDragMoveCanvas);
+  // previewContainer.value.removeEventListener('wheel', handleCanvasResize, {passive: false});
 
   // 键盘事件设置模式
   document.removeEventListener('keydown', triggerDragCanvas);
@@ -3973,37 +3945,16 @@ onBeforeUnmount(() => {
       background: var(--preview-background-color);
       width: var(--preview-container-width);
       height: 100%;
-      box-sizing: border-box;
-      overflow: auto;
-      --canvas-width: 100vw;
-      --canvas-height: 100vh;
 
-      .canvas {
+      .canvas-wrapper {
         width: var(--canvas-width);
         height: var(--canvas-height);
-        position: relative;
-        will-change: transform;
-        transition: none;
+        display: flex;
+        justify-content: center;
+        align-items: center;
 
-        .image-background {
-          overflow: hidden;
-          position: absolute;
-        }
+        #canvas {
 
-        .image-background[blur-border]::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          backdrop-filter: blur(var(--blur-intensity));
-          border-radius: inherit;
-        }
-
-        img {
-          position: absolute;
-          display: block;
         }
       }
     }
