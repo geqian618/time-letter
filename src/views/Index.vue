@@ -688,7 +688,7 @@
           </div>
 
           <div class="tab-wrapper">
-            <el-button size="small" @click="exportCanvas(fabricCanvas)">导出</el-button>
+            <el-button size="small" @click="exportCanvas(canvasEditor)">导出</el-button>
           </div>
 
           <div class="filter">
@@ -1219,7 +1219,7 @@ const scaleOptions = {
   scaleStep: 0.01
 }
 
-let fabricCanvas = null;
+let canvasEditor = null;
 
 let clickTimeout = null;
 
@@ -2324,8 +2324,8 @@ async function switchPreviewImage(event, canvas) {
 
     // 前一次预览元素与当前预览元素不同，隐藏前一次预览元素
     if (beforePath && beforePath !== canvas.path) {
-      fabricCanvas.clearCanvas()
-      fabricCanvas.setCenterZoom(1)
+      canvasEditor.clearCanvas()
+      canvasEditor.setCenterZoom(1)
     }
 
     // 没有预览元素或前一次预览元素与当前预览元素不同时显示，多次点击预览同一元素不重复渲染
@@ -2343,27 +2343,27 @@ async function switchPreviewImage(event, canvas) {
         const height = image.height;
         image.path = canvas.path
         // 设置画布宽高等于缩放后的图片尺寸
-        fabricCanvas.resizeCanvas(width, height);
+        canvasEditor.resizeCanvas(width, height);
         const {clientWidth, clientHeight} = previewContainer.value;
         const scale = Math.min(clientHeight / height, clientWidth / width) * projectSettings.value.others.defaultCanvasScale;
-        fabricCanvas.setCenterZoom(scale)
-        fabricCanvas.addElement(image);
-        fabricCanvas.renderAll()
+        canvasEditor.setCenterZoom(scale)
+        canvasEditor.addElement(image);
+        canvasEditor.renderAll()
         scrollBarMoveToCenter(canvas)
 
         canvas.data = {
-          zoom: fabricCanvas.getZoom(),
-          json: fabricCanvas.exportToJSON(),
-          width: fabricCanvas.getCanvasWidth(),
-          height: fabricCanvas.getCanvasHeight(),
+          zoom: canvasEditor.getZoom(),
+          json: canvasEditor.exportToJSON(),
+          width: canvasEditor.getCanvasWidth(),
+          height: canvasEditor.getCanvasHeight(),
         }
       } else {
         const {json, width, height, zoom} = canvas.data;
-        fabricCanvas.resizeCanvas(width, height);
+        canvasEditor.resizeCanvas(width, height);
         // 设置缩放
-        fabricCanvas.setCenterZoom(zoom);
-        await fabricCanvas.loadFromJSON(json)
-        fabricCanvas.renderAll()
+        canvasEditor.setCenterZoom(zoom);
+        await canvasEditor.loadFromJSON(json)
+        canvasEditor.renderAll()
         setScrollBarPosition(canvas)
       }
     }
@@ -2386,7 +2386,7 @@ const initCanvasSize = () => {
 
     const canvas = document.querySelector('#canvas');
 
-    fabricCanvas = new CanvasEditor(canvas);
+    canvasEditor = new CanvasEditor(canvas);
 
   }, 1000)
 }
@@ -3473,23 +3473,23 @@ const handleDropElement = async function (event) {
 
   if (!dragElement) return;
 
-  const {x, y, scaleY, scaleX} = fabricCanvas.getCanvasInternalPosition(event);
+  const {x, y, scaleY, scaleX} = canvasEditor.getCanvasInternalPosition(event);
 
   dragElement.x = x - offsetX * scaleX
 
   dragElement.y = y - offsetY * scaleY
 
-  fabricCanvas.addElement(dragElement)
+  canvasEditor.addElement(dragElement)
 
-  fabricCanvas.renderAll()
+  canvasEditor.renderAll()
 
   const currentCanvas = CanvasManager.getCurrentCanvas();
 
   currentCanvas.data = {
-    zoom: fabricCanvas.getZoom(),
-    json: fabricCanvas.exportToJSON(),
-    width: fabricCanvas.getCanvasWidth(),
-    height: fabricCanvas.getCanvasHeight(),
+    zoom: canvasEditor.getZoom(),
+    json: canvasEditor.exportToJSON(),
+    width: canvasEditor.getCanvasWidth(),
+    height: canvasEditor.getCanvasHeight(),
   }
 }
 
