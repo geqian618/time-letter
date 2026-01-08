@@ -13,6 +13,8 @@ class Image extends Element {
         this[IMAGE_SYMBOL] = image
         this.src = image?.src
         this.crossOrigin = options.crossOrigin || 'anonymous'
+        this.width = options.width
+        this.height = options.height
         this.alpha = options.alpha || 1
         this.angle = options.angle || 0
         // 图片阴影 - 需要处理嵌套对象

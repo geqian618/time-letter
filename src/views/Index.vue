@@ -1213,10 +1213,10 @@ const templateSettings = ref({})
 
 const availableCanvas = ref(new Map())
 
-const scaleOptions = {
-  minScale: 0.01,
-  maxScale: 5,
-  scaleStep: 0.01
+const zoomOptions = {
+  minZoom: 0.01,
+  maxZoom: 5,
+  zoomStep: 0.01
 }
 
 let canvasEditor = null;
@@ -1929,11 +1929,11 @@ const stopWatchImageZIndex = watch(() => imageOptions.value.zIndex, (newVal, old
 
 
 const handleCanvasScale = () => {
-  const newScale = projectSettings.value.others.defaultCanvasScale;
+  const zoom = projectSettings.value.others.defaultCanvasScale;
   const canvases = CanvasManager.getCanvases();
   canvases.forEach(canvas => {
     if (canvas.completed) {
-      setScale(canvas, newScale)
+      setZoom(canvas, zoom)
     }
   })
 }
@@ -2443,7 +2443,7 @@ const initializeCanvasLayout = async (canvas) => {
 
   const canvasScale = Math.min(containerRealWidth / containerIdealWidth, containerRealHeight / containerIdealHeight)
 
-  setScale(canvas, canvasScale * defaultCanvasScale)
+  setZoom(canvas, canvasScale * defaultCanvasScale)
 
   setTimeout(() => {
     canvasElement.style.transition = 'transform 0.1s';
@@ -2451,9 +2451,9 @@ const initializeCanvasLayout = async (canvas) => {
 }
 
 // 设置缩放比例
-function setScale(canvas, scale) {
+function setZoom(canvas, zoom) {
 
-  if (!canvas || !scale) return
+  if (!canvas || !zoom) return
 
   const computedStyle = window.getComputedStyle(canvasElement.value);
 
@@ -2461,30 +2461,25 @@ function setScale(canvas, scale) {
 
   const canvasHeight = Number.parseFloat(computedStyle.height);
 
-  const {minScale, maxScale} = scaleOptions;
+  const {minZoom, maxZoom} = zoomOptions;
 
   const centerX = canvasWidth / 2
   const centerY = canvasHeight / 2
 
   // 限制缩放范围
-  const canvasScale = Math.min(Math.max(minScale, scale), maxScale);
+  const newZoom = Math.min(Math.max(minZoom, zoom), maxZoom);
 
   // 应用缩放变换
-  canvasElement.value.style.transform = `scale(${canvasScale})`;
+  canvasElement.value.style.transform = `scale(${newZoom})`;
   // 设置变换原点为中心点
   canvasElement.value.style.transformOrigin = `${centerX}px ${centerY}px`;
 
-  canvas.data.zoom = canvasScale
-
+  canvas.data.zoom = newZoom
 }
 
 // 缩放函数
 function zoom(direction) {
-  const canvas = CanvasManager.getCurrentCanvas();
-  if (!canvas) return
-  const {scaleStep} = scaleOptions;
-  const newScale = direction === 'in' ? canvas.data.zoom + scaleStep : canvas.data.zoom - scaleStep;
-  setScale(canvas, newScale);
+
 }
 
 
@@ -3481,6 +3476,8 @@ const handleDropElement = async function (event) {
 
   canvasEditor.addElement(dragElement)
 
+  console.log(canvasEditor.getElements())
+
   canvasEditor.renderAll()
 
   const currentCanvas = CanvasManager.getCurrentCanvas();
@@ -3528,14 +3525,18 @@ const handleDragleave = (event) => {
 
 // 处理 canvas 缩放
 const handleCanvasResize = (event) => {
-  const target = event.target;
-  if (target.getAttribute('id') !== 'preview-container') {
-    // 阻止默认滚动行为
-    event.preventDefault();
-    // 根据滚轮方向确定缩放方向
-    const direction = event.deltaY < 0 ? 'in' : 'out';
-    zoom(direction);
-  }
+  // 阻止默认滚动行为
+  event.preventDefault();
+  // 根据滚轮方向确定缩放方向
+  const direction = event.deltaY < 0 ? 'in' : 'out';
+  const canvas = CanvasManager.getCurrentCanvas();
+  if (!canvas) return
+  const zoom = canvasEditor.getZoom();
+  const {zoomStep, maxZoom, minZoom} = zoomOptions;
+  let newZoom = direction === 'in' ? zoom + zoomStep : zoom - zoomStep;
+  newZoom = Math.min(Math.max(minZoom, newZoom), maxZoom);
+  canvas.data.zoom = zoom
+  canvasEditor.setCenterZoom(newZoom)
 }
 
 const handleDragMoveCanvas = (event) => {
@@ -3617,7 +3618,7 @@ const bindEventListener = () => {
   previewList.value.addEventListener('keydown', handleSelectAllPreviewElements);
 
   previewContainer.value.addEventListener('mousedown', handleDragMoveCanvas);
-  // previewContainer.value.addEventListener('wheel', handleCanvasResize, {passive: false});
+  previewContainer.value.addEventListener('wheel', handleCanvasResize, {passive: false});
 
   // 键盘事件设置模式
   document.addEventListener('keydown', triggerDragCanvas);
@@ -3637,7 +3638,7 @@ const unbindEventListener = () => {
   previewList.value.removeEventListener('keydown', handleSelectAllPreviewElements);
 
   previewContainer.value.removeEventListener('mousedown', handleDragMoveCanvas);
-  // previewContainer.value.removeEventListener('wheel', handleCanvasResize, {passive: false});
+  previewContainer.value.removeEventListener('wheel', handleCanvasResize, {passive: false});
 
   // 键盘事件设置模式
   document.removeEventListener('keydown', triggerDragCanvas);

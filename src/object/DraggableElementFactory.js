@@ -71,7 +71,7 @@ class DraggableElementFactory {
             // 对于图片元素，检查加载状态
             if (this.settings.tagName === 'img') {
                 const {url, width, height} = this.settings
-                Image.fromURL(url, {width: width / zoom, height: height / zoom,draggable: true})
+                Image.fromURL(url, {width: width / zoom, height: height / zoom, draggable: true})
                     .then(image => {
                         resolve(image);
                     })

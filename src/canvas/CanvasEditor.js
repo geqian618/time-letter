@@ -421,6 +421,7 @@ class CanvasEditor {
         }
     }
 
+
     /**
      * 绘制所有内容
      */
@@ -433,22 +434,56 @@ class CanvasEditor {
         this.drawElements()
     }
 
+
+    /**
+     * 通过中心点设置缩放
+     * @param zoom
+     */
     setCenterZoom(zoom) {
-        this.canvasConfig.zoom = zoom
-        this.canvas.style.transform = `scale(${zoom})`
-        this.canvas.style.transformOrigin = 'center center';
+        if (zoom > 0) {
+            this.canvasConfig.zoom = zoom
+            this.canvas.style.transform = `scale(${zoom})`
+            this.canvas.style.transformOrigin = 'center center';
+        }
     }
 
+    /**
+     * 通过指定点设置缩放
+     * @param zoom
+     * @param pointX
+     * @param pointY
+     */
     setZoom(zoom, pointX, pointY) {
-        this.canvasConfig.zoom = zoom
-        this.canvas.style.transform = `scale(${zoom})`
-        this.canvas.style.transformOrigin = `${pointX}px ${pointY}px`;
+        if (zoom > 0) {
+            this.canvasConfig.zoom = zoom
+            this.canvas.style.transform = `scale(${zoom})`
+            this.canvas.style.transformOrigin = `${pointX}px ${pointY}px`;
+        }
     }
 
+    /**
+     * 获取当前缩放
+     * @returns {number}
+     */
     getZoom() {
         return this.canvasConfig.zoom
     }
 
+
+    /**
+     * 获取 canvas 中心点
+     * @returns {{x: number, y: number}}
+     */
+    getCenterPoint() {
+        return {
+            x: this.canvas.width / 2,
+            y: this.canvas.height / 2
+        }
+    }
+
+    /**
+     * 绘制元素到 canvas 上
+     */
     drawElements() {
         // 绘制所有文本
         for (const element of this.elements) {
@@ -473,6 +508,11 @@ class CanvasEditor {
     }
 
 
+    /**
+     * 绘制光标
+     * @param textObj
+     * @param cursorWidth
+     */
     drawCursor(textObj, cursorWidth) {
         const {x, y, fontColor, fontSize, spacing} = textObj;
         const cursorX = x + this.getSubTextMetrics(textObj, 0, this.cursorIndex).width;
@@ -486,6 +526,10 @@ class CanvasEditor {
     }
 
 
+    /**
+     * 绘制文本编辑状态背景颜色
+     * @param element
+     */
     drawEditBackground(element) {
         const {x, y, fontSize, highlightColor} = element
         const metrics = this.getTextMetrics(element);
@@ -500,6 +544,14 @@ class CanvasEditor {
     }
 
 
+    /**
+     * 绘制选中元素状态
+     * @param x
+     * @param y
+     * @param width
+     * @param height
+     * @param options
+     */
     drawActiveRect(x, y, width, height, options = {}) {
         const {dashPattern = [6, 4], lineWidth = 1, color = 'red', lineCap = 'butt'} = options;
         this.ctx.save();
@@ -514,6 +566,14 @@ class CanvasEditor {
         this.ctx.restore();
     }
 
+    /**
+     * 填充矩形
+     * @param x
+     * @param y
+     * @param width
+     * @param height
+     * @param fillColor
+     */
     drawFillRect(x, y, width, height, fillColor) {
         this.ctx.save();
         // 绘制高亮背景
@@ -539,6 +599,11 @@ class CanvasEditor {
     }
 
 
+    /**
+     * 通过鼠标事件获取触发位置在 canvas 内部的坐标
+     * @param event
+     * @returns {{scaleX: number, scaleY: number, x: number, y: number}}
+     */
     getCanvasInternalPosition(event) {
         const rect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / rect.width;
@@ -550,6 +615,10 @@ class CanvasEditor {
     }
 
 
+    /**
+     * 处理 canvas 内鼠标相关事件
+     * @param event
+     */
     handleMouseDown(event) {
         const startTime = Date.now();
         const {x: startX, y: startY} = this.getCanvasInternalPosition(event);
@@ -685,6 +754,11 @@ class CanvasEditor {
     }
 
 
+    /**
+     * 取消元素选择状态
+     *
+     * @param event
+     */
     handleCancelActive(event) {
         const {x, y} = this.getCanvasInternalPosition(event);
         const textObj = this.getTextAtPosition(x, y);
@@ -782,12 +856,15 @@ class CanvasEditor {
         this.renderAll();
     }
 
-    getCanvasWidth() {
-        return this.canvasConfig.width
-    }
-
-    getCanvasHeight() {
-        return this.canvasConfig.height
+    /**
+     * 获取 canvas 尺寸
+     * @returns {*}
+     */
+    getCanvasSize() {
+        return {
+            width: this.canvas.width,
+            height: this.canvas.height
+        }
     }
 
     /**
@@ -823,7 +900,7 @@ class CanvasEditor {
 
 
     /**
-     * 导出图片
+     * 导出 JPEG 图片
      * @param filename
      * @param quality
      */
@@ -833,19 +910,33 @@ class CanvasEditor {
     }
 
 
+    /**
+     * 导出 PNG 图片
+     * @param filename
+     */
     exportPNG(filename) {
         const dataURL = this.canvas.toDataURL('image/png');
         this.#downloadFile(filename, dataURL)
     }
 
 
+    /**
+     * 导出 WEBP 图片
+     * @param filename
+     * @param quality
+     */
     exportWEBP(filename, quality = 0.95) {
         const dataURL = this.canvas.toDataURL('image/webp', quality);
         this.#downloadFile(filename, dataURL)
     }
 
 
-    #downloadFile(filename, dataURL) {
+    /**
+     * 下载文件
+     * @param filename
+     * @param dataURL
+     */
+    #downloadFile(dataURL, filename) {
         const link = document.createElement('a');
         link.download = filename;
         link.href = dataURL;
