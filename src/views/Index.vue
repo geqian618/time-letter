@@ -688,7 +688,7 @@
           </div>
 
           <div class="tab-wrapper">
-            <el-button size="small" @click="exportCanvas(canvasEditor)">导出</el-button>
+            <el-button size="small" @click="canvasEditor.exportPNG('img.png')">导出</el-button>
           </div>
 
           <div class="filter">
@@ -3516,31 +3516,6 @@ const handleDropFiles = (event) => {
 }
 
 
-const exportCanvas = (canvas, filename = 'canvas-image.jpg') => {
-
-  // 1. 保存当前的视口变换状态
-  const originalViewportTransform = canvas.viewportTransform.slice();
-
-  // 2. 重置视口（缩放为1，无平移）
-  canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-
-  const dataURL = canvas.toDataURL({
-    multiplier: 1,
-    format: 'jpeg',
-    quality: 1.0
-  });
-
-  const link = document.createElement('a');
-  link.href = dataURL;
-  link.download = filename;
-  link.click();
-  // 4. 恢复原始视口状态
-  canvas.setViewportTransform(originalViewportTransform);
-  // 重绘画布
-  canvas.requestRenderAll();
-}
-
-
 const handleDragover = (event) => {
   // 允许放置
   event.preventDefault();
@@ -4083,6 +4058,8 @@ onBeforeUnmount(() => {
       justify-content: left;
       align-items: center;
       border-bottom: 1px solid var(--border-color);
+      gap: 15px;
+      padding-left: 15px;
 
       .filter {
         margin-left: auto;
@@ -4112,7 +4089,6 @@ onBeforeUnmount(() => {
         img {
           height: 100%;
           width: auto;
-          margin-left: 15px;
           transition: opacity 0.4s ease;
         }
 

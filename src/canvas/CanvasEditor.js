@@ -822,6 +822,38 @@ class CanvasEditor {
     }
 
 
+    /**
+     * 导出图片
+     * @param filename
+     * @param quality
+     */
+    exportJPEG(filename, quality = 0.95) {
+        const dataURL = this.canvas.toDataURL('image/jpeg', quality);
+        this.#downloadFile(filename, dataURL)
+    }
+
+
+    exportPNG(filename) {
+        const dataURL = this.canvas.toDataURL('image/png');
+        this.#downloadFile(filename, dataURL)
+    }
+
+
+    exportWEBP(filename, quality = 0.95) {
+        const dataURL = this.canvas.toDataURL('image/webp', quality);
+        this.#downloadFile(filename, dataURL)
+    }
+
+
+    #downloadFile(filename, dataURL) {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = dataURL;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
 }
 
 

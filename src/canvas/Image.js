@@ -4,17 +4,17 @@ const IMAGE_SYMBOL = Symbol('image');
 
 class Image extends Element {
 
-    constructor(src, options = {}) {
+    constructor(image, options = {}) {
+        if (!image) {
+            throw new Error('Failed to load image, image is null');
+        }
         super(options);
-        this[IMAGE_SYMBOL] = null
         this.type = 'image'
-        this.src = src || ''
-        this.width = options.width || 0
-        this.height = options.height || 0
+        this[IMAGE_SYMBOL] = image
+        this.src = image?.src
+        this.crossOrigin = options.crossOrigin || 'anonymous'
         this.alpha = options.alpha || 1
         this.angle = options.angle || 0
-        this.crossOrigin = 'anonymous'
-
         // 图片阴影 - 需要处理嵌套对象
         this.shadow = {
             color: 'rgba(0,0,0,1)',
@@ -23,46 +23,39 @@ class Image extends Element {
             offsetY: 0,
             ...options.shadow
         };
+        const {naturalWidth, naturalHeight} = image;
+        const {width, height} = options;
+        // 如果没有设置宽高，使用图片原始尺寸
+        if (!width && !height) {
+            this.width = naturalWidth;
+            this.height = naturalHeight;
+        }
+        // 如果只设置了宽度，按比例计算高度
+        else if (width && !height) {
+            this.height = width * naturalHeight / naturalWidth;
+        }
+        // 如果只设置了高度，按比例计算宽度
+        else if (height && !width) {
+            this.width = height * naturalWidth / naturalHeight;
+        }
     }
 
 
-    static fromURL(src, options) {
+    static fromURL(src, options = {}) {
         return new Promise((resolve, reject) => {
-            const instance = new Image(src, options);
-            if (!instance.src) {
-                reject(`Failed to load image: ${instance.src}`);
+            if (!src) {
+                reject(`Failed to load image: src is null`);
             }
             const image = new window.Image();
-            image.crossOrigin = instance.crossOrigin;
             image.onload = () => {
-                const {naturalWidth, naturalHeight} = image;
-                // 如果 instance 没有设置宽高，使用图片原始尺寸
-                if (!instance.width && !instance.height) {
-                    instance.width = naturalWidth;
-                    instance.height = naturalHeight;
-                }
-                // 如果 instance 设置了宽高，直接使用
-                else if (instance.width && instance.height) {
-                    image.width = instance.width;
-                    image.height = instance.height;
-                }
-                // 如果只设置了宽度，按比例计算高度
-                else if (instance.width && !instance.height) {
-                    image.width = instance.width;
-                    image.height = instance.height = instance.width * naturalHeight / naturalWidth;
-                }
-                // 如果只设置了高度，按比例计算宽度
-                else if (instance.height && !instance.width) {
-                    image.height = instance.height;
-                    image.width = instance.width = instance.height * naturalWidth / naturalHeight;
-                }
-                instance[IMAGE_SYMBOL] = image
+                const instance = new Image(image, options);
                 resolve(instance);
             };
             image.onerror = () => {
-                reject(`Failed to load image: ${instance.src}`);
+                reject(`Failed to load image: ${src}`);
             };
-            image.src = instance.src;
+            image.src = src;
+            image.crossOrigin = options.crossOrigin;
         })
     }
 
