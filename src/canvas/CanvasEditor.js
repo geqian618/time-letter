@@ -662,7 +662,7 @@ class CanvasEditor {
             document.removeEventListener('mouseup', handleMouseup)
         }
         this.canvas.addEventListener('mousemove', handleMousemove)
-        this.canvas.addEventListener('mouseup', handleMouseup)
+        document.addEventListener('mouseup', handleMouseup)
     }
 
     handleActiveElement(element) {

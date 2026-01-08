@@ -2354,8 +2354,7 @@ async function switchPreviewImage(event, canvas) {
         canvas.data = {
           zoom: canvasEditor.getZoom(),
           json: canvasEditor.exportToJSON(),
-          width: canvasEditor.getCanvasWidth(),
-          height: canvasEditor.getCanvasHeight(),
+          ...canvasEditor.getCanvasSize()
         }
       } else {
         const {json, width, height, zoom} = canvas.data;
@@ -3485,8 +3484,7 @@ const handleDropElement = async function (event) {
   currentCanvas.data = {
     zoom: canvasEditor.getZoom(),
     json: canvasEditor.exportToJSON(),
-    width: canvasEditor.getCanvasWidth(),
-    height: canvasEditor.getCanvasHeight(),
+    ...canvasEditor.getCanvasSize()
   }
 }
 
@@ -3535,7 +3533,7 @@ const handleCanvasResize = (event) => {
   const {zoomStep, maxZoom, minZoom} = zoomOptions;
   let newZoom = direction === 'in' ? zoom + zoomStep : zoom - zoomStep;
   newZoom = Math.min(Math.max(minZoom, newZoom), maxZoom);
-  canvas.data.zoom = zoom
+  canvas.data.zoom = newZoom
   canvasEditor.setCenterZoom(newZoom)
 }
 
@@ -4351,6 +4349,4 @@ onBeforeUnmount(() => {
     }
   }
 }
-
-
 </style>
