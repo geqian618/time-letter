@@ -70,26 +70,18 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
         if (Atomics.load(interrupt, 0) === 1 || queue.length === 0) {
             return;
         }
-
         const setting = queue.shift();
-        const {imagePath, index, settings: {border, photograph, texts, images}} = setting;
-
         try {
             const params = {
                 projectSettings,
                 outputDirectory,
-                imagePath,
-                index,
-                border,
-                photograph,
-                texts,
-                images,
+                setting
             };
             await threadPool.run(params);
         } catch (err) {
             errors++;
             dialog.showErrorBox('文件读取异常', err.message)
-            console.error(`处理图片 ${imagePath} 失败:`, err);
+            console.error(`处理图片 ${setting.path} 失败:`, err);
         } finally {
             completed++;
             updateProgress();

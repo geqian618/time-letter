@@ -78,10 +78,8 @@
           </el-aside>
         </div>
 
-        <div class="preview-container" id="preview-container" ref="previewContainer">
-          <div class="canvas-wrapper" ref="canvasWrapper">
-            <canvas id="canvas" ref="canvasElement"></canvas>
-          </div>
+        <div class="preview-container" id="preview-container" ref="previewContainer" @mousedown="triggerContextMenu">
+          <canvas id="canvas" ref="canvasElement"></canvas>
         </div>
 
         <div class="page-right">
@@ -689,6 +687,10 @@
             </el-tooltip>
           </div>
 
+          <div class="tab-wrapper">
+            <el-button size="small" @click="exportCanvas(fabricCanvas)">导出</el-button>
+          </div>
+
           <div class="filter">
             <div class="filter-label">筛选：</div>
             <div class="filter-select">
@@ -1163,7 +1165,10 @@ import {nextTick, onBeforeUnmount, onMounted, ref, watch, computed} from "vue";
 
 import FixedImage from "../component/FixedImage";
 
-import {Canvas as FabricCanvas, IText, Image} from 'fabric'
+import CanvasEditor from '../canvas/CanvasEditor'
+import Text from '../canvas/Text'
+import EditableText from '../canvas/EditableText'
+import Image from '../canvas/Image'
 
 import {useThrottle} from '@/utils/throttle'
 
@@ -1209,9 +1214,9 @@ const templateSettings = ref({})
 const availableCanvas = ref(new Map())
 
 const scaleOptions = {
-  minScale: 0.5,
+  minScale: 0.01,
   maxScale: 5,
-  scaleStep: 0.05
+  scaleStep: 0.01
 }
 
 let fabricCanvas = null;
@@ -1251,8 +1256,6 @@ const sliderRange = ref({
 })
 
 const previewContainer = ref(null)
-
-const canvasWrapper = ref(null)
 
 const canvasElement = ref(null)
 
@@ -1481,9 +1484,11 @@ const createThreadPool = () => {
   window.electronAPI.createThreadPool(maxThreads)
 }
 
-const triggerContextMenu = () => {
-  if (CanvasManager.isNotEmpty()) {
-    window.electronAPI.openContextMenu()
+const triggerContextMenu = (e) => {
+  if (e.button === 2) {
+    if (CanvasManager.isNotEmpty()) {
+      window.electronAPI.openContextMenu()
+    }
   }
 }
 
@@ -1633,67 +1638,17 @@ const watchContextMenu = () => {
         selectedPreviewList.value.clear();
       } else if (type === 1) {
 
-        const newSettings = []
-
         const paths = Array.from(selectedPreviewList.value.keys());
 
-        const selectedCanvas = CanvasManager.getCanvas(CanvasManager.getSelectedPath());
-
-        if (selectedCanvas) {
-          selectedCanvas.hide();
-          await nextTick()
-        }
-
-        let currentCanvas = null;
-
-        for (let i = 0; i < paths.length; i++) {
-          try {
-
-            currentCanvas = CanvasManager.getCanvas(paths[i]);
-
-            if (!currentCanvas.completed || currentCanvas.isUpdate) {
-
-              currentCanvas.show()
-              await nextTick()
-
-              if (!currentCanvas.completed) {
-                await initializeCanvasLayout(currentCanvas)
-              }
-
-              if (currentCanvas.isUpdate) {
-                await refreshTemplate(currentCanvas.path)
-              }
-
-            }
-
-            const {settings: {border, photograph, texts, images}, metadata} = currentCanvas;
-
-            newSettings.push({
-              imagePath: paths[i],
-              index: i + 1,
-              settings: {
-                border,
-                photograph,
-                images: [...images.values()],
-                texts: [...texts.values()],
-              }
-            })
-
-
-          } finally {
-            currentCanvas.hide()
-            await nextTick();
-          }
-        }
-
-        selectedCanvas.show()
-
-        await nextTick()
+        const settings = paths.map((path, index) => {
+          const canvas = CanvasManager.getCanvas(path);
+          return {filePath: path, index, json: canvas?.data?.json}
+        });
 
         window.electronAPI.requestExportFiles(_.cloneDeep({
           projectSettings: projectSettings.value,
           outputDirectory: data.outputDirectory,
-          settings: newSettings
+          settings
         }))
 
         downloadProgressVisible.value = true
@@ -2369,7 +2324,8 @@ async function switchPreviewImage(event, canvas) {
 
     // 前一次预览元素与当前预览元素不同，隐藏前一次预览元素
     if (beforePath && beforePath !== canvas.path) {
-      fabricCanvas.clear()
+      fabricCanvas.clearCanvas()
+      fabricCanvas.setCenterZoom(1)
     }
 
     // 没有预览元素或前一次预览元素与当前预览元素不同时显示，多次点击预览同一元素不重复渲染
@@ -2382,28 +2338,33 @@ async function switchPreviewImage(event, canvas) {
       event.target.classList.add('active')
 
       if (!canvas.data) {
-        const image = await FixedImage.fromURL(canvas.url, {crossOrigin: 'anonymous'});
+        const image = await Image.fromURL(canvas.url, {selectable: false});
         const width = image.width;
         const height = image.height;
+        image.path = canvas.path
+        // 设置画布宽高等于缩放后的图片尺寸
+        fabricCanvas.resizeCanvas(width, height);
         const {clientWidth, clientHeight} = previewContainer.value;
         const scale = Math.min(clientHeight / height, clientWidth / width) * projectSettings.value.others.defaultCanvasScale;
-        // 设置画布宽高等于缩放后的图片尺寸
-        fabricCanvas.setDimensions({
-          width: width,
-          height: height
-        });
-        // 将图片添加到画布并居中
-        fabricCanvas.centerObject(image);
-        fabricCanvas.add(image);
-        const center = fabricCanvas.getCenterPoint();
-        fabricCanvas.zoomToPoint(center, scale)
-
+        fabricCanvas.setCenterZoom(scale)
+        fabricCanvas.addElement(image);
         fabricCanvas.renderAll()
+        scrollBarMoveToCenter(canvas)
+
+        canvas.data = {
+          zoom: fabricCanvas.getZoom(),
+          json: fabricCanvas.exportToJSON(),
+          width: fabricCanvas.getCanvasWidth(),
+          height: fabricCanvas.getCanvasHeight(),
+        }
       } else {
-        const {json, width, height} = canvas.data;
-        fabricCanvas.setDimensions({width, height});
+        const {json, width, height, zoom} = canvas.data;
+        fabricCanvas.resizeCanvas(width, height);
+        // 设置缩放
+        fabricCanvas.setCenterZoom(zoom);
         await fabricCanvas.loadFromJSON(json)
         fabricCanvas.renderAll()
+        setScrollBarPosition(canvas)
       }
     }
   }
@@ -2421,48 +2382,11 @@ const initCanvasSize = () => {
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
 
-    // 设置CSS自定义属性
-    canvasWrapper.value.style.setProperty('--canvas-width', `${windowWidth * 1.5}px`);
-    canvasWrapper.value.style.setProperty('--canvas-height', `${windowHeight * 1.5}px`);
-    canvasWrapper.value.idealWidth = Number.parseFloat(previewContainer.value.offsetWidth)
-    canvasWrapper.value.idealHeight = Number.parseFloat(previewContainer.value.offsetHeight)
     renderCanvasScrollbar()
 
     const canvas = document.querySelector('#canvas');
 
-    fabricCanvas = new FabricCanvas(canvas);
-
-    fabricCanvas.on('object:added', (event) => {
-      const currentCanvas = CanvasManager.getCurrentCanvas();
-      currentCanvas.data = {
-        json: fabricCanvas.toJSON(),
-        width: fabricCanvas.width,
-        height: fabricCanvas.height
-      }
-      console.log('添加元素', currentCanvas.data)
-    })
-
-    fabricCanvas.on('object:modified', (event) => {
-      const currentCanvas = CanvasManager.getCurrentCanvas();
-      currentCanvas.data = {
-        json: fabricCanvas.toJSON(),
-        width: fabricCanvas.width,
-        height: fabricCanvas.height
-      }
-      console.log('修改元素', currentCanvas.data)
-    })
-
-
-    fabricCanvas.on('mouse:wheel', function (opt) {
-      var delta = opt.e.deltaY;
-      var zoom = fabricCanvas.getZoom();
-      zoom *= 0.999 ** delta;
-      if (zoom > 20) zoom = 20;
-      if (zoom < 0.01) zoom = 0.01;
-      fabricCanvas.zoomToPoint(fabricCanvas.getCenterPoint(), zoom);
-      opt.e.preventDefault();
-      opt.e.stopPropagation();
-    });
+    fabricCanvas = new CanvasEditor(canvas);
 
   }, 1000)
 }
@@ -2531,7 +2455,7 @@ function setScale(canvas, scale) {
 
   if (!canvas || !scale) return
 
-  const computedStyle = window.getComputedStyle(canvasWrapper.value);
+  const computedStyle = window.getComputedStyle(canvasElement.value);
 
   const canvasWidth = Number.parseFloat(computedStyle.width);
 
@@ -2546,11 +2470,11 @@ function setScale(canvas, scale) {
   const canvasScale = Math.min(Math.max(minScale, scale), maxScale);
 
   // 应用缩放变换
-  canvasWrapper.value.style.transform = `scale(${canvasScale})`;
+  canvasElement.value.style.transform = `scale(${canvasScale})`;
   // 设置变换原点为中心点
-  canvasWrapper.value.style.transformOrigin = `${centerX}px ${centerY}px`;
+  canvasElement.value.style.transformOrigin = `${centerX}px ${centerY}px`;
 
-  canvas.scale = canvasScale
+  canvas.data.zoom = canvasScale
 
 }
 
@@ -2559,7 +2483,7 @@ function zoom(direction) {
   const canvas = CanvasManager.getCurrentCanvas();
   if (!canvas) return
   const {scaleStep} = scaleOptions;
-  const newScale = direction === 'in' ? canvas.scale + scaleStep : canvas.scale - scaleStep;
+  const newScale = direction === 'in' ? canvas.data.zoom + scaleStep : canvas.data.zoom - scaleStep;
   setScale(canvas, newScale);
 }
 
@@ -2593,7 +2517,7 @@ const handleScrollBarMoveToCenter = () => {
 // 初始化时自动滚动到图形内容区域
 function scrollBarMoveToCenter(canvas) {
   if (!canvas) return
-  const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasWrapper.value
+  const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement.value
   const {offsetWidth: previewContainerWidth, offsetHeight: previewContainerHeight} = previewContainer.value
   // 计算滚动位置，使图形内容居中
   const scrollLeft = (canvasWidth - previewContainerWidth) / 2;
@@ -2914,18 +2838,17 @@ const handleSelectAllPreviewElements = (event) => {
 const handleMoveScrollbar = (event) => {
   const canvas = CanvasManager.getCurrentCanvas();
   if (!canvas) return
-
   // 清除之前的定时器
   if (scrollTimeout) {
     clearTimeout(scrollTimeout);
   }
-
   // 设置新的定时器（防抖：100ms）
   scrollTimeout = setTimeout(() => {
     const target = event.target;
     // 设置滚动条参数到 image 对象
     canvas.scrollTop = target.scrollTop;
     canvas.scrollLeft = target.scrollLeft;
+    console.log('handleMoveScrollbar...')
   }, 100);
 
 }
@@ -3550,19 +3473,25 @@ const handleDropElement = async function (event) {
 
   if (!dragElement) return;
 
-  const canvasRect = canvasElement.value.getBoundingClientRect();
+  const {x, y, scaleY, scaleX} = fabricCanvas.getCanvasInternalPosition(event);
 
-  const left = event.clientX - canvasRect.left;
+  dragElement.x = x - offsetX * scaleX
 
-  const top = event.clientY - canvasRect.top;
+  dragElement.y = y - offsetY * scaleY
 
-  dragElement.set({left, top})
-
-  fabricCanvas.add(dragElement)
+  fabricCanvas.addElement(dragElement)
 
   fabricCanvas.renderAll()
-}
 
+  const currentCanvas = CanvasManager.getCurrentCanvas();
+
+  currentCanvas.data = {
+    zoom: fabricCanvas.getZoom(),
+    json: fabricCanvas.exportToJSON(),
+    width: fabricCanvas.getCanvasWidth(),
+    height: fabricCanvas.getCanvasHeight(),
+  }
+}
 
 const handleDropFiles = (event) => {
 
@@ -3663,13 +3592,13 @@ const handleDragMoveCanvas = (event) => {
     const scrollLeft = Math.max(0, Math.min(initialScrollLeft - offsetX, maxScrollLeft));
     const scrollTop = Math.max(0, Math.min(initialScrollTop - offsetY, maxScrollTop));
 
-    // 应用鼠标移动的距离到滚动位置
-    canvas.scrollLeft = scrollLeft;
-    canvas.scrollTop = scrollTop;
-
     // 设置滚动位置
     previewContainer.value.scrollLeft = scrollLeft;
     previewContainer.value.scrollTop = scrollTop;
+
+    // 应用鼠标移动的距离到滚动位置
+    canvas.scrollLeft = scrollLeft;
+    canvas.scrollTop = scrollTop;
   };
 
   document.onmouseup = function (event) {
@@ -3709,7 +3638,7 @@ const bindEventListener = () => {
   previewContainer.value.addEventListener('dragover', handleDragover);
   previewContainer.value.addEventListener('dragleave', handleDragleave);
 
-  previewContainer.value.addEventListener('scroll', handleMoveScrollbar);
+  // previewContainer.value.addEventListener('scroll', handleMoveScrollbar);
   previewList.value.addEventListener('keydown', handleSelectAllPreviewElements);
 
   previewContainer.value.addEventListener('mousedown', handleDragMoveCanvas);

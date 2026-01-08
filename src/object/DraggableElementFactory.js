@@ -4,7 +4,13 @@ import {executeFunctionScript} from '@/utils/script-helper'
 
 import {projectSettings} from "@/config/project-settings";
 
-import {IText, Image} from "fabric";
+import CanvasManager from "@/object/CanvasManager";
+
+import Text from '../canvas/Text.js'
+
+import EditableText from '../canvas/EditableText.js'
+
+import Image from '../canvas/Image.js'
 
 class DraggableElementFactory {
 
@@ -49,13 +55,14 @@ class DraggableElementFactory {
 
     getElement() {
         return new Promise((resolve, reject) => {
-
+            const {data: {zoom}} = CanvasManager.getCurrentCanvas();
             // 对于非图片元素（如div），直接返回
             if (this.settings.tagName === 'div') {
                 const {fontSize} = this.settings.options;
                 const context = this.#getText();
-                const text = new IText(context, {
-                    fontSize
+                const text = new EditableText(context, {
+                    fontSize: fontSize / zoom,
+                    draggable: true
                 });
                 resolve(text);
                 return;
@@ -63,12 +70,9 @@ class DraggableElementFactory {
 
             // 对于图片元素，检查加载状态
             if (this.settings.tagName === 'img') {
-                const {url} = this.settings
-                Image.fromURL(url, {crossOrigin: 'anonymous'})
+                const {url, width, height} = this.settings
+                Image.fromURL(url, {width: width / zoom, height: height / zoom,draggable: true})
                     .then(image => {
-                        const {width, height} = this.settings;
-                        image.scaleToWidth(width)
-                        image.scaleToHeight(height)
                         resolve(image);
                     })
                     .catch(error => {

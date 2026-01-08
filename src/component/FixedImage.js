@@ -9,6 +9,7 @@ class FixedImage extends Image {
         super(element, options);
         this.selectable = false;
         this.evented = false
+        this.path = ''
     }
 
     /**
@@ -19,7 +20,8 @@ class FixedImage extends Image {
             propertiesToInclude.concat([
                 'selectable',
                 'evented',
-                'type'
+                'type',
+                'path'
             ])
         )
     }

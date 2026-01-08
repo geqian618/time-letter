@@ -1,8 +1,8 @@
-const imageEditor = require("../utils/image-editor");
+const canvasEditor = require("../utils/canvas-editor");
 
 module.exports = async (data) => {
     try {
-        return await imageEditor.addBorderAndText(data);
+        return await canvasEditor.draw(data);
     } catch (error) {
         throw error;
     }

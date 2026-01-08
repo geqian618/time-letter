@@ -1,0 +1,828 @@
+import Image from './Image.js'
+import Text from './Text.js'
+import EditableText from './EditableText.js'
+
+/**
+ * Canvas 文本编辑器类
+ * 封装 Canvas 文本编辑功能
+ */
+class CanvasEditor {
+    /**
+     * 构造函数
+     * @param {HTMLCanvasElement} canvas - Canvas 元素
+     * @param {Object} options - 配置选项
+     */
+    constructor(canvas, options = {}) {
+
+        // 获取 Canvas 元素和上下文
+        this.canvas = canvas;
+        this.ctx = this.canvas.getContext('2d');
+
+        // 元素数据存储
+        this.elements = new Set();
+
+        this.activeElements = new Set();
+
+        // 编辑状态
+        this.editingText = null;
+        this.isEditing = false;
+        this.cursorIndex = 0;
+        this.cursorEndIndex = 0
+
+        this.cursorBlinkInterval = null;
+        this.isCursorVisible = true;
+
+        // 动态创建的输入框
+        this.hiddenInput = null;
+
+        // 默认配置
+        this.canvasConfig = {
+            width: options.width,
+            height: options.height,
+            cursorWidth: 1,
+            zoom: 1,
+            selectionColor: 'rgb(59,103,225,0.5)',
+            cursorColor: options.cursorColor || '#4A90E2',
+            showGrid: options.showGrid || false,
+            gridSize: options.gridSize || 20,
+            gridColor: options.gridColor || '#e3e0e0'
+        };
+
+        // 绑定事件处理函数
+        this.handleKeyDown = this.handleKeyDown.bind(this);
+        this.handleKeyUp = this.handleKeyUp.bind(this);
+        this.handleInput = this.handleInput.bind(this);
+        this.handleBlur = this.handleBlur.bind(this);
+        this.handleMouseDown = this.handleMouseDown.bind(this);
+
+        // 初始化
+        this.init();
+    }
+
+    /**
+     * 初始化编辑器
+     */
+    init() {
+        const {width, height} = this.canvasConfig;
+        if (width && height) {
+            this.resizeCanvas(width, height)
+        }
+        // 添加事件监听
+        this.canvas.addEventListener('mousedown', this.handleMouseDown);
+    }
+
+    /**
+     * 创建隐藏输入框
+     */
+    createHiddenInput() {
+        // 如果已存在输入框，先移除
+        if (this.hiddenInput) {
+            this.removeHiddenInput();
+        }
+        // 创建新的输入框
+        this.hiddenInput = document.createElement('input');
+        this.hiddenInput.type = 'text';
+        this.hiddenInput.style.position = 'fixed';
+        this.hiddenInput.style.opacity = '0';
+        this.hiddenInput.style.pointerEvents = 'none';
+        this.hiddenInput.style.width = '1px';
+        this.hiddenInput.style.height = '1px';
+        this.hiddenInput.style.border = 'none';
+        this.hiddenInput.style.outline = 'none';
+        this.hiddenInput.style.padding = '0';
+        this.hiddenInput.style.margin = '0';
+        this.hiddenInput.style.left = '-10000px'; // 移到屏幕外很远的地方
+        this.hiddenInput.style.top = '-10000px'; // 移到屏幕外很远的地方
+        this.hiddenInput.style.zIndex = '-1000'; // 确保在底层
+        this.hiddenInput.style.overflow = 'hidden';
+        this.hiddenInput.style.clip = 'rect(0, 0, 0, 0)';
+
+        // 添加到body
+        document.body.appendChild(this.hiddenInput);
+
+        // 添加事件监听
+        this.hiddenInput.addEventListener('keydown', this.handleKeyDown);
+        this.hiddenInput.addEventListener('keyup', this.handleKeyUp);
+        this.hiddenInput.addEventListener('input', this.handleInput);
+        this.hiddenInput.addEventListener('blur', this.handleBlur);
+
+        return this.hiddenInput;
+    }
+
+    /**
+     * 开始编辑文本
+     * @param {Object} textObj - 要编辑的文本对象
+     * @param {number} index - 光标位置
+     */
+    startEditing(textObj, index) {
+
+        if (this.isEditing && this.editingText === textObj) {
+            // 如果已经在编辑同一文本，只更新光标位置
+            this.cursorEndIndex = this.cursorIndex = index;
+            this.renderAll();
+            this.updateInputSelection();
+            return;
+        }
+
+        if (this.isEditing && this.editingText !== textObj) {
+            this.finishEditing();
+        }
+
+        this.editingText = textObj;
+        this.isEditing = true;
+        this.isCursorVisible = true;
+        this.cursorEndIndex = this.cursorIndex = index;
+        this.canvas.style.cursor = 'text';
+
+        // 动态创建隐藏输入框
+        this.createHiddenInput();
+
+        // 设置隐藏输入框的值
+        this.hiddenInput.value = textObj.text;
+
+        // 延迟一下再聚焦，避免立即触发滚动
+        setTimeout(() => {
+            if (this.hiddenInput) {
+                // 设置输入框的光标位置
+                this.updateInputSelection();
+            }
+        }, 10);
+
+        // 开始光标闪烁
+        this.startCursorBlink();
+
+        this.renderAll();
+    }
+
+    /**
+     * 移除隐藏输入框
+     */
+    removeHiddenInput() {
+        if (this.hiddenInput) {
+            // 移除事件监听
+            this.hiddenInput.removeEventListener('keydown', this.handleKeyDown);
+            this.hiddenInput.removeEventListener('keyup', this.handleKeyUp);
+            this.hiddenInput.removeEventListener('input', this.handleInput);
+            this.hiddenInput.removeEventListener('blur', this.handleBlur);
+
+            // 从DOM中移除
+            if (this.hiddenInput.parentNode) {
+                this.hiddenInput.parentNode.removeChild(this.hiddenInput);
+            }
+            this.hiddenInput = null;
+        }
+    }
+
+    /**
+     * 添加元素
+     * @returns {number} 新添加元素的索引
+     * @param element
+     */
+    addElement(element) {
+        this.elements.add(element);
+        this.renderAll();
+        return this.elements.size - 1;
+    }
+
+
+    /**
+     * 移除元素
+     * @param {number} element - 元素
+     */
+    removeElement(element) {
+        return this.elements.delete(element);
+    }
+
+
+    /**
+     * 移除元素
+     * @param {number} element - 元素
+     */
+    removeActiveElement(element) {
+        return this.activeElements.delete(element);
+    }
+
+    /**
+     * 获取所有元素
+     * @returns {Array} 文本对象数组
+     */
+    getElements(isClone) {
+        return isClone ? new Set(Array.from(this.elements).map(element => ({...element}))) : this.elements;
+    }
+
+
+    /**
+     * 获取所有选中元素
+     * @returns {Array} 文本对象数组
+     */
+    getActiveElements(isClone) {
+        return isClone ? new Set(Array.from(this.activeElements).map(element => ({...element}))) : this.activeElements;
+    }
+
+
+    /**
+     * 清理画布
+     */
+    clearCanvas() {
+        this.elements = new Set();
+        this.isEditing && this.cancelEditing();
+        this.renderAll();
+    }
+
+    /**
+     * 切换网格背景显示
+     */
+    toggleGrid() {
+        this.canvasConfig.showGrid = !this.canvasConfig.showGrid;
+        this.renderAll();
+    }
+
+    /**
+     * 获取文本度量信息
+     * @param {Text} textObj - 测量的文本
+     * @returns {TextMetrics} 文本度量
+     */
+    getTextMetrics(textObj) {
+        const text = textObj.text;
+        return this.getSubTextMetrics(textObj, 0, text.length)
+    }
+
+    /**
+     * 获取部分文本宽度
+     * @param {string} textObj - 完整文本
+     * @param {number} startIndex - 开始索引
+     * @param {number} endIndex - 结束索引
+     * @returns {TextMetrics} 截取文本度量
+     */
+    getSubTextMetrics(textObj, startIndex, endIndex) {
+
+        const {text, spacing, fontStyle, fontWeight, fontSize, fontFamily} = textObj;
+        // 设置字体（与 drawText 保持一致）
+        this.ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px "${fontFamily}", "Microsoft YaHei", sans-serif`;
+
+        // 参数边界检查
+        const safeStart = Math.max(0, Math.min(startIndex, endIndex));
+        const safeEnd = Math.min(text.length, Math.max(startIndex, endIndex));
+
+        let textWidth = 0;
+        let charCount = 0;
+
+        // 使用与 drawText 相同的逻辑测量每个字符
+        for (let i = safeStart; i < safeEnd; i++) {
+            const char = text[i];
+            textWidth += this.ctx.measureText(char).width;
+            charCount++;
+        }
+
+        // 添加间距（字符数 -1 ）* spacing
+        const spacingWidth = charCount > 0 ? (charCount - 1) * spacing : 0;
+
+        // 返回一个包含宽度信息的对象
+        return {
+            width: textWidth + spacingWidth,
+            charCount: charCount,
+            spacingWidth,
+            textWidth,
+        };
+    }
+
+
+    getRangeByIndex(textObj, startIndex, endIndex) {
+        const {x, text, spacing, fontStyle, fontWeight, fontSize, fontFamily} = textObj;
+        // 设置字体（与 drawText 保持一致）
+        this.ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px "${fontFamily}", "Microsoft YaHei", sans-serif`;
+        let startX = x;
+        let endX = x;
+        const minIndex = Math.max(0, Math.min(startIndex, endIndex));
+        const maxIndex = Math.min(text.length, Math.max(startIndex, endIndex));
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const charWidth = this.ctx.measureText(char).width;
+            if (i < minIndex) {
+                startX += charWidth + spacing;
+            }
+            if (i < maxIndex) {
+                endX += charWidth + spacing;
+            }
+        }
+        startX = Math.max(0, startX - spacing)
+        endX = Math.max(0, endX - spacing)
+        return {startX, endX}
+    }
+
+    /**
+     * 根据点击位置计算光标位置
+     * @param {Object} textObj - 文本对象
+     * @param {number} clickX - 点击X坐标
+     * @param {number} clickY - 点击Y坐标
+     * @returns {number} 光标索引
+     */
+    getCursorIndexFromText(textObj, clickX, clickY) {
+        const metrics = this.getTextMetrics(textObj);
+        const text = textObj.text;
+        // 计算文本的实际绘制区域
+        const textLeft = textObj.x;
+        const textRight = textObj.x + metrics.width;
+
+        // 如果点击在文本左侧，光标在开头
+        if (clickX < textLeft) return 0;
+
+        // 如果点击在文本右侧，光标在末尾
+        if (clickX > textRight) return text.length;
+
+        // 计算相对点击位置
+        const relativeX = clickX - textLeft;
+
+        // 使用二分法查找最近的光标位置
+        let closestIndex = 0;
+        let minDistance = Infinity;
+
+        for (let i = 0; i <= text.length; i++) {
+            const width = this.getSubTextMetrics(textObj, 0, i).width;
+            const distance = Math.abs(width - relativeX);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestIndex = i;
+            }
+        }
+        return closestIndex;
+    }
+
+
+    /**
+     * 获取点击区域文本元素
+     *
+     * @param {number} x - 点击 X 坐标
+     * @param {number} y - 点击 Y 坐标
+     * @returns {Object|null} 点击的文本对象或null
+     */
+    getTextAtPosition(x, y) {
+        return this.getElementAt(x, y, (element) => {
+            return element.type === 'text'
+        })
+    }
+
+
+    /**
+     * 获取点击区域元素
+     *
+     * @param {number} x - 点击 X 坐标
+     * @param {number} y - 点击 Y 坐标
+     * @param filter 过滤条件
+     * @returns {Object|null} 点击的元素对象或null
+     */
+    getElementAt(x, y, filter) {
+        // 将 Set 转为数组后反向遍历
+        const reversedArray = Array.from(this.elements).reverse();
+        for (const element of reversedArray) {
+            if (element.contains(x, y) && (!filter || filter(element))) {
+                return element
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 开始光标闪烁
+     */
+    startCursorBlink() {
+        clearInterval(this.cursorBlinkInterval);
+        this.cursorBlinkInterval = setInterval(() => {
+            // 有文本被选中，因此光标闪烁
+            if (this.cursorIndex !== this.cursorEndIndex && !this.isCursorVisible) return;
+            this.isCursorVisible = !this.isCursorVisible;
+            if (this.isEditing && this.editingText) {
+                this.renderAll();
+            }
+        }, 800);
+    }
+
+    /**
+     * 绘制网格背景
+     */
+    drawGrid() {
+        if (!this.canvasConfig.showGrid) return;
+        this.ctx.strokeStyle = this.canvasConfig.gridColor;
+        this.ctx.lineWidth = 0.5;
+        // 绘制垂直线
+        for (let x = 0; x <= this.canvas.width; x += this.canvasConfig.gridSize) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, 0);
+            this.ctx.lineTo(x, this.canvas.height);
+            this.ctx.stroke();
+        }
+
+        // 绘制水平线
+        for (let y = 0; y <= this.canvas.height; y += this.canvasConfig.gridSize) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, y);
+            this.ctx.lineTo(this.canvas.width, y);
+            this.ctx.stroke();
+        }
+    }
+
+    /**
+     * 绘制所有内容
+     */
+    renderAll() {
+        // 清除画布
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // 绘制网格背景
+        this.drawGrid();
+        // 绘制元素
+        this.drawElements()
+    }
+
+    setCenterZoom(zoom) {
+        this.canvasConfig.zoom = zoom
+        this.canvas.style.transform = `scale(${zoom})`
+        this.canvas.style.transformOrigin = 'center center';
+    }
+
+    setZoom(zoom, pointX, pointY) {
+        this.canvasConfig.zoom = zoom
+        this.canvas.style.transform = `scale(${zoom})`
+        this.canvas.style.transformOrigin = `${pointX}px ${pointY}px`;
+    }
+
+    getZoom() {
+        return this.canvasConfig.zoom
+    }
+
+    drawElements() {
+        // 绘制所有文本
+        for (const element of this.elements) {
+            if (element.type === 'text') {
+                // 绘制文本
+                element.draw(this.ctx);
+                // 如果是正在编辑的文本，绘制背景颜色
+                if (this.editingText === element && this.isEditing) {
+                    this.drawEditBackground(element)
+                    // 如果是正在编辑的文本，绘制光标
+                    if (this.isCursorVisible) {
+                        this.drawCursor(element, this.canvasConfig.cursorWidth)
+                    }
+                }
+            } else if (element.type === 'image') {
+                if (element.type === 'image') {
+                    // 绘制图片
+                    element.draw(this.ctx);
+                }
+            }
+        }
+    }
+
+
+    drawCursor(textObj, cursorWidth) {
+        const {x, y, fontColor, fontSize, spacing} = textObj;
+        const cursorX = x + this.getSubTextMetrics(textObj, 0, this.cursorIndex).width;
+        this.ctx.fillStyle = fontColor;
+        this.ctx.fillRect(
+            cursorX + (spacing - cursorWidth) / 2,
+            y,
+            cursorWidth,
+            fontSize
+        );
+    }
+
+
+    drawEditBackground(element) {
+        const {x, y, fontSize, highlightColor} = element
+        const metrics = this.getTextMetrics(element);
+        const margin = 0.3 * fontSize;
+        const width = metrics.width + 2 * margin
+        const height = fontSize + 2 * margin
+        this.drawFillRect(x - margin, y - margin, width, height, highlightColor)
+        if (this.cursorIndex !== this.cursorEndIndex) {
+            const {startX, endX} = this.getRangeByIndex(element, this.cursorIndex, this.cursorEndIndex);
+            this.drawFillRect(startX, y, endX - startX, fontSize, this.canvasConfig.selectionColor)
+        }
+    }
+
+
+    drawActiveRect(x, y, width, height, options = {}) {
+        const {dashPattern = [6, 4], lineWidth = 1, color = 'red', lineCap = 'butt'} = options;
+        this.ctx.save();
+        this.ctx.setLineDash(dashPattern);
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.strokeStyle = color;
+        this.ctx.lineCap = lineCap;
+
+        this.ctx.beginPath();
+        this.ctx.rect(x, y, width, height);
+        this.ctx.stroke();
+        this.ctx.restore();
+    }
+
+    drawFillRect(x, y, width, height, fillColor) {
+        this.ctx.save();
+        // 绘制高亮背景
+        this.ctx.fillStyle = fillColor;
+        this.ctx.fillRect(x, y, width, height);
+        this.ctx.restore();
+    }
+
+
+    /**
+     * 处理 Canvas 点击事件
+     * @param {Event} event - 点击事件
+     */
+    handleEditText(event) {
+        const {x, y} = this.getCanvasInternalPosition(event);
+        const textObj = this.getTextAtPosition(x, y);
+        if (textObj && textObj.editable) {
+            // 计算点击位置对应的光标索引
+            const index = this.getCursorIndexFromText(textObj, x, y);
+            // 如果是双击，直接进入编辑模式
+            this.startEditing(textObj, index);
+        }
+    }
+
+
+    getCanvasInternalPosition(event) {
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        // 计算 Canvas 坐标系中的位置
+        const x = (event.clientX - rect.left) * scaleX;
+        const y = (event.clientY - rect.top) * scaleY;
+        return {x, y, scaleX, scaleY}
+    }
+
+
+    handleMouseDown(event) {
+        const startTime = Date.now();
+        const {x: startX, y: startY} = this.getCanvasInternalPosition(event);
+        const element = this.getElementAt(startX, startY, element => element.selectable);
+        if (!element) {
+            this.handleCancelActive(event)
+            return
+        }
+        const offsetX = startX - element.x
+        const offsetY = startY - element.y
+        const handleMousemove = (e) => {
+            const interval = Date.now() - startTime;
+            const {x: moveX, y: moveY} = this.getCanvasInternalPosition(e);
+            if (interval > 200 && (startX !== moveX || startY !== moveY)) {
+                if (element.type === 'text' && this.isEditing) {
+                    // 选中文本
+                    this.cursorEndIndex = this.getCursorIndexFromText(element, moveX);
+                    if (this.cursorEndIndex !== this.cursorIndex) {
+                        this.updateInputSelection()
+                        this.renderAll()
+                    }
+                } else if (element.draggable) {
+                    this.canvas.style.cursor = 'move';
+                    element.x = moveX - offsetX;
+                    element.y = moveY - offsetY;
+                    this.renderAll()
+                }
+            }
+        }
+        const handleMouseup = (e) => {
+            const {x: endX, y: endY} = this.getCanvasInternalPosition(e);
+            if (startX === endX && startY === endY) {
+                if (element.type === 'text' && this.activeElements.has(element)) {
+                    this.handleEditText(event)
+                } else {
+                    this.handleActiveElement(element)
+                }
+            }
+            !this.isEditing && (this.canvas.style.cursor = '');
+            this.canvas.removeEventListener('mousemove', handleMousemove)
+            document.removeEventListener('mouseup', handleMouseup)
+        }
+        this.canvas.addEventListener('mousemove', handleMousemove)
+        this.canvas.addEventListener('mouseup', handleMouseup)
+    }
+
+    handleActiveElement(element) {
+        const {x, y, width, height} = element;
+        this.drawActiveRect(x, y, width, height)
+        this.activeElements.add(element)
+    }
+
+    /**
+     * 更新输入框的光标位置
+     */
+    updateInputSelection() {
+        if (!this.editingText || !this.hiddenInput) return;
+        // 设置输入框的光标位置
+        setTimeout(() => {
+            this.hiddenInput.focus()
+            const start = Math.min(this.cursorIndex, this.cursorEndIndex);
+            const end = Math.max(this.cursorIndex, this.cursorEndIndex);
+
+            this.hiddenInput.setSelectionRange(start, end);
+        }, 0);
+    }
+
+    /**
+     * 处理输入事件
+     * @param {Event} event - 输入事件
+     */
+    handleInput(event) {
+        if (!this.editingText || !this.hiddenInput) return;
+        const oldText = this.editingText.text;
+        const newText = event.target.value;
+        // 更新文本
+        this.editingText.text = newText;
+        // 获取输入框当前的光标位置
+        const inputCursorPos = this.hiddenInput.selectionStart;
+        // 更新 Canvas 光标位置
+        this.cursorEndIndex = this.cursorIndex = Math.max(0, Math.min(inputCursorPos, newText.length));
+        this.renderAll();
+    }
+
+    /**
+     * 处理键盘按下事件
+     * @param {Event} event - 键盘事件
+     */
+    handleKeyDown(event) {
+        if (!this.editingText) return;
+        switch (event.key) {
+            case 'Enter':
+                event.preventDefault();
+                this.finishEditing();
+                break;
+            case 'Escape':
+                event.preventDefault();
+                this.cancelEditing();
+                break;
+            case 'ArrowLeft':
+                event.preventDefault();
+                if (this.cursorIndex > 0) {
+                    this.cursorIndex--;
+                    this.cursorEndIndex--;
+                    this.updateInputSelection();
+                    this.renderAll();
+                }
+                break;
+            case 'ArrowRight':
+                event.preventDefault();
+                if (this.cursorIndex < this.editingText.text.length) {
+                    this.cursorIndex++;
+                    this.cursorEndIndex++;
+                    this.updateInputSelection();
+                    this.renderAll();
+                }
+                break;
+            case 'Home':
+                event.preventDefault();
+                this.cursorEndIndex = this.cursorIndex = 0;
+                this.updateInputSelection();
+                this.renderAll();
+                break;
+            case 'End':
+                event.preventDefault();
+                this.cursorEndIndex = this.cursorIndex = this.editingText.text.length;
+                this.updateInputSelection();
+                this.renderAll();
+                break;
+            case 'Delete':
+                break;
+        }
+    }
+
+
+    handleCancelActive(event) {
+        const {x, y} = this.getCanvasInternalPosition(event);
+        const textObj = this.getTextAtPosition(x, y);
+        if (this.isEditing && textObj !== this.editingText) {
+            this.finishEditing();
+        }
+        if (this.activeElements.size > 0) {
+            this.activeElements.clear();
+            this.renderAll();
+        }
+    }
+
+
+    /**
+     * 处理键盘松开事件
+     */
+    handleKeyUp() {
+        if (!this.editingText || !this.hiddenInput) return;
+        // 更新光标位置
+        this.cursorEndIndex = this.cursorIndex = this.hiddenInput.selectionStart;
+        this.renderAll();
+    }
+
+    /**
+     * 处理失去焦点事件
+     */
+    handleBlur() {
+        setTimeout(() => {
+            if (this.editingText && this.hiddenInput && document.activeElement !== this.hiddenInput) {
+                // this.finishEditing();
+            }
+        }, 100);
+    }
+
+    /**
+     * 完成编辑
+     */
+    finishEditing() {
+        if (this.editingText && this.hiddenInput) {
+            this.canvas.style.cursor = '';
+            // 更新文本
+            this.editingText.text = this.hiddenInput.value;
+            this.removeActiveElement(this.editingText)
+            this.cleanup();
+            this.renderAll();
+        }
+    }
+
+    /**
+     * 取消编辑
+     */
+    cancelEditing() {
+        if (this.editingText) {
+            // 如果文本为空，移除它
+            if (this.editingText.text === '') {
+                this.elements.delete(this.editingText)
+            }
+            this.cleanup();
+            this.renderAll();
+        }
+    }
+
+    /**
+     * 清理编辑状态
+     */
+    cleanup() {
+        // 移除隐藏输入框
+        this.removeHiddenInput();
+        this.editingText = null;
+        this.isEditing = false;
+        this.cursorEndIndex = this.cursorIndex = 0;
+        clearInterval(this.cursorBlinkInterval);
+    }
+
+    /**
+     * 销毁编辑器，清理事件监听
+     */
+    destroy() {
+        // 移除事件监听
+        this.canvas.removeEventListener('mousedown', this.handleMouseDown);
+        // 移除隐藏输入框
+        this.removeHiddenInput();
+        // 清除定时器
+        clearInterval(this.cursorBlinkInterval);
+    }
+
+    /**
+     * 调整 Canvas 大小
+     * @param {number} width - 新宽度
+     * @param {number} height - 新高度
+     */
+    resizeCanvas(width, height) {
+        this.canvas.width = this.canvasConfig.width = width;
+        this.canvas.height = this.canvasConfig.height = height;
+        this.renderAll();
+    }
+
+    getCanvasWidth() {
+        return this.canvasConfig.width
+    }
+
+    getCanvasHeight() {
+        return this.canvasConfig.height
+    }
+
+    /**
+     * 导出所有文本数据为 JSON
+     * @returns {string} JSON 格式的文本数据
+     */
+    exportToJSON() {
+        return JSON.stringify([...this.elements], null, 2);
+    }
+
+    /**
+     * 从 JSON 导入文本数据
+     * @param {string} json - JSON 格式的文本数据
+     */
+    async loadFromJSON(json) {
+        try {
+            const elements = JSON.parse(json) || [];
+            if (Array.isArray(elements)) {
+                for (let element of elements) {
+                    if (element.type === 'text') {
+                        this.elements.add(new Text(element.text, element))
+                    }
+                    if (element.type === 'image') {
+                        this.elements.add(await Image.fromURL(element.src, element))
+                    }
+                }
+                this.renderAll();
+            }
+        } catch (e) {
+            console.error('导入失败:', e);
+        }
+    }
+
+
+}
+
+
+export default CanvasEditor
