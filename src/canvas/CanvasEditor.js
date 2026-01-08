@@ -906,7 +906,7 @@ class CanvasEditor {
      */
     exportJPEG(filename, quality = 0.95) {
         const dataURL = this.canvas.toDataURL('image/jpeg', quality);
-        this.#downloadFile(filename, dataURL)
+        this.#downloadFile(dataURL, filename)
     }
 
 
@@ -916,7 +916,7 @@ class CanvasEditor {
      */
     exportPNG(filename) {
         const dataURL = this.canvas.toDataURL('image/png');
-        this.#downloadFile(filename, dataURL)
+        this.#downloadFile(dataURL, filename)
     }
 
 
@@ -927,7 +927,7 @@ class CanvasEditor {
      */
     exportWEBP(filename, quality = 0.95) {
         const dataURL = this.canvas.toDataURL('image/webp', quality);
-        this.#downloadFile(filename, dataURL)
+        this.#downloadFile(dataURL, filename)
     }
 
 
