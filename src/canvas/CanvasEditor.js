@@ -40,17 +40,16 @@ class CanvasEditor {
 
         // 默认配置
         this.canvasConfig = {
-            width: options.width,
-            height: options.height,
+            width: options.width || canvas.width,
+            height: options.height || canvas.height,
             cursorWidth: 1,
             zoom: 1,
             selectionColor: 'rgb(59,103,225,0.5)',
-            cursorColor: options.cursorColor || '#4A90E2',
+            backgroundColor: options.backgroundColor || 'white',
             showGrid: options.showGrid || false,
             gridSize: options.gridSize || 20,
             gridColor: options.gridColor || '#e3e0e0'
         };
-
 
         // 事件回调
         this.eventCallbacks = new Map();
@@ -63,16 +62,17 @@ class CanvasEditor {
         this.handleMouseDown = this.handleMouseDown.bind(this);
 
         // 初始化
-        this.init();
+        this.initCanvas();
     }
 
     /**
      * 初始化编辑器
      */
-    init() {
+    initCanvas() {
         const {width, height} = this.canvasConfig;
         if (width && height) {
-            this.resizeCanvas(width, height)
+            this.canvas.width = width
+            this.canvas.height = height
         }
         // 添加事件监听
         this.canvas.addEventListener('mousedown', this.handleMouseDown);
@@ -450,14 +450,34 @@ class CanvasEditor {
      * 绘制所有内容
      */
     renderAll() {
+        const {width, height} = this.canvasConfig;
         // 清除画布
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.clearRect(0, 0, width, height);
+        // 绘制背景
+        this.drawBackgroundColor()
         // 绘制网格背景
         this.drawGrid();
         // 绘制元素
         this.drawElements()
     }
 
+
+    /**
+     * 绘制背景
+     */
+    drawBackgroundColor() {
+        const {width, height, backgroundColor} = this.canvasConfig;
+        this.drawFillRect(0, 0, width, height, backgroundColor)
+    }
+
+
+    /**
+     * 设置背景
+     * @param color
+     */
+    setBackgroundColor(color) {
+        this.canvasConfig.backgroundColor = color
+    }
 
     /**
      * 通过中心点设置缩放
@@ -882,7 +902,6 @@ class CanvasEditor {
     resizeCanvas(width, height) {
         this.canvas.width = this.canvasConfig.width = width;
         this.canvas.height = this.canvasConfig.height = height;
-        this.renderAll();
     }
 
     /**
