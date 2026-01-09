@@ -2918,21 +2918,13 @@ const handleCancelSelectedElement = (event) => {
 
 // 删除元素
 const handleRemoveElement = (event) => {
-  const dragElement = CanvasManager.getSelectedObject().draggableElement;
-  if (dragElement === null || dragElement.getAttribute('selected') !== 'true') return;
-  // 检测 Delete (46) 或 Backspace (8) 键
-  if (event.key === 'Delete' || event.key === 'Backspace' || event.keyCode === 46 || event.keyCode === 8) {
-    // event.preventDefault();
-    if (dragElement.getAttribute('selected') === 'true') {
-      if ((dragElement instanceof HTMLDivElement) && !dragElement.querySelector('input')) {
-        CanvasManager.deleteElement(CanvasManager.getSelectedPath(), dragElement)
-        dragElement.remove()
-      }
-      if (dragElement instanceof HTMLImageElement) {
-        CanvasManager.deleteElement(CanvasManager.getSelectedPath(), dragElement)
-        dragElement.remove()
-      }
+  // 判断是否为删除键（Backspace 或 Delete）
+  if (event.key === 'Backspace' || event.key === 'Delete') {
+    const activeElements = canvasEditor.getActiveElements();
+    for (let activeElement of activeElements) {
+      canvasEditor.removeElement(activeElement)
     }
+    canvasEditor.renderAll()
   }
 }
 
@@ -3602,12 +3594,14 @@ const bindEventListener = () => {
   previewContainer.value.addEventListener('dragover', handleDragover);
   previewContainer.value.addEventListener('dragleave', handleDragleave);
 
-  // previewContainer.value.addEventListener('scroll', handleMoveScrollbar);
+  previewContainer.value.addEventListener('scroll', handleMoveScrollbar);
+
   previewList.value.addEventListener('keydown', handleSelectAllPreviewElements);
 
   previewContainer.value.addEventListener('mousedown', handleDragMoveCanvas);
   previewContainer.value.addEventListener('wheel', handleCanvasResize, {passive: false});
 
+  document.addEventListener('keydown', handleRemoveElement);
   // 键盘事件设置模式
   document.addEventListener('keydown', triggerDragCanvas);
 }
@@ -3623,11 +3617,13 @@ const unbindEventListener = () => {
   previewContainer.value.removeEventListener('dragleave', handleDragleave);
 
   previewContainer.value.removeEventListener('scroll', handleMoveScrollbar);
+
   previewList.value.removeEventListener('keydown', handleSelectAllPreviewElements);
 
   previewContainer.value.removeEventListener('mousedown', handleDragMoveCanvas);
   previewContainer.value.removeEventListener('wheel', handleCanvasResize, {passive: false});
 
+  document.removeEventListener('keydown', handleRemoveElement);
   // 键盘事件设置模式
   document.removeEventListener('keydown', triggerDragCanvas);
 }

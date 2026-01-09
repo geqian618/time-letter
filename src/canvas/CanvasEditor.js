@@ -219,7 +219,15 @@ class CanvasEditor {
      * @param {number} element - 元素
      */
     removeElement(element) {
-        return this.elements.delete(element);
+        return this.elements.delete(element) && this.activeElements.delete(element);
+    }
+
+    /**
+     * 移除全部元素
+     */
+    removeElements() {
+        this.elements.clear();
+        this.activeElements.clear();
     }
 
 
@@ -231,6 +239,15 @@ class CanvasEditor {
         return this.activeElements.delete(element);
     }
 
+
+    /**
+     * 移除全部激活元素
+     */
+    removeActiveElements() {
+        this.activeElements.clear();
+    }
+
+
     /**
      * 获取所有元素
      * @returns {Array} 文本对象数组
@@ -239,15 +256,13 @@ class CanvasEditor {
         return isClone ? new Set(Array.from(this.elements).map(element => ({...element}))) : this.elements;
     }
 
-
     /**
      * 获取所有选中元素
      * @returns {Array} 文本对象数组
      */
     getActiveElements(isClone) {
-        return isClone ? new Set(Array.from(this.activeElements).map(element => ({...element}))) : this.activeElements;
+        return isClone ? Array.from(this.activeElements).map(element => ({...element})) : this.activeElements;
     }
-
 
     /**
      * 清理画布
