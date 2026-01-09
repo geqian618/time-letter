@@ -16,6 +16,9 @@ class CanvasEditor {
      */
     constructor(canvas, options = {}) {
 
+        // 缓存图片
+        this.cache = new Map();
+
         // 获取 Canvas 元素和上下文
         this.canvas = canvas;
 
@@ -45,7 +48,7 @@ class CanvasEditor {
             cursorWidth: 1,
             zoom: 1,
             selectionColor: 'rgb(59,103,225,0.5)',
-            backgroundColor: options.backgroundColor || 'white',
+            backgroundColor: options.backgroundColor || 'rgba(255,255,255,0)',
             showGrid: options.showGrid || false,
             gridSize: options.gridSize || 20,
             gridColor: options.gridColor || '#e3e0e0'
@@ -203,6 +206,9 @@ class CanvasEditor {
      */
     addElement(element) {
         this.elements.add(element);
+        if (element.type === 'image' && element.cacheable) {
+            this.cache.set(element.src, element.image)
+        }
         this.renderAll();
         return this.elements.size - 1;
     }
@@ -450,9 +456,8 @@ class CanvasEditor {
      * 绘制所有内容
      */
     renderAll() {
-        const {width, height} = this.canvasConfig;
         // 清除画布
-        this.ctx.clearRect(0, 0, width, height);
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         // 绘制背景
         this.drawBackgroundColor()
         // 绘制网格背景
@@ -466,8 +471,8 @@ class CanvasEditor {
      * 绘制背景
      */
     drawBackgroundColor() {
-        const {width, height, backgroundColor} = this.canvasConfig;
-        this.drawFillRect(0, 0, width, height, backgroundColor)
+        const {backgroundColor} = this.canvasConfig;
+        this.drawFillRect(0, 0, this.canvas.width, this.canvas.height, backgroundColor)
     }
 
 
@@ -920,7 +925,13 @@ class CanvasEditor {
      * @returns {string} JSON 格式的文本数据
      */
     exportToJSON() {
-        return JSON.stringify([...this.elements], null, 2);
+        return JSON.stringify({
+            canvas: {
+                width: this.canvas.width,
+                height: this.canvas.height,
+                elements: [...this.elements]
+            }
+        }, null, 2);
     }
 
     /**
@@ -929,18 +940,19 @@ class CanvasEditor {
      */
     async loadFromJSON(json) {
         try {
-            const elements = JSON.parse(json) || [];
-            if (Array.isArray(elements)) {
-                for (let element of elements) {
-                    if (element.type === 'text') {
-                        this.elements.add(new Text(element.text, element))
-                    }
-                    if (element.type === 'image') {
-                        this.elements.add(await Image.fromURL(element.src, element))
-                    }
+            const {canvas: {width, height, elements}} = JSON.parse(json);
+            this.resizeCanvas(width, height)
+            for (let element of elements) {
+                if (element.type === 'text') {
+                    this.elements.add(new Text(element.text, element))
                 }
-                this.renderAll();
+                if (element.type === 'image') {
+                    const image = this.cache.get(element.src);
+                    const instance = image ? new Image(image, element) : await Image.fromURL(element.src, element);
+                    this.elements.add(instance)
+                }
             }
+            this.renderAll();
         } catch (e) {
             console.error('导入失败:', e);
         }

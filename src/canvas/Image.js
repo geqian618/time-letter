@@ -1,7 +1,5 @@
 import Element from './Element.js'
 
-const IMAGE_SYMBOL = Symbol('image');
-
 class Image extends Element {
 
     constructor(image, options = {}) {
@@ -10,7 +8,8 @@ class Image extends Element {
         }
         super(options);
         this.type = 'image'
-        this[IMAGE_SYMBOL] = image
+        this.image = image
+        this.cacheable = options.cacheable || false
         this.src = image?.src
         this.crossOrigin = options.crossOrigin || 'anonymous'
         this.width = options.width
@@ -67,7 +66,7 @@ class Image extends Element {
     }
 
     draw(ctx) {
-        if (!this[IMAGE_SYMBOL]) {
+        if (!this.image) {
             console.error(`Failed to load image: ${this.src}`)
             return
         }
@@ -92,7 +91,7 @@ class Image extends Element {
         // 旋转画布
         ctx.rotate(this.angle * Math.PI / 180);
         // 绘制图片（注意坐标已偏移到中心点）
-        ctx.drawImage(this[IMAGE_SYMBOL], -this.width / 2, -this.height / 2, this.width, this.height);
+        ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
         // 恢复画布到之前保存的状态
         ctx.restore();
     }

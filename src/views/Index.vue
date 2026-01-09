@@ -2332,7 +2332,7 @@ async function switchPreviewImage(event, canvas) {
       event.target.classList.add('active')
 
       if (!canvas.data) {
-        const image = await Image.fromURL(canvas.url, {selectable: false});
+        const image = await Image.fromURL(canvas.url, {selectable: false, cacheable: true});
         const width = image.width;
         const height = image.height;
         image.path = canvas.path
@@ -2347,14 +2347,12 @@ async function switchPreviewImage(event, canvas) {
         canvas.data = {
           zoom: canvasEditor.getZoom(),
           json: canvasEditor.exportToJSON(),
-          ...canvasEditor.getCanvasSize()
         }
       } else {
-        const {json, width, height, zoom} = canvas.data;
-        canvasEditor.resizeCanvas(width, height);
+        const {json, zoom} = canvas.data;
+        await canvasEditor.loadFromJSON(json)
         // 设置缩放
         canvasEditor.setCenterZoom(zoom);
-        await canvasEditor.loadFromJSON(json)
         canvasEditor.renderAll()
         setScrollBarPosition(canvas)
       }
@@ -3477,8 +3475,7 @@ const handleDropElement = async function (event) {
 
   currentCanvas.data = {
     zoom: canvasEditor.getZoom(),
-    json: canvasEditor.exportToJSON(),
-    ...canvasEditor.getCanvasSize()
+    json: canvasEditor.exportToJSON()
   }
 }
 
