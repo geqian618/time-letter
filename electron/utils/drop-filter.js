@@ -4,10 +4,12 @@ async function createBlurFilterFromFile(inputPath, blurRadius = 10, overlayOpaci
     try {
         // 使用文件路径创建 sharp 实例
         const originalImage = sharp(inputPath);
+
         const metadata = await originalImage.metadata();
 
         // 统一缩放尺寸
         const maxDimension = 4000;
+
         let processingImage = originalImage;
 
         if (metadata.width > maxDimension || metadata.height > maxDimension) {

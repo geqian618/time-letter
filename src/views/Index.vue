@@ -1163,12 +1163,7 @@
 
 import {nextTick, onBeforeUnmount, onMounted, ref, watch, computed} from "vue";
 
-import FixedImage from "../component/FixedImage";
-
-import CanvasEditor from '../canvas/CanvasEditor'
-import Text from '../canvas/Text'
-import EditableText from '../canvas/EditableText'
-import Image from '../canvas/Image'
+import {CanvasEditor, Image, Text, EditableText} from '@/canvas/CanvasEditor'
 
 import {useThrottle} from '@/utils/throttle'
 
@@ -2325,7 +2320,6 @@ async function switchPreviewImage(event, canvas) {
     // 前一次预览元素与当前预览元素不同，隐藏前一次预览元素
     if (beforePath && beforePath !== canvas.path) {
       canvasEditor.clearCanvas()
-      canvasEditor.setCenterZoom(1)
     }
 
     // 没有预览元素或前一次预览元素与当前预览元素不同时显示，多次点击预览同一元素不重复渲染
@@ -2350,7 +2344,6 @@ async function switchPreviewImage(event, canvas) {
         canvasEditor.addElement(image);
         canvasEditor.renderAll()
         scrollBarMoveToCenter(canvas)
-
         canvas.data = {
           zoom: canvasEditor.getZoom(),
           json: canvasEditor.exportToJSON(),
@@ -2386,6 +2379,10 @@ const initCanvasSize = () => {
     const canvas = document.querySelector('#canvas');
 
     canvasEditor = new CanvasEditor(canvas);
+
+    canvasEditor.on('selection:object', (event) => {
+      console.log('选中元素：', event)
+    })
 
   }, 1000)
 }
@@ -2842,7 +2839,6 @@ const handleMoveScrollbar = (event) => {
     // 设置滚动条参数到 image 对象
     canvas.scrollTop = target.scrollTop;
     canvas.scrollLeft = target.scrollLeft;
-    console.log('handleMoveScrollbar...')
   }, 100);
 
 }
@@ -3475,8 +3471,6 @@ const handleDropElement = async function (event) {
 
   canvasEditor.addElement(dragElement)
 
-  console.log(canvasEditor.getElements())
-
   canvasEditor.renderAll()
 
   const currentCanvas = CanvasManager.getCurrentCanvas();
@@ -3541,46 +3535,44 @@ const handleDragMoveCanvas = (event) => {
   // 阻止默认滚动行为
   event.preventDefault();
   const canvas = CanvasManager.getCurrentCanvas();
-  if (!canvas) return;
-  // 拖拽开始时设置光标为正在抓取的状态
-  previewContainer.value.style.cursor = 'grabbing';
-  const {scrollWidth, scrollHeight, clientWidth, clientHeight} = previewContainer.value
-  // 记录初始滚动位置和鼠标位置
-  const initialScrollLeft = canvas.scrollLeft;
-  const initialScrollTop = canvas.scrollTop;
-  const maxScrollLeft = Math.max(0, scrollWidth - clientWidth);
-  const maxScrollTop = Math.max(0, scrollHeight - clientHeight);
-  const startX = event.clientX;
-  const startY = event.clientY;
+  if (canvas && isCanvasDraggingMode) {
+    // 拖拽开始时设置光标为正在抓取的状态
+    previewContainer.value.style.cursor = 'grabbing';
+    const {scrollWidth, scrollHeight, clientWidth, clientHeight} = previewContainer.value
+    // 记录初始滚动位置和鼠标位置
+    const initialScrollLeft = canvas.scrollLeft;
+    const initialScrollTop = canvas.scrollTop;
+    const maxScrollLeft = Math.max(0, scrollWidth - clientWidth);
+    const maxScrollTop = Math.max(0, scrollHeight - clientHeight);
+    const startX = event.clientX;
+    const startY = event.clientY;
 
-  previewContainer.value.onmousemove = function (event) {
+    const handleMousemove = function (event) {
+      // 取消拖拽模式，不更改滚动条位置
+      if (!isCanvasDraggingMode) return
+      // 计算鼠标移动的距离
+      const offsetX = event.clientX - startX;
+      const offsetY = event.clientY - startY;
+      // 限制滚动位置在边界内
+      const scrollLeft = Math.max(0, Math.min(initialScrollLeft - offsetX, maxScrollLeft));
+      const scrollTop = Math.max(0, Math.min(initialScrollTop - offsetY, maxScrollTop));
+      // 设置滚动位置
+      previewContainer.value.scrollLeft = scrollLeft;
+      previewContainer.value.scrollTop = scrollTop;
+      // 应用鼠标移动的距离到滚动位置
+      canvas.scrollLeft = scrollLeft;
+      canvas.scrollTop = scrollTop;
+    };
 
-    // 取消拖拽模式，不更改滚动条位置
-    if (!isCanvasDraggingMode) return
-
-    // 计算鼠标移动的距离
-    const offsetX = event.clientX - startX;
-    const offsetY = event.clientY - startY;
-
-    // 限制滚动位置在边界内
-    const scrollLeft = Math.max(0, Math.min(initialScrollLeft - offsetX, maxScrollLeft));
-    const scrollTop = Math.max(0, Math.min(initialScrollTop - offsetY, maxScrollTop));
-
-    // 设置滚动位置
-    previewContainer.value.scrollLeft = scrollLeft;
-    previewContainer.value.scrollTop = scrollTop;
-
-    // 应用鼠标移动的距离到滚动位置
-    canvas.scrollLeft = scrollLeft;
-    canvas.scrollTop = scrollTop;
-  };
-
-  document.onmouseup = function (event) {
-    // 拖拽结束，恢复光标为抓手的准备状态（空格键仍按住）
-    previewContainer.value.style.cursor = '';
-    previewContainer.value.onmousemove = null;
-    document.onmouseup = null;
-  };
+    const handleMouseup = function (event) {
+      // 拖拽结束，恢复光标为抓手的准备状态（空格键仍按住）
+      previewContainer.value.style.cursor = '';
+      previewContainer.value.removeEventListener('mousemove', handleMousemove)
+      document.removeEventListener('mouseup', handleMouseup)
+    };
+    previewContainer.value.addEventListener('mousemove', handleMousemove)
+    document.addEventListener('mouseup', handleMouseup)
+  }
 };
 
 
@@ -3590,13 +3582,14 @@ const triggerDragCanvas = (event) => {
     isCanvasDraggingMode = true;
     // 设置全局样式提示用户
     previewContainer.value.style.cursor = 'grab';
-    document.onkeyup = function (event) {
+    const handleKeyup = function (event) {
       if (event.code === 'Space') {
         isCanvasDraggingMode = false;
         previewContainer.value.style.cursor = '';
-        document.onkeyup = null
+        document.removeEventListener('keyup', handleKeyup)
       }
     }
+    document.addEventListener('keyup', handleKeyup)
   }
 }
 

@@ -6,11 +6,7 @@ import {projectSettings} from "@/config/project-settings";
 
 import CanvasManager from "@/object/CanvasManager";
 
-import Text from '../canvas/Text.js'
-
-import EditableText from '../canvas/EditableText.js'
-
-import Image from '../canvas/Image.js'
+import {Image, Text, EditableText} from '@/canvas/CanvasEditor'
 
 class DraggableElementFactory {
 

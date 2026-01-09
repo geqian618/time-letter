@@ -2,6 +2,8 @@ import Image from './Image.js'
 import Text from './Text.js'
 import EditableText from './EditableText.js'
 
+const SELECTION_OBJECT = 'selection:object'
+
 /**
  * Canvas 文本编辑器类
  * 封装 Canvas 文本编辑功能
@@ -16,6 +18,7 @@ class CanvasEditor {
 
         // 获取 Canvas 元素和上下文
         this.canvas = canvas;
+
         this.ctx = this.canvas.getContext('2d');
 
         // 元素数据存储
@@ -48,6 +51,10 @@ class CanvasEditor {
             gridColor: options.gridColor || '#e3e0e0'
         };
 
+
+        // 事件回调
+        this.eventCallbacks = new Map();
+
         // 绑定事件处理函数
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.handleKeyUp = this.handleKeyUp.bind(this);
@@ -70,6 +77,22 @@ class CanvasEditor {
         // 添加事件监听
         this.canvas.addEventListener('mousedown', this.handleMouseDown);
     }
+
+
+    /**
+     * 绑定 canvas 相关事件
+     * @param event
+     * @param callback
+     */
+    on(event, callback) {
+        let events = this.eventCallbacks.get(event);
+        if (!events) {
+            events = new Set();
+            this.eventCallbacks.set(event, events);
+        }
+        events.add(callback);
+    }
+
 
     /**
      * 创建隐藏输入框
@@ -224,7 +247,8 @@ class CanvasEditor {
      * 清理画布
      */
     clearCanvas() {
-        this.elements = new Set();
+        this.elements.clear();
+        this.activeElements.clear();
         this.isEditing && this.cancelEditing();
         this.renderAll();
     }
@@ -654,7 +678,7 @@ class CanvasEditor {
                 if (element.type === 'text' && this.activeElements.has(element)) {
                     this.handleEditText(event)
                 } else {
-                    this.handleActiveElement(element)
+                    this.handleActiveElement({endX, endY, element})
                 }
             }
             !this.isEditing && (this.canvas.style.cursor = '');
@@ -665,11 +689,16 @@ class CanvasEditor {
         document.addEventListener('mouseup', handleMouseup)
     }
 
-    handleActiveElement(element) {
-        const {x, y, width, height} = element;
+    handleActiveElement(event) {
+        const {x, y, width, height} = event.element;
+        this.activeElements.add(event.element)
         this.drawActiveRect(x, y, width, height)
-        this.activeElements.add(element)
+        const callbacks = this.eventCallbacks.get(SELECTION_OBJECT);
+        if (callbacks && callbacks.size) {
+            callbacks.forEach(callback => callback(event))
+        }
     }
+
 
     /**
      * 更新输入框的光标位置
@@ -948,4 +977,4 @@ class CanvasEditor {
 }
 
 
-export default CanvasEditor
+export {CanvasEditor, Image, Text, EditableText}
