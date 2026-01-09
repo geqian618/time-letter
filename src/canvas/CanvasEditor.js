@@ -617,10 +617,11 @@ class CanvasEditor {
      * @param options
      */
     drawActiveRect(x, y, width, height, options = {}) {
-        const {dashPattern = [6, 4], lineWidth = 1, color = 'red', lineCap = 'butt'} = options;
+        const {dashPattern = [5, 3], lineWidth = 1, color = 'red', lineCap = 'butt'} = options;
+        const zoom = this.canvasConfig.zoom;
         this.ctx.save();
-        this.ctx.setLineDash(dashPattern);
-        this.ctx.lineWidth = lineWidth;
+        this.ctx.setLineDash([dashPattern[0] / zoom, dashPattern[1] / zoom]);
+        this.ctx.lineWidth = lineWidth / zoom;
         this.ctx.strokeStyle = color;
         this.ctx.lineCap = lineCap;
 
@@ -655,6 +656,7 @@ class CanvasEditor {
         const {x, y} = this.getCanvasInternalPosition(event);
         const textObj = this.getTextAtPosition(x, y);
         if (textObj && textObj.editable) {
+            this.removeActiveElements()
             // 计算点击位置对应的光标索引
             const index = this.getCursorIndexFromText(textObj, x, y);
             // 如果是双击，直接进入编辑模式
@@ -705,6 +707,7 @@ class CanvasEditor {
                         this.renderAll()
                     }
                 } else if (element.draggable) {
+                    this.activeElements.delete(element)
                     this.canvas.style.cursor = 'move';
                     element.x = moveX - offsetX;
                     element.y = moveY - offsetY;
@@ -718,6 +721,7 @@ class CanvasEditor {
                 if (element.type === 'text' && this.activeElements.has(element)) {
                     this.handleEditText(event)
                 } else {
+                    this.isEditing && this.finishEditing()
                     this.handleActiveElement({endX, endY, element})
                 }
             }
@@ -732,7 +736,8 @@ class CanvasEditor {
     handleActiveElement(event) {
         const {x, y, width, height} = event.element;
         this.activeElements.add(event.element)
-        this.drawActiveRect(x, y, width, height)
+        const offsetWidth = 1 / this.canvasConfig.zoom;
+        this.drawActiveRect(x - offsetWidth, y - offsetWidth, width + 2 * offsetWidth, height + 2 * offsetWidth)
         const callbacks = this.eventCallbacks.get(SELECTION_OBJECT);
         if (callbacks && callbacks.size) {
             callbacks.forEach(callback => callback(event))
@@ -870,6 +875,9 @@ class CanvasEditor {
             this.canvas.style.cursor = '';
             // 更新文本
             this.editingText.text = this.hiddenInput.value;
+            if (!this.editingText.text) {
+                this.removeElement(this.editingText)
+            }
             this.removeActiveElement(this.editingText)
             this.cleanup();
             this.renderAll();
@@ -882,9 +890,10 @@ class CanvasEditor {
     cancelEditing() {
         if (this.editingText) {
             // 如果文本为空，移除它
-            if (this.editingText.text === '') {
-                this.elements.delete(this.editingText)
+            if (!this.editingText.text) {
+                this.removeElement(this.editingText)
             }
+            this.removeActiveElement(this.editingText)
             this.cleanup();
             this.renderAll();
         }
