@@ -18,7 +18,7 @@ export class ImageOptions {
         this.angle = 0;
         this.alpha = 1;
         this.zIndex = 0;
-        this.boxShadow = new ShadowSettings();
+        this.shadow = new ShadowSettings();
     }
 }
 
@@ -39,10 +39,10 @@ export class TextOptions {
         this.fontStyle = 'normal';
         this.fontWeight = 400;
         this.fontColor = 'rgb(0,0,0,1)';
-        this.textDirection = 0;
+        this.direction = 0;
         this.angle = 0;
         this.zIndex = 0;
-        this.textShadow = new ShadowSettings();
+        this.shadow = new ShadowSettings();
     }
 }
 

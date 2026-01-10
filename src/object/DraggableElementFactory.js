@@ -57,7 +57,7 @@ class DraggableElementFactory {
                 const {fontSize} = this.settings.options;
                 const context = this.#getText();
                 const text = new EditableText(context, {
-                    fontSize: fontSize / zoom,
+                    fontSize: Math.floor(fontSize / zoom),
                     draggable: true
                 });
                 resolve(text);

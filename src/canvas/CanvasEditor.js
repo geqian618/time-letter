@@ -25,9 +25,9 @@ class CanvasEditor {
         this.ctx = this.canvas.getContext('2d');
 
         // 元素数据存储
-        this.elements = new Set();
+        this.elements = [];
 
-        this.activeElements = new Set();
+        this.activeElements = [];
 
         // 编辑状态
         this.editingText = null;
@@ -205,12 +205,12 @@ class CanvasEditor {
      * @param element
      */
     addElement(element) {
-        this.elements.add(element);
+        this.elements.push(element);
         if (element.type === 'image' && element.cacheable) {
             this.cache.set(element.src, element.image)
         }
         this.renderAll();
-        return this.elements.size - 1;
+        return this.elements.length - 1;
     }
 
 
@@ -219,24 +219,42 @@ class CanvasEditor {
      * @param {number} element - 元素
      */
     removeElement(element) {
-        return this.elements.delete(element) && this.activeElements.delete(element);
+        let index = this.elements.findIndex(item => item.id === element.id);
+        while (index !== -1) {
+            this.elements.splice(index, 1);
+            index = this.elements.findIndex(item => item.id === element.id);
+        }
+        this.removeActiveElement(element);
     }
+
+    hasElement(element) {
+        return this.elements.findIndex(item => item.id === element.id) !== -1;
+    }
+
 
     /**
      * 移除全部元素
      */
     removeElements() {
-        this.elements.clear();
-        this.activeElements.clear();
+        this.elements = [];
+        this.activeElements = [];
     }
 
+
+    hasActiveElement(element) {
+        return this.activeElements.findIndex(item => item.id === element.id) !== -1;
+    }
 
     /**
      * 移除元素
      * @param {number} element - 元素
      */
     removeActiveElement(element) {
-        return this.activeElements.delete(element);
+        let index = this.activeElements.findIndex(item => item.id === element.id);
+        while (index !== -1) {
+            this.activeElements.splice(index, 1);
+            index = this.activeElements.findIndex(item => item.id === element.id);
+        }
     }
 
 
@@ -244,16 +262,24 @@ class CanvasEditor {
      * 移除全部激活元素
      */
     removeActiveElements() {
-        this.activeElements.clear();
+        this.activeElements = [];
     }
 
+
+    updateElement(element) {
+        for (let item of this.elements) {
+            if (element.id === item.id) {
+                Object.assign(item, element);
+            }
+        }
+    }
 
     /**
      * 获取所有元素
      * @returns {Array} 文本对象数组
      */
     getElements(isClone) {
-        return isClone ? new Set(Array.from(this.elements).map(element => ({...element}))) : this.elements;
+        return isClone ? this.elements.map(element => ({...element})) : this.elements;
     }
 
     /**
@@ -261,15 +287,15 @@ class CanvasEditor {
      * @returns {Array} 文本对象数组
      */
     getActiveElements(isClone) {
-        return isClone ? Array.from(this.activeElements).map(element => ({...element})) : this.activeElements;
+        return isClone ? this.activeElements.map(element => ({...element})) : this.activeElements;
     }
 
     /**
      * 清理画布
      */
     clearCanvas() {
-        this.elements.clear();
-        this.activeElements.clear();
+        this.elements = [];
+        this.activeElements = [];
         this.isEditing && this.cancelEditing();
         this.renderAll();
     }
@@ -555,7 +581,7 @@ class CanvasEditor {
                 // 绘制文本
                 element.draw(this.ctx);
                 // 如果是正在编辑的文本，绘制背景颜色
-                if (this.editingText === element && this.isEditing) {
+                if (this.editingText === element && this.editingText === element) {
                     this.drawEditBackground(element)
                     // 如果是正在编辑的文本，绘制光标
                     if (this.isCursorVisible) {
@@ -567,6 +593,9 @@ class CanvasEditor {
                     // 绘制图片
                     element.draw(this.ctx);
                 }
+            }
+            if (this.hasActiveElement(element) && this.editingText !== element) {
+                element.selection(this.ctx, this.canvasConfig.zoom)
             }
         }
     }
@@ -707,7 +736,7 @@ class CanvasEditor {
                         this.renderAll()
                     }
                 } else if (element.draggable) {
-                    this.activeElements.delete(element)
+                    this.removeActiveElement(element)
                     this.canvas.style.cursor = 'move';
                     element.x = moveX - offsetX;
                     element.y = moveY - offsetY;
@@ -718,11 +747,11 @@ class CanvasEditor {
         const handleMouseup = (e) => {
             const {x: endX, y: endY} = this.getCanvasInternalPosition(e);
             if (startX === endX && startY === endY) {
-                if (element.type === 'text' && this.activeElements.has(element)) {
+                if (element.type === 'text' && this.hasActiveElement(element)) {
                     this.handleEditText(event)
                 } else {
                     this.isEditing && this.finishEditing()
-                    this.handleActiveElement({endX, endY, element})
+                    this.handleActiveElement({x: endX, y: endY, target: element})
                 }
             }
             !this.isEditing && (this.canvas.style.cursor = '');
@@ -734,14 +763,12 @@ class CanvasEditor {
     }
 
     handleActiveElement(event) {
-        const {x, y, width, height} = event.element;
-        this.activeElements.add(event.element)
-        const offsetWidth = 1 / this.canvasConfig.zoom;
-        this.drawActiveRect(x - offsetWidth, y - offsetWidth, width + 2 * offsetWidth, height + 2 * offsetWidth)
+        this.activeElements.push(event.target)
         const callbacks = this.eventCallbacks.get(SELECTION_OBJECT);
         if (callbacks && callbacks.size) {
             callbacks.forEach(callback => callback(event))
         }
+        this.renderAll()
     }
 
 
@@ -839,8 +866,8 @@ class CanvasEditor {
         if (this.isEditing && textObj !== this.editingText) {
             this.finishEditing();
         }
-        if (this.activeElements.size > 0) {
-            this.activeElements.clear();
+        if (this.activeElements.length > 0) {
+            this.activeElements = [];
             this.renderAll();
         }
     }
@@ -890,7 +917,7 @@ class CanvasEditor {
     cancelEditing() {
         if (this.editingText) {
             // 如果文本为空，移除它
-            if (!this.editingText.text) {
+            if (!this.hiddenInput.value) {
                 this.removeElement(this.editingText)
             }
             this.removeActiveElement(this.editingText)
@@ -953,7 +980,7 @@ class CanvasEditor {
             canvas: {
                 width: this.canvas.width,
                 height: this.canvas.height,
-                elements: [...this.elements]
+                elements: this.elements
             }
         }, null, 2);
     }
@@ -968,12 +995,12 @@ class CanvasEditor {
             this.resizeCanvas(width, height)
             for (let element of elements) {
                 if (element.type === 'text') {
-                    this.elements.add(new Text(element.text, element))
+                    this.elements.push(new Text(element.text, element))
                 }
                 if (element.type === 'image') {
                     const image = this.cache.get(element.src);
                     const instance = image ? new Image(image, element) : await Image.fromURL(element.src, element);
-                    this.elements.add(instance)
+                    this.elements.push(instance)
                 }
             }
             this.renderAll();

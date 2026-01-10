@@ -385,8 +385,8 @@
                         <div class="label">排列方向</div>
                         <div class="value">
                           <el-select
-                              v-model="textOptions.textDirection"
-                              :options="[{label:'水平', value:0}, {label:'垂直', value:1}]"
+                              v-model="textOptions.direction"
+                              :options="[{label:'水平', value: 'horizontal'}, {label: '垂直', value: 'vertical'}]"
                               size="small"
                               placeholder="Select"/>
                         </div>
@@ -424,7 +424,7 @@
                           <el-slider
                               v-model="textOptions.fontSize"
                               :min="1"
-                              :max="100"
+                              :max="1000"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
@@ -500,33 +500,33 @@
                           <el-slider size="small"
                                      :min="-50"
                                      :max="50"
-                                     v-model="textOptions.textShadow.offsetX"
+                                     v-model="textOptions.shadow.offsetX"
                                      placement="top"/>
-                          <input type="number" class="number-input" v-model="textOptions.textShadow.offsetX" step="1">
+                          <input type="number" class="number-input" v-model="textOptions.shadow.offsetX" step="1">
                         </div>
                       </li>
                       <li class="option">
                         <div class="label">Y轴偏移</div>
                         <div class="value">
                           <el-slider
-                              v-model="textOptions.textShadow.offsetY"
+                              v-model="textOptions.shadow.offsetY"
                               :min="-50"
                               :max="50"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
-                          <input type="number" class="number-input" v-model="textOptions.textShadow.offsetY" step="1">
+                          <input type="number" class="number-input" v-model="textOptions.shadow.offsetY" step="1">
                         </div>
                       </li>
                       <li class="option">
                         <div class="label">模糊程度</div>
                         <div class="value">
                           <el-slider
-                              v-model="textOptions.textShadow.blur"
+                              v-model="textOptions.shadow.blur"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
-                          <input type="number" class="number-input" v-model="textOptions.textShadow.blur" step="1">
+                          <input type="number" class="number-input" v-model="textOptions.shadow.blur" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -534,7 +534,7 @@
                         <div class="value">
                           <el-color-picker
                               @change=""
-                              v-model="textOptions.textShadow.shadowColor"
+                              v-model="textOptions.shadow.shadowColor"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
@@ -605,33 +605,33 @@
                           <el-slider size="small"
                                      :min="-50"
                                      :max="50"
-                                     v-model="imageOptions.boxShadow.offsetX"
+                                     v-model="imageOptions.shadow.offsetX"
                                      placement="top"/>
-                          <input type="number" class="number-input" v-model="imageOptions.boxShadow.offsetX" step="1">
+                          <input type="number" class="number-input" v-model="imageOptions.shadow.offsetX" step="1">
                         </div>
                       </li>
                       <li class="option">
                         <div class="label">Y轴偏移</div>
                         <div class="value">
                           <el-slider
-                              v-model="imageOptions.boxShadow.offsetY"
+                              v-model="imageOptions.shadow.offsetY"
                               :min="-50"
                               :max="50"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
-                          <input type="number" class="number-input" v-model="imageOptions.boxShadow.offsetY" step="1">
+                          <input type="number" class="number-input" v-model="imageOptions.shadow.offsetY" step="1">
                         </div>
                       </li>
                       <li class="option">
                         <div class="label">模糊程度</div>
                         <div class="value">
                           <el-slider
-                              v-model="imageOptions.boxShadow.blur"
+                              v-model="imageOptions.shadow.blur"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
-                          <input type="number" class="number-input" v-model="imageOptions.boxShadow.blur" step="1">
+                          <input type="number" class="number-input" v-model="imageOptions.shadow.blur" step="1">
                         </div>
                       </li>
                       <li class="option">
@@ -639,7 +639,7 @@
                         <div class="value">
                           <el-color-picker
                               @change=""
-                              v-model="imageOptions.boxShadow.shadowColor"
+                              v-model="imageOptions.shadow.shadowColor"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
@@ -1744,183 +1744,32 @@ const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
   //停止监听 stopWatch();
   const canvas = CanvasManager.getCurrentCanvas();
   if (!canvas) return
-  const imageElement = canvas.getImageElement();
-  const backgroundElement = imageElement.parentNode.querySelector('.image-background');
-  const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
-  const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
-  for (let [element, settings] of canvas.settings.texts) {
-    if (element.getAttribute('selected') === 'true') {
-      let computedStyle = window.getComputedStyle(element);
-      const elementWidth = parseFloat(element.style.width) || parseFloat(computedStyle.width);
-      const elementHeight = parseFloat(element.style.height) || parseFloat(computedStyle.height);
-      let elementLeft = parseFloat(element.style.left) || parseFloat(computedStyle.left)
-      let elementTop = parseFloat(element.style.top) || parseFloat(computedStyle.top)
-      let elementRight = parseFloat(element.style.right) || parseFloat(computedStyle.right)
-      let elementBottom = parseFloat(element.style.bottom) || parseFloat(computedStyle.bottom)
-      element.style.zIndex = newVal.zIndex
-      element.style.fontStyle = newVal.fontStyle
-      element.style.fontWeight = newVal.fontWeight
-      element.style.fontFamily = newVal.fontFamily
-      element.style.fontSize = newVal.fontSize + 'px'
-      element.style.color = newVal.fontColor
-      element.style.background = newVal.tagBackground
-      element.style.transform = `rotate(${newVal.angle}deg)`
-      const {textShadow: {offsetX, offsetY, blur, shadowColor}} = newVal;
-      element.style.textShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
-
-      if (newVal.textDirection === 0) {
-        element.style.writingMode = 'horizontal-tb'
-      } else if (newVal.textDirection === 1) {
-        element.style.writingMode = 'vertical-lr'
-        element.style.textOrientation = 'upright'
-      }
-
-      await nextTick()
-
-      const newElementWidth = element.offsetWidth;
-      const newElementHeight = element.offsetHeight;
-
-      const increaseWidth = newElementWidth - elementWidth;
-      const increaseHeight = newElementHeight - elementHeight;
-
-      element.style.left = elementLeft - increaseWidth / 2 + 'px'
-      element.style.top = elementTop - increaseHeight / 2 + 'px'
-      element.style.right = elementRight - increaseWidth / 2 + 'px'
-      element.style.bottom = elementBottom - increaseHeight / 2 + 'px'
-
-      await nextTick()
-
-      settings.options = _.cloneDeep(newVal)
-      settings.width = newElementWidth
-      settings.height = newElementHeight
-      settings.options.fontSizeRatio = newVal.fontSize / backgroundWidth
-      settings.options.textShadow.offsetXRatio = newVal.textShadow.offsetX / newVal.fontSize
-      settings.options.textShadow.offsetYRatio = newVal.textShadow.offsetY / newVal.fontSize
-      settings.options.textShadow.blurRatio = newVal.textShadow.blur / newVal.fontSize
-
-      updateElementPosition(canvas, element, settings)
-    }
+  canvasEditor.updateElement({...textOptions.value})
+  canvasEditor.renderAll()
+  canvas.data = {
+    zoom: canvasEditor.getZoom(),
+    json: canvasEditor.exportToJSON(),
   }
 }, {
   //深度监视（监视属性变化）
   deep: true,
-  //immediate 立即触发一次监视
-  //immediate: true
 });
 
-const stopImageAngleWatch = watch(() => imageOptions.value.angle, (newVal, oldVal) => {
+
+const stopImageSettingsWatch = watch(imageOptions, async (newVal, oldVal) => {
+  //停止监听 stopWatch();
   const canvas = CanvasManager.getCurrentCanvas();
   if (!canvas) return
-  const elements = canvas.settings.images;
-  for (let [element, settings] of elements) {
-    if (element.getAttribute('selected') === 'true') {
-      element.style.transformOrigin = 'center center'
-      element.style.transform = `rotate(${newVal}deg)`;
-      settings.options.angle = newVal
-    }
-  }
-});
-
-const stopImageAlphaWatch = watch(() => imageOptions.value.alpha, (newVal, oldVal) => {
-  const canvas = CanvasManager.getCurrentCanvas();
-  if (!canvas) return
-  const elements = canvas.settings.images;
-  for (let [element, settings] of elements) {
-    if (element.getAttribute('selected') === 'true') {
-      element.style.opacity = newVal
-      settings.options.alpha = newVal
-    }
-  }
-});
-
-const stopImageBoxShadowWatch = watch(() => imageOptions.value.boxShadow, (newVal, oldVal) => {
-  const canvas = CanvasManager.getCurrentCanvas();
-  if (!canvas) return
-  const elements = canvas.settings.images;
-  for (let [element, settings] of elements) {
-    if (element.getAttribute('selected') === 'true') {
-
-      const {offsetX, offsetY, blur, shadowColor} = newVal;
-      element.style.boxShadow = `${offsetX + 'px ' + offsetY + 'px ' + blur + 'px ' + shadowColor}`
-
-      const {offsetWidth, offsetHeight} = element;
-      settings.options.boxShadow = _.cloneDeep(newVal)
-      settings.options.boxShadow.offsetXRatio = offsetX / offsetWidth
-      settings.options.boxShadow.offsetYRatio = offsetY / offsetHeight
-      settings.options.boxShadow.blurRatio = blur / offsetWidth
-    }
+  canvasEditor.updateElement({...imageOptions.value})
+  canvasEditor.renderAll()
+  canvas.data = {
+    zoom: canvasEditor.getZoom(),
+    json: canvasEditor.exportToJSON(),
   }
 }, {
   //深度监视（监视属性变化）
   deep: true,
-})
-
-
-const stopImageScaleWatch = watch(() => imageOptions.value.scale, async (newVal, oldVal) => {
-  const canvas = CanvasManager.getCurrentCanvas();
-  if (!canvas) return
-  const backgroundElement = canvas.getImageElement().parentNode.querySelector('.image-background');
-  const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
-  const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
-  const elements = canvas.settings.images;
-  for (let [element, settings] of elements) {
-    if (element.getAttribute('selected') === 'true') {
-
-      const {originalWidth, originalHeight} = settings;
-
-      const computedStyle = window.getComputedStyle(element);
-      let elementWidth = Number.parseFloat(computedStyle.width);
-      let elementHeight = Number.parseFloat(computedStyle.height);
-      let elementLeft = Number.parseFloat(computedStyle.left);
-      let elementRight = Number.parseFloat(computedStyle.right);
-      let elementTop = Number.parseFloat(computedStyle.top);
-      let elementBottom = Number.parseFloat(computedStyle.bottom);
-
-      let scale = newVal - elementWidth / originalWidth;
-
-      const increaseWidth = originalWidth * scale;
-      const increaseHeight = originalHeight * scale;
-
-      elementWidth = elementWidth + increaseWidth
-      elementHeight = elementHeight + increaseHeight
-
-      elementLeft = elementLeft - increaseWidth / 2
-      elementRight = elementRight - increaseWidth / 2
-      elementTop = elementTop - increaseHeight / 2
-      elementBottom = elementBottom - increaseHeight / 2
-
-      element.style.width = elementWidth + 'px'
-      element.style.height = elementHeight + 'px'
-      element.style.left = elementLeft + 'px'
-      element.style.top = elementTop + 'px'
-      element.style.right = elementRight + 'px'
-      element.style.bottom = elementBottom + 'px'
-
-      await nextTick();
-
-      settings.width = elementWidth
-      settings.height = elementHeight
-      settings.options.scale = newVal
-      settings.options.imageWidthRatio = elementWidth / backgroundWidth
-      settings.options.imageHeightRatio = elementHeight / backgroundHeight
-
-      updateElementPosition(canvas, element, settings)
-    }
-  }
 });
-
-
-const stopWatchImageZIndex = watch(() => imageOptions.value.zIndex, (newVal, oldVal) => {
-  const canvas = CanvasManager.getCurrentCanvas();
-  if (!canvas) return
-  const elements = canvas.settings.images;
-  for (let [element, settings] of elements) {
-    if (element.getAttribute('selected') === 'true') {
-      element.style.zIndex = newVal
-      settings.options.zIndex = newVal;
-    }
-  }
-})
 
 
 const handleCanvasScale = () => {
@@ -2367,6 +2216,7 @@ const setScrollBarPosition = (canvas) => {
 }
 
 const initCanvasSize = () => {
+
   setTimeout(() => {
     // 获取窗口宽高
     const windowWidth = window.innerWidth;
@@ -2380,6 +2230,30 @@ const initCanvasSize = () => {
 
     canvasEditor.on('selection:object', (event) => {
       console.log('选中元素：', event)
+      const target = event.target;
+      if (target.type === 'text') {
+        console.log(target)
+        textOptions.value = target
+        if (projectSettings.value.others.optionAnchorPoint) {
+          handleOpenSubMenu('3')
+          nextTick(() => {
+            document.getElementById('text-options').scrollIntoView({behavior: 'smooth'});
+          })
+        }
+      } else if (target.type === 'image') {
+        imageOptions.value = target
+        if (projectSettings.value.others.optionAnchorPoint) {
+          handleOpenSubMenu('4')
+          nextTick(() => {
+            document.getElementById('image-options').scrollIntoView({behavior: 'smooth'});
+          })
+        }
+      }
+    })
+
+
+    canvasEditor.on('updated:object', (event) => {
+
     })
 
   }, 1000)
@@ -3648,7 +3522,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   stopWatchAvailableCanvas()
-  stopTextSettingsWatch()
+  // stopTextSettingsWatch()
   stopProjectSettingsWatch()
   stopImageBoxShadowWatch()
   stopWatchImageZIndex()

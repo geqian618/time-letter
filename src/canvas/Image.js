@@ -83,16 +83,42 @@ class Image extends Element {
         ctx.shadowOffsetX = shadowOffsetX || 0;
         ctx.shadowOffsetY = shadowOffsetY || 0;
 
-        // 将画布原点移动到图片中心点
-        const centerX = this.x + this.width / 2;
-        const centerY = this.y + this.height / 2;
-        ctx.translate(centerX, centerY);
+        if (this.angle !== 0) {
+            // 将画布原点移动到图片中心点
+            const centerX = this.x + this.width / 2;
+            const centerY = this.y + this.height / 2;
+            ctx.translate(centerX, centerY);
+            // 旋转画布
+            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.translate(-centerX, -centerY);
+        }
 
-        // 旋转画布
-        ctx.rotate(this.angle * Math.PI / 180);
         // 绘制图片（注意坐标已偏移到中心点）
-        ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
         // 恢复画布到之前保存的状态
+        ctx.restore();
+    }
+
+
+    selection(ctx, zoom) {
+        let dashPattern = [5, 3], lineWidth = 1, color = 'red', lineCap = 'butt'
+        ctx.save();
+        ctx.setLineDash([dashPattern[0] / zoom, dashPattern[1] / zoom]);
+        ctx.lineWidth = lineWidth / zoom;
+        ctx.strokeStyle = color;
+        ctx.lineCap = lineCap;
+        if (this.angle !== 0) {
+            // 将画布原点移动到图片中心点
+            const centerX = this.x + this.width / 2;
+            const centerY = this.y + this.height / 2;
+            ctx.translate(centerX, centerY);
+            // 旋转画布
+            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.translate(-centerX, -centerY);
+        }
+        ctx.beginPath();
+        ctx.rect(this.x, this.y, this.width, this.height);
+        ctx.stroke();
         ctx.restore();
     }
 }

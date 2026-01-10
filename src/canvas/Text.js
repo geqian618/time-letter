@@ -6,26 +6,19 @@ import Element from './Element.js'
 class Text extends Element {
 
     constructor(text, options = {}) {
-
         super(options);
-
         // 元素类型
         this.type = 'text';
-
         this.width = options.width || 0
-
         this.height = options.height || 0
-
         // 文本内容
         this.text = text || '';
-
+        this.direction = options.direction || 'horizontal';
         // 可编辑
         this.editable = options.editable !== undefined ? options.editable : false;
-
         // 文字间距
         this.spacing = options.spacing || 0;
-
-        this.angle = 0;
+        this.angle = options.angle || 0;
 
         // 字体属性
         this.fontSize = options.fontSize || 16;
@@ -52,11 +45,8 @@ class Text extends Element {
 
 
     draw(ctx) {
-
         ctx.save();
-
         ctx.textBaseline = 'top';
-
         ctx.textAlign = 'left'
 
         // 字体设置
@@ -73,21 +63,101 @@ class Text extends Element {
         // 默认Y偏移
         ctx.shadowOffsetY = this.shadowOffsetY || 0;
 
-        let currentX = this.x;
+        const {charPositions, height, width} = this.direction === 'vertical'
+            ? this.parseVerticalChars(ctx)
+            : this.parseHorizontalChars(ctx)
 
-        for (let i = 0; i < this.text.length; i++) {
-            const char = this.text[i];
-            ctx.fillText(char, currentX, this.y);
-            if (i === this.text.length - 1) {
-                currentX += ctx.measureText(char).width
-                break
-            }
-            currentX += ctx.measureText(char).width + this.spacing;
+        if (this.angle !== 0) {
+            // 计算文本中心点
+            const centerX = this.x + width / 2;
+            const centerY = this.y + height / 2;
+            // 平移到文本中心点，旋转，再平移回来
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.translate(-centerX, -centerY);
         }
-        this.width = currentX - this.x;
-        this.height = this.fontSize;
+
+        // 绘制每个字符
+        for (const pos of charPositions) {
+            ctx.fillText(pos.char, pos.x, pos.y);
+        }
+
+        this.width = width;
+        this.height = height
+
         ctx.restore();
     }
+
+
+    parseHorizontalChars(ctx) {
+        let currentX = this.x;
+        const charPositions = [];
+        for (let i = 0; i < this.text.length; i++) {
+            const char = this.text[i];
+            const charWidth = ctx.measureText(char).width;
+            charPositions.push({char, x: currentX, y: this.y, width: charWidth, height: this.fontSize});
+            currentX += charWidth + (i < this.text.length - 1 ? this.spacing : 0);
+        }
+        return {
+            width: currentX - this.x,
+            height: this.fontSize,
+            charPositions
+        };
+    }
+
+    parseVerticalChars(ctx) {
+        let currentY = this.y;
+        const charPositions = [];
+        let maxCharWidth = 0;
+        // 先测量所有字符的宽度，找出最大宽度
+        const charWidths = [];
+        for (let i = 0; i < this.text.length; i++) {
+            const charWidth = ctx.measureText(this.text[i]).width;
+            charWidths.push(charWidth);
+            maxCharWidth = Math.max(maxCharWidth, charWidth);
+        }
+        // 根据居中对齐方式计算x坐标
+        for (let i = 0; i < this.text.length; i++) {
+            // 计算当前字符在最大宽度内居中的x坐标
+            const charX = this.x + (maxCharWidth - charWidths[i]) / 2;
+            charPositions.push({
+                char: this.text[i],
+                x: charX,
+                y: currentY,
+                width: charWidths[i],
+                height: this.fontSize
+            });
+            currentY += this.fontSize + (i < this.text.length - 1 ? this.spacing : 0);
+        }
+        return {
+            width: maxCharWidth,
+            height: currentY - this.y,
+            charPositions
+        };
+    }
+
+    selection(ctx, zoom) {
+        let dashPattern = [5, 3], lineWidth = 1, color = 'red', lineCap = 'butt'
+        ctx.save();
+        ctx.setLineDash([dashPattern[0] / zoom, dashPattern[1] / zoom]);
+        ctx.lineWidth = lineWidth / zoom;
+        ctx.strokeStyle = color;
+        ctx.lineCap = lineCap;
+        if (this.angle !== 0) {
+            // 计算文本中心点
+            const centerX = this.x + this.width / 2;
+            const centerY = this.y + this.height / 2;
+            // 平移到文本中心点，旋转，再平移回来
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.translate(-centerX, -centerY);
+        }
+        ctx.beginPath();
+        ctx.rect(this.x, this.y, this.width, this.height);
+        ctx.stroke();
+        ctx.restore();
+    }
+
 }
 
 export default Text
