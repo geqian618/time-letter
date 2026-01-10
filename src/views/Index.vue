@@ -2229,11 +2229,9 @@ const initCanvasSize = () => {
     canvasEditor = new CanvasEditor(canvas);
 
     canvasEditor.on('selection:object', (event) => {
-      console.log('选中元素：', event)
       const target = event.target;
       if (target.type === 'text') {
-        console.log(target)
-        textOptions.value = target
+        textOptions.value = {...target}
         if (projectSettings.value.others.optionAnchorPoint) {
           handleOpenSubMenu('3')
           nextTick(() => {
@@ -2241,7 +2239,7 @@ const initCanvasSize = () => {
           })
         }
       } else if (target.type === 'image') {
-        imageOptions.value = target
+        imageOptions.value = {...target}
         if (projectSettings.value.others.optionAnchorPoint) {
           handleOpenSubMenu('4')
           nextTick(() => {

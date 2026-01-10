@@ -581,11 +581,11 @@ class CanvasEditor {
                 // 绘制文本
                 element.draw(this.ctx);
                 // 如果是正在编辑的文本，绘制背景颜色
-                if (this.editingText === element && this.editingText === element) {
+                if (this.editingText === element) {
                     this.drawEditBackground(element)
                     // 如果是正在编辑的文本，绘制光标
                     if (this.isCursorVisible) {
-                        this.drawCursor(element, this.canvasConfig.cursorWidth)
+                        this.drawCursor(element, this.canvasConfig.cursorWidth / this.canvasConfig.zoom)
                     }
                 }
             } else if (element.type === 'image') {
@@ -747,7 +747,7 @@ class CanvasEditor {
         const handleMouseup = (e) => {
             const {x: endX, y: endY} = this.getCanvasInternalPosition(e);
             if (startX === endX && startY === endY) {
-                if (element.type === 'text' && this.hasActiveElement(element)) {
+                if (this.hasActiveElement(element) || this.editingText === element) {
                     this.handleEditText(event)
                 } else {
                     this.isEditing && this.finishEditing()
