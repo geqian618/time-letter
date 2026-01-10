@@ -32,7 +32,7 @@ class Text extends Element {
         // 颜色
         this.fontColor = options.fontColor || 'black';
 
-        this.highlightColor = options.highlightColor || 'rgba(180,179,179,0.2)';
+        this.highlightColor = options.highlightColor || 'rgba(255,255,255,0.2)';
 
         // 文本阴影 - 需要处理嵌套对象
         this.shadow = {
@@ -149,10 +149,11 @@ class Text extends Element {
     }
 
     selection(ctx, zoom) {
-        let dashPattern = [5, 3], lineWidth = 1, color = 'red', lineCap = 'butt'
+        let dashPattern = [5, 3], color = 'red', lineCap = 'butt'
+        const lineWidth = 1 / zoom;
         ctx.save();
         ctx.setLineDash([dashPattern[0] / zoom, dashPattern[1] / zoom]);
-        ctx.lineWidth = lineWidth / zoom;
+        ctx.lineWidth = lineWidth;
         ctx.strokeStyle = color;
         ctx.lineCap = lineCap;
         if (this.angle !== 0) {
@@ -165,7 +166,7 @@ class Text extends Element {
             ctx.translate(-centerX, -centerY);
         }
         ctx.beginPath();
-        ctx.rect(this.x, this.y, this.width, this.height);
+        ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width + 2 * lineWidth, this.height + 2 * lineWidth);
         ctx.stroke();
         ctx.restore();
     }

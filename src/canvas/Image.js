@@ -101,26 +101,28 @@ class Image extends Element {
 
 
     selection(ctx, zoom) {
-        let dashPattern = [5, 3], lineWidth = 1, color = 'red', lineCap = 'butt'
+        let dashPattern = [5, 3], color = 'red', lineCap = 'butt'
+        const lineWidth = 1 / zoom;
         ctx.save();
         ctx.setLineDash([dashPattern[0] / zoom, dashPattern[1] / zoom]);
-        ctx.lineWidth = lineWidth / zoom;
+        ctx.lineWidth = lineWidth;
         ctx.strokeStyle = color;
         ctx.lineCap = lineCap;
         if (this.angle !== 0) {
-            // 将画布原点移动到图片中心点
+            // 计算文本中心点
             const centerX = this.x + this.width / 2;
             const centerY = this.y + this.height / 2;
+            // 平移到文本中心点，旋转，再平移回来
             ctx.translate(centerX, centerY);
-            // 旋转画布
             ctx.rotate(this.angle * Math.PI / 180);
             ctx.translate(-centerX, -centerY);
         }
         ctx.beginPath();
-        ctx.rect(this.x, this.y, this.width, this.height);
+        ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width + 2 * lineWidth, this.height + 2 * lineWidth);
         ctx.stroke();
         ctx.restore();
     }
+
 }
 
 export default Image;
