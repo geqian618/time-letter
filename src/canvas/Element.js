@@ -19,6 +19,11 @@ class Element {
     contains(x, y) {
         return false
     }
+
+    selection(ctx, zoom) {
+
+    }
+
 }
 
 

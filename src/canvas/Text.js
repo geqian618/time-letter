@@ -48,7 +48,6 @@ class Text extends Element {
         ctx.save();
         ctx.textBaseline = 'top';
         ctx.textAlign = 'left'
-
         // 字体设置
         ctx.font = `${this.fontStyle} ${this.fontWeight} ${this.fontSize}px "${this.fontFamily}", "Microsoft YaHei", sans-serif`;
         // 字体颜色
