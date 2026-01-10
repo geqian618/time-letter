@@ -1175,6 +1175,8 @@ import MapHelper from "@/utils/map-helper";
 
 import Notification from '@/utils/Notification'
 
+import useEventListener from '@/composables/useEventListener'
+
 import {projectSettings, outputSizeOptions, originalMetadata, downloadThreadsOptions} from '@/config/project-settings'
 
 import {
@@ -3458,48 +3460,22 @@ const triggerDragCanvas = (event) => {
 const bindEventListener = () => {
 
   document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
-    element.addEventListener('dragstart', handleDragStart);
+    useEventListener(element, 'dragstart', handleDragStart)
   });
-  previewContainer.value.addEventListener('drop', handleDropElement);
 
-  previewContainer.value.addEventListener('drop', handleDropFiles);
-  previewContainer.value.addEventListener('dragover', handleDragover);
-  previewContainer.value.addEventListener('dragleave', handleDragleave);
+  useEventListener(previewList.value, 'keydown', handleSelectAllPreviewElements);
 
-  previewContainer.value.addEventListener('scroll', handleMoveScrollbar);
+  useEventListener(previewContainer.value, 'drop', handleDropElement);
+  useEventListener(previewContainer.value, 'drop', handleDropFiles);
+  useEventListener(previewContainer.value, 'dragover', handleDragover);
+  useEventListener(previewContainer.value, 'dragleave', handleDragleave);
+  useEventListener(previewContainer.value, 'scroll', handleMoveScrollbar);
+  useEventListener(previewContainer.value, 'mousedown', handleDragMoveCanvas);
+  useEventListener(previewContainer.value, 'wheel', handleCanvasResize, {passive: false});
 
-  previewList.value.addEventListener('keydown', handleSelectAllPreviewElements);
-
-  previewContainer.value.addEventListener('mousedown', handleDragMoveCanvas);
-  previewContainer.value.addEventListener('wheel', handleCanvasResize, {passive: false});
-
-  document.addEventListener('keydown', handleRemoveElement);
-  // 键盘事件设置模式
-  document.addEventListener('keydown', triggerDragCanvas);
+  useEventListener(document, 'keydown', handleRemoveElement)
+  useEventListener(document, 'keydown', triggerDragCanvas)
 }
-
-const unbindEventListener = () => {
-
-  document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
-    element.removeEventListener('dragstart', handleDragStart)
-  });
-  previewContainer.value.removeEventListener('drop', handleDropElement);
-  previewContainer.value.removeEventListener('drop', handleDropFiles);
-  previewContainer.value.removeEventListener('dragover', handleDragover);
-  previewContainer.value.removeEventListener('dragleave', handleDragleave);
-
-  previewContainer.value.removeEventListener('scroll', handleMoveScrollbar);
-
-  previewList.value.removeEventListener('keydown', handleSelectAllPreviewElements);
-
-  previewContainer.value.removeEventListener('mousedown', handleDragMoveCanvas);
-  previewContainer.value.removeEventListener('wheel', handleCanvasResize, {passive: false});
-
-  document.removeEventListener('keydown', handleRemoveElement);
-  // 键盘事件设置模式
-  document.removeEventListener('keydown', triggerDragCanvas);
-}
-
 
 onMounted(() => {
   createThreadPool()
@@ -3513,21 +3489,16 @@ onMounted(() => {
   watchDownloadProgress()
   editorOutputSettings()
   loadProjectSettings()
-  bindEventListener()
   initCanvasSize()
+  bindEventListener()
 })
 
 
 onBeforeUnmount(() => {
   stopWatchAvailableCanvas()
-  // stopTextSettingsWatch()
+  stopTextSettingsWatch()
+  stopImageSettingsWatch()
   stopProjectSettingsWatch()
-  stopImageBoxShadowWatch()
-  stopWatchImageZIndex()
-  stopImageAlphaWatch()
-  stopImageScaleWatch()
-  stopImageAngleWatch()
-  unbindEventListener()
 })
 
 
