@@ -142,19 +142,14 @@ class CanvasEditor {
      * @param {number} index - 光标位置
      */
     startEditing(textObj, index) {
-
-        if (this.isEditing && this.editingText === textObj) {
+        if (textObj.status === Element.EDITING) {
             // 如果已经在编辑同一文本，只更新光标位置
             this.cursorEndIndex = this.cursorIndex = index;
             this.renderAll();
             this.updateInputSelection();
             return;
         }
-
-        if (this.isEditing && this.editingText !== textObj) {
-            this.finishEditing();
-        }
-
+        textObj.status = Element.EDITING
         this.editingText = textObj;
         this.isEditing = true;
         this.isCursorVisible = true;
@@ -597,7 +592,7 @@ class CanvasEditor {
                     element.draw(this.ctx);
                 }
             }
-            if (this.hasActiveElement(element) && this.editingText !== element) {
+            if (this.hasActiveElement(element)) {
                 element.selection(this.ctx, this.canvasConfig.zoom)
             }
         }
@@ -689,7 +684,10 @@ class CanvasEditor {
         const {x, y} = this.getCanvasInternalPosition(event);
         if (element && element.editable) {
             this.removeActiveElements()
-            element.status = Element.EDITING
+            if (this.isEditing && this.editingText !== element) {
+                this.finishEditing()
+                return
+            }
             // 计算点击位置对应的光标索引
             const index = this.getCursorIndexFromText(element, x, y);
             // 如果是双击，直接进入编辑模式
