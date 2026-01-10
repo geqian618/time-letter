@@ -1,5 +1,11 @@
 class Element {
 
+    static NONE = 'none'
+
+    static SELECTED = 'selected'
+
+    static EDITING = 'editing'
+
     constructor(options) {
 
         // 文本对象 id
@@ -8,6 +14,8 @@ class Element {
         this.x = options.x || 0;
 
         this.y = options.y || 0;
+
+        this.status = 'none'
 
         // 是否可选中
         this.selectable = options.selectable !== undefined ? options.selectable : true;

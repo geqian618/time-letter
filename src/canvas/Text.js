@@ -13,11 +13,13 @@ class Text extends Element {
         this.height = options.height || 0
         // 文本内容
         this.text = text || '';
+        // 文本排列方向
         this.direction = options.direction || 'horizontal';
         // 可编辑
         this.editable = options.editable !== undefined ? options.editable : false;
         // 文字间距
         this.spacing = options.spacing || 0;
+        // 旋转角度
         this.angle = options.angle || 0;
 
         // 字体属性
@@ -26,9 +28,12 @@ class Text extends Element {
         this.fontFamily = options.fontFamily || 'Microsoft YaHei';
         this.fontWeight = options.fontWeight || 400;
         this.lineHeight = options.lineHeight || 1.5;
+
         // 颜色
         this.fontColor = options.fontColor || 'black';
+
         this.highlightColor = options.highlightColor || 'rgba(180,179,179,0.2)';
+
         // 文本阴影 - 需要处理嵌套对象
         this.shadow = {
             color: 'rgba(0,0,0,1)',
@@ -37,6 +42,14 @@ class Text extends Element {
             offsetY: 0,
             ...options.shadow
         };
+
+
+        this.hiddenInput = null
+
+        this.cursor = {
+            start: 0,
+            end: 0
+        }
     }
 
     contains(x, y) {

@@ -1,5 +1,6 @@
 import Image from './Image.js'
 import Text from './Text.js'
+import Element from './Element.js'
 import EditableText from './EditableText.js'
 
 const SELECTION_OBJECT = 'selection:object'
@@ -252,7 +253,8 @@ class CanvasEditor {
     removeActiveElement(element) {
         let index = this.activeElements.findIndex(item => item.id === element.id);
         while (index !== -1) {
-            this.activeElements.splice(index, 1);
+            const removeObj = this.activeElements.splice(index, 1);
+            removeObj.status = Element.NONE
             index = this.activeElements.findIndex(item => item.id === element.id);
         }
     }
@@ -262,6 +264,7 @@ class CanvasEditor {
      * 移除全部激活元素
      */
     removeActiveElements() {
+        this.activeElements.forEach(item => item.status = Element.NONE)
         this.activeElements = [];
     }
 
@@ -296,7 +299,7 @@ class CanvasEditor {
     clearCanvas() {
         this.elements = [];
         this.activeElements = [];
-        this.isEditing && this.cancelEditing();
+        this.isEditing && this.finishEditing();
         this.renderAll();
     }
 
@@ -581,7 +584,7 @@ class CanvasEditor {
                 // 绘制文本
                 element.draw(this.ctx);
                 // 如果是正在编辑的文本，绘制背景颜色
-                if (this.editingText === element) {
+                if (element.status === Element.EDITING) {
                     this.drawEditBackground(element)
                     // 如果是正在编辑的文本，绘制光标
                     if (this.isCursorVisible) {
@@ -679,17 +682,18 @@ class CanvasEditor {
 
     /**
      * 处理 Canvas 点击事件
-     * @param {Event} event - 点击事件
+     * @param params
      */
-    handleEditText(event) {
+    handleEditText(params) {
+        const {event, element} = params;
         const {x, y} = this.getCanvasInternalPosition(event);
-        const textObj = this.getTextAtPosition(x, y);
-        if (textObj && textObj.editable) {
+        if (element && element.editable) {
             this.removeActiveElements()
+            element.status = Element.EDITING
             // 计算点击位置对应的光标索引
-            const index = this.getCursorIndexFromText(textObj, x, y);
+            const index = this.getCursorIndexFromText(element, x, y);
             // 如果是双击，直接进入编辑模式
-            this.startEditing(textObj, index);
+            this.startEditing(element, index);
         }
     }
 
@@ -719,7 +723,7 @@ class CanvasEditor {
         const {x: startX, y: startY} = this.getCanvasInternalPosition(event);
         const element = this.getElementAt(startX, startY, element => element.selectable);
         if (!element) {
-            this.handleCancelActive(event)
+            this.handleCancelActive()
             return
         }
         const offsetX = startX - element.x
@@ -728,7 +732,7 @@ class CanvasEditor {
             const interval = Date.now() - startTime;
             const {x: moveX, y: moveY} = this.getCanvasInternalPosition(e);
             if (interval > 200 && (startX !== moveX || startY !== moveY)) {
-                if (element.type === 'text' && this.isEditing) {
+                if (element.type === 'text' && element.status === Element.EDITING) {
                     // 选中文本
                     this.cursorEndIndex = this.getCursorIndexFromText(element, moveX);
                     if (this.cursorEndIndex !== this.cursorIndex) {
@@ -747,10 +751,10 @@ class CanvasEditor {
         const handleMouseup = (e) => {
             const {x: endX, y: endY} = this.getCanvasInternalPosition(e);
             if (startX === endX && startY === endY) {
-                if (this.hasActiveElement(element) || this.editingText === element) {
-                    this.handleEditText(event)
+                if (element.type === 'text' && (element.status === Element.SELECTED || element.status === Element.EDITING)) {
+                    this.handleEditText({event, element})
                 } else {
-                    this.isEditing && this.finishEditing()
+                    this.editingText && this.finishEditing()
                     this.handleActiveElement({x: endX, y: endY, target: element})
                 }
             }
@@ -763,7 +767,9 @@ class CanvasEditor {
     }
 
     handleActiveElement(event) {
+        const target = event.target;
         this.activeElements.push(event.target)
+        target.status = Element.SELECTED
         const callbacks = this.eventCallbacks.get(SELECTION_OBJECT);
         if (callbacks && callbacks.size) {
             callbacks.forEach(callback => callback(event))
@@ -858,17 +864,14 @@ class CanvasEditor {
     /**
      * 取消元素选择状态
      *
-     * @param event
      */
-    handleCancelActive(event) {
-        const {x, y} = this.getCanvasInternalPosition(event);
-        const textObj = this.getTextAtPosition(x, y);
-        if (this.isEditing && textObj !== this.editingText) {
-            this.finishEditing();
-        }
+    handleCancelActive() {
         if (this.activeElements.length > 0) {
-            this.activeElements = [];
+            this.removeActiveElements()
             this.renderAll();
+        }
+        if (this.editingText) {
+            this.finishEditing()
         }
     }
 
@@ -900,6 +903,7 @@ class CanvasEditor {
     finishEditing() {
         if (this.editingText && this.hiddenInput) {
             this.canvas.style.cursor = '';
+            this.editingText.status = Element.NONE
             // 更新文本
             this.editingText.text = this.hiddenInput.value;
             if (!this.editingText.text) {
@@ -916,6 +920,8 @@ class CanvasEditor {
      */
     cancelEditing() {
         if (this.editingText) {
+            this.canvas.style.cursor = '';
+            this.editingText.status = Element.NONE
             // 如果文本为空，移除它
             if (!this.hiddenInput.value) {
                 this.removeElement(this.editingText)
