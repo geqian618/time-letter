@@ -424,7 +424,7 @@
                           <el-slider
                               v-model="textOptions.fontSize"
                               :min="1"
-                              :max="1000"
+                              :max="100"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
@@ -498,8 +498,8 @@
                         <div class="label">X轴偏移</div>
                         <div class="value">
                           <el-slider size="small"
-                                     :min="-50"
-                                     :max="50"
+                                     :min="-100"
+                                     :max="100"
                                      v-model="textOptions.shadow.offsetX"
                                      placement="top"/>
                           <input type="number" class="number-input" v-model="textOptions.shadow.offsetX" step="1">
@@ -510,8 +510,8 @@
                         <div class="value">
                           <el-slider
                               v-model="textOptions.shadow.offsetY"
-                              :min="-50"
-                              :max="50"
+                              :min="-100"
+                              :max="100"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
@@ -534,7 +534,7 @@
                         <div class="value">
                           <el-color-picker
                               @change=""
-                              v-model="textOptions.shadow.shadowColor"
+                              v-model="textOptions.shadow.color"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
@@ -603,8 +603,8 @@
                         <div class="label">X轴偏移</div>
                         <div class="value">
                           <el-slider size="small"
-                                     :min="-50"
-                                     :max="50"
+                                     :min="-100"
+                                     :max="100"
                                      v-model="imageOptions.shadow.offsetX"
                                      placement="top"/>
                           <input type="number" class="number-input" v-model="imageOptions.shadow.offsetX" step="1">
@@ -615,8 +615,8 @@
                         <div class="value">
                           <el-slider
                               v-model="imageOptions.shadow.offsetY"
-                              :min="-50"
-                              :max="50"
+                              :min="-100"
+                              :max="100"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
@@ -639,7 +639,7 @@
                         <div class="value">
                           <el-color-picker
                               @change=""
-                              v-model="imageOptions.shadow.shadowColor"
+                              v-model="imageOptions.shadow.color"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
@@ -1364,7 +1364,7 @@ const handleFilterFonts = (search) => {
 }
 
 
-const stopWatchAvailableCanvas = watch(filterType, async () => {
+watch(filterType, async () => {
   await clearSelectedPreviewList()
   availableCanvas.value = CanvasManager.getAvailableCanvases(filterType.value)
   await nextTick()
@@ -1719,7 +1719,7 @@ const handleFocalLength = (type) => {
 }
 
 
-const stopProjectSettingsWatch = watch(projectSettings, (newVal, oldVal) => {
+watch(projectSettings, (newVal, oldVal) => {
   const settings = _.cloneDeep(newVal);
   settings.availableFonts = Array.from(settings.availableFonts.entries())
   StorageManager.saveProjectSettings(settings)
@@ -1742,32 +1742,40 @@ const loadProjectSettings = () => {
 }
 
 
-const stopTextSettingsWatch = watch(textOptions, async (newVal, oldVal) => {
-  //停止监听 stopWatch();
+watch(textOptions, async (newVal, oldValue) => {
+  if (newVal !== oldValue) return
   const canvas = CanvasManager.getCurrentCanvas();
-  if (!canvas) return
-  canvasEditor.updateElement({...textOptions.value})
+  const activeElements = canvasEditor.getActiveElements();
+  if (!canvas || !activeElements.length) return
+  const initZoom = canvas.initZoom;
+  const element = _.cloneDeep(newVal);
+  element.fontSize = element.fontSize / initZoom
+  element.shadow.offsetX = element.shadow.offsetX / initZoom
+  element.shadow.offsetY = element.shadow.offsetY / initZoom
+  element.shadow.blur = element.shadow.blur / initZoom
+  canvasEditor.updateElement(element)
   canvasEditor.renderAll()
-  canvas.data = {
-    zoom: canvasEditor.getZoom(),
-    json: canvasEditor.exportToJSON(),
-  }
+  canvas.zoom = canvasEditor.getZoom()
+  canvas.json = canvasEditor.exportToJSON()
 }, {
-  //深度监视（监视属性变化）
   deep: true,
 });
 
 
-const stopImageSettingsWatch = watch(imageOptions, async (newVal, oldVal) => {
-  //停止监听 stopWatch();
+watch(() => imageOptions.value, async (newVal, oldValue) => {
+  if (newVal !== oldValue) return
   const canvas = CanvasManager.getCurrentCanvas();
-  if (!canvas) return
-  canvasEditor.updateElement({...imageOptions.value})
+  const activeElements = canvasEditor.getActiveElements();
+  if (!canvas || !activeElements.length) return
+  const initZoom = canvas.initZoom;
+  const element = _.cloneDeep(newVal);
+  element.shadow.offsetX = element.shadow.offsetX / initZoom
+  element.shadow.offsetY = element.shadow.offsetY / initZoom
+  element.shadow.blur = element.shadow.blur / initZoom
+  canvasEditor.updateElement(element)
   canvasEditor.renderAll()
-  canvas.data = {
-    zoom: canvasEditor.getZoom(),
-    json: canvasEditor.exportToJSON(),
-  }
+  canvas.zoom = canvasEditor.getZoom()
+  canvas.json = canvasEditor.exportToJSON()
 }, {
   //深度监视（监视属性变化）
   deep: true,
@@ -2170,7 +2178,7 @@ async function switchPreviewImage(event, canvas) {
 
     // 前一次预览元素与当前预览元素不同，隐藏前一次预览元素
     if (beforePath && beforePath !== canvas.path) {
-      canvasEditor.clearCanvas()
+      canvasEditor.clearCanvas();
     }
 
     // 没有预览元素或前一次预览元素与当前预览元素不同时显示，多次点击预览同一元素不重复渲染
@@ -2182,36 +2190,37 @@ async function switchPreviewImage(event, canvas) {
       // 设置选择样式
       event.target.classList.add('active')
 
-      if (!canvas.data) {
+      if (!canvas.completed) {
         const image = await Image.fromURL(canvas.url, {selectable: false, cacheable: true});
         const width = image.width;
         const height = image.height;
         image.path = canvas.path
         // 设置画布宽高等于缩放后的图片尺寸
         canvasEditor.resizeCanvas(width, height);
-        const {clientWidth, clientHeight} = previewContainer.value;
-        const scale = Math.min(clientHeight / height, clientWidth / width) * projectSettings.value.others.defaultCanvasScale;
+        const {idealWidth, idealHeight} = previewContainer.value;
+        const initScale = Math.min(idealHeight / height, idealWidth / width);
+        const scale = initScale * projectSettings.value.others.defaultCanvasScale;
         canvasEditor.setCenterZoom(scale)
         canvasEditor.addElement(image);
         canvasEditor.renderAll()
         scrollBarMoveToCenter(canvas)
-        canvas.data = {
-          zoom: canvasEditor.getZoom(),
-          json: canvasEditor.exportToJSON(),
-        }
+        canvas.completed = true
+        canvas.initZoom = initScale
+        canvas.zoom = canvasEditor.getZoom()
+        canvas.json = canvasEditor.exportToJSON()
       } else {
-        const {json, zoom} = canvas.data;
+        const {json, zoom} = canvas;
         await canvasEditor.loadFromJSON(json)
         // 设置缩放
         canvasEditor.setCenterZoom(zoom);
         canvasEditor.renderAll()
-        setScrollBarPosition(canvas)
+        updateScrollBarPosition(canvas)
       }
     }
   }
 }
 
-const setScrollBarPosition = (canvas) => {
+const updateScrollBarPosition = (canvas) => {
   // 设置滚动位置
   previewContainer.value.scrollLeft = canvas.scrollLeft;
   previewContainer.value.scrollTop = canvas.scrollTop;
@@ -2220,20 +2229,28 @@ const setScrollBarPosition = (canvas) => {
 const initCanvasSize = () => {
 
   setTimeout(() => {
-    // 获取窗口宽高
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
+
+    previewContainer.value.idealWidth = previewContainer.value.clientWidth
+
+    previewContainer.value.idealHeight = previewContainer.value.clientHeight
 
     renderCanvasScrollbar()
 
-    const canvas = document.querySelector('#canvas');
+    const canvasElement = document.querySelector('#canvas');
 
-    canvasEditor = new CanvasEditor(canvas);
+    canvasEditor = new CanvasEditor(canvasElement);
 
     canvasEditor.on('selection:object', (event) => {
+      const {initZoom} = CanvasManager.getCurrentCanvas();
       const target = event.target;
+      const element = _.cloneDeep(target);
       if (target.type === 'text') {
-        textOptions.value = {...target}
+        const {fontSize, shadow: {offsetX, offsetY, blur}} = element;
+        element.fontSize = Number.parseInt(fontSize * initZoom)
+        element.shadow.offsetX = Number.parseInt(offsetX * initZoom)
+        element.shadow.offsetY = Number.parseInt(offsetY * initZoom)
+        element.shadow.blur = Number.parseInt(blur * initZoom)
+        textOptions.value = element
         if (projectSettings.value.others.optionAnchorPoint) {
           handleOpenSubMenu('3')
           nextTick(() => {
@@ -2241,7 +2258,11 @@ const initCanvasSize = () => {
           })
         }
       } else if (target.type === 'image') {
-        imageOptions.value = {...target}
+        const {shadow: {offsetX, offsetY, blur}} = element;
+        element.shadow.offsetX = Number.parseInt(offsetX * initZoom)
+        element.shadow.offsetY = Number.parseInt(offsetY * initZoom)
+        element.shadow.blur = Number.parseInt(blur * initZoom)
+        imageOptions.value = element
         if (projectSettings.value.others.optionAnchorPoint) {
           handleOpenSubMenu('4')
           nextTick(() => {
@@ -2250,7 +2271,6 @@ const initCanvasSize = () => {
         }
       }
     })
-
 
     canvasEditor.on('updated:object', (event) => {
 
@@ -2342,7 +2362,7 @@ function setZoom(canvas, zoom) {
   // 设置变换原点为中心点
   canvasElement.value.style.transformOrigin = `${centerX}px ${centerY}px`;
 
-  canvas.data.zoom = newZoom
+  canvas.zoom = newZoom
 }
 
 // 缩放函数
@@ -2357,7 +2377,7 @@ const renderCanvas = async (canvas) => {
     await initializeCanvasLayout(canvas)
   }
 
-  setScrollBarPosition(canvas)
+  updateScrollBarPosition(canvas)
   metadataOptions.value = canvas.metadata
   borderOptions.value = canvas.settings.border.options
   photographOptions.value = canvas.settings.photograph.options
@@ -3101,7 +3121,6 @@ const handleEditorElement = (event) => {
     }
   };
 
-
   // 添加事件监听器
   dragElement.addEventListener('keydown', handleKeydown);
   dragElement.addEventListener('blur', handleBlur);
@@ -3338,11 +3357,8 @@ const handleDropElement = async function (event) {
   canvasEditor.renderAll()
 
   const currentCanvas = CanvasManager.getCurrentCanvas();
-
-  currentCanvas.data = {
-    zoom: canvasEditor.getZoom(),
-    json: canvasEditor.exportToJSON()
-  }
+  currentCanvas.zoom = canvasEditor.getZoom()
+  currentCanvas.json = canvasEditor.exportToJSON()
 }
 
 const handleDropFiles = (event) => {
@@ -3390,7 +3406,7 @@ const handleCanvasResize = (event) => {
   const {zoomStep, maxZoom, minZoom} = zoomOptions;
   let newZoom = direction === 'in' ? zoom + zoomStep : zoom - zoomStep;
   newZoom = Math.min(Math.max(minZoom, newZoom), maxZoom);
-  canvas.data.zoom = newZoom
+  canvas.zoom = newZoom
   canvasEditor.setCenterZoom(newZoom)
 }
 
@@ -3495,10 +3511,7 @@ onMounted(() => {
 
 
 onBeforeUnmount(() => {
-  stopWatchAvailableCanvas()
-  stopTextSettingsWatch()
-  stopImageSettingsWatch()
-  stopProjectSettingsWatch()
+
 })
 
 

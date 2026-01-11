@@ -67,13 +67,13 @@ class Text extends Element {
         ctx.fillStyle = this.fontColor;
 
         // 默认不透明黑色
-        ctx.shadowColor = this.shadowColor || 'rgba(0,0,0,1)';
+        ctx.shadowColor = this.shadow.color;
         // 默认模糊 0 像素
-        ctx.shadowBlur = this.shadowBlur || 0;
+        ctx.shadowBlur = this.shadow.blur;
         // 默认X偏移
-        ctx.shadowOffsetX = this.shadowOffsetX || 0;
+        ctx.shadowOffsetX = this.shadow.offsetX;
         // 默认Y偏移
-        ctx.shadowOffsetY = this.shadowOffsetY || 0;
+        ctx.shadowOffsetY = this.shadow.offsetY;
 
         const {charPositions, height, width} = this.direction === 'vertical'
             ? this.parseVerticalChars(ctx)

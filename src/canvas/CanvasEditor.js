@@ -276,16 +276,20 @@ class CanvasEditor {
      * 获取所有元素
      * @returns {Array} 文本对象数组
      */
-    getElements(isClone) {
-        return isClone ? this.elements.map(element => ({...element})) : this.elements;
+    getElements(filter) {
+        return filter && typeof filter === 'function'
+            ? this.elements.filter(filter)
+            : this.elements;
     }
 
     /**
      * 获取所有选中元素
      * @returns {Array} 文本对象数组
      */
-    getActiveElements(isClone) {
-        return isClone ? this.activeElements.map(element => ({...element})) : this.activeElements;
+    getActiveElements(filter) {
+        return filter && typeof filter === 'function'
+            ? this.activeElements.filter(filter)
+            : this.activeElements;
     }
 
     /**

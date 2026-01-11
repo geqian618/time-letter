@@ -7,7 +7,7 @@ export class ShadowSettings {
         this.offsetYRatio = 0;
         this.blur = 0;
         this.blurRatio = 0;
-        this.shadowColor = 'rgb(0,0,0,1)';
+        this.color = 'rgb(0,0,0,1)';
     }
 }
 
@@ -39,7 +39,7 @@ export class TextOptions {
         this.fontStyle = 'normal';
         this.fontWeight = 400;
         this.fontColor = 'rgb(0,0,0,1)';
-        this.direction = 0;
+        this.direction = 'horizontal';
         this.angle = 0;
         this.zIndex = 0;
         this.shadow = new ShadowSettings();

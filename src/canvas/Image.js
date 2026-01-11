@@ -12,6 +12,7 @@ class Image extends Element {
         this.cacheable = options.cacheable || false
         this.src = image?.src
         this.crossOrigin = options.crossOrigin || 'anonymous'
+        this.scale = options.scale || 1
         this.width = options.width
         this.height = options.height
         this.alpha = options.alpha || 1
@@ -62,7 +63,7 @@ class Image extends Element {
 
 
     contains(x, y) {
-        return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height
+        return x >= this.x && x <= this.x + this.width * this.scale && y >= this.y && y <= this.y + this.height * this.scale
     }
 
     draw(ctx) {
@@ -85,8 +86,8 @@ class Image extends Element {
 
         if (this.angle !== 0) {
             // 将画布原点移动到图片中心点
-            const centerX = this.x + this.width / 2;
-            const centerY = this.y + this.height / 2;
+            const centerX = this.x + this.width * this.scale / 2;
+            const centerY = this.y + this.height * this.scale / 2;
             ctx.translate(centerX, centerY);
             // 旋转画布
             ctx.rotate(this.angle * Math.PI / 180);
@@ -94,7 +95,7 @@ class Image extends Element {
         }
 
         // 绘制图片（注意坐标已偏移到中心点）
-        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+        ctx.drawImage(this.image, this.x, this.y, this.width * this.scale, this.height * this.scale);
         // 恢复画布到之前保存的状态
         ctx.restore();
     }
@@ -110,15 +111,15 @@ class Image extends Element {
         ctx.lineCap = lineCap;
         if (this.angle !== 0) {
             // 计算文本中心点
-            const centerX = this.x + this.width / 2;
-            const centerY = this.y + this.height / 2;
+            const centerX = this.x + this.width * this.scale / 2;
+            const centerY = this.y + this.height * this.scale / 2;
             // 平移到文本中心点，旋转，再平移回来
             ctx.translate(centerX, centerY);
             ctx.rotate(this.angle * Math.PI / 180);
             ctx.translate(-centerX, -centerY);
         }
         ctx.beginPath();
-        ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width + 2 * lineWidth, this.height + 2 * lineWidth);
+        ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width * this.scale + 2 * lineWidth, this.height * this.scale + 2 * lineWidth);
         ctx.stroke();
         ctx.restore();
     }

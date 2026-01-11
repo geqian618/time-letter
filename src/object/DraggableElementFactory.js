@@ -51,7 +51,7 @@ class DraggableElementFactory {
 
     getElement() {
         return new Promise((resolve, reject) => {
-            const {data: {zoom}} = CanvasManager.getCurrentCanvas();
+            const {zoom} = CanvasManager.getCurrentCanvas();
             // 对于非图片元素（如div），直接返回
             if (this.settings.tagName === 'div') {
                 const {fontSize} = this.settings.options;
