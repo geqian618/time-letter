@@ -1639,7 +1639,7 @@ const watchContextMenu = () => {
 
         const settings = paths.map((path, index) => {
           const canvas = CanvasManager.getCanvas(path);
-          return {filePath: path, index, json: canvas?.data?.json}
+          return {filePath: path, index, json: canvas?.json}
         });
 
         window.electronAPI.requestExportFiles(_.cloneDeep({
@@ -2274,6 +2274,16 @@ const initCanvasSize = () => {
 
     canvasEditor.on('updated:object', (event) => {
 
+    })
+
+    canvasEditor.on('move:object', (event) => {
+      const canvas = CanvasManager.getCurrentCanvas();
+      canvas.json = canvasEditor.exportToJSON()
+      console.log(111111111111111)
+    })
+
+    canvasEditor.on('add:object', (event) => {
+      console.log('添加元素', event)
     })
 
   }, 1000)
