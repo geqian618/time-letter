@@ -32,8 +32,8 @@ class CanvasEditor {
         // 编辑状态
         this.editingText = null;
         this.isEditing = false;
-        this.cursorIndex = 0;
-        this.cursorEndIndex = 0
+        this.cursorStart = 0;
+        this.cursorEnd = 0
 
         this.cursorBlinkInterval = null;
         this.isCursorVisible = true;
@@ -143,7 +143,7 @@ class CanvasEditor {
     startEditing(textObj, index) {
         if (textObj.status === Element.EDITING) {
             // 如果已经在编辑同一文本，只更新光标位置
-            this.cursorEndIndex = this.cursorIndex = index;
+            this.cursorEnd = this.cursorStart = index;
             this.renderAll();
             this.updateInputSelection();
             return;
@@ -152,7 +152,7 @@ class CanvasEditor {
         this.editingText = textObj;
         this.isEditing = true;
         this.isCursorVisible = true;
-        this.cursorEndIndex = this.cursorIndex = index;
+        this.cursorEnd = this.cursorStart = index;
         this.canvas.style.cursor = 'text';
 
         // 动态创建隐藏输入框
@@ -393,7 +393,7 @@ class CanvasEditor {
      * @param {number} clickY - 点击Y坐标
      * @returns {number} 光标索引
      */
-    getCursorIndexFromText(textObj, clickX, clickY) {
+    getcursorStartFromText(textObj, clickX, clickY) {
         const metrics = this.getTextMetrics(textObj);
         const text = textObj.text;
         // 计算文本的实际绘制区域
@@ -465,7 +465,7 @@ class CanvasEditor {
         clearInterval(this.cursorBlinkInterval);
         this.cursorBlinkInterval = setInterval(() => {
             // 有文本被选中，因此光标闪烁
-            if (this.cursorIndex !== this.cursorEndIndex && !this.isCursorVisible) return;
+            if (this.cursorStart !== this.cursorEnd && !this.isCursorVisible) return;
             this.isCursorVisible = !this.isCursorVisible;
             if (this.isEditing && this.editingText) {
                 this.renderAll();
@@ -587,10 +587,10 @@ class CanvasEditor {
                 element.draw(this.ctx);
                 // 如果是正在编辑的文本，绘制背景颜色
                 if (element.status === Element.EDITING) {
-                    element.drawEditBackground(this.ctx)
+                    element.drawEditBackground(this.ctx, this.cursorStart, this.cursorEnd)
                     // 如果是正在编辑的文本，绘制光标
                     if (this.isCursorVisible) {
-                        element.drawCursor(this.ctx)
+                        element.drawCursor(this.ctx, this.cursorStart, this.cursorEnd)
                     }
                 }
             } else if (element.type === 'image') {
@@ -613,7 +613,7 @@ class CanvasEditor {
      */
     drawCursor(textObj, cursorWidth) {
         const {x, y, fontColor, fontSize, spacing} = textObj;
-        const cursorX = x + this.getSubTextMetrics(textObj, 0, this.cursorIndex).width;
+        const cursorX = x + this.getSubTextMetrics(textObj, 0, this.cursorStart).width;
         this.ctx.fillStyle = fontColor;
         this.ctx.fillRect(
             cursorX + (spacing - cursorWidth) / 2,
@@ -636,8 +636,8 @@ class CanvasEditor {
         const height = fontSize + 2 * margin
         const {ascent} = element;
         this.drawFillRect(x - margin, y - margin - ascent, width, height, highlightColor)
-        if (this.cursorIndex !== this.cursorEndIndex) {
-            const {startX, endX} = this.getRangeByIndex(element, this.cursorIndex, this.cursorEndIndex);
+        if (this.cursorStart !== this.cursorEnd) {
+            const {startX, endX} = this.getRangeByIndex(element, this.cursorStart, this.cursorEnd);
             this.drawFillRect(startX, y, endX - startX, fontSize, this.canvasConfig.selectionColor)
         }
     }
@@ -697,7 +697,7 @@ class CanvasEditor {
                 return
             }
             // 计算点击位置对应的光标索引
-            const index = this.getCursorIndexFromText(element, x, y);
+            const index = this.getcursorStartFromText(element, x, y);
             // 如果是双击，直接进入编辑模式
             this.startEditing(element, index);
         }
@@ -740,8 +740,8 @@ class CanvasEditor {
             if (interval > 200 && (startX !== moveX || startY !== moveY)) {
                 if (element.type === 'text' && element.status === Element.EDITING) {
                     // 选中文本
-                    this.cursorEndIndex = this.getCursorIndexFromText(element, moveX);
-                    if (this.cursorEndIndex !== this.cursorIndex) {
+                    this.cursorEnd = this.getcursorStartFromText(element, moveX);
+                    if (this.cursorEnd !== this.cursorStart) {
                         this.updateInputSelection()
                         this.renderAll()
                     }
@@ -797,8 +797,8 @@ class CanvasEditor {
         // 设置输入框的光标位置
         setTimeout(() => {
             this.hiddenInput.focus()
-            const start = Math.min(this.cursorIndex, this.cursorEndIndex);
-            const end = Math.max(this.cursorIndex, this.cursorEndIndex);
+            const start = Math.min(this.cursorStart, this.cursorEnd);
+            const end = Math.max(this.cursorStart, this.cursorEnd);
 
             this.hiddenInput.setSelectionRange(start, end);
         }, 0);
@@ -817,7 +817,7 @@ class CanvasEditor {
         // 获取输入框当前的光标位置
         const inputCursorPos = this.hiddenInput.selectionStart;
         // 更新 Canvas 光标位置
-        this.cursorEndIndex = this.cursorIndex = Math.max(0, Math.min(inputCursorPos, newText.length));
+        this.cursorEnd = this.cursorStart = Math.max(0, Math.min(inputCursorPos, newText.length));
         this.renderAll();
     }
 
@@ -838,31 +838,31 @@ class CanvasEditor {
                 break;
             case 'ArrowLeft':
                 event.preventDefault();
-                if (this.cursorIndex > 0) {
-                    this.cursorIndex--;
-                    this.cursorEndIndex--;
+                if (this.cursorStart > 0) {
+                    this.cursorStart--;
+                    this.cursorEnd--;
                     this.updateInputSelection();
                     this.renderAll();
                 }
                 break;
             case 'ArrowRight':
                 event.preventDefault();
-                if (this.cursorIndex < this.editingText.text.length) {
-                    this.cursorIndex++;
-                    this.cursorEndIndex++;
+                if (this.cursorStart < this.editingText.text.length) {
+                    this.cursorStart++;
+                    this.cursorEnd++;
                     this.updateInputSelection();
                     this.renderAll();
                 }
                 break;
             case 'Home':
                 event.preventDefault();
-                this.cursorEndIndex = this.cursorIndex = 0;
+                this.cursorEnd = this.cursorStart = 0;
                 this.updateInputSelection();
                 this.renderAll();
                 break;
             case 'End':
                 event.preventDefault();
-                this.cursorEndIndex = this.cursorIndex = this.editingText.text.length;
+                this.cursorEnd = this.cursorStart = this.editingText.text.length;
                 this.updateInputSelection();
                 this.renderAll();
                 break;
@@ -893,7 +893,7 @@ class CanvasEditor {
     handleKeyUp() {
         if (!this.editingText || !this.hiddenInput) return;
         // 更新光标位置
-        this.cursorEndIndex = this.cursorIndex = this.hiddenInput.selectionStart;
+        this.cursorEnd = this.cursorStart = this.hiddenInput.selectionStart;
         this.renderAll();
     }
 
@@ -951,7 +951,7 @@ class CanvasEditor {
         this.removeHiddenInput();
         this.editingText = null;
         this.isEditing = false;
-        this.cursorEndIndex = this.cursorIndex = 0;
+        this.cursorEnd = this.cursorStart = 0;
         clearInterval(this.cursorBlinkInterval);
     }
 
@@ -1319,9 +1319,11 @@ class Text extends Element {
     /**
      * 绘制光标
      * @param ctx
+     * @param start
+     * @param end
      */
-    drawCursor(ctx) {
-        const {y, fontColor, fontSize, spacing, chars, cursor: {start, end}} = this;
+    drawCursor(ctx, start, end) {
+        const {y, fontColor, fontSize, spacing, chars} = this;
         const cursorWidth = 0.1 * fontSize;
         const char = chars[end];
         ctx.save()
@@ -1347,9 +1349,13 @@ class Text extends Element {
     /**
      * 绘制文本编辑状态背景颜色
      * @param ctx
+     * @param start
+     * @param end
+     * @param start
+     * @param end
      */
-    drawEditBackground(ctx) {
-        const {x, y, height, width, highlightColor, spacing, text, chars, cursor: {start, end}} = this
+    drawEditBackground(ctx, start, end) {
+        const {x, y, height, width, highlightColor, spacing, text, chars} = this
         const margin = 0.3 * height;
         ctx.save()
         // 绘制高亮背景

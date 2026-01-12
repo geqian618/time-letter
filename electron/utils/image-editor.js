@@ -46,34 +46,21 @@ function drawText(ctx, text, newWidth, newHeight, availableFonts) {
 
     // 设置对齐基准点
     ctx.textAlign = 'left'; // 水平对齐
-    ctx.textBaseline = 'top'; // 垂直基线
+    ctx.textBaseline = 'alphabetic'; // 垂直基线
 
     // 测量文本尺寸
-    const metrics = ctx.measureText(text.content);
-    const textWidth = metrics.width;
-    const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+    const {actualBoundingBoxAscent: ascent, actualBoundingBoxDescent: descent, width} = ctx.measureText(text.content);
 
-    const {offsetX, offsetY} = availableFonts.get(fontFamily) || {offsetX: 0, offsetY: 0};
-    let textX = text.offsetLeftRatio * newWidth + offsetX * fontSize
-    let textY = text.offsetTopRatio * newHeight + offsetY * fontSize
+    let textX = text.offsetLeftRatio * newWidth
+    let textY = text.offsetTopRatio * newHeight + ascent
 
     // 1. 计算文字中心点
     let centerX, centerY;
 
-    switch (ctx.textAlign) {
-        case 'left':
-            centerX = textX + textWidth / 2;
-            break;
-        case 'right':
-            centerX = textX - textWidth / 2;
-            break;
-        case 'center':
-        default:
-            centerX = textX;
-    }
+    centerX = textX + width / 2;
 
     // 根据 top 基线计算垂直中心
-    centerY = textY + textHeight / 2;
+    centerY = textY + width / 2;
 
     // 保存当前画布状态
     ctx.save();
