@@ -2278,7 +2278,6 @@ const initCanvasSize = () => {
     canvasEditor.on('move:object', (event) => {
       const canvas = CanvasManager.getCurrentCanvas();
       canvas.json = canvasEditor.exportToJSON()
-      console.log(111111111111111)
     })
 
     canvasEditor.on('add:object', (event) => {

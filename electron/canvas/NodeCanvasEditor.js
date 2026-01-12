@@ -763,7 +763,6 @@ class NodeCanvasEditor {
                     element.x = moveX - offsetX;
                     element.y = moveY - offsetY;
                     const callbacks = this.eventCallbacks.get(MOVE_OBJECT);
-                    console.log(this.eventCallbacks)
                     if (callbacks && callbacks.size) {
                         callbacks.forEach(callback => callback({x: moveX, y: moveY, target: element}))
                     }
@@ -1211,9 +1210,13 @@ class Text extends Element {
 
 
     draw(ctx) {
+
         ctx.save();
+
+        // 对齐方式
         ctx.textBaseline = 'alphabetic';
         ctx.textAlign = 'left';
+
         // 字体设置
         ctx.font = `${this.fontStyle} ${this.fontWeight} ${this.fontSize}px "${this.fontFamily}", "Microsoft YaHei", sans-serif`;
         // 字体颜色
@@ -1229,7 +1232,9 @@ class Text extends Element {
         ctx.shadowOffsetY = this.shadow.offsetY;
 
         const metrics = ctx.measureText(this.text);
+
         this.ascent = metrics.actualBoundingBoxAscent;
+
         this.descent = metrics.actualBoundingBoxDescent;
 
         const {chars, height, width} = this.direction === 'vertical'

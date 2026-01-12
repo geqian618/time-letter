@@ -1199,9 +1199,6 @@ class Text extends Element {
             ...options.shadow
         };
 
-
-        this.hiddenInput = null
-
         this.ascent = 0;
 
         this.descent = 0;
@@ -1522,7 +1519,7 @@ class Image extends Element {
 
         // 如果未旋转，使用原来的轴对齐边界框检测
         if (this.angle === 0) {
-            return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
+            return x >= this.x && x <= this.x + this.width * this.scale && y >= this.y && y <= this.y + this.height * this.scale;
         }
 
         // 对于旋转的文本，将点击点反向旋转回文本的局部坐标系
