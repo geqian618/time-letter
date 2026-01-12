@@ -16,6 +16,9 @@ class CanvasEditor {
      */
     constructor(canvas, options = {}) {
 
+        // 是否为浏览器环境
+        this.isBrowser = typeof window !== 'undefined'
+
         // 缓存图片
         this.cache = new Map();
 
@@ -78,7 +81,7 @@ class CanvasEditor {
             this.canvas.height = height
         }
         // 添加事件监听
-        this.canvas.addEventListener('mousedown', this.handleMouseDown);
+        this.isBrowser && this.canvas.addEventListener('mousedown', this.handleMouseDown);
     }
 
 
@@ -1100,6 +1103,9 @@ class Element {
 
         // 是否可拖拽
         this.draggable = options.draggable !== undefined ? options.draggable : false;
+
+        this.meta = options.meta || null
+
     }
 
 }
@@ -1441,18 +1447,28 @@ class Image extends Element {
     static fromURL(src, options = {}) {
         return new Promise((resolve, reject) => {
             if (!src) {
-                reject(`Failed to load image: src is null`);
+                return reject(`Failed to load image: src is null`);
             }
-            const image = new window.Image();
-            image.onload = () => {
-                const instance = new Image(image, options);
-                resolve(instance);
-            };
-            image.onerror = () => {
-                reject(`Failed to load image: ${src}`);
-            };
-            image.src = src;
-            image.crossOrigin = options.crossOrigin;
+            if (typeof window !== 'undefined') {
+                const image = new window.Image();
+                image.onload = () => {
+                    const instance = new Image(image, options);
+                    resolve(instance);
+                };
+                image.onerror = () => {
+                    reject(`Failed to load image: ${src}`);
+                };
+                image.src = src;
+                image.crossOrigin = options.crossOrigin;
+
+            } else {
+                const {loadImage} = require('@napi-rs/canvas')
+                loadImage(src).then(image => {
+                    resolve(new Image(image, options))
+                }).catch(err => {
+                    reject(`Failed to load image from URL: ${src}. ${err.message}`)
+                })
+            }
         })
     }
 

@@ -2191,10 +2191,9 @@ async function switchPreviewImage(event, canvas) {
       event.target.classList.add('active')
 
       if (!canvas.completed) {
-        const image = await Image.fromURL(canvas.url, {selectable: false, cacheable: true});
+        const image = await Image.fromURL(canvas.url, {selectable: false, cacheable: true, meta: {path: canvas.path}});
         const width = image.width;
         const height = image.height;
-        image.path = canvas.path
         // 设置画布宽高等于缩放后的图片尺寸
         canvasEditor.resizeCanvas(width, height);
         const {idealWidth, idealHeight} = previewContainer.value;

@@ -1,4 +1,4 @@
-const {CanvasEditor, Text} = require("../canvas/CanvasEditor");
+const {CanvasEditor, Text} = require("../canvas/NodeCanvasEditor");
 const {createCanvas} = require('@napi-rs/canvas')
 const path = require("path");
 const {copyExifDataToBuffer} = require("../utils/exif-helper");
@@ -7,7 +7,6 @@ const {promises: fs} = require("fs");
 module.exports = async (params) => {
     try {
         const {
-            outputDirectory,
             projectSettings: {
                 outputSettings: {
                     quality,
@@ -15,9 +14,9 @@ module.exports = async (params) => {
                     outputSize: {longSide, shortSide, width, height, type},
                     isSynchronizeMetadata,
                     fileNaming: {basename, prefix, suffix}
-                },
-                availableFonts
+                }
             },
+            outputDirectory,
             setting: {json, filePath, index}
         } = params
 
@@ -39,7 +38,7 @@ module.exports = async (params) => {
 
         for (let element of elements) {
             if (element.type === 'image') {
-                element.src = element.path
+                element.src = element.meta.path
             }
         }
 

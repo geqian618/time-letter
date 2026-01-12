@@ -1,6 +1,3 @@
-
-const {createCanvas, Image: CanvasImage, loadImage} = require('@napi-rs/canvas');
-
 const SELECTION_OBJECT = 'selection:object'
 
 const MOVE_OBJECT = 'move:object'
@@ -11,7 +8,7 @@ const ADD_OBJECT = 'add:object'
  * Canvas 文本编辑器类
  * 封装 Canvas 文本编辑功能
  */
-class CanvasEditor {
+class NodeCanvasEditor {
     /**
      * 构造函数
      * @param {HTMLCanvasElement} canvas - Canvas 元素
@@ -19,6 +16,7 @@ class CanvasEditor {
      */
     constructor(canvas, options = {}) {
 
+        // 是否为浏览器环境
         this.isBrowser = typeof window !== 'undefined'
 
         // 缓存图片
@@ -37,8 +35,8 @@ class CanvasEditor {
         // 编辑状态
         this.editingText = null;
         this.isEditing = false;
-        this.cursorIndex = 0;
-        this.cursorEndIndex = 0
+        this.cursorStart = 0;
+        this.cursorEnd = 0
 
         this.cursorBlinkInterval = null;
         this.isCursorVisible = true;
@@ -148,7 +146,7 @@ class CanvasEditor {
     startEditing(textObj, index) {
         if (textObj.status === Element.EDITING) {
             // 如果已经在编辑同一文本，只更新光标位置
-            this.cursorEndIndex = this.cursorIndex = index;
+            this.cursorEnd = this.cursorStart = index;
             this.renderAll();
             this.updateInputSelection();
             return;
@@ -157,7 +155,7 @@ class CanvasEditor {
         this.editingText = textObj;
         this.isEditing = true;
         this.isCursorVisible = true;
-        this.cursorEndIndex = this.cursorIndex = index;
+        this.cursorEnd = this.cursorStart = index;
         this.canvas.style.cursor = 'text';
 
         // 动态创建隐藏输入框
@@ -416,6 +414,7 @@ class CanvasEditor {
 
         // 使用二分法查找最近的光标位置
         let closestIndex = 0;
+
         let minDistance = Infinity;
 
         for (let i = 0; i <= text.length; i++) {
@@ -470,7 +469,7 @@ class CanvasEditor {
         clearInterval(this.cursorBlinkInterval);
         this.cursorBlinkInterval = setInterval(() => {
             // 有文本被选中，因此光标闪烁
-            if (this.cursorIndex !== this.cursorEndIndex && !this.isCursorVisible) return;
+            if (this.cursorStart !== this.cursorEnd && !this.isCursorVisible) return;
             this.isCursorVisible = !this.isCursorVisible;
             if (this.isEditing && this.editingText) {
                 this.renderAll();
@@ -541,7 +540,7 @@ class CanvasEditor {
      */
     setCenterZoom(zoom) {
         if (zoom > 0) {
-            this.canvasConfig.zoom = zoom
+            this.ctx.zoom = this.canvasConfig.zoom = zoom
             this.canvas.style.transform = `scale(${zoom})`
             this.canvas.style.transformOrigin = 'center center';
         }
@@ -555,7 +554,7 @@ class CanvasEditor {
      */
     setZoom(zoom, pointX, pointY) {
         if (zoom > 0) {
-            this.canvasConfig.zoom = zoom
+            this.ctx.zoom = this.canvasConfig.zoom = zoom
             this.canvas.style.transform = `scale(${zoom})`
             this.canvas.style.transformOrigin = `${pointX}px ${pointY}px`;
         }
@@ -592,10 +591,10 @@ class CanvasEditor {
                 element.draw(this.ctx);
                 // 如果是正在编辑的文本，绘制背景颜色
                 if (element.status === Element.EDITING) {
-                    this.drawEditBackground(element)
+                    element.drawEditBackground(this.ctx, this.cursorStart, this.cursorEnd)
                     // 如果是正在编辑的文本，绘制光标
                     if (this.isCursorVisible) {
-                        this.drawCursor(element, this.canvasConfig.cursorWidth / this.canvasConfig.zoom)
+                        element.drawCursor(this.ctx, this.cursorStart, this.cursorEnd)
                     }
                 }
             } else if (element.type === 'image') {
@@ -605,7 +604,7 @@ class CanvasEditor {
                 }
             }
             if (this.hasActiveElement(element)) {
-                element.selection(this.ctx, this.canvasConfig.zoom)
+                element.selection(this.ctx)
             }
         }
     }
@@ -618,7 +617,7 @@ class CanvasEditor {
      */
     drawCursor(textObj, cursorWidth) {
         const {x, y, fontColor, fontSize, spacing} = textObj;
-        const cursorX = x + this.getSubTextMetrics(textObj, 0, this.cursorIndex).width;
+        const cursorX = x + this.getSubTextMetrics(textObj, 0, this.cursorStart).width;
         this.ctx.fillStyle = fontColor;
         this.ctx.fillRect(
             cursorX + (spacing - cursorWidth) / 2,
@@ -634,15 +633,15 @@ class CanvasEditor {
      * @param element
      */
     drawEditBackground(element) {
-        const {x, y, fontSize, highlightColor} = element
+        const {x, y, height, highlightColor} = element
         const metrics = this.getTextMetrics(element);
-        const margin = 0.3 * fontSize;
+        const margin = 0.3 * height;
         const width = metrics.width + 2 * margin
-        const height = fontSize + 2 * margin
-        this.drawFillRect(x - margin, y - margin, width, height, highlightColor)
-        if (this.cursorIndex !== this.cursorEndIndex) {
-            const {startX, endX} = this.getRangeByIndex(element, this.cursorIndex, this.cursorEndIndex);
-            this.drawFillRect(startX, y, endX - startX, fontSize, this.canvasConfig.selectionColor)
+        const {ascent} = element;
+        this.drawFillRect(x - margin, y - margin - ascent, width, height, highlightColor)
+        if (this.cursorStart !== this.cursorEnd) {
+            const {startX, endX} = this.getRangeByIndex(element, this.cursorStart, this.cursorEnd);
+            this.drawFillRect(startX, y, endX - startX, height + 2 * margin, this.canvasConfig.selectionColor)
         }
     }
 
@@ -744,8 +743,8 @@ class CanvasEditor {
             if (interval > 200 && (startX !== moveX || startY !== moveY)) {
                 if (element.type === 'text' && element.status === Element.EDITING) {
                     // 选中文本
-                    this.cursorEndIndex = this.getCursorIndexFromText(element, moveX);
-                    if (this.cursorEndIndex !== this.cursorIndex) {
+                    this.cursorEnd = this.getCursorIndexFromText(element, moveX);
+                    if (this.cursorEnd !== this.cursorStart) {
                         this.updateInputSelection()
                         this.renderAll()
                     }
@@ -755,6 +754,7 @@ class CanvasEditor {
                     element.x = moveX - offsetX;
                     element.y = moveY - offsetY;
                     const callbacks = this.eventCallbacks.get(MOVE_OBJECT);
+                    console.log(this.eventCallbacks)
                     if (callbacks && callbacks.size) {
                         callbacks.forEach(callback => callback({x: moveX, y: moveY, target: element}))
                     }
@@ -800,8 +800,8 @@ class CanvasEditor {
         // 设置输入框的光标位置
         setTimeout(() => {
             this.hiddenInput.focus()
-            const start = Math.min(this.cursorIndex, this.cursorEndIndex);
-            const end = Math.max(this.cursorIndex, this.cursorEndIndex);
+            const start = Math.min(this.cursorStart, this.cursorEnd);
+            const end = Math.max(this.cursorStart, this.cursorEnd);
 
             this.hiddenInput.setSelectionRange(start, end);
         }, 0);
@@ -820,7 +820,7 @@ class CanvasEditor {
         // 获取输入框当前的光标位置
         const inputCursorPos = this.hiddenInput.selectionStart;
         // 更新 Canvas 光标位置
-        this.cursorEndIndex = this.cursorIndex = Math.max(0, Math.min(inputCursorPos, newText.length));
+        this.cursorEnd = this.cursorStart = Math.max(0, Math.min(inputCursorPos, newText.length));
         this.renderAll();
     }
 
@@ -841,31 +841,31 @@ class CanvasEditor {
                 break;
             case 'ArrowLeft':
                 event.preventDefault();
-                if (this.cursorIndex > 0) {
-                    this.cursorIndex--;
-                    this.cursorEndIndex--;
+                if (this.cursorStart > 0) {
+                    this.cursorStart--;
+                    this.cursorEnd--;
                     this.updateInputSelection();
                     this.renderAll();
                 }
                 break;
             case 'ArrowRight':
                 event.preventDefault();
-                if (this.cursorIndex < this.editingText.text.length) {
-                    this.cursorIndex++;
-                    this.cursorEndIndex++;
+                if (this.cursorStart < this.editingText.text.length) {
+                    this.cursorStart++;
+                    this.cursorEnd++;
                     this.updateInputSelection();
                     this.renderAll();
                 }
                 break;
             case 'Home':
                 event.preventDefault();
-                this.cursorEndIndex = this.cursorIndex = 0;
+                this.cursorEnd = this.cursorStart = 0;
                 this.updateInputSelection();
                 this.renderAll();
                 break;
             case 'End':
                 event.preventDefault();
-                this.cursorEndIndex = this.cursorIndex = this.editingText.text.length;
+                this.cursorEnd = this.cursorStart = this.editingText.text.length;
                 this.updateInputSelection();
                 this.renderAll();
                 break;
@@ -896,7 +896,7 @@ class CanvasEditor {
     handleKeyUp() {
         if (!this.editingText || !this.hiddenInput) return;
         // 更新光标位置
-        this.cursorEndIndex = this.cursorIndex = this.hiddenInput.selectionStart;
+        this.cursorEnd = this.cursorStart = this.hiddenInput.selectionStart;
         this.renderAll();
     }
 
@@ -954,7 +954,7 @@ class CanvasEditor {
         this.removeHiddenInput();
         this.editingText = null;
         this.isEditing = false;
-        this.cursorEndIndex = this.cursorIndex = 0;
+        this.cursorEnd = this.cursorStart = 0;
         clearInterval(this.cursorBlinkInterval);
     }
 
@@ -1019,13 +1019,13 @@ class CanvasEditor {
                 }
                 if (element.type === 'image') {
                     const image = this.cache.get(element.src);
-                    const instance = image ? new Image(image, element) : await Image.fromFile(element.path, element);
+                    const instance = image ? new Image(image, element) : await Image.fromURL(element.src, element);
                     this.elements.push(instance)
                 }
             }
             this.renderAll();
-        } catch (e) {
-            console.error('导入失败:', e);
+        } catch (err) {
+            throw err
         }
     }
 
@@ -1068,31 +1068,12 @@ class CanvasEditor {
      * @param dataURL
      */
     #downloadFile(dataURL, filename) {
-        if (this.isBrowser) {
-            const link = document.createElement('a');
-            link.download = filename;
-            link.href = dataURL;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } else {
-            // 1. 从 dataURL 中提取 MIME 类型和 base64 数据
-            const matches = dataURL.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-
-            if (!matches || matches.length !== 3) {
-                return;
-            }
-            const mimeType = matches[1];
-            const base64Data = matches[2];
-            // 2. 根据 MIME 类型确定文件扩展名
-            const extension = mimeType.split('/')[1];
-            // 3. 确保文件路径有正确的扩展名
-            const finalPath = filename.replace(/\.[^/.]+$/, '') + '.' + extension;
-            // 4. 将 base64 数据转换为 Buffer 并写入文件
-            const buffer = Buffer.from(base64Data, 'base64');
-            fs.writeFileSync(finalPath, buffer);
-        }
-
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = dataURL;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
 }
@@ -1122,6 +1103,9 @@ class Element {
 
         // 是否可拖拽
         this.draggable = options.draggable !== undefined ? options.draggable : false;
+
+        this.meta = options.meta || null
+
     }
 
 }
@@ -1173,6 +1157,12 @@ class Text extends Element {
 
         this.hiddenInput = null
 
+        this.ascent = 0;
+
+        this.descent = 0;
+
+        this.chars = []
+
         this.cursor = {
             start: 0,
             end: 0
@@ -1180,7 +1170,34 @@ class Text extends Element {
     }
 
     contains(x, y) {
-        return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height
+
+        // 如果未旋转，使用原来的轴对齐边界框检测
+        if (this.angle === 0) {
+            return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
+        }
+
+        // 对于旋转的文本，将点击点反向旋转回文本的局部坐标系
+        // 计算文本中心点（旋转中心）
+        const centerX = this.x + this.width / 2;
+        const centerY = this.y + this.height / 2;
+
+        // 将点相对于中心点平移
+        const translatedX = x - centerX;
+        const translatedY = y - centerY;
+
+        // 计算反向旋转角度（弧度）
+        const angleRad = -this.angle * Math.PI / 180;
+
+        // 反向旋转点（绕中心点反向旋转）
+        const rotatedX = translatedX * Math.cos(angleRad) - translatedY * Math.sin(angleRad);
+        const rotatedY = translatedX * Math.sin(angleRad) + translatedY * Math.cos(angleRad);
+
+        // 将点平移回原坐标系
+        const localX = rotatedX + centerX;
+        const localY = rotatedY + centerY;
+
+        // 检查反向旋转后的点是否在原始（未旋转）的边界框内
+        return localX >= this.x && localX <= this.x + this.width && localY >= this.y && localY <= this.y + this.height;
     }
 
 
@@ -1202,7 +1219,11 @@ class Text extends Element {
         // 默认Y偏移
         ctx.shadowOffsetY = this.shadow.offsetY;
 
-        const {charPositions, height, width} = this.direction === 'vertical'
+        const metrics = ctx.measureText(this.text);
+        this.ascent = metrics.actualBoundingBoxAscent;
+        this.descent = metrics.actualBoundingBoxDescent;
+
+        const {chars, height, width} = this.direction === 'vertical'
             ? this.parseVerticalChars(ctx)
             : this.parseHorizontalChars(ctx)
 
@@ -1217,12 +1238,13 @@ class Text extends Element {
         }
 
         // 绘制每个字符
-        for (const pos of charPositions) {
-            ctx.fillText(pos.char, pos.x, pos.y);
+        for (const char of chars) {
+            ctx.fillText(char.char, char.x, char.y);
         }
 
-        this.width = width;
-        this.height = height
+        this.width = width || this.fontSize / 10;
+        this.height = height || this.fontSize
+        this.chars = chars;
 
         ctx.restore();
     }
@@ -1230,23 +1252,31 @@ class Text extends Element {
 
     parseHorizontalChars(ctx) {
         let currentX = this.x;
-        const charPositions = [];
+        let currentY = this.y + this.ascent;
+        const chars = [];
+        let maxCharHeight = 0;
         for (let i = 0; i < this.text.length; i++) {
             const char = this.text[i];
-            const charWidth = ctx.measureText(char).width;
-            charPositions.push({char, x: currentX, y: this.y, width: charWidth, height: this.fontSize});
+            const {
+                width: charWidth,
+                actualBoundingBoxAscent: ascent,
+                actualBoundingBoxDescent: descent
+            } = ctx.measureText(char);
+            const charHeight = ascent + descent
+            maxCharHeight = Math.max(maxCharHeight, charHeight);
+            chars.push({char, x: currentX, y: currentY, width: charWidth, height: charHeight});
             currentX += charWidth + (i < this.text.length - 1 ? this.spacing : 0);
         }
         return {
             width: currentX - this.x,
-            height: this.fontSize,
-            charPositions
+            height: maxCharHeight,
+            chars
         };
     }
 
     parseVerticalChars(ctx) {
-        let currentY = this.y;
-        const charPositions = [];
+        let currentY = this.y + this.ascent;
+        const chars = [];
         let maxCharWidth = 0;
         // 先测量所有字符的宽度，找出最大宽度
         const charWidths = [];
@@ -1259,7 +1289,7 @@ class Text extends Element {
         for (let i = 0; i < this.text.length; i++) {
             // 计算当前字符在最大宽度内居中的x坐标
             const charX = this.x + (maxCharWidth - charWidths[i]) / 2;
-            charPositions.push({
+            chars.push({
                 char: this.text[i],
                 x: charX,
                 y: currentY,
@@ -1271,76 +1301,95 @@ class Text extends Element {
         return {
             width: maxCharWidth,
             height: currentY - this.y,
-            charPositions
+            chars
         };
     }
 
-    selection(ctx, zoom) {
-        let dashPattern = [5, 3], color = 'red', lineCap = 'butt'
-        const lineWidth = 1 / zoom;
+    selection(ctx) {
+        const color = 'red', lineCap = 'butt'
+        const lineWidth = 0.08 * this.fontSize;
         ctx.save();
-        ctx.setLineDash([dashPattern[0] / zoom, dashPattern[1] / zoom]);
+        ctx.setLineDash([0.3 * this.fontSize, 0.2 * this.fontSize]);
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = color;
         ctx.lineCap = lineCap;
-
-        // 如果旋转角度为0，直接绘制矩形
-        if (this.angle === 0) {
-            ctx.beginPath();
-            ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width + 2 * lineWidth, this.height + 2 * lineWidth);
-            ctx.stroke();
-        } else {
-            // 如果旋转角度不为0，需要计算旋转后的包围盒
-            // 计算文字中心点
+        if (this.angle !== 0) {
+            // 计算文本中心点
             const centerX = this.x + this.width / 2;
             const centerY = this.y + this.height / 2;
-
-            // 四个角的坐标（未旋转时）
-            const corners = [
-                {x: this.x, y: this.y},
-                {x: this.x + this.width, y: this.y},
-                {x: this.x + this.width, y: this.y + this.height},
-                {x: this.x, y: this.y + this.height}
-            ];
-
-            // 将角度转换为弧度
-            const rad = this.angle * Math.PI / 180;
-            const cos = Math.cos(rad);
-            const sin = Math.sin(rad);
-
-            // 计算旋转后的坐标并找出最小/最大值
-            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-
-            for (const corner of corners) {
-                // 相对于中心点的坐标
-                const dx = corner.x - centerX;
-                const dy = corner.y - centerY;
-
-                // 旋转后的坐标
-                const rotatedX = centerX + dx * cos - dy * sin;
-                const rotatedY = centerY + dx * sin + dy * cos;
-
-                // 更新边界
-                minX = Math.min(minX, rotatedX);
-                minY = Math.min(minY, rotatedY);
-                maxX = Math.max(maxX, rotatedX);
-                maxY = Math.max(maxY, rotatedY);
-            }
-
-            // 绘制旋转后的矩形
-            ctx.save();
+            // 平移到文本中心点，旋转，再平移回来
             ctx.translate(centerX, centerY);
-            ctx.rotate(rad);
+            ctx.rotate(this.angle * Math.PI / 180);
             ctx.translate(-centerX, -centerY);
-            ctx.beginPath();
-            ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width + 2 * lineWidth, this.height + 2 * lineWidth);
-            ctx.stroke();
-            ctx.restore();
         }
-
+        ctx.beginPath();
+        ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width + 2 * lineWidth, this.height + 2 * lineWidth);
+        ctx.stroke();
         ctx.restore();
     }
 
+
+    /**
+     * 绘制光标
+     * @param ctx
+     * @param start
+     * @param end
+     */
+    drawCursor(ctx, start, end) {
+        if (start !== end) return
+        const {y, fontColor, fontSize, spacing, chars} = this;
+        const cursorWidth = 0.08 * fontSize;
+        const char = chars[end];
+        ctx.save()
+        ctx.fillStyle = fontColor;
+        if (this.angle !== 0) {
+            // 计算文本中心点
+            const centerX = this.x + this.width / 2;
+            const centerY = this.y + this.height / 2;
+            // 平移到文本中心点，旋转，再平移回来
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.translate(-centerX, -centerY);
+        }
+        const x = !char ? this.x + this.width + (spacing - cursorWidth) / 2 : char.x + (spacing - cursorWidth) / 2;
+        ctx.fillRect(x, y, cursorWidth, this.height);
+        ctx.restore();
+    }
+
+    /**
+     * 绘制文本编辑状态背景颜色
+     * @param ctx
+     * @param start
+     * @param end
+     * @param start
+     * @param end
+     */
+    drawEditBackground(ctx, start, end) {
+        const {x, y, height, width, highlightColor, spacing, text, chars} = this
+        const margin = 0.3 * height;
+        ctx.save()
+        // 绘制高亮背景
+        ctx.fillStyle = highlightColor;
+        if (this.angle !== 0) {
+            // 计算文本中心点
+            const centerX = this.x + this.width / 2;
+            const centerY = this.y + this.height / 2;
+            // 平移到文本中心点，旋转，再平移回来
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.translate(-centerX, -centerY);
+        }
+        ctx.fillRect(x - margin, y - margin, width + 2 * margin, height + 2 * margin);
+        if (start !== end) {
+            const startIndex = Math.max(0, Math.min(start, end));
+            const endIndex = Math.min(text.length, Math.max(start, end));
+            const startX = chars[startIndex].x - spacing / 2;
+            const endX = endIndex < this.text.length ? chars[endIndex].x + spacing / 2 : this.x + this.width + spacing / 2;
+            ctx.fillStyle = 'rgb(59,103,225,0.5)';
+            ctx.fillRect(startX, y, endX - startX, height);
+        }
+        ctx.restore();
+    }
 }
 
 
@@ -1352,22 +1401,23 @@ class EditableText extends Text {
 
 
 class Image extends Element {
+
     constructor(image, options = {}) {
         if (!image) {
             throw new Error('Failed to load image, image is null');
         }
         super(options);
-        this.type = 'image';
-        this.image = image;
-        this.cacheable = options.cacheable || false;
-        this.src = image?.src || options.src;
-        this.crossOrigin = options.crossOrigin || 'anonymous';
-        this.scale = options.scale || 1;
-        this.width = options.width;
-        this.height = options.height;
-        this.alpha = options.alpha || 1;
-        this.angle = options.angle || 0;
-
+        this.type = 'image'
+        this.image = image
+        this.cacheable = options.cacheable || false
+        this.src = image?.src
+        this.crossOrigin = options.crossOrigin || 'anonymous'
+        this.scale = options.scale || 1
+        this.width = options.width
+        this.height = options.height
+        this.alpha = options.alpha || 1
+        this.angle = options.angle || 0
+        this.path = options.path
         // 图片阴影 - 需要处理嵌套对象
         this.shadow = {
             color: 'rgba(0,0,0,1)',
@@ -1376,82 +1426,94 @@ class Image extends Element {
             offsetY: 0,
             ...options.shadow
         };
-
-        // 对于 canvas 的 Image 对象，naturalWidth 和 naturalHeight 属性可能不存在
-        // 使用 width 和 height 属性替代
-        const imgWidth = image.naturalWidth || image.width || 0;
-        const imgHeight = image.naturalHeight || image.height || 0;
-
+        const {naturalWidth, naturalHeight} = image;
         const {width, height} = options;
-
         // 如果没有设置宽高，使用图片原始尺寸
         if (!width && !height) {
-            this.width = imgWidth;
-            this.height = imgHeight;
+            this.width = naturalWidth;
+            this.height = naturalHeight;
         }
         // 如果只设置了宽度，按比例计算高度
         else if (width && !height) {
-            this.height = width * imgHeight / imgWidth;
+            this.height = width * naturalHeight / naturalWidth;
         }
         // 如果只设置了高度，按比例计算宽度
         else if (height && !width) {
-            this.width = height * imgWidth / imgHeight;
+            this.width = height * naturalWidth / naturalHeight;
         }
     }
 
 
-    static async fromURL(url, options = {}) {
-        if (!url) {
-            throw new Error('Failed to load image: URL is null or undefined');
-        }
-        try {
-            const image = await loadImage(url);
-            return new Image(image, options);
-        } catch (error) {
-            throw new Error(`Failed to load image from URL: ${url}. ${error.message}`);
-        }
+    static fromURL(src, options = {}) {
+        return new Promise((resolve, reject) => {
+            if (!src) {
+                return reject(`Failed to load image: src is null`);
+            }
+            if (typeof window !== 'undefined') {
+                const image = new window.Image();
+                image.onload = () => {
+                    const instance = new Image(image, options);
+                    resolve(instance);
+                };
+                image.onerror = () => {
+                    reject(`Failed to load image: ${src}`);
+                };
+                image.src = src;
+                image.crossOrigin = options.crossOrigin;
+
+            } else {
+                const {loadImage} = require('@napi-rs/canvas')
+                loadImage(src).then(image => {
+                    resolve(new Image(image, options))
+                }).catch(err => {
+                    reject(`Failed to load image from URL: ${src}. ${err.message}`)
+                })
+            }
+        })
     }
 
-    static async fromFile(path, options = {}) {
-        if (!path) {
-            throw new Error('Failed to load image: path is null');
-        }
-        try {
-            const image = await loadImage(path);
-            return new Image(image, options);
-        } catch (error) {
-            throw new Error(`Failed to load image from file: ${path}. ${error.message}`);
-        }
-    }
-
-    static async fromBuffer(buffer, options = {}) {
-        if (!buffer) {
-            throw new Error('Failed to load image: buffer is null');
-        }
-        try {
-            const image = await loadImage(buffer);
-            return new Image(image, options);
-        } catch (error) {
-            throw new Error(`Failed to load image from buffer: ${error.message}`);
-        }
-    }
 
     contains(x, y) {
-        return x >= this.x && x <= this.x + this.width * this.scale && y >= this.y && y <= this.y + this.height * this.scale;
+
+        // 如果未旋转，使用原来的轴对齐边界框检测
+        if (this.angle === 0) {
+            return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
+        }
+
+        // 对于旋转的文本，将点击点反向旋转回文本的局部坐标系
+        // 计算文本中心点（旋转中心）
+        const centerX = this.x + this.width * this.scale / 2;
+        const centerY = this.y + this.height * this.scale / 2;
+
+        // 将点相对于中心点平移
+        const translatedX = x - centerX;
+        const translatedY = y - centerY;
+
+        // 计算反向旋转角度（弧度）
+        const angleRad = -this.angle * Math.PI / 180;
+
+        // 反向旋转点（绕中心点反向旋转）
+        const rotatedX = translatedX * Math.cos(angleRad) - translatedY * Math.sin(angleRad);
+        const rotatedY = translatedX * Math.sin(angleRad) + translatedY * Math.cos(angleRad);
+
+        // 将点平移回原坐标系
+        const localX = rotatedX + centerX;
+        const localY = rotatedY + centerY;
+
+        // 检查反向旋转后的点是否在原始（未旋转）的边界框内
+        return localX >= this.x && localX <= this.x + this.width * this.scale && localY >= this.y && localY <= this.y + this.height * this.scale;
     }
 
     draw(ctx) {
         if (!this.image) {
-            console.error(`Failed to load image: ${this.src}`);
-            return;
+            console.error(`Failed to load image: ${this.src}`)
+            return
         }
-
         // 保存当前画布状态
         ctx.save();
-        ctx.globalAlpha = this.alpha;
+        ctx.globalAlpha = this.alpha
 
         const {color: shadowColor, blur: shadowBlur, offsetX: shadowOffsetX, offsetY: shadowOffsetY} = this.shadow;
-
         // 设置阴影颜色（支持RGBA格式）
         ctx.shadowColor = shadowColor || 'rgba(0, 0, 0, 1)';
         // 设置阴影模糊度（像素）
@@ -1470,33 +1532,22 @@ class Image extends Element {
             ctx.translate(-centerX, -centerY);
         }
 
-        try {
-            // 绘制图片
-            ctx.drawImage(
-                this.image,
-                this.x,
-                this.y,
-                this.width * this.scale,
-                this.height * this.scale
-            );
-        } catch (error) {
-            console.error(`Error drawing image: ${error.message}`);
-        }
-
+        // 绘制图片（注意坐标已偏移到中心点）
+        ctx.drawImage(this.image, this.x, this.y, this.width * this.scale, this.height * this.scale);
         // 恢复画布到之前保存的状态
         ctx.restore();
     }
 
-    selection(ctx, zoom) {
-        let dashPattern = [5, 3], color = 'red', lineCap = 'butt';
-        const lineWidth = 1 / zoom;
 
+    selection(ctx) {
+        const color = 'red', lineCap = 'butt'
+        const baseWidth = Math.max(this.width, this.height) * this.scale;
+        const lineWidth = 0.02 * baseWidth
         ctx.save();
-        ctx.setLineDash([dashPattern[0] / zoom, dashPattern[1] / zoom]);
+        ctx.setLineDash([0.06 * baseWidth, 0.03 * baseWidth]);
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = color;
         ctx.lineCap = lineCap;
-
         if (this.angle !== 0) {
             // 计算文本中心点
             const centerX = this.x + this.width * this.scale / 2;
@@ -1506,78 +1557,13 @@ class Image extends Element {
             ctx.rotate(this.angle * Math.PI / 180);
             ctx.translate(-centerX, -centerY);
         }
-
         ctx.beginPath();
-        ctx.rect(
-            this.x - lineWidth,
-            this.y - lineWidth,
-            this.width * this.scale + 2 * lineWidth,
-            this.height * this.scale + 2 * lineWidth
-        );
+        ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width * this.scale + 2 * lineWidth, this.height * this.scale + 2 * lineWidth);
         ctx.stroke();
         ctx.restore();
     }
 
-    // 新增方法：将图片转换为 Buffer
-    toBuffer(mimeType = 'image/png', options = {}) {
-        return new Promise((resolve, reject) => {
-            try {
-                // 创建临时 canvas 来绘制图片
-                const canvas = createCanvas(
-                    Math.ceil(this.width * this.scale),
-                    Math.ceil(this.height * this.scale)
-                );
-
-                const ctx = canvas.getContext('2d');
-
-                // 设置透明度
-                ctx.globalAlpha = this.alpha;
-
-                // 绘制图片
-                ctx.drawImage(
-                    this.image,
-                    0,
-                    0,
-                    this.width * this.scale,
-                    this.height * this.scale
-                );
-
-                // 转换为 Buffer
-                canvas.toBuffer((err, buffer) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(buffer);
-                    }
-                }, mimeType, options);
-            } catch (error) {
-                reject(error);
-            }
-        });
-    }
-
-    // 新增方法：获取图片数据 URL
-    toDataURL(mimeType = 'image/png', quality) {
-        const canvas = createCanvas(
-            Math.ceil(this.width * this.scale),
-            Math.ceil(this.height * this.scale)
-        );
-        const ctx = canvas.getContext('2d');
-
-        // 设置透明度
-        ctx.globalAlpha = this.alpha;
-
-        // 绘制图片
-        ctx.drawImage(
-            this.image,
-            0,
-            0,
-            this.width * this.scale,
-            this.height * this.scale
-        );
-
-        return canvas.toDataURL(mimeType, quality);
-    }
 }
 
-module.exports = {CanvasEditor, Text, EditableText, Image};
+// 支持 ES6 模块
+module.exports = {CanvasEditor: NodeCanvasEditor, Text, EditableText, Image};

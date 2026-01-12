@@ -68,9 +68,9 @@ class DraggableElementFactory {
                 Image.fromURL(url, {
                     width: width / zoom,
                     height: height / zoom,
-                    draggable: true
+                    draggable: true,
+                    meta: {path}
                 }).then(image => {
-                    image.path = path
                     resolve(image);
                 }).catch(error => {
                     reject(error);
