@@ -1518,7 +1518,7 @@ class Image extends Element {
         const baseWidth = Math.max(this.width, this.height) * this.scale;
         const lineWidth = 0.02 * baseWidth
         ctx.save();
-        ctx.setLineDash([0.1 * baseWidth, 0.05 * baseWidth]);
+        ctx.setLineDash([0.06 * baseWidth, 0.03 * baseWidth]);
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = color;
         ctx.lineCap = lineCap;
