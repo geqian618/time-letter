@@ -75,11 +75,20 @@ class NodeCanvasEditor {
      * 初始化编辑器
      */
     initCanvas() {
+
         const {width, height} = this.canvasConfig;
         if (width && height) {
             this.canvas.width = width
             this.canvas.height = height
         }
+
+        //设置高质量渲染选项
+        this.ctx.patternQuality = 'best';
+        this.ctx.quality = 'best'
+        this.ctx.antialias = 'subpixel'
+        this.ctx.imageSmoothingEnabled = true;
+        this.ctx.imageSmoothingQuality = 'high'
+
         // 添加事件监听
         this.isBrowser && this.canvas.addEventListener('mousedown', this.handleMouseDown);
     }
@@ -1024,7 +1033,7 @@ class NodeCanvasEditor {
                 }
             }
             this.renderAll();
-        } catch (err) {
+        } catch (err) {i
             throw err
         }
     }
