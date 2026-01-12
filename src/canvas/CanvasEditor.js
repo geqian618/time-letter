@@ -393,7 +393,7 @@ class CanvasEditor {
      * @param {number} clickY - 点击Y坐标
      * @returns {number} 光标索引
      */
-    getcursorStartFromText(textObj, clickX, clickY) {
+    getCursorIndexFromText(textObj, clickX, clickY) {
         const metrics = this.getTextMetrics(textObj);
         const text = textObj.text;
         // 计算文本的实际绘制区域
@@ -411,6 +411,7 @@ class CanvasEditor {
 
         // 使用二分法查找最近的光标位置
         let closestIndex = 0;
+
         let minDistance = Infinity;
 
         for (let i = 0; i <= text.length; i++) {
@@ -629,16 +630,15 @@ class CanvasEditor {
      * @param element
      */
     drawEditBackground(element) {
-        const {x, y, fontSize, highlightColor} = element
+        const {x, y, height, highlightColor} = element
         const metrics = this.getTextMetrics(element);
-        const margin = 0.3 * fontSize;
+        const margin = 0.3 * height;
         const width = metrics.width + 2 * margin
-        const height = fontSize + 2 * margin
         const {ascent} = element;
         this.drawFillRect(x - margin, y - margin - ascent, width, height, highlightColor)
         if (this.cursorStart !== this.cursorEnd) {
             const {startX, endX} = this.getRangeByIndex(element, this.cursorStart, this.cursorEnd);
-            this.drawFillRect(startX, y, endX - startX, fontSize, this.canvasConfig.selectionColor)
+            this.drawFillRect(startX, y, endX - startX, height + 2 * margin, this.canvasConfig.selectionColor)
         }
     }
 
@@ -697,7 +697,7 @@ class CanvasEditor {
                 return
             }
             // 计算点击位置对应的光标索引
-            const index = this.getcursorStartFromText(element, x, y);
+            const index = this.getCursorIndexFromText(element, x, y);
             // 如果是双击，直接进入编辑模式
             this.startEditing(element, index);
         }
@@ -740,7 +740,7 @@ class CanvasEditor {
             if (interval > 200 && (startX !== moveX || startY !== moveY)) {
                 if (element.type === 'text' && element.status === Element.EDITING) {
                     // 选中文本
-                    this.cursorEnd = this.getcursorStartFromText(element, moveX);
+                    this.cursorEnd = this.getCursorIndexFromText(element, moveX);
                     if (this.cursorEnd !== this.cursorStart) {
                         this.updateInputSelection()
                         this.renderAll()
@@ -1236,8 +1236,8 @@ class Text extends Element {
             ctx.fillText(char.char, char.x, char.y);
         }
 
-        this.width = width;
-        this.height = height
+        this.width = width || this.fontSize / 10;
+        this.height = height || this.fontSize
         this.chars = chars;
 
         ctx.restore();
@@ -1248,15 +1248,22 @@ class Text extends Element {
         let currentX = this.x;
         let currentY = this.y + this.ascent;
         const chars = [];
+        let maxCharHeight = 0;
         for (let i = 0; i < this.text.length; i++) {
             const char = this.text[i];
-            const charWidth = ctx.measureText(char).width;
-            chars.push({char, x: currentX, y: currentY, width: charWidth, height: this.fontSize});
+            const {
+                width: charWidth,
+                actualBoundingBoxAscent: ascent,
+                actualBoundingBoxDescent: descent
+            } = ctx.measureText(char);
+            const charHeight = ascent + descent
+            maxCharHeight = Math.max(maxCharHeight, charHeight);
+            chars.push({char, x: currentX, y: currentY, width: charWidth, height: charHeight});
             currentX += charWidth + (i < this.text.length - 1 ? this.spacing : 0);
         }
         return {
             width: currentX - this.x,
-            height: this.fontSize,
+            height: maxCharHeight,
             chars
         };
     }
@@ -1323,8 +1330,9 @@ class Text extends Element {
      * @param end
      */
     drawCursor(ctx, start, end) {
+        if (start !== end) return
         const {y, fontColor, fontSize, spacing, chars} = this;
-        const cursorWidth = 0.1 * fontSize;
+        const cursorWidth = 0.08 * fontSize;
         const char = chars[end];
         ctx.save()
         ctx.fillStyle = fontColor;
@@ -1337,12 +1345,8 @@ class Text extends Element {
             ctx.rotate(this.angle * Math.PI / 180);
             ctx.translate(-centerX, -centerY);
         }
-        ctx.fillRect(
-            char.x + (spacing - cursorWidth) / 2,
-            y,
-            cursorWidth,
-            fontSize
-        );
+        const x = !char ? this.x + this.width + (spacing - cursorWidth) / 2 : char.x + (spacing - cursorWidth) / 2;
+        ctx.fillRect(x, y, cursorWidth, this.height);
         ctx.restore();
     }
 
@@ -1372,9 +1376,9 @@ class Text extends Element {
         ctx.fillRect(x - margin, y - margin, width + 2 * margin, height + 2 * margin);
         if (start !== end) {
             const startIndex = Math.max(0, Math.min(start, end));
-            const endIndex = Math.min(text.length, Math.max(start, end) + 1);
+            const endIndex = Math.min(text.length, Math.max(start, end));
             const startX = chars[startIndex].x - spacing / 2;
-            const endX = chars[endIndex].x - spacing / 2;
+            const endX = endIndex < this.text.length ? chars[endIndex].x + spacing / 2 : this.x + this.width + spacing / 2;
             ctx.fillStyle = 'rgb(59,103,225,0.5)';
             ctx.fillRect(startX, y, endX - startX, height);
         }
