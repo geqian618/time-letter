@@ -536,7 +536,7 @@ class CanvasEditor {
      */
     setCenterZoom(zoom) {
         if (zoom > 0) {
-            this.canvasConfig.zoom = zoom
+            this.ctx.zoom = this.canvasConfig.zoom = zoom
             this.canvas.style.transform = `scale(${zoom})`
             this.canvas.style.transformOrigin = 'center center';
         }
@@ -550,7 +550,7 @@ class CanvasEditor {
      */
     setZoom(zoom, pointX, pointY) {
         if (zoom > 0) {
-            this.canvasConfig.zoom = zoom
+            this.ctx.zoom = this.canvasConfig.zoom = zoom
             this.canvas.style.transform = `scale(${zoom})`
             this.canvas.style.transformOrigin = `${pointX}px ${pointY}px`;
         }
@@ -587,10 +587,10 @@ class CanvasEditor {
                 element.draw(this.ctx);
                 // 如果是正在编辑的文本，绘制背景颜色
                 if (element.status === Element.EDITING) {
-                    this.drawEditBackground(element)
+                    element.drawEditBackground(this.ctx)
                     // 如果是正在编辑的文本，绘制光标
                     if (this.isCursorVisible) {
-                        this.drawCursor(element, this.canvasConfig.cursorWidth / this.canvasConfig.zoom)
+                        element.drawCursor(this.ctx)
                     }
                 }
             } else if (element.type === 'image') {
@@ -600,7 +600,7 @@ class CanvasEditor {
                 }
             }
             if (this.hasActiveElement(element)) {
-                element.selection(this.ctx, this.canvasConfig.zoom)
+                element.selection(this.ctx)
             }
         }
     }
@@ -634,7 +634,8 @@ class CanvasEditor {
         const margin = 0.3 * fontSize;
         const width = metrics.width + 2 * margin
         const height = fontSize + 2 * margin
-        this.drawFillRect(x - margin, y - margin, width, height, highlightColor)
+        const {ascent} = element;
+        this.drawFillRect(x - margin, y - margin - ascent, width, height, highlightColor)
         if (this.cursorIndex !== this.cursorEndIndex) {
             const {startX, endX} = this.getRangeByIndex(element, this.cursorIndex, this.cursorEndIndex);
             this.drawFillRect(startX, y, endX - startX, fontSize, this.canvasConfig.selectionColor)
@@ -1150,6 +1151,12 @@ class Text extends Element {
 
         this.hiddenInput = null
 
+        this.ascent = 0;
+
+        this.descent = 0;
+
+        this.chars = []
+
         this.cursor = {
             start: 0,
             end: 0
@@ -1157,7 +1164,34 @@ class Text extends Element {
     }
 
     contains(x, y) {
-        return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height
+
+        // 如果未旋转，使用原来的轴对齐边界框检测
+        if (this.angle === 0) {
+            return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
+        }
+
+        // 对于旋转的文本，将点击点反向旋转回文本的局部坐标系
+        // 计算文本中心点（旋转中心）
+        const centerX = this.x + this.width / 2;
+        const centerY = this.y + this.height / 2;
+
+        // 将点相对于中心点平移
+        const translatedX = x - centerX;
+        const translatedY = y - centerY;
+
+        // 计算反向旋转角度（弧度）
+        const angleRad = -this.angle * Math.PI / 180;
+
+        // 反向旋转点（绕中心点反向旋转）
+        const rotatedX = translatedX * Math.cos(angleRad) - translatedY * Math.sin(angleRad);
+        const rotatedY = translatedX * Math.sin(angleRad) + translatedY * Math.cos(angleRad);
+
+        // 将点平移回原坐标系
+        const localX = rotatedX + centerX;
+        const localY = rotatedY + centerY;
+
+        // 检查反向旋转后的点是否在原始（未旋转）的边界框内
+        return localX >= this.x && localX <= this.x + this.width && localY >= this.y && localY <= this.y + this.height;
     }
 
 
@@ -1179,7 +1213,11 @@ class Text extends Element {
         // 默认Y偏移
         ctx.shadowOffsetY = this.shadow.offsetY;
 
-        const {charPositions, height, width} = this.direction === 'vertical'
+        const metrics = ctx.measureText(this.text);
+        this.ascent = metrics.actualBoundingBoxAscent;
+        this.descent = metrics.actualBoundingBoxDescent;
+
+        const {chars, height, width} = this.direction === 'vertical'
             ? this.parseVerticalChars(ctx)
             : this.parseHorizontalChars(ctx)
 
@@ -1194,12 +1232,13 @@ class Text extends Element {
         }
 
         // 绘制每个字符
-        for (const pos of charPositions) {
-            ctx.fillText(pos.char, pos.x, pos.y);
+        for (const char of chars) {
+            ctx.fillText(char.char, char.x, char.y);
         }
 
         this.width = width;
         this.height = height
+        this.chars = chars;
 
         ctx.restore();
     }
@@ -1207,23 +1246,24 @@ class Text extends Element {
 
     parseHorizontalChars(ctx) {
         let currentX = this.x;
-        const charPositions = [];
+        let currentY = this.y + this.ascent;
+        const chars = [];
         for (let i = 0; i < this.text.length; i++) {
             const char = this.text[i];
             const charWidth = ctx.measureText(char).width;
-            charPositions.push({char, x: currentX, y: this.y, width: charWidth, height: this.fontSize});
+            chars.push({char, x: currentX, y: currentY, width: charWidth, height: this.fontSize});
             currentX += charWidth + (i < this.text.length - 1 ? this.spacing : 0);
         }
         return {
             width: currentX - this.x,
             height: this.fontSize,
-            charPositions
+            chars
         };
     }
 
     parseVerticalChars(ctx) {
-        let currentY = this.y;
-        const charPositions = [];
+        let currentY = this.y + this.ascent;
+        const chars = [];
         let maxCharWidth = 0;
         // 先测量所有字符的宽度，找出最大宽度
         const charWidths = [];
@@ -1236,7 +1276,7 @@ class Text extends Element {
         for (let i = 0; i < this.text.length; i++) {
             // 计算当前字符在最大宽度内居中的x坐标
             const charX = this.x + (maxCharWidth - charWidths[i]) / 2;
-            charPositions.push({
+            chars.push({
                 char: this.text[i],
                 x: charX,
                 y: currentY,
@@ -1248,15 +1288,15 @@ class Text extends Element {
         return {
             width: maxCharWidth,
             height: currentY - this.y,
-            charPositions
+            chars
         };
     }
 
-    selection(ctx, zoom) {
-        let dashPattern = [5, 3], color = 'red', lineCap = 'butt'
-        const lineWidth = 1 / zoom;
+    selection(ctx) {
+        const color = 'red', lineCap = 'butt'
+        const lineWidth = 0.08 * this.fontSize;
         ctx.save();
-        ctx.setLineDash([dashPattern[0] / zoom, dashPattern[1] / zoom]);
+        ctx.setLineDash([0.3 * this.fontSize, 0.2 * this.fontSize]);
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = color;
         ctx.lineCap = lineCap;
@@ -1275,6 +1315,65 @@ class Text extends Element {
         ctx.restore();
     }
 
+
+    /**
+     * 绘制光标
+     * @param ctx
+     */
+    drawCursor(ctx) {
+        const {y, fontColor, fontSize, spacing, chars, cursor: {start, end}} = this;
+        const cursorWidth = 0.1 * fontSize;
+        const char = chars[end];
+        ctx.save()
+        ctx.fillStyle = fontColor;
+        if (this.angle !== 0) {
+            // 计算文本中心点
+            const centerX = this.x + this.width / 2;
+            const centerY = this.y + this.height / 2;
+            // 平移到文本中心点，旋转，再平移回来
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.translate(-centerX, -centerY);
+        }
+        ctx.fillRect(
+            char.x + (spacing - cursorWidth) / 2,
+            y,
+            cursorWidth,
+            fontSize
+        );
+        ctx.restore();
+    }
+
+    /**
+     * 绘制文本编辑状态背景颜色
+     * @param ctx
+     */
+    drawEditBackground(ctx) {
+        const {x, y, height, width, highlightColor, spacing, text, chars, cursor: {start, end}} = this
+        const margin = 0.3 * height;
+        ctx.save()
+        // 绘制高亮背景
+        ctx.fillStyle = highlightColor;
+        if (this.angle !== 0) {
+            // 计算文本中心点
+            const centerX = this.x + this.width / 2;
+            const centerY = this.y + this.height / 2;
+            // 平移到文本中心点，旋转，再平移回来
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.translate(-centerX, -centerY);
+        }
+        ctx.fillRect(x - margin, y - margin, width + 2 * margin, height + 2 * margin);
+        if (start !== end) {
+            const startIndex = Math.max(0, Math.min(start, end));
+            const endIndex = Math.min(text.length, Math.max(start, end) + 1);
+            const startX = chars[startIndex].x - spacing / 2;
+            const endX = chars[endIndex].x - spacing / 2;
+            ctx.fillStyle = 'rgb(59,103,225,0.5)';
+            ctx.fillRect(startX, y, endX - startX, height);
+        }
+        ctx.restore();
+    }
 }
 
 
@@ -1349,7 +1448,34 @@ class Image extends Element {
 
 
     contains(x, y) {
-        return x >= this.x && x <= this.x + this.width * this.scale && y >= this.y && y <= this.y + this.height * this.scale
+
+        // 如果未旋转，使用原来的轴对齐边界框检测
+        if (this.angle === 0) {
+            return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
+        }
+
+        // 对于旋转的文本，将点击点反向旋转回文本的局部坐标系
+        // 计算文本中心点（旋转中心）
+        const centerX = this.x + this.width * this.scale / 2;
+        const centerY = this.y + this.height * this.scale / 2;
+
+        // 将点相对于中心点平移
+        const translatedX = x - centerX;
+        const translatedY = y - centerY;
+
+        // 计算反向旋转角度（弧度）
+        const angleRad = -this.angle * Math.PI / 180;
+
+        // 反向旋转点（绕中心点反向旋转）
+        const rotatedX = translatedX * Math.cos(angleRad) - translatedY * Math.sin(angleRad);
+        const rotatedY = translatedX * Math.sin(angleRad) + translatedY * Math.cos(angleRad);
+
+        // 将点平移回原坐标系
+        const localX = rotatedX + centerX;
+        const localY = rotatedY + centerY;
+
+        // 检查反向旋转后的点是否在原始（未旋转）的边界框内
+        return localX >= this.x && localX <= this.x + this.width * this.scale && localY >= this.y && localY <= this.y + this.height * this.scale;
     }
 
     draw(ctx) {
@@ -1387,11 +1513,12 @@ class Image extends Element {
     }
 
 
-    selection(ctx, zoom) {
-        let dashPattern = [5, 3], color = 'red', lineCap = 'butt'
-        const lineWidth = 1 / zoom;
+    selection(ctx) {
+        const color = 'red', lineCap = 'butt'
+        const baseWidth = Math.max(this.width, this.height) * this.scale;
+        const lineWidth = 0.02 * baseWidth
         ctx.save();
-        ctx.setLineDash([dashPattern[0] / zoom, dashPattern[1] / zoom]);
+        ctx.setLineDash([0.1 * baseWidth, 0.05 * baseWidth]);
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = color;
         ctx.lineCap = lineCap;

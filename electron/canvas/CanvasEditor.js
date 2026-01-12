@@ -1283,18 +1283,61 @@ class Text extends Element {
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = color;
         ctx.lineCap = lineCap;
-        if (this.angle !== 0) {
-            // 计算文本中心点
+
+        // 如果旋转角度为0，直接绘制矩形
+        if (this.angle === 0) {
+            ctx.beginPath();
+            ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width + 2 * lineWidth, this.height + 2 * lineWidth);
+            ctx.stroke();
+        } else {
+            // 如果旋转角度不为0，需要计算旋转后的包围盒
+            // 计算文字中心点
             const centerX = this.x + this.width / 2;
             const centerY = this.y + this.height / 2;
-            // 平移到文本中心点，旋转，再平移回来
+
+            // 四个角的坐标（未旋转时）
+            const corners = [
+                {x: this.x, y: this.y},
+                {x: this.x + this.width, y: this.y},
+                {x: this.x + this.width, y: this.y + this.height},
+                {x: this.x, y: this.y + this.height}
+            ];
+
+            // 将角度转换为弧度
+            const rad = this.angle * Math.PI / 180;
+            const cos = Math.cos(rad);
+            const sin = Math.sin(rad);
+
+            // 计算旋转后的坐标并找出最小/最大值
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+            for (const corner of corners) {
+                // 相对于中心点的坐标
+                const dx = corner.x - centerX;
+                const dy = corner.y - centerY;
+
+                // 旋转后的坐标
+                const rotatedX = centerX + dx * cos - dy * sin;
+                const rotatedY = centerY + dx * sin + dy * cos;
+
+                // 更新边界
+                minX = Math.min(minX, rotatedX);
+                minY = Math.min(minY, rotatedY);
+                maxX = Math.max(maxX, rotatedX);
+                maxY = Math.max(maxY, rotatedY);
+            }
+
+            // 绘制旋转后的矩形
+            ctx.save();
             ctx.translate(centerX, centerY);
-            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.rotate(rad);
             ctx.translate(-centerX, -centerY);
+            ctx.beginPath();
+            ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width + 2 * lineWidth, this.height + 2 * lineWidth);
+            ctx.stroke();
+            ctx.restore();
         }
-        ctx.beginPath();
-        ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width + 2 * lineWidth, this.height + 2 * lineWidth);
-        ctx.stroke();
+
         ctx.restore();
     }
 
