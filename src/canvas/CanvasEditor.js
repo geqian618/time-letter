@@ -75,7 +75,7 @@ class CanvasEditor {
      * 初始化编辑器
      */
     initCanvas() {
-        
+
         const {width, height} = this.canvasConfig;
         if (width && height) {
             this.canvas.width = width
@@ -225,6 +225,11 @@ class CanvasEditor {
     }
 
 
+    hasElement(element) {
+        return this.elements.findIndex(item => item.id === element.id) !== -1;
+    }
+
+
     /**
      * 移除元素
      * @param {number} element - 元素
@@ -238,15 +243,30 @@ class CanvasEditor {
         this.removeActiveElement(element);
     }
 
-    hasElement(element) {
-        return this.elements.findIndex(item => item.id === element.id) !== -1;
+
+    /**
+     * 移除元素
+     * @param {Array<Object>|Object} elements - 元素或元素数组
+     */
+    removeElements(elements) {
+        if (!elements || (Array.isArray(elements) && elements.length === 0)) {
+            return;
+        }
+        // 统一转换为数组
+        const elementArray = Array.isArray(elements) ? elements : [elements];
+        // 获取要删除的id集合
+        const targets = new Set(elementArray.map(element => element.id));
+        // 过滤掉匹配id的元素
+        this.elements = this.elements.filter(element => !targets.has(element.id));
+        // 同时删除激活元素
+        this.activeElements = this.activeElements.filter(element => !targets.has(element.id));
     }
 
 
     /**
      * 移除全部元素
      */
-    removeElements() {
+    clearElements() {
         this.elements = [];
         this.activeElements = [];
     }
@@ -271,9 +291,25 @@ class CanvasEditor {
 
 
     /**
+     * 移除元素
+     * @param {Array<Object>|Object} elements - 元素或元素数组
+     */
+    removeActiveElements(elements) {
+        if (!elements || (Array.isArray(elements) && elements.length === 0)) {
+            return;
+        }
+        // 统一转换为数组
+        const elementArray = Array.isArray(elements) ? elements : [elements];
+        // 获取要删除的id集合
+        const targets = new Set(elementArray.map(element => element.id));
+        // 过滤掉匹配id的元素
+        this.activeElements = this.activeElements.filter(element => !targets.has(element.id));
+    }
+
+    /**
      * 移除全部激活元素
      */
-    removeActiveElements() {
+    clearActiveElements() {
         this.activeElements.forEach(item => item.status = Element.NONE)
         this.activeElements = [];
     }
@@ -703,7 +739,7 @@ class CanvasEditor {
         const {event, element} = params;
         const {x, y} = this.getCanvasInternalPosition(event);
         if (element && element.editable) {
-            this.removeActiveElements()
+            this.clearActiveElements()
             if (this.isEditing && this.editingText !== element) {
                 this.finishEditing()
                 return
@@ -890,7 +926,7 @@ class CanvasEditor {
      */
     handleCancelActive() {
         if (this.activeElements.length > 0) {
-            this.removeActiveElements()
+            this.clearActiveElements()
             this.renderAll();
         }
         if (this.editingText) {

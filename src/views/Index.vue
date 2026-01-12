@@ -2821,11 +2821,14 @@ const handleCancelSelectedElement = (event) => {
 
 // 删除元素
 const handleRemoveElement = (event) => {
+  const canvas = CanvasManager.getCurrentCanvas();
   // 判断是否为删除键（Backspace 或 Delete）
-  if (event.key === 'Backspace' || event.key === 'Delete') {
+  if (canvas && (event.key === 'Backspace' || event.key === 'Delete')) {
     const activeElements = canvasEditor.getActiveElements();
-    for (let activeElement of activeElements) {
-      canvasEditor.removeElement(activeElement)
+    const length = activeElements.length;
+    canvasEditor.removeElements(activeElements)
+    if (length) {
+      canvas.json = canvasEditor.exportToJSON()
     }
     canvasEditor.renderAll()
   }
