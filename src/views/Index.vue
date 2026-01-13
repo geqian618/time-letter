@@ -2818,20 +2818,6 @@ const handleCancelSelectedElement = (event) => {
   }
 }
 
-// 删除元素
-const handleRemoveElement = (event) => {
-  const canvas = CanvasManager.getCurrentCanvas();
-  // 判断是否为删除键（Backspace 或 Delete）
-  if (canvas && (event.key === 'Backspace' || event.key === 'Delete')) {
-    const activeElements = canvasEditor.getActiveElements();
-    const length = activeElements.length;
-    canvasEditor.removeElements(activeElements)
-    if (length) {
-      canvas.json = canvasEditor.exportToJSON()
-    }
-    canvasEditor.renderAll()
-  }
-}
 
 // 编辑文本
 const handleEditorElement = (event) => {
@@ -3422,8 +3408,6 @@ const handleCanvasResize = (event) => {
 }
 
 const handleDragMoveCanvas = (event) => {
-  // 阻止默认滚动行为
-  event.preventDefault();
   const canvas = CanvasManager.getCurrentCanvas();
   if (canvas && isCanvasDraggingMode) {
     // 拖拽开始时设置光标为正在抓取的状态
@@ -3480,6 +3464,38 @@ const triggerDragCanvas = (event) => {
       }
     }
     document.addEventListener('keyup', handleKeyup)
+  }
+}
+
+
+// 删除元素
+const handleRemoveElement = (event) => {
+
+  // 检查当前焦点元素是否为可输入元素
+  const activeElement = document.activeElement;
+
+  // 判断是否为可输入元素
+  const isEditable = activeElement.tagName === 'INPUT' ||
+      activeElement.tagName === 'TEXTAREA' ||
+      activeElement.tagName === 'SELECT' ||
+      activeElement.isContentEditable ||
+      activeElement.getAttribute('contenteditable') === 'true';
+
+  // 如果是可输入元素，则允许默认的删除行为
+  if (isEditable) {
+    return;
+  }
+
+  const canvas = CanvasManager.getCurrentCanvas();
+  // 判断是否为删除键（Backspace 或 Delete）
+  if (canvas && (event.key === 'Backspace' || event.key === 'Delete')) {
+    const activeElements = canvasEditor.getActiveElements();
+    const length = activeElements.length;
+    canvasEditor.removeElements(activeElements)
+    if (length) {
+      canvas.json = canvasEditor.exportToJSON()
+    }
+    canvasEditor.renderAll()
   }
 }
 
