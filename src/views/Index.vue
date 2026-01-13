@@ -446,6 +446,20 @@
                         </div>
                       </li>
                       <li class="option">
+                        <div class="label">字符间距</div>
+                        <div class="value">
+                          <el-slider
+                              :min="0"
+                              :max="100"
+                              v-model="textOptions.spacing"
+                              show-alpha
+                              :step="1"
+                              size="small"
+                              :predefine="predefineColors"/>
+                          <input type="number" class="number-input" v-model="textOptions.spacing" step="1">
+                        </div>
+                      </li>
+                      <li class="option">
                         <div class="label">旋转角度</div>
                         <div class="value">
                           <el-slider size="small"
@@ -1750,6 +1764,7 @@ watch(textOptions, async (newVal, oldValue) => {
   const initZoom = canvas.initZoom;
   const element = _.cloneDeep(newVal);
   element.fontSize = element.fontSize / initZoom
+  element.spacing = element.spacing / initZoom
   element.shadow.offsetX = element.shadow.offsetX / initZoom
   element.shadow.offsetY = element.shadow.offsetY / initZoom
   element.shadow.blur = element.shadow.blur / initZoom
@@ -2242,10 +2257,12 @@ const initCanvasSize = () => {
     canvasEditor.on('selection:object', (event) => {
       const {initZoom} = CanvasManager.getCurrentCanvas();
       const target = event.target;
-      const element = _.cloneDeep(target);
+      const {x, y, ...element} = _.cloneDeep(target);
+      console.log(element)
       if (target.type === 'text') {
-        const {fontSize, shadow: {offsetX, offsetY, blur}} = element;
+        const {fontSize, spacing, shadow: {offsetX, offsetY, blur}} = element;
         element.fontSize = Number.parseInt(fontSize * initZoom)
+        element.spacing = Number.parseInt(spacing * initZoom)
         element.shadow.offsetX = Number.parseInt(offsetX * initZoom)
         element.shadow.offsetY = Number.parseInt(offsetY * initZoom)
         element.shadow.blur = Number.parseInt(blur * initZoom)

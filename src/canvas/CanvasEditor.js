@@ -444,7 +444,7 @@ class CanvasEditor {
      */
     getCursorIndexFromText(textObj, clickX, clickY) {
 
-        const {text, chars, x, y, width, fontSize: rawHeight, height, direction, angle = 0} = textObj;
+        const {text, chars, x, y, width, fontSize: rawHeight, spacing, height, direction, angle = 0} = textObj;
 
         // 如果有旋转角度，需要对点击坐标进行反向旋转
         let transformedX = clickX;
@@ -490,8 +490,7 @@ class CanvasEditor {
             for (let i = 0; i < chars.length - 1; i++) {
                 const before = chars[i];
                 const next = chars[i + 1];
-                if (transformedX >= before.x + before.width / 2 &&
-                    transformedX <= next.x + next.width / 2) {
+                if (transformedX >= before.x + before.width / 2 && transformedX <= next.x + next.width / 2) {
                     return i + 1;
                 }
             }
@@ -509,10 +508,9 @@ class CanvasEditor {
 
             // 遍历查找光标位置
             for (let i = 0; i < chars.length - 1; i++) {
-                const before = top + rawHeight * i;
-                const next = top + rawHeight * (i + 1);
-                if (transformedY >= before + rawHeight / 2 &&
-                    transformedY <= next + rawHeight / 2) {
+                const before = top + rawHeight * i + (i === 0 ? 0 : spacing);
+                const next = top + (rawHeight + spacing) * (i + 1);
+                if (transformedY >= before + rawHeight / 2 && transformedY <= next + rawHeight / 2) {
                     return i + 1;
                 }
             }
@@ -794,6 +792,8 @@ class CanvasEditor {
             }
             // 计算点击位置对应的光标索引
             const index = this.getCursorIndexFromText(element, x, y);
+
+            console.log(index)
             // 如果是双击，直接进入编辑模式
             this.startEditing(element, index);
         }
@@ -1212,12 +1212,24 @@ class Element {
  */
 class Text extends Element {
 
+    #width = 0;
+
+    #height = 0;
+
+    #centerX = 0;
+
+    #centerY = 0;
+
+    #chars = []
+
+    #ascent = 0;
+
+    #descent = 0;
+
     constructor(text, options = {}) {
         super(options);
         // 元素类型
         this.type = 'text';
-        this.width = options.width || 0
-        this.height = options.height || 0
         // 文本内容
         this.text = text || '';
         // 文本排列方向
@@ -1250,21 +1262,54 @@ class Text extends Element {
             offsetY: 0,
             ...options.shadow
         };
+    }
 
-        this.ascent = 0;
 
-        this.descent = 0;
+    // 外部可访问
+    get ascent() {
+        return this.#ascent;
+    }
 
-        this.chars = []
+    // 外部可访问
+    get descent() {
+        return this.#descent;
+    }
 
-        this.centerX = 0;
 
-        this.centerY = 0;
+    // 外部可访问
+    get width() {
+        return this.#width;
+    }
 
-        this.cursor = {
-            start: 0,
-            end: 0
-        }
+    // 外部可访问
+    get height() {
+        return this.#height;
+    }
+
+
+    set centerX(value) {
+        this.#centerX = value;
+    }
+
+
+    get centerX() {
+        return this.#centerX;
+    }
+
+
+    set centerY(value) {
+        this.#centerY = value;
+    }
+
+
+    get centerY() {
+        return this.#centerY;
+    }
+
+
+    // 外部可访问
+    get chars() {
+        return this.#chars;
     }
 
 
@@ -1314,37 +1359,41 @@ class Text extends Element {
         ctx.shadowOffsetY = this.shadow.offsetY;
 
         const metrics = ctx.measureText(this.text);
-        this.ascent = metrics.actualBoundingBoxAscent;
-        this.descent = metrics.actualBoundingBoxDescent;
+        this.#ascent = metrics.actualBoundingBoxAscent;
+        this.#descent = metrics.actualBoundingBoxDescent;
 
-        const {chars, height, width} = this.direction === 'vertical'
+        let {chars, height, width} = this.direction === 'vertical'
             ? this.parseVerticalChars(ctx)
             : this.parseHorizontalChars(ctx)
 
         if (!this.centerX || !this.centerY || this.angle === 0) {
             // 计算文本中心点
-            this.centerX = this.x + width / 2;
-            this.centerY = this.y + height / 2;
+            this.#centerX = this.x + width / 2;
+            this.#centerY = this.y + height / 2;
         }
 
         if (this.angle !== 0) {
-            // 根据新的宽高和原中心点重新计算位置
-            this.x = this.centerX - this.width / 2;
-            this.y = this.centerY - this.height / 2;
+            if (this.width !== width || this.height !== height) {
+                // 根据新的宽高和原中心点重新计算位置
+                this.x = this.centerX - width / 2
+                this.y = this.centerY - height / 2
+                chars = this.direction === 'vertical' ? this.parseVerticalChars(ctx).chars : this.parseHorizontalChars(ctx).chars
+            }
             // 平移到文本中心点，旋转，再平移回来
             ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
             ctx.translate(-this.centerX, -this.centerY);
         }
 
+
         // 绘制每个字符
         for (const char of chars) {
             ctx.fillText(char.char, char.x, char.y);
         }
 
-        this.width = width || (this.direction === 'horizontal' ? this.fontSize / 10 : this.fontSize)
-        this.height = height || (this.direction === 'horizontal' ? this.fontSize : this.fontSize / 10)
-        this.chars = chars;
+        this.#width = width || (this.direction === 'horizontal' ? this.fontSize / 10 : this.fontSize)
+        this.#height = height || (this.direction === 'horizontal' ? this.fontSize : this.fontSize / 10)
+        this.#chars = chars;
 
         ctx.restore();
     }
@@ -1447,10 +1496,10 @@ class Text extends Element {
             ctx.translate(-this.centerX, -this.centerY);
         }
         if (this.direction === 'horizontal') {
-            const startX = !char ? this.x + this.width + (spacing - cursorWidth) / 2 : char.x + (spacing - cursorWidth) / 2;
+            const startX = !char ? this.x + this.width + (spacing - cursorWidth) / 2 : char.x - (spacing - cursorWidth) / 2;
             ctx.fillRect(startX, this.y, cursorWidth, this.height);
         } else {
-            const startY = !char ? this.y + this.height + (spacing - cursorWidth) / 2 : this.y + this.descent + this.fontSize * end + (spacing - cursorWidth) / 2;
+            const startY = !char ? this.y + this.height + (spacing - cursorWidth) / 2 : this.y + this.descent + (this.fontSize + this.spacing) * end - (spacing - cursorWidth) / 2;
             ctx.fillRect(this.x, startY, this.width, cursorWidth);
         }
         ctx.restore();
@@ -1465,7 +1514,7 @@ class Text extends Element {
      * @param end
      */
     drawEditBackground(ctx, start, end) {
-        const {x, y, height, width, highlightColor, spacing, text, chars} = this
+        const {x, y, height, width, highlightColor, fontSize: rawHeight, spacing, text, chars} = this
         ctx.save()
         // 绘制高亮背景
         ctx.fillStyle = highlightColor;
@@ -1482,7 +1531,7 @@ class Text extends Element {
                 const startIndex = Math.max(0, Math.min(start, end));
                 const endIndex = Math.min(text.length, Math.max(start, end));
                 const startX = chars[startIndex].x - spacing / 2;
-                const endX = endIndex < this.text.length ? chars[endIndex].x + spacing / 2 : this.x + this.width + spacing / 2;
+                const endX = endIndex < text.length ? chars[endIndex].x + spacing / 2 : x + width + spacing / 2;
                 ctx.fillStyle = 'rgb(59,103,225,0.5)';
                 ctx.fillRect(startX, y, endX - startX, height);
             }
@@ -1492,8 +1541,8 @@ class Text extends Element {
             if (start !== end) {
                 const startIndex = Math.max(0, Math.min(start, end));
                 const endIndex = Math.min(text.length, Math.max(start, end));
-                const startY = this.y + this.descent + startIndex * this.fontSize - spacing / 2;
-                const endY = this.y + this.descent + endIndex * this.fontSize - spacing / 2;
+                const startY = startIndex === 0 ? y : y + this.descent + startIndex * (rawHeight + spacing) - spacing / 2;
+                const endY = endIndex === text.length ? y + height : y + this.descent + endIndex * (rawHeight + spacing) - spacing / 2;
                 ctx.fillStyle = 'rgb(59,103,225,0.5)';
                 ctx.fillRect(x, startY, width, endY - startY);
             }
