@@ -518,7 +518,7 @@ class CanvasEditor {
             }
         }
         // 如果没有找到匹配（理论上不应该到这里），返回0
-        return 0;
+        return -1;
     }
 
 
@@ -794,7 +794,6 @@ class CanvasEditor {
             }
             // 计算点击位置对应的光标索引
             const index = this.getCursorIndexFromText(element, x, y);
-            console.log(index)
             // 如果是双击，直接进入编辑模式
             this.startEditing(element, index);
         }
@@ -831,6 +830,8 @@ class CanvasEditor {
         }
         const offsetX = startX - element.x
         const offsetY = startY - element.y
+        const centerX = element.centerX
+        const centerY = element.centerY
         const handleMousemove = (e) => {
             const interval = Date.now() - startTime;
             const {x: moveX, y: moveY} = this.getCanvasInternalPosition(e);
@@ -847,6 +848,8 @@ class CanvasEditor {
                     this.canvas.style.cursor = 'move';
                     element.x = moveX - offsetX;
                     element.y = moveY - offsetY;
+                    element.centerX = centerX + (moveX - startX)
+                    element.centerY = centerY + (moveY - startY)
                     const callbacks = this.eventCallbacks.get(MOVE_OBJECT);
                     if (callbacks && callbacks.size) {
                         callbacks.forEach(callback => callback({x: moveX, y: moveY, target: element}))
@@ -1223,6 +1226,7 @@ class Text extends Element {
         this.editable = options.editable !== undefined ? options.editable : false;
         // 文字间距
         this.spacing = options.spacing || 0;
+
         // 旋转角度
         this.angle = options.angle || 0;
 
@@ -1253,11 +1257,16 @@ class Text extends Element {
 
         this.chars = []
 
+        this.centerX = 0;
+
+        this.centerY = 0;
+
         this.cursor = {
             start: 0,
             end: 0
         }
     }
+
 
     contains(x, y) {
 
@@ -1266,14 +1275,9 @@ class Text extends Element {
             return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
         }
 
-        // 对于旋转的文本，将点击点反向旋转回文本的局部坐标系
-        // 计算文本中心点（旋转中心）
-        const centerX = this.x + this.width / 2;
-        const centerY = this.y + this.height / 2;
-
         // 将点相对于中心点平移
-        const translatedX = x - centerX;
-        const translatedY = y - centerY;
+        const translatedX = x - this.centerX;
+        const translatedY = y - this.centerY;
 
         // 计算反向旋转角度（弧度）
         const angleRad = -this.angle * Math.PI / 180;
@@ -1283,8 +1287,8 @@ class Text extends Element {
         const rotatedY = translatedX * Math.sin(angleRad) + translatedY * Math.cos(angleRad);
 
         // 将点平移回原坐标系
-        const localX = rotatedX + centerX;
-        const localY = rotatedY + centerY;
+        const localX = rotatedX + this.centerX;
+        const localY = rotatedY + this.centerY;
 
         // 检查反向旋转后的点是否在原始（未旋转）的边界框内
         return localX >= this.x && localX <= this.x + this.width && localY >= this.y && localY <= this.y + this.height;
@@ -1317,14 +1321,20 @@ class Text extends Element {
             ? this.parseVerticalChars(ctx)
             : this.parseHorizontalChars(ctx)
 
-        if (this.angle !== 0) {
+        if (!this.centerX || !this.centerY || this.angle === 0) {
             // 计算文本中心点
-            const centerX = this.x + width / 2;
-            const centerY = this.y + height / 2;
+            this.centerX = this.x + width / 2;
+            this.centerY = this.y + height / 2;
+        }
+
+        if (this.angle !== 0) {
+            // 根据新的宽高和原中心点重新计算位置
+            this.x = this.centerX - this.width / 2;
+            this.y = this.centerY - this.height / 2;
             // 平移到文本中心点，旋转，再平移回来
-            ctx.translate(centerX, centerY);
+            ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
+            ctx.translate(-this.centerX, -this.centerY);
         }
 
         // 绘制每个字符
@@ -1405,13 +1415,10 @@ class Text extends Element {
         ctx.strokeStyle = color;
         ctx.lineCap = lineCap;
         if (this.angle !== 0) {
-            // 计算文本中心点
-            const centerX = this.x + this.width / 2;
-            const centerY = this.y + this.height / 2;
             // 平移到文本中心点，旋转，再平移回来
-            ctx.translate(centerX, centerY);
+            ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
+            ctx.translate(-this.centerX, -this.centerY);
         }
         ctx.beginPath();
         ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width + 2 * lineWidth, this.height + 2 * lineWidth);
@@ -1434,13 +1441,10 @@ class Text extends Element {
         ctx.save()
         ctx.fillStyle = fontColor;
         if (this.angle !== 0) {
-            // 计算文本中心点
-            const centerX = this.x + this.width / 2;
-            const centerY = this.y + this.height / 2;
             // 平移到文本中心点，旋转，再平移回来
-            ctx.translate(centerX, centerY);
+            ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
+            ctx.translate(-this.centerX, -this.centerY);
         }
         if (this.direction === 'horizontal') {
             const startX = !char ? this.x + this.width + (spacing - cursorWidth) / 2 : char.x + (spacing - cursorWidth) / 2;
@@ -1466,13 +1470,10 @@ class Text extends Element {
         // 绘制高亮背景
         ctx.fillStyle = highlightColor;
         if (this.angle !== 0) {
-            // 计算文本中心点
-            const centerX = this.x + this.width / 2;
-            const centerY = this.y + this.height / 2;
             // 平移到文本中心点，旋转，再平移回来
-            ctx.translate(centerX, centerY);
+            ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
+            ctx.translate(-this.centerX, -this.centerY);
         }
         if (this.direction === 'horizontal') {
             const margin = 0.3 * height;

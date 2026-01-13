@@ -8,7 +8,7 @@ const ADD_OBJECT = 'add:object'
  * Canvas 文本编辑器类
  * 封装 Canvas 文本编辑功能
  */
-class NodeCanvasEditor {
+class CanvasEditor {
     /**
      * 构造函数
      * @param {HTMLCanvasElement} canvas - Canvas 元素
@@ -165,7 +165,8 @@ class NodeCanvasEditor {
         this.isEditing = true;
         this.isCursorVisible = true;
         this.cursorEnd = this.cursorStart = index;
-        this.canvas.style.cursor = 'text';
+
+        this.canvas.style.cursor = textObj.direction === 'horizontal' ? 'text' : 'vertical-text';
 
         // 动态创建隐藏输入框
         this.createHiddenInput();
@@ -225,6 +226,11 @@ class NodeCanvasEditor {
     }
 
 
+    hasElement(element) {
+        return this.elements.findIndex(item => item.id === element.id) !== -1;
+    }
+
+
     /**
      * 移除元素
      * @param {number} element - 元素
@@ -238,15 +244,30 @@ class NodeCanvasEditor {
         this.removeActiveElement(element);
     }
 
-    hasElement(element) {
-        return this.elements.findIndex(item => item.id === element.id) !== -1;
+
+    /**
+     * 移除元素
+     * @param {Array<Object>|Object} elements - 元素或元素数组
+     */
+    removeElements(elements) {
+        if (!elements || (Array.isArray(elements) && elements.length === 0)) {
+            return;
+        }
+        // 统一转换为数组
+        const elementArray = Array.isArray(elements) ? elements : [elements];
+        // 获取要删除的id集合
+        const targets = new Set(elementArray.map(element => element.id));
+        // 过滤掉匹配id的元素
+        this.elements = this.elements.filter(element => !targets.has(element.id));
+        // 同时删除激活元素
+        this.activeElements = this.activeElements.filter(element => !targets.has(element.id));
     }
 
 
     /**
      * 移除全部元素
      */
-    removeElements() {
+    clearElements() {
         this.elements = [];
         this.activeElements = [];
     }
@@ -271,9 +292,25 @@ class NodeCanvasEditor {
 
 
     /**
+     * 移除元素
+     * @param {Array<Object>|Object} elements - 元素或元素数组
+     */
+    removeActiveElements(elements) {
+        if (!elements || (Array.isArray(elements) && elements.length === 0)) {
+            return;
+        }
+        // 统一转换为数组
+        const elementArray = Array.isArray(elements) ? elements : [elements];
+        // 获取要删除的id集合
+        const targets = new Set(elementArray.map(element => element.id));
+        // 过滤掉匹配id的元素
+        this.activeElements = this.activeElements.filter(element => !targets.has(element.id));
+    }
+
+    /**
      * 移除全部激活元素
      */
-    removeActiveElements() {
+    clearActiveElements() {
         this.activeElements.forEach(item => item.status = Element.NONE)
         this.activeElements = [];
     }
@@ -406,35 +443,82 @@ class NodeCanvasEditor {
      * @returns {number} 光标索引
      */
     getCursorIndexFromText(textObj, clickX, clickY) {
-        const metrics = this.getTextMetrics(textObj);
-        const text = textObj.text;
-        // 计算文本的实际绘制区域
-        const textLeft = textObj.x;
-        const textRight = textObj.x + metrics.width;
 
-        // 如果点击在文本左侧，光标在开头
-        if (clickX < textLeft) return 0;
+        const {text, chars, x, y, width, fontSize: rawHeight, height, direction, angle = 0} = textObj;
 
-        // 如果点击在文本右侧，光标在末尾
-        if (clickX > textRight) return text.length;
+        // 如果有旋转角度，需要对点击坐标进行反向旋转
+        let transformedX = clickX;
+        let transformedY = clickY;
 
-        // 计算相对点击位置
-        const relativeX = clickX - textLeft;
+        if (angle !== 0) {
+            // 计算文本中心点
+            const centerX = x + width / 2;
+            const centerY = y + height / 2;
 
-        // 使用二分法查找最近的光标位置
-        let closestIndex = 0;
+            // 将点击坐标转换到以文本中心为原点的坐标系
+            const dx = clickX - centerX;
+            const dy = clickY - centerY;
 
-        let minDistance = Infinity;
+            // 反向旋转角度（负角度）
+            const rad = -angle * Math.PI / 180;
+            const cos = Math.cos(rad);
+            const sin = Math.sin(rad);
 
-        for (let i = 0; i <= text.length; i++) {
-            const width = this.getSubTextMetrics(textObj, 0, i).width;
-            const distance = Math.abs(width - relativeX);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestIndex = i;
+            // 计算反向旋转后的坐标
+            transformedX = dx * cos - dy * sin + centerX;
+            transformedY = dx * sin + dy * cos + centerY;
+        }
+
+        // 使用转换后的坐标进行光标索引计算
+        if (direction === 'horizontal') {
+            // 计算文本的实际绘制区域
+            const left = x;
+            const right = x + width;
+
+            // 如果文本是空的，直接返回0
+            if (!chars || chars.length === 0) return 0;
+
+            const first = chars[0];
+            const last = chars[chars.length - 1];
+
+            // 如果点击在文本左侧，光标在开头
+            if (transformedX < left + first.width / 2) return 0;
+            // 如果点击在文本右侧，光标在末尾
+            if (transformedX > right - last.width / 2) return text.length;
+
+            // 遍历查找光标位置
+            for (let i = 0; i < chars.length - 1; i++) {
+                const before = chars[i];
+                const next = chars[i + 1];
+                if (transformedX >= before.x + before.width / 2 &&
+                    transformedX <= next.x + next.width / 2) {
+                    return i + 1;
+                }
+            }
+        } else {
+            // 计算文本的实际绘制区域
+            const top = y;
+            const bottom = top + height;
+
+            // 如果点击在文本上方，光标在开头
+            if (transformedY < top + rawHeight / 2) return 0;
+            // 如果点击在文本下方，光标在末尾
+            if (transformedY > bottom - rawHeight / 2) {
+                return text.length;
+            }
+
+            // 遍历查找光标位置
+            for (let i = 0; i < chars.length - 1; i++) {
+                const before = top + rawHeight * i;
+                const next = top + rawHeight * (i + 1);
+                if (transformedY >= before + rawHeight / 2 &&
+                    transformedY <= next + rawHeight / 2) {
+                    return i + 1;
+                }
             }
         }
-        return closestIndex;
+        // 如果没有找到匹配（理论上不应该到这里），返回0
+        return -1;
     }
 
 
@@ -703,7 +787,7 @@ class NodeCanvasEditor {
         const {event, element} = params;
         const {x, y} = this.getCanvasInternalPosition(event);
         if (element && element.editable) {
-            this.removeActiveElements()
+            this.clearActiveElements()
             if (this.isEditing && this.editingText !== element) {
                 this.finishEditing()
                 return
@@ -746,13 +830,15 @@ class NodeCanvasEditor {
         }
         const offsetX = startX - element.x
         const offsetY = startY - element.y
+        const centerX = element.centerX
+        const centerY = element.centerY
         const handleMousemove = (e) => {
             const interval = Date.now() - startTime;
             const {x: moveX, y: moveY} = this.getCanvasInternalPosition(e);
             if (interval > 200 && (startX !== moveX || startY !== moveY)) {
                 if (element.type === 'text' && element.status === Element.EDITING) {
                     // 选中文本
-                    this.cursorEnd = this.getCursorIndexFromText(element, moveX);
+                    this.cursorEnd = this.getCursorIndexFromText(element, moveX, moveY);
                     if (this.cursorEnd !== this.cursorStart) {
                         this.updateInputSelection()
                         this.renderAll()
@@ -762,6 +848,8 @@ class NodeCanvasEditor {
                     this.canvas.style.cursor = 'move';
                     element.x = moveX - offsetX;
                     element.y = moveY - offsetY;
+                    element.centerX = centerX + (moveX - startX)
+                    element.centerY = centerY + (moveY - startY)
                     const callbacks = this.eventCallbacks.get(MOVE_OBJECT);
                     if (callbacks && callbacks.size) {
                         callbacks.forEach(callback => callback({x: moveX, y: moveY, target: element}))
@@ -889,7 +977,7 @@ class NodeCanvasEditor {
      */
     handleCancelActive() {
         if (this.activeElements.length > 0) {
-            this.removeActiveElements()
+            this.clearActiveElements()
             this.renderAll();
         }
         if (this.editingText) {
@@ -1032,8 +1120,8 @@ class NodeCanvasEditor {
                 }
             }
             this.renderAll();
-        } catch (err) {i
-            throw err
+        } catch (e) {
+            console.error('导入失败:', e);
         }
     }
 
@@ -1138,6 +1226,7 @@ class Text extends Element {
         this.editable = options.editable !== undefined ? options.editable : false;
         // 文字间距
         this.spacing = options.spacing || 0;
+
         // 旋转角度
         this.angle = options.angle || 0;
 
@@ -1162,20 +1251,22 @@ class Text extends Element {
             ...options.shadow
         };
 
-
-        this.hiddenInput = null
-
         this.ascent = 0;
 
         this.descent = 0;
 
         this.chars = []
 
+        this.centerX = 0;
+
+        this.centerY = 0;
+
         this.cursor = {
             start: 0,
             end: 0
         }
     }
+
 
     contains(x, y) {
 
@@ -1184,14 +1275,9 @@ class Text extends Element {
             return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
         }
 
-        // 对于旋转的文本，将点击点反向旋转回文本的局部坐标系
-        // 计算文本中心点（旋转中心）
-        const centerX = this.x + this.width / 2;
-        const centerY = this.y + this.height / 2;
-
         // 将点相对于中心点平移
-        const translatedX = x - centerX;
-        const translatedY = y - centerY;
+        const translatedX = x - this.centerX;
+        const translatedY = y - this.centerY;
 
         // 计算反向旋转角度（弧度）
         const angleRad = -this.angle * Math.PI / 180;
@@ -1201,8 +1287,8 @@ class Text extends Element {
         const rotatedY = translatedX * Math.sin(angleRad) + translatedY * Math.cos(angleRad);
 
         // 将点平移回原坐标系
-        const localX = rotatedX + centerX;
-        const localY = rotatedY + centerY;
+        const localX = rotatedX + this.centerX;
+        const localY = rotatedY + this.centerY;
 
         // 检查反向旋转后的点是否在原始（未旋转）的边界框内
         return localX >= this.x && localX <= this.x + this.width && localY >= this.y && localY <= this.y + this.height;
@@ -1210,13 +1296,9 @@ class Text extends Element {
 
 
     draw(ctx) {
-
         ctx.save();
-
-        // 对齐方式
         ctx.textBaseline = 'alphabetic';
         ctx.textAlign = 'left';
-
         // 字体设置
         ctx.font = `${this.fontStyle} ${this.fontWeight} ${this.fontSize}px "${this.fontFamily}", "Microsoft YaHei", sans-serif`;
         // 字体颜色
@@ -1232,23 +1314,27 @@ class Text extends Element {
         ctx.shadowOffsetY = this.shadow.offsetY;
 
         const metrics = ctx.measureText(this.text);
-
         this.ascent = metrics.actualBoundingBoxAscent;
-
         this.descent = metrics.actualBoundingBoxDescent;
 
         const {chars, height, width} = this.direction === 'vertical'
             ? this.parseVerticalChars(ctx)
             : this.parseHorizontalChars(ctx)
 
-        if (this.angle !== 0) {
+        if (!this.centerX || !this.centerY || this.angle === 0) {
             // 计算文本中心点
-            const centerX = this.x + width / 2;
-            const centerY = this.y + height / 2;
+            this.centerX = this.x + width / 2;
+            this.centerY = this.y + height / 2;
+        }
+
+        if (this.angle !== 0) {
+            // 根据新的宽高和原中心点重新计算位置
+            this.x = this.centerX - this.width / 2;
+            this.y = this.centerY - this.height / 2;
             // 平移到文本中心点，旋转，再平移回来
-            ctx.translate(centerX, centerY);
+            ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
+            ctx.translate(-this.centerX, -this.centerY);
         }
 
         // 绘制每个字符
@@ -1256,8 +1342,8 @@ class Text extends Element {
             ctx.fillText(char.char, char.x, char.y);
         }
 
-        this.width = width || this.fontSize / 10;
-        this.height = height || this.fontSize
+        this.width = width || (this.direction === 'horizontal' ? this.fontSize / 10 : this.fontSize)
+        this.height = height || (this.direction === 'horizontal' ? this.fontSize : this.fontSize / 10)
         this.chars = chars;
 
         ctx.restore();
@@ -1293,28 +1379,29 @@ class Text extends Element {
         const chars = [];
         let maxCharWidth = 0;
         // 先测量所有字符的宽度，找出最大宽度
-        const charWidths = [];
         for (let i = 0; i < this.text.length; i++) {
-            const charWidth = ctx.measureText(this.text[i]).width;
-            charWidths.push(charWidth);
-            maxCharWidth = Math.max(maxCharWidth, charWidth);
+            const char = this.text[i];
+            const {
+                width,
+                actualBoundingBoxAscent: ascent,
+                actualBoundingBoxDescent: descent
+            } = ctx.measureText(char);
+            const height = ascent + descent
+            chars.push({width, char, height, ascent, descent});
+            maxCharWidth = Math.max(maxCharWidth, width);
         }
         // 根据居中对齐方式计算x坐标
         for (let i = 0; i < this.text.length; i++) {
+            const char = chars[i];
             // 计算当前字符在最大宽度内居中的x坐标
-            const charX = this.x + (maxCharWidth - charWidths[i]) / 2;
-            chars.push({
-                char: this.text[i],
-                x: charX,
-                y: currentY,
-                width: charWidths[i],
-                height: this.fontSize
-            });
+            char.x = this.x + (maxCharWidth - char.width) / 2;
+            const rowCenterY = currentY + this.fontSize / 2;
+            char.y = rowCenterY + (char.height / 2 - char.ascent);
             currentY += this.fontSize + (i < this.text.length - 1 ? this.spacing : 0);
         }
         return {
             width: maxCharWidth,
-            height: currentY - this.y,
+            height: currentY - (this.y + this.ascent),
             chars
         };
     }
@@ -1328,13 +1415,10 @@ class Text extends Element {
         ctx.strokeStyle = color;
         ctx.lineCap = lineCap;
         if (this.angle !== 0) {
-            // 计算文本中心点
-            const centerX = this.x + this.width / 2;
-            const centerY = this.y + this.height / 2;
             // 平移到文本中心点，旋转，再平移回来
-            ctx.translate(centerX, centerY);
+            ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
+            ctx.translate(-this.centerX, -this.centerY);
         }
         ctx.beginPath();
         ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width + 2 * lineWidth, this.height + 2 * lineWidth);
@@ -1351,22 +1435,24 @@ class Text extends Element {
      */
     drawCursor(ctx, start, end) {
         if (start !== end) return
-        const {y, fontColor, fontSize, spacing, chars} = this;
+        const {fontColor, fontSize, spacing, chars} = this;
         const cursorWidth = 0.08 * fontSize;
         const char = chars[end];
         ctx.save()
         ctx.fillStyle = fontColor;
         if (this.angle !== 0) {
-            // 计算文本中心点
-            const centerX = this.x + this.width / 2;
-            const centerY = this.y + this.height / 2;
             // 平移到文本中心点，旋转，再平移回来
-            ctx.translate(centerX, centerY);
+            ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
+            ctx.translate(-this.centerX, -this.centerY);
         }
-        const x = !char ? this.x + this.width + (spacing - cursorWidth) / 2 : char.x + (spacing - cursorWidth) / 2;
-        ctx.fillRect(x, y, cursorWidth, this.height);
+        if (this.direction === 'horizontal') {
+            const startX = !char ? this.x + this.width + (spacing - cursorWidth) / 2 : char.x + (spacing - cursorWidth) / 2;
+            ctx.fillRect(startX, this.y, cursorWidth, this.height);
+        } else {
+            const startY = !char ? this.y + this.height + (spacing - cursorWidth) / 2 : this.y + this.descent + this.fontSize * end + (spacing - cursorWidth) / 2;
+            ctx.fillRect(this.x, startY, this.width, cursorWidth);
+        }
         ctx.restore();
     }
 
@@ -1380,27 +1466,37 @@ class Text extends Element {
      */
     drawEditBackground(ctx, start, end) {
         const {x, y, height, width, highlightColor, spacing, text, chars} = this
-        const margin = 0.3 * height;
         ctx.save()
         // 绘制高亮背景
         ctx.fillStyle = highlightColor;
         if (this.angle !== 0) {
-            // 计算文本中心点
-            const centerX = this.x + this.width / 2;
-            const centerY = this.y + this.height / 2;
             // 平移到文本中心点，旋转，再平移回来
-            ctx.translate(centerX, centerY);
+            ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
+            ctx.translate(-this.centerX, -this.centerY);
         }
-        ctx.fillRect(x - margin, y - margin, width + 2 * margin, height + 2 * margin);
-        if (start !== end) {
-            const startIndex = Math.max(0, Math.min(start, end));
-            const endIndex = Math.min(text.length, Math.max(start, end));
-            const startX = chars[startIndex].x - spacing / 2;
-            const endX = endIndex < this.text.length ? chars[endIndex].x + spacing / 2 : this.x + this.width + spacing / 2;
-            ctx.fillStyle = 'rgb(59,103,225,0.5)';
-            ctx.fillRect(startX, y, endX - startX, height);
+        if (this.direction === 'horizontal') {
+            const margin = 0.3 * height;
+            ctx.fillRect(x - margin, y - margin, width + 2 * margin, height + 2 * margin);
+            if (start !== end) {
+                const startIndex = Math.max(0, Math.min(start, end));
+                const endIndex = Math.min(text.length, Math.max(start, end));
+                const startX = chars[startIndex].x - spacing / 2;
+                const endX = endIndex < this.text.length ? chars[endIndex].x + spacing / 2 : this.x + this.width + spacing / 2;
+                ctx.fillStyle = 'rgb(59,103,225,0.5)';
+                ctx.fillRect(startX, y, endX - startX, height);
+            }
+        } else {
+            const margin = 0.3 * width;
+            ctx.fillRect(x - margin, y - margin, width + 2 * margin, height + 2 * margin);
+            if (start !== end) {
+                const startIndex = Math.max(0, Math.min(start, end));
+                const endIndex = Math.min(text.length, Math.max(start, end));
+                const startY = this.y + this.descent + startIndex * this.fontSize - spacing / 2;
+                const endY = this.y + this.descent + endIndex * this.fontSize - spacing / 2;
+                ctx.fillStyle = 'rgb(59,103,225,0.5)';
+                ctx.fillRect(x, startY, width, endY - startY);
+            }
         }
         ctx.restore();
     }
@@ -1491,7 +1587,7 @@ class Image extends Element {
 
         // 如果未旋转，使用原来的轴对齐边界框检测
         if (this.angle === 0) {
-            return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
+            return x >= this.x && x <= this.x + this.width * this.scale && y >= this.y && y <= this.y + this.height * this.scale;
         }
 
         // 对于旋转的文本，将点击点反向旋转回文本的局部坐标系
@@ -1580,4 +1676,4 @@ class Image extends Element {
 }
 
 // 支持 ES6 模块
-module.exports = {CanvasEditor: NodeCanvasEditor, Text, EditableText, Image};
+module.exports = {CanvasEditor, Text, EditableText, Image};
