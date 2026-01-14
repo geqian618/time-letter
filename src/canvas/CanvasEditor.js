@@ -1530,8 +1530,8 @@ class Text extends Element {
             if (start !== end) {
                 const startIndex = Math.max(0, Math.min(start, end));
                 const endIndex = Math.min(text.length, Math.max(start, end));
-                const startX = chars[startIndex].x - spacing / 2;
-                const endX = endIndex < text.length ? chars[endIndex].x + spacing / 2 : x + width + spacing / 2;
+                const startX = startIndex === 0 ? x : chars[startIndex].x - spacing / 2;
+                const endX = endIndex < text.length ? chars[endIndex].x - spacing / 2 : x + width;
                 ctx.fillStyle = 'rgb(59,103,225,0.5)';
                 ctx.fillRect(startX, y, endX - startX, height);
             }
