@@ -4,6 +4,7 @@ const MOVE_OBJECT = 'move:object'
 
 const ADD_OBJECT = 'add:object'
 
+
 /**
  * Canvas 文本编辑器类
  * 封装 Canvas 文本编辑功能
@@ -677,9 +678,9 @@ class CanvasEditor {
     drawElements() {
         // 绘制所有文本
         for (const element of this.elements) {
+            // 绘制元素
+            element.draw(this.ctx);
             if (element.type === 'text') {
-                // 绘制文本
-                element.draw(this.ctx);
                 // 如果是正在编辑的文本，绘制背景颜色
                 if (element.status === Element.EDITING) {
                     element.drawEditBackground(this.ctx, this.cursorStart, this.cursorEnd)
@@ -687,11 +688,6 @@ class CanvasEditor {
                     if (this.isCursorVisible) {
                         element.drawCursor(this.ctx, this.cursorStart, this.cursorEnd)
                     }
-                }
-            } else if (element.type === 'image') {
-                if (element.type === 'image') {
-                    // 绘制图片
-                    element.draw(this.ctx);
                 }
             }
             if (this.hasActiveElement(element)) {
@@ -1117,6 +1113,9 @@ class CanvasEditor {
                     const image = this.cache.get(element.src);
                     const instance = image ? new Image(image, element) : await Image.fromURL(element.src, element);
                     this.elements.push(instance)
+                }
+                if (element.type === 'rect') {
+                    this.elements.push(new Rect(element));
                 }
             }
             this.renderAll();
@@ -1576,7 +1575,6 @@ class Image extends Element {
         this.height = options.height
         this.alpha = options.alpha || 1
         this.angle = options.angle || 0
-        this.path = options.path
         // 图片阴影 - 需要处理嵌套对象
         this.shadow = {
             color: 'rgba(0,0,0,1)',
@@ -1724,5 +1722,113 @@ class Image extends Element {
 
 }
 
+
+class Rect extends Element {
+    constructor(options) {
+        super(options);
+        this.type = 'rect'
+        this.width = options.width || 0
+        this.height = options.height || 0
+        this.fill = options.fill || 'rgba(255,255,255,0)'
+        this.radius = options.radius || 0
+        this.stroke = options.stroke || 'rgba(0,0,0,1)'
+        this.strokeWidth = options.strokeWidth || 0
+        this.angle = options.angle || 0
+        // 图片阴影 - 需要处理嵌套对象
+        this.shadow = {
+            color: 'rgba(0,0,0,1)',
+            blur: 0,
+            offsetX: 0,
+            offsetY: 0,
+            ...options.shadow
+        };
+    }
+
+    contains(x, y) {
+        // 如果未旋转，使用原来的轴对齐边界框检测
+        if (this.angle === 0) {
+            return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
+        }
+        // 对于旋转的文本，将点击点反向旋转回文本的局部坐标系
+        // 计算文本中心点（旋转中心）
+        const centerX = this.x + this.width / 2;
+        const centerY = this.y + this.height / 2;
+        // 将点相对于中心点平移
+        const translatedX = x - centerX;
+        const translatedY = y - centerY;
+        // 计算反向旋转角度（弧度）
+        const angleRad = -this.angle * Math.PI / 180;
+        // 反向旋转点（绕中心点反向旋转）
+        const rotatedX = translatedX * Math.cos(angleRad) - translatedY * Math.sin(angleRad);
+        const rotatedY = translatedX * Math.sin(angleRad) + translatedY * Math.cos(angleRad);
+        // 将点平移回原坐标系
+        const localX = rotatedX + centerX;
+        const localY = rotatedY + centerY;
+        // 检查反向旋转后的点是否在原始（未旋转）的边界框内
+        return localX >= this.x && localX <= this.x + this.width && localY >= this.y && localY <= this.y + this.height;
+    }
+
+    selection(ctx) {
+        const color = 'red', lineCap = 'butt'
+        const baseWidth = Math.max(this.width, this.height);
+        const lineWidth = 0.02 * baseWidth
+        ctx.save();
+        ctx.setLineDash([0.06 * baseWidth, 0.03 * baseWidth]);
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = color;
+        ctx.lineCap = lineCap;
+        if (this.angle !== 0) {
+            // 计算文本中心点
+            const centerX = this.x + this.width / 2;
+            const centerY = this.y + this.height / 2;
+            // 平移到文本中心点，旋转，再平移回来
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.translate(-centerX, -centerY);
+        }
+        ctx.beginPath();
+        ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width + 2 * lineWidth, this.height + 2 * lineWidth);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    draw(ctx) {
+        // 保存当前画布状态
+        ctx.save();
+        const {color: shadowColor, blur: shadowBlur, offsetX: shadowOffsetX, offsetY: shadowOffsetY} = this.shadow;
+
+        ctx.fillStyle = this.fill;
+        ctx.strokeStyle = this.stroke;
+        ctx.lineWidth = this.strokeWidth;
+
+        // 设置阴影颜色（支持RGBA格式）
+        ctx.shadowColor = shadowColor || 'rgba(0, 0, 0, 1)';
+        // 设置阴影模糊度（像素）
+        ctx.shadowBlur = shadowBlur || 0;
+        // 设置阴影偏移（像素）
+        ctx.shadowOffsetX = shadowOffsetX || 0;
+        ctx.shadowOffsetY = shadowOffsetY || 0;
+
+        if (this.angle !== 0) {
+            // 将画布原点移动到图片中心点
+            const centerX = this.x + this.width / 2;
+            const centerY = this.y + this.height / 2;
+            ctx.translate(centerX, centerY);
+            // 旋转画布
+            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.translate(-centerX, -centerY);
+        }
+
+        // 先填充，后描边
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        if (this.strokeWidth) {
+            ctx.strokeRect(this.x, this.y, this.width, this.height);
+        }
+        // 恢复画布到之前保存的状态
+        ctx.restore();
+    }
+}
+
+
 // 支持 ES6 模块
-export {CanvasEditor, Text, EditableText, Image};
+export {CanvasEditor, Text, EditableText, Image, Rect};

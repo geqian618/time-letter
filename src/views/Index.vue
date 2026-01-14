@@ -1177,7 +1177,7 @@
 
 import {nextTick, onBeforeUnmount, onMounted, ref, watch, computed} from "vue";
 
-import {CanvasEditor, Image, Text, EditableText} from '@/canvas/CanvasEditor'
+import {CanvasEditor, Image, Text, EditableText, Rect} from '@/canvas/CanvasEditor'
 
 import {useThrottle} from '@/utils/throttle'
 
@@ -1873,29 +1873,15 @@ const synchronizeTemplate = () => {
 }
 
 const saveTemplates = async () => {
-
   if (!saveTemplateForm) return
-
   saveTemplateForm.value.validate(async (valid, fields) => {
     if (valid) {
-      const canvas = CanvasManager.getCurrentCanvas();
-      const {border, photograph, images, texts} = _.cloneDeep(canvas.settings)
-      const newTemplates = [...templates.value];
-      // 清空模版列表，重新生成列表
-      templates.value = []
-      await nextTick()
-
-      newTemplates.push({
+      const {json: settings} = CanvasManager.getCurrentCanvas();
+      templates.value.push({
         templateId: Date.now(),
         templateName: newTemplate.value.templateName,
-        settings: {
-          border: border,
-          photograph,
-          images: Array.from(images.values()),
-          texts: Array.from(texts.values())
-        }
+        settings
       })
-      templates.value = newTemplates
       StorageManager.saveTemplates(templates.value)
       newTemplate.value.templateName = ''
       saveTemplateDialogVisible.value = false
@@ -2258,7 +2244,6 @@ const initCanvasSize = () => {
       const {initZoom} = CanvasManager.getCurrentCanvas();
       const target = event.target;
       const {x, y, ...element} = _.cloneDeep(target);
-      console.log(element)
       if (target.type === 'text') {
         const {fontSize, spacing, shadow: {offsetX, offsetY, blur}} = element;
         element.fontSize = Number.parseInt(fontSize * initZoom)
