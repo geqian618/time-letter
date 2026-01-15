@@ -2600,7 +2600,7 @@ const handleUpdateBorders = async () => {
       radius: borderRadius,
       backdropBlur: borderBlur,
       backdropFilter: true,
-      meta: target.meta
+      meta: {path: target.meta.path, ...background.meta}
     })
   } else {
     background.width = newWidth;

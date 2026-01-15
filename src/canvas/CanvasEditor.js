@@ -84,11 +84,11 @@ class CanvasEditor {
         }
 
         //设置高质量渲染选项
-        this.ctx.patternQuality = 'best';
-        this.ctx.quality = 'best'
-        this.ctx.antialias = 'subpixel'
-        this.ctx.imageSmoothingEnabled = true;
-        this.ctx.imageSmoothingQuality = 'high'
+        // this.ctx.patternQuality = 'best';
+        // this.ctx.quality = 'best'
+        // this.ctx.antialias = 'subpixel'
+        // this.ctx.imageSmoothingEnabled = true;
+        // this.ctx.imageSmoothingQuality = 'high'
 
         // 添加事件监听
         this.isBrowser && this.canvas.addEventListener('mousedown', this.handleMouseDown);
