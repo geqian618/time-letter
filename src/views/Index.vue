@@ -2198,10 +2198,14 @@ async function switchPreviewImage(event, canvas) {
       event.target.classList.add('active')
 
       if (!canvas.completed) {
-        const image = await Image.fromURL(canvas.url, {selectable: false, cacheable: true, meta: {path: canvas.path}});
+        const image = await Image.fromURL(canvas.url, {
+          selectable: false,
+          cacheable: true,
+          meta: {...new PhotographOptions(), path: canvas.path}
+        });
         const width = image.width;
         const height = image.height;
-        const background = new Rect({width, height, meta: {isBackground: true}});
+        const background = new Rect({width, height, meta: new BorderOptions()});
         // 设置画布宽高等于缩放后的图片尺寸
         canvasEditor.resizeCanvas(width, height);
         const {idealWidth, idealHeight} = previewContainer.value;
@@ -2212,6 +2216,8 @@ async function switchPreviewImage(event, canvas) {
         canvasEditor.addElement(image);
         canvasEditor.renderAll()
         scrollBarMoveToCenter(canvas)
+        borderOptions.value = background.meta
+        photographOptions.value = image.meta
         canvas.completed = true
         canvas.initZoom = initScale
         canvas.zoom = canvasEditor.getZoom()
@@ -2223,7 +2229,10 @@ async function switchPreviewImage(event, canvas) {
         await canvasEditor.loadFromJSON(json)
         // 设置缩放
         canvasEditor.setCenterZoom(zoom);
-        canvasEditor.renderAll()
+        canvasEditor.renderAll();
+        const elements = canvasEditor.getElements();
+        borderOptions.value = elements[0].meta
+        photographOptions.value = elements[1].meta
         updateScrollBarPosition(canvas)
       }
     }
