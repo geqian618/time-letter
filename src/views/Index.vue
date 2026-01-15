@@ -79,9 +79,8 @@
         </div>
 
         <div class="preview-container" id="preview-container" ref="previewContainer" @mousedown="triggerContextMenu">
-          <canvas id="canvas" ref="canvasElement">
-            <canvas id="background-canvas" ref="backgroundCanvas"></canvas>
-          </canvas>
+          <canvas id="canvas" ref="canvasElement"></canvas>
+          <canvas id="background-canvas" ref="backgroundElement"></canvas>
         </div>
 
         <div class="page-right">
@@ -1275,6 +1274,8 @@ const previewContainer = ref(null)
 
 const canvasElement = ref(null)
 
+const backgroundElement = ref(null)
+
 const previewList = ref(null);
 
 const menuRef = ref(null)
@@ -2208,13 +2209,15 @@ async function switchPreviewImage(event, canvas) {
         const background = new Rect({width, height, meta: new BorderOptions()});
         // 设置画布宽高等于缩放后的图片尺寸
         canvasEditor.resizeCanvas(width, height);
+        backgroundCanvasEditor.resizeCanvas(width, height);
         const {idealWidth, idealHeight} = previewContainer.value;
         const initScale = Math.min(idealHeight / height, idealWidth / width);
         const scale = initScale * projectSettings.value.others.defaultCanvasScale;
         canvasEditor.setCenterZoom(scale)
-        canvasEditor.addElement(background);
-        canvasEditor.addElement(image);
-        canvasEditor.renderAll()
+        backgroundCanvasEditor.setCenterZoom(scale)
+        backgroundCanvasEditor.addElement(background);
+        backgroundCanvasEditor.addElement(image);
+        backgroundCanvasEditor.renderAll()
         scrollBarMoveToCenter(canvas)
         borderOptions.value = background.meta
         photographOptions.value = image.meta
@@ -2224,13 +2227,17 @@ async function switchPreviewImage(event, canvas) {
         canvas.width = width;
         canvas.height = height
         canvas.json = canvasEditor.exportToJSON()
+        canvas.bgjson = backgroundCanvasEditor.exportToJSON()
       } else {
-        const {json, zoom} = canvas;
+        const {json, bgjson, zoom} = canvas;
         await canvasEditor.loadFromJSON(json)
+        await backgroundCanvasEditor.loadFromJSON(bgjson)
         // 设置缩放
         canvasEditor.setCenterZoom(zoom);
+        backgroundCanvasEditor.setCenterZoom(zoom);
         canvasEditor.renderAll();
-        const elements = canvasEditor.getElements();
+        backgroundCanvasEditor.renderAll();
+        const elements = backgroundCanvasEditor.getElements();
         borderOptions.value = elements[0].meta
         photographOptions.value = elements[1].meta
         updateScrollBarPosition(canvas)
@@ -2255,13 +2262,9 @@ const initCanvasSize = () => {
 
     renderCanvasScrollbar()
 
-    const canvasElement = document.querySelector('#canvas');
+    canvasEditor = new CanvasEditor(canvasElement.value);
 
-    const backgroundElement = document.querySelector('#background-canvas');
-
-    canvasEditor = new CanvasEditor(canvasElement);
-
-    backgroundCanvasEditor = new CanvasEditor(backgroundElement);
+    backgroundCanvasEditor = new CanvasEditor(backgroundElement.value);
 
     canvasEditor.on('selection:object', (event) => {
       const {initZoom} = CanvasManager.getCurrentCanvas();
@@ -2530,12 +2533,12 @@ const handleUpdatePhotograph = async () => {
   if (!currentCanvas) return
   const {initZoom} = currentCanvas;
   const {borderRadius, shadow} = photographOptions.value
-  const elements = canvasEditor.getElements();
+  const elements = backgroundCanvasEditor.getElements();
   const image = elements[1];
   image.radius = borderRadius / initZoom;
   image.shadow = {...shadow, blur: shadow.blur / initZoom};
-  canvasEditor.renderAll();
-  currentCanvas.json = canvasEditor.exportToJSON()
+  backgroundCanvasEditor.renderAll();
+  currentCanvas.bgjson = backgroundCanvasEditor.exportToJSON()
 }
 
 const renderPhotograph = async (path) => {
@@ -2575,7 +2578,7 @@ const handleUpdateBorders = async () => {
     borderType,
     borderBlur
   } = borderOptions.value;
-  const elements = canvasEditor.getElements();
+  const elements = backgroundCanvasEditor.getElements();
   const background = elements[0];
   const target = elements[1];
   borderLeft = borderLeft / initZoom
@@ -2588,6 +2591,7 @@ const handleUpdateBorders = async () => {
   target.y = borderTop
   const newWidth = width + borderLeft + borderRight
   const newHeight = height + borderTop + borderBottom
+  backgroundCanvasEditor.resizeCanvas(newWidth, newHeight)
   canvasEditor.resizeCanvas(newWidth, newHeight)
   scrollBarMoveToCenter(currentCanvas)
 
@@ -2609,7 +2613,8 @@ const handleUpdateBorders = async () => {
     background.radius = borderRadius;
     background.backdropBlur = borderBlur;
   }
-  currentCanvas.json = canvasEditor.exportToJSON()
+  currentCanvas.bgjson = backgroundCanvasEditor.exportToJSON()
+  backgroundCanvasEditor.renderAll()
   canvasEditor.renderAll()
 }
 
@@ -3482,6 +3487,7 @@ const handleCanvasResize = (event) => {
   newZoom = Math.min(Math.max(minZoom, newZoom), maxZoom);
   canvas.zoom = newZoom
   canvasEditor.setCenterZoom(newZoom)
+  backgroundCanvasEditor.setCenterZoom(newZoom)
 }
 
 const handleDragMoveCanvas = (event) => {
@@ -3794,19 +3800,19 @@ onBeforeUnmount(() => {
       background: var(--preview-background-color);
       width: var(--preview-container-width);
       height: 100%;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
 
       #canvas {
-        position: relative;
+        position: absolute;
+        z-index: 10;
+        background-color: transparent;
+      }
 
-        #background-canvas {
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          left: 0;
-          right: 0;
-          top: 0;
-          bottom: 0;
-        }
+      #background-canvas {
+        position: absolute;
       }
     }
 
