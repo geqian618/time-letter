@@ -1684,7 +1684,6 @@ class Image extends Element {
         }
 
         // 保存当前画布状态
-        const originalCtx = ctx;
         ctx.save();
         ctx.globalAlpha = this.alpha;
 
