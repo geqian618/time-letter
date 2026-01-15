@@ -240,7 +240,7 @@ function drawPhotograph(ctx, img, x, y, width, height, photograph) {
     createRoundedPath(ctx, x, y, width, height, borderRadius);
 
     // 填充路径以产生阴影（使用透明色，这样只有阴影可见）
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.01)'; // 几乎透明的颜色
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.01)';
     ctx.fill();
 
     // 清除阴影设置，避免影响后续绘制

@@ -240,7 +240,7 @@
                         <div class="value">
                           <el-color-picker
                               @change="handleUpdatePhotograph"
-                              v-model="photographOptions.shadow.shadowColor"
+                              v-model="photographOptions.shadow.color"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
@@ -2525,6 +2525,7 @@ const handleUpdatePhotograph = async () => {
   const image = elements[1];
   image.radius = borderRadius / initZoom;
   image.shadow = {...shadow, blur: shadow.blur / initZoom};
+  console.log(image.shadow)
   canvasEditor.renderAll();
 }
 
