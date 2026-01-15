@@ -192,12 +192,12 @@
                                      size="small"
                                      :min="-50"
                                      :max="50"
-                                     v-model="photographOptions.boxShadow.offsetX"
+                                     v-model="photographOptions.shadow.offsetX"
                                      placement="top"/>
                           <input type="number"
                                  class="number-input"
                                  @input="handleUpdatePhotograph"
-                                 v-model="photographOptions.boxShadow.offsetX"
+                                 v-model="photographOptions.shadow.offsetX"
                                  step="1">
                         </div>
                       </li>
@@ -205,7 +205,7 @@
                         <div class="label">Y轴偏移</div>
                         <div class="value">
                           <el-slider
-                              v-model="photographOptions.boxShadow.offsetY"
+                              v-model="photographOptions.shadow.offsetY"
                               @input="handleUpdatePhotograph"
                               :min="-50"
                               :max="50"
@@ -215,7 +215,7 @@
                           <input type="number"
                                  class="number-input"
                                  @input="handleUpdatePhotograph"
-                                 v-model="photographOptions.boxShadow.offsetY"
+                                 v-model="photographOptions.shadow.offsetY"
                                  step="1">
                         </div>
                       </li>
@@ -223,7 +223,7 @@
                         <div class="label">模糊程度</div>
                         <div class="value">
                           <el-slider
-                              v-model="photographOptions.boxShadow.blur"
+                              v-model="photographOptions.shadow.blur"
                               @input="handleUpdatePhotograph"
                               show-alpha
                               size="small"
@@ -231,7 +231,7 @@
                           <input type="number"
                                  class="number-input"
                                  @input="handleUpdatePhotograph"
-                                 v-model="photographOptions.boxShadow.blur"
+                                 v-model="photographOptions.shadow.blur"
                                  step="1">
                         </div>
                       </li>
@@ -240,7 +240,7 @@
                         <div class="value">
                           <el-color-picker
                               @change="handleUpdatePhotograph"
-                              v-model="photographOptions.boxShadow.shadowColor"
+                              v-model="photographOptions.shadow.shadowColor"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
@@ -2518,8 +2518,14 @@ const handleSelectMultiplePreviewElements = (event, canvas) => {
 
 const handleUpdatePhotograph = async () => {
   const currentCanvas = CanvasManager.getCurrentCanvas();
-  currentCanvas.settings.photograph.options = _.cloneDeep(photographOptions.value)
-  await renderPhotograph(CanvasManager.getSelectedPath())
+  if (!currentCanvas) return
+  const {initZoom} = currentCanvas;
+  const {borderRadius, shadow} = photographOptions.value
+  const elements = canvasEditor.getElements();
+  const image = elements[1];
+  image.radius = borderRadius / initZoom;
+  image.shadow = {...shadow, blur: shadow.blur / initZoom};
+  canvasEditor.renderAll();
 }
 
 const renderPhotograph = async (path) => {

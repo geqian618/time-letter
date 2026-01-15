@@ -222,6 +222,7 @@ class CanvasEditor {
         if (callbacks && callbacks.size) {
             callbacks.forEach(callback => callback({x: element.x, y: element.y, target: element}))
         }
+        this.renderAll();
         return this.elements.length - 1;
     }
 
@@ -351,6 +352,7 @@ class CanvasEditor {
         this.elements = [];
         this.activeElements = [];
         this.isEditing && this.finishEditing();
+        this.renderAll();
     }
 
     /**
@@ -358,6 +360,7 @@ class CanvasEditor {
      */
     toggleGrid() {
         this.canvasConfig.showGrid = !this.canvasConfig.showGrid;
+        this.renderAll();
     }
 
     /**
@@ -1115,6 +1118,7 @@ class CanvasEditor {
                     this.elements.push(new Rect(element));
                 }
             }
+            this.renderAll();
         } catch (e) {
             console.error('导入失败:', e);
         }
@@ -1673,13 +1677,19 @@ class Image extends Element {
     }
 
     draw(ctx) {
+
         if (!this.image) {
             console.error(`Failed to load image: ${this.src}`)
             return
         }
+
+        // 保存当前画布状态
+        const originalCtx = ctx;
         ctx.save();
         ctx.globalAlpha = this.alpha;
+
         const {color: shadowColor, blur: shadowBlur, offsetX: shadowOffsetX, offsetY: shadowOffsetY} = this.shadow;
+
         // 设置阴影颜色（支持RGBA格式）
         ctx.shadowColor = shadowColor || 'rgba(0, 0, 0, 1)';
         // 设置阴影模糊度（像素）
@@ -1698,7 +1708,6 @@ class Image extends Element {
             ctx.translate(-centerX, -centerY);
         }
 
-
         if (this.backdropBlur) {
             ctx.filter = `blur(${this.backdropBlur}px)`
         }
@@ -1706,6 +1715,7 @@ class Image extends Element {
         // 创建圆角裁剪区域
         this._drawRoundedClip(ctx);
 
+        // 直接绘制图片（带圆角）
         ctx.drawImage(this.image, this.x, this.y, this.width * this.scale, this.height * this.scale);
 
         // 恢复画布到之前保存的状态（包括裁剪区域）

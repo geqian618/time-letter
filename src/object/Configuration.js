@@ -27,7 +27,7 @@ export class PhotographOptions {
     constructor() {
         this.borderRadius = 0;
         this.borderRadiusRatio = 0;
-        this.boxShadow = new ShadowSettings();
+        this.shadow = new ShadowSettings();
     }
 }
 
