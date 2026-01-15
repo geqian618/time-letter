@@ -222,7 +222,6 @@ class CanvasEditor {
         if (callbacks && callbacks.size) {
             callbacks.forEach(callback => callback({x: element.x, y: element.y, target: element}))
         }
-        this.renderAll();
         return this.elements.length - 1;
     }
 
@@ -352,7 +351,6 @@ class CanvasEditor {
         this.elements = [];
         this.activeElements = [];
         this.isEditing && this.finishEditing();
-        this.renderAll();
     }
 
     /**
@@ -360,7 +358,6 @@ class CanvasEditor {
      */
     toggleGrid() {
         this.canvasConfig.showGrid = !this.canvasConfig.showGrid;
-        this.renderAll();
     }
 
     /**
@@ -1118,7 +1115,6 @@ class CanvasEditor {
                     this.elements.push(new Rect(element));
                 }
             }
-            this.renderAll();
         } catch (e) {
             console.error('导入失败:', e);
         }
@@ -1567,15 +1563,18 @@ class Image extends Element {
         super(options);
         this.type = 'image'
         this.image = image
-        this.cacheable = options.cacheable || false
         this.src = image?.src
         this.crossOrigin = options.crossOrigin || 'anonymous'
+        this.cacheable = options.cacheable || false
         this.scale = options.scale || 1
         this.width = options.width
         this.height = options.height
         this.alpha = options.alpha || 1
         this.angle = options.angle || 0
-        // 图片阴影 - 需要处理嵌套对象
+        // 圆角属性
+        this.radius = options.radius || 0;
+
+        // 图片阴影
         this.shadow = {
             color: 'rgba(0,0,0,1)',
             blur: 0,
@@ -1583,8 +1582,21 @@ class Image extends Element {
             offsetY: 0,
             ...options.shadow
         };
+
+        // backdrop-filter 效果配置
+        this.backdropFilter = options.backdropFilter || false;  // 是否启用背景模糊
+        this.backdropBlur = options.backdropBlur || 0;  // 模糊强度
+        this.backdropBrightness = options.backdropBrightness || 1.0;  // 亮度
+        this.backdropSaturation = options.backdropSaturation || 1.0;  // 饱和度
+        this.backdropOpacity = options.backdropOpacity || 0.3;  // 模糊层不透明度
+
+        // 缓存模糊效果的 canvas
+        this._backdropCache = null;
+        this._lastBackdropConfig = null;
+
         const {naturalWidth, naturalHeight} = image;
         const {width, height} = options;
+
         // 如果没有设置宽高，使用图片原始尺寸
         if (!width && !height) {
             this.width = naturalWidth;
@@ -1598,8 +1610,8 @@ class Image extends Element {
         else if (height && !width) {
             this.width = height * naturalWidth / naturalHeight;
         }
-    }
 
+    }
 
     static fromURL(src, options = {}) {
         return new Promise((resolve, reject) => {
@@ -1628,7 +1640,6 @@ class Image extends Element {
             }
         })
     }
-
 
     contains(x, y) {
 
@@ -1666,10 +1677,8 @@ class Image extends Element {
             console.error(`Failed to load image: ${this.src}`)
             return
         }
-        // 保存当前画布状态
         ctx.save();
-        ctx.globalAlpha = this.alpha
-
+        ctx.globalAlpha = this.alpha;
         const {color: shadowColor, blur: shadowBlur, offsetX: shadowOffsetX, offsetY: shadowOffsetY} = this.shadow;
         // 设置阴影颜色（支持RGBA格式）
         ctx.shadowColor = shadowColor || 'rgba(0, 0, 0, 1)';
@@ -1689,12 +1698,42 @@ class Image extends Element {
             ctx.translate(-centerX, -centerY);
         }
 
-        // 绘制图片（注意坐标已偏移到中心点）
+
+        if (this.backdropBlur) {
+            ctx.filter = `blur(${this.backdropBlur}px)`
+        }
+
+        // 创建圆角裁剪区域
+        this._drawRoundedClip(ctx);
+
         ctx.drawImage(this.image, this.x, this.y, this.width * this.scale, this.height * this.scale);
-        // 恢复画布到之前保存的状态
+
+        // 恢复画布到之前保存的状态（包括裁剪区域）
         ctx.restore();
     }
 
+    // 创建圆角裁剪区域
+    _drawRoundedClip(ctx) {
+        if (this.radius <= 0) return;
+        const x = this.x;
+        const y = this.y;
+        const width = this.width * this.scale;
+        const height = this.height * this.scale;
+        const radius = Math.min(this.radius, width / 2, height / 2);
+
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+        ctx.clip();
+    }
 
     selection(ctx) {
         const color = 'red', lineCap = 'butt'
@@ -1705,6 +1744,7 @@ class Image extends Element {
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = color;
         ctx.lineCap = lineCap;
+
         if (this.angle !== 0) {
             // 计算文本中心点
             const centerX = this.x + this.width * this.scale / 2;
@@ -1714,14 +1754,39 @@ class Image extends Element {
             ctx.rotate(this.angle * Math.PI / 180);
             ctx.translate(-centerX, -centerY);
         }
-        ctx.beginPath();
-        ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width * this.scale + 2 * lineWidth, this.height * this.scale + 2 * lineWidth);
+
+        // 如果设置了圆角，绘制圆角选择框
+        if (this.radius > 0) {
+            const x = this.x - lineWidth;
+            const y = this.y - lineWidth;
+            const width = this.width * this.scale + 2 * lineWidth;
+            const height = this.height * this.scale + 2 * lineWidth;
+            const radius = Math.min(this.radius, width / 2, height / 2);
+
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        } else {
+            // 绘制直角选择框
+            ctx.beginPath();
+            ctx.rect(this.x - lineWidth, this.y - lineWidth,
+                this.width * this.scale + 2 * lineWidth,
+                this.height * this.scale + 2 * lineWidth);
+        }
+
         ctx.stroke();
         ctx.restore();
     }
 
 }
-
 
 class Rect extends Element {
     constructor(options) {
@@ -1729,11 +1794,12 @@ class Rect extends Element {
         this.type = 'rect'
         this.width = options.width || 0
         this.height = options.height || 0
-        this.fill = options.fill || 'rgba(255,255,255,0)'
+        this.fill = options.fill || 'rgba(255,255,255,1)'
         this.radius = options.radius || 0
         this.stroke = options.stroke || 'rgba(0,0,0,1)'
         this.strokeWidth = options.strokeWidth || 0
         this.angle = options.angle || 0
+        this.radius = options.radius || 0
         // 图片阴影 - 需要处理嵌套对象
         this.shadow = {
             color: 'rgba(0,0,0,1)',
@@ -1819,13 +1885,40 @@ class Rect extends Element {
             ctx.translate(-centerX, -centerY);
         }
 
+        // 绘制圆角
+        this._drawRoundedClip(ctx)
+
         // 先填充，后描边
         ctx.fillRect(this.x, this.y, this.width, this.height);
         if (this.strokeWidth) {
             ctx.strokeRect(this.x, this.y, this.width, this.height);
         }
+
         // 恢复画布到之前保存的状态
         ctx.restore();
+    }
+
+
+    // 创建圆角裁剪区域
+    _drawRoundedClip(ctx) {
+        if (this.radius <= 0) return;
+        const x = this.x;
+        const y = this.y;
+        const width = this.width;
+        const height = this.height;
+        const radius = Math.min(this.radius, width / 2, height / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+        ctx.clip();
     }
 }
 

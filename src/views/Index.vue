@@ -79,7 +79,9 @@
         </div>
 
         <div class="preview-container" id="preview-container" ref="previewContainer" @mousedown="triggerContextMenu">
-          <canvas id="canvas" ref="canvasElement"></canvas>
+          <canvas id="canvas" ref="canvasElement">
+            <canvas id="background-canvas" ref="backgroundCanvas"></canvas>
+          </canvas>
         </div>
 
         <div class="page-right">
@@ -1203,7 +1205,8 @@ import {
   ImageOptions,
   BorderOptions,
   FontSettings,
-  PhotographOptions, PhotographSettings
+  PhotographOptions,
+  PhotographSettings
 } from '@/object/Configuration'
 
 import {Canvas} from '@/object/Canvas'
@@ -1231,6 +1234,8 @@ const zoomOptions = {
 }
 
 let canvasEditor = null;
+
+let backgroundCanvasEditor = null;
 
 let clickTimeout = null;
 
@@ -2180,6 +2185,7 @@ async function switchPreviewImage(event, canvas) {
     // 前一次预览元素与当前预览元素不同，隐藏前一次预览元素
     if (beforePath && beforePath !== canvas.path) {
       canvasEditor.clearCanvas();
+      backgroundCanvasEditor.clearCanvas();
     }
 
     // 没有预览元素或前一次预览元素与当前预览元素不同时显示，多次点击预览同一元素不重复渲染
@@ -2195,18 +2201,22 @@ async function switchPreviewImage(event, canvas) {
         const image = await Image.fromURL(canvas.url, {selectable: false, cacheable: true, meta: {path: canvas.path}});
         const width = image.width;
         const height = image.height;
+        const background = new Rect({width, height, meta: {isBackground: true}});
         // 设置画布宽高等于缩放后的图片尺寸
         canvasEditor.resizeCanvas(width, height);
         const {idealWidth, idealHeight} = previewContainer.value;
         const initScale = Math.min(idealHeight / height, idealWidth / width);
         const scale = initScale * projectSettings.value.others.defaultCanvasScale;
         canvasEditor.setCenterZoom(scale)
+        canvasEditor.addElement(background);
         canvasEditor.addElement(image);
         canvasEditor.renderAll()
         scrollBarMoveToCenter(canvas)
         canvas.completed = true
         canvas.initZoom = initScale
         canvas.zoom = canvasEditor.getZoom()
+        canvas.width = width;
+        canvas.height = height
         canvas.json = canvasEditor.exportToJSON()
       } else {
         const {json, zoom} = canvas;
@@ -2238,7 +2248,11 @@ const initCanvasSize = () => {
 
     const canvasElement = document.querySelector('#canvas');
 
+    const backgroundElement = document.querySelector('#background-canvas');
+
     canvasEditor = new CanvasEditor(canvasElement);
+
+    backgroundCanvasEditor = new CanvasEditor(backgroundElement);
 
     canvasEditor.on('selection:object', (event) => {
       const {initZoom} = CanvasManager.getCurrentCanvas();
@@ -2533,9 +2547,54 @@ const renderPhotograph = async (path) => {
 
 const handleUpdateBorders = async () => {
   const currentCanvas = CanvasManager.getCurrentCanvas();
-  currentCanvas.settings.border.options = _.cloneDeep(borderOptions.value)
-  await renderBorders(CanvasManager.getSelectedPath())
-  refreshCanvasElementPosition(CanvasManager.getSelectedPath())
+  if (!currentCanvas) return
+  const {width, height, initZoom} = currentCanvas;
+  let {
+    borderLeft,
+    borderRight,
+    borderTop,
+    borderBottom,
+    borderColor,
+    borderRadius,
+    borderType,
+    borderBlur
+  } = borderOptions.value;
+  const elements = canvasEditor.getElements();
+  const background = elements[0];
+  const target = elements[1];
+  borderLeft = borderLeft / initZoom
+  borderRight = borderRight / initZoom
+  borderTop = borderTop / initZoom
+  borderBottom = borderBottom / initZoom
+  borderRadius = borderRadius / initZoom
+  borderBlur = borderBlur / initZoom
+  target.x = borderLeft
+  target.y = borderTop
+  const newWidth = width + borderLeft + borderRight
+  const newHeight = height + borderTop + borderBottom
+  canvasEditor.resizeCanvas(newWidth, newHeight)
+  scrollBarMoveToCenter(currentCanvas)
+
+  if (borderType === 0 && background.type !== 'rect') {
+    elements[0] = new Rect({width: newWidth, height: newHeight, radius: borderRadius, fill: borderColor});
+  } else if (borderType === 1 && background.type !== 'image') {
+    elements[0] = new Image(target.image, {
+      width: newWidth,
+      height: newHeight,
+      radius: borderRadius,
+      backdropBlur: borderBlur,
+      backdropFilter: true,
+      meta: target.meta
+    })
+  } else {
+    background.width = newWidth;
+    background.height = newHeight;
+    background.fill = borderColor;
+    background.radius = borderRadius;
+    background.backdropBlur = borderBlur;
+  }
+  currentCanvas.json = canvasEditor.exportToJSON()
+  canvasEditor.renderAll()
 }
 
 
@@ -3720,15 +3779,17 @@ onBeforeUnmount(() => {
       width: var(--preview-container-width);
       height: 100%;
 
-      .canvas-wrapper {
-        width: var(--canvas-width);
-        height: var(--canvas-height);
-        display: flex;
-        justify-content: center;
-        align-items: center;
+      #canvas {
+        position: relative;
 
-        #canvas {
-
+        #background-canvas {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          left: 0;
+          right: 0;
+          top: 0;
+          bottom: 0;
         }
       }
     }
