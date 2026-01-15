@@ -222,6 +222,7 @@ class CanvasEditor {
         if (callbacks && callbacks.size) {
             callbacks.forEach(callback => callback({x: element.x, y: element.y, target: element}))
         }
+        this.renderAll();
         return this.elements.length - 1;
     }
 
@@ -351,6 +352,7 @@ class CanvasEditor {
         this.elements = [];
         this.activeElements = [];
         this.isEditing && this.finishEditing();
+        this.renderAll();
     }
 
     /**
@@ -358,6 +360,7 @@ class CanvasEditor {
      */
     toggleGrid() {
         this.canvasConfig.showGrid = !this.canvasConfig.showGrid;
+        this.renderAll();
     }
 
     /**
@@ -1115,6 +1118,7 @@ class CanvasEditor {
                     this.elements.push(new Rect(element));
                 }
             }
+            this.renderAll();
         } catch (e) {
             console.error('导入失败:', e);
         }
@@ -1679,47 +1683,65 @@ class Image extends Element {
         }
         ctx.save();
         ctx.globalAlpha = this.alpha;
-        const {color: shadowColor, blur: shadowBlur, offsetX: shadowOffsetX, offsetY: shadowOffsetY} = this.shadow;
-        // 设置阴影颜色（支持RGBA格式）
-        ctx.shadowColor = shadowColor || 'rgba(0, 0, 0, 1)';
-        // 设置阴影模糊度（像素）
-        ctx.shadowBlur = shadowBlur || 0;
-        // 设置阴影偏移（像素）
-        ctx.shadowOffsetX = shadowOffsetX || 0;
-        ctx.shadowOffsetY = shadowOffsetY || 0;
 
-        if (this.angle !== 0) {
-            // 将画布原点移动到图片中心点
-            const centerX = this.x + this.width * this.scale / 2;
-            const centerY = this.y + this.height * this.scale / 2;
-            ctx.translate(centerX, centerY);
-            // 旋转画布
-            ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
-        }
-
-
-        if (this.backdropBlur) {
-            ctx.filter = `blur(${this.backdropBlur}px)`
-        }
-
-        // 创建圆角裁剪区域
-        this._drawRoundedClip(ctx);
-
-        ctx.drawImage(this.image, this.x, this.y, this.width * this.scale, this.height * this.scale);
-
-        // 恢复画布到之前保存的状态（包括裁剪区域）
-        ctx.restore();
-    }
-
-    // 创建圆角裁剪区域
-    _drawRoundedClip(ctx) {
-        if (this.radius <= 0) return;
         const x = this.x;
         const y = this.y;
         const width = this.width * this.scale;
         const height = this.height * this.scale;
         const radius = Math.min(this.radius, width / 2, height / 2);
+
+        const {color: shadowColor, blur: shadowBlur, offsetX: shadowOffsetX, offsetY: shadowOffsetY} = this.shadow;
+        const hasShadow = shadowColor && (shadowBlur > 0 || shadowOffsetX !== 0 || shadowOffsetY !== 0);
+
+        // 先绘制阴影（如果存在）
+        if (hasShadow) {
+            ctx.shadowColor = shadowColor;
+            ctx.shadowBlur = shadowBlur;
+            ctx.shadowOffsetX = shadowOffsetX;
+            ctx.shadowOffsetY = shadowOffsetY;
+
+            this._createRoundedRectPath(ctx, x, y, width, height, radius);
+            ctx.fillStyle = 'rgba(0,0,0,1)';
+            ctx.fill();
+
+            // 重要：清除阴影设置，避免影响后续绘制
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+        }
+
+        // 设置变换
+        if (this.angle !== 0) {
+            const centerX = x + width / 2;
+            const centerY = y + height / 2;
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.translate(-centerX, -centerY);
+        }
+
+        if (this.backdropBlur) {
+            ctx.filter = `blur(${this.backdropBlur}px)`;
+        }
+
+        // 创建圆角裁剪区域并绘制图像
+        this._createRoundedRectPath(ctx, x, y, width, height, radius);
+
+        ctx.clip();
+
+        ctx.drawImage(this.image, x, y, width, height);
+
+        ctx.restore();
+    }
+
+    // 修改后的通用圆角矩形路径方法
+    _createRoundedRectPath(ctx, x, y, width, height, radius) {
+        if (radius <= 0) {
+            ctx.beginPath();
+            ctx.rect(x, y, width, height);
+            return;
+        }
+        radius = Math.min(radius, width / 2, height / 2);
 
         ctx.beginPath();
         ctx.moveTo(x + radius, y);
@@ -1732,7 +1754,6 @@ class Image extends Element {
         ctx.lineTo(x, y + radius);
         ctx.quadraticCurveTo(x, y, x + radius, y);
         ctx.closePath();
-        ctx.clip();
     }
 
     selection(ctx) {

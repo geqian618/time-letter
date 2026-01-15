@@ -2525,8 +2525,8 @@ const handleUpdatePhotograph = async () => {
   const image = elements[1];
   image.radius = borderRadius / initZoom;
   image.shadow = {...shadow, blur: shadow.blur / initZoom};
-  console.log(image.shadow)
   canvasEditor.renderAll();
+  currentCanvas.json = canvasEditor.exportToJSON()
 }
 
 const renderPhotograph = async (path) => {
