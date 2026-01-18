@@ -1659,7 +1659,14 @@ const watchContextMenu = () => {
 
         const settings = paths.map((path, index) => {
           const canvas = CanvasManager.getCanvas(path);
-          return {filePath: path, index, json: canvas?.json}
+          const {
+            background: {canvas: {elements: backgroundElements}},
+            foreground: {canvas: {elements: foregroundElements}}
+          } = canvas;
+          for (let element of foregroundElements) {
+            backgroundElements.push(element);
+          }
+          return {filePath: path, index, json: JSON.stringify(canvas.background)}
         });
 
         window.electronAPI.requestExportFiles(_.cloneDeep({
@@ -1777,7 +1784,7 @@ watch(textOptions, async (newVal, oldValue) => {
   canvasEditor.updateElement(element)
   canvasEditor.renderAll()
   canvas.zoom = canvasEditor.getZoom()
-  canvas.json = canvasEditor.exportToJSON()
+  canvas.foreground = canvasEditor.exportToObject()
 }, {
   deep: true,
 });
@@ -1796,7 +1803,7 @@ watch(() => imageOptions.value, async (newVal, oldValue) => {
   canvasEditor.updateElement(element)
   canvasEditor.renderAll()
   canvas.zoom = canvasEditor.getZoom()
-  canvas.json = canvasEditor.exportToJSON()
+  canvas.foreground = canvasEditor.exportToObject()
 }, {
   //深度监视（监视属性变化）
   deep: true,
@@ -2221,17 +2228,18 @@ async function switchPreviewImage(event, canvas) {
         scrollBarMoveToCenter(canvas)
         borderOptions.value = background.meta
         photographOptions.value = image.meta
+        metadataOptions.value = canvas.metadata
         canvas.completed = true
         canvas.initZoom = initScale
         canvas.zoom = canvasEditor.getZoom()
         canvas.width = width;
         canvas.height = height
-        canvas.json = canvasEditor.exportToJSON()
-        canvas.bgjson = backgroundCanvasEditor.exportToJSON()
+        canvas.foreground = canvasEditor.exportToObject()
+        canvas.background = backgroundCanvasEditor.exportToObject()
       } else {
-        const {json, bgjson, zoom} = canvas;
-        await canvasEditor.loadFromJSON(json)
-        await backgroundCanvasEditor.loadFromJSON(bgjson)
+        const {foreground, background, zoom} = canvas;
+        await canvasEditor.loadFromObject(foreground)
+        await backgroundCanvasEditor.loadFromObject(background)
         // 设置缩放
         canvasEditor.setCenterZoom(zoom);
         backgroundCanvasEditor.setCenterZoom(zoom);
@@ -2240,6 +2248,7 @@ async function switchPreviewImage(event, canvas) {
         const elements = backgroundCanvasEditor.getElements();
         borderOptions.value = elements[0].meta
         photographOptions.value = elements[1].meta
+        metadataOptions.value = canvas.metadata
         updateScrollBarPosition(canvas)
       }
     }
@@ -2305,7 +2314,8 @@ const initCanvasSize = () => {
 
     canvasEditor.on('move:object', (event) => {
       const canvas = CanvasManager.getCurrentCanvas();
-      canvas.json = canvasEditor.exportToJSON()
+      canvas.foreground = canvasEditor.exportToObject()
+      canvas.background = backgroundCanvasEditor.exportToObject()
     })
 
     canvasEditor.on('add:object', (event) => {
@@ -2538,7 +2548,7 @@ const handleUpdatePhotograph = async () => {
   image.radius = borderRadius / initZoom;
   image.shadow = {...shadow, blur: shadow.blur / initZoom};
   backgroundCanvasEditor.renderAll();
-  currentCanvas.bgjson = backgroundCanvasEditor.exportToJSON()
+  currentCanvas.background = backgroundCanvasEditor.exportToObject()
 }
 
 const renderPhotograph = async (path) => {
@@ -2613,7 +2623,7 @@ const handleUpdateBorders = async () => {
     background.radius = borderRadius;
     background.backdropBlur = borderBlur;
   }
-  currentCanvas.bgjson = backgroundCanvasEditor.exportToJSON()
+  currentCanvas.background = backgroundCanvasEditor.exportToObject()
   backgroundCanvasEditor.renderAll()
   canvasEditor.renderAll()
 }
@@ -3437,7 +3447,7 @@ const handleDropElement = async function (event) {
 
   const currentCanvas = CanvasManager.getCurrentCanvas();
   currentCanvas.zoom = canvasEditor.getZoom()
-  currentCanvas.json = canvasEditor.exportToJSON()
+  canvas.foreground = canvasEditor.exportToObject()
 }
 
 const handleDropFiles = (event) => {
@@ -3576,7 +3586,7 @@ const handleRemoveElement = (event) => {
     const length = activeElements.length;
     canvasEditor.removeElements(activeElements)
     if (length) {
-      canvas.json = canvasEditor.exportToJSON()
+      canvas.foreground = canvasEditor.exportToObject()
     }
     canvasEditor.renderAll()
   }

@@ -1084,18 +1084,57 @@ class CanvasEditor {
     }
 
     /**
-     * 导出所有文本数据为 JSON
+     * 导出所有数据为 JSON
      * @returns {string} JSON 格式的文本数据
      */
     exportToJSON() {
-        return JSON.stringify({
+        return JSON.stringify(this.exportToObject(), null, 2);
+    }
+
+
+    /**
+     * 导出所有数据为 Object
+     * @returns {Object} Object
+     */
+    exportToObject() {
+        return {
             canvas: {
                 width: this.canvas.width,
                 height: this.canvas.height,
                 elements: this.elements
             }
-        }, null, 2);
+        }
     }
+
+
+    /**
+     * 从 object 导入数据
+     * @param {Object} object - JSON 格式的文本数据
+     */
+    async loadFromObject(object) {
+        if (!object) return;
+        try {
+            const {canvas: {width, height, elements}} = object;
+            this.resizeCanvas(width, height)
+            for (let element of elements) {
+                if (element.type === 'text') {
+                    this.elements.push(new Text(element.text, element))
+                }
+                if (element.type === 'image') {
+                    const image = this.cache.get(element.src);
+                    const instance = image ? new Image(image, element) : await Image.fromURL(element.src, element);
+                    this.elements.push(instance)
+                }
+                if (element.type === 'rect') {
+                    this.elements.push(new Rect(element));
+                }
+            }
+            this.renderAll();
+        } catch (e) {
+            console.error('导入失败:', e);
+        }
+    }
+
 
     /**
      * 从 JSON 导入文本数据
