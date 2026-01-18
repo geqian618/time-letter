@@ -1659,10 +1659,7 @@ const watchContextMenu = () => {
 
         const settings = paths.map((path, index) => {
           const canvas = CanvasManager.getCanvas(path);
-          const {
-            background: {canvas: {elements: backgroundElements}},
-            foreground: {canvas: {elements: foregroundElements}}
-          } = canvas;
+          const {background: {elements: backgroundElements}, foreground: {elements: foregroundElements}} = canvas;
           for (let element of foregroundElements) {
             backgroundElements.push(element);
           }

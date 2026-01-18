@@ -34,15 +34,13 @@ module.exports = async (params) => {
 
         const data = JSON.parse(json);
 
-        const {canvas: {elements}} = data
+        const {elements} = data
 
         for (let element of elements) {
             if (element.type === 'image') {
                 element.src = element.meta.path
             }
         }
-
-        console.log(elements)
 
         const canvas = createCanvas(1000, 1000);
         const canvasEditor = new CanvasEditor(canvas);

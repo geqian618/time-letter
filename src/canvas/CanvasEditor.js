@@ -1098,11 +1098,9 @@ class CanvasEditor {
      */
     exportToObject() {
         return {
-            canvas: {
-                width: this.canvas.width,
-                height: this.canvas.height,
-                elements: this.elements
-            }
+            width: this.canvas.width,
+            height: this.canvas.height,
+            elements: this.elements
         }
     }
 
@@ -1114,7 +1112,7 @@ class CanvasEditor {
     async loadFromObject(object) {
         if (!object) return;
         try {
-            const {canvas: {width, height, elements}} = object;
+            const {width, height, elements} = object;
             this.resizeCanvas(width, height)
             for (let element of elements) {
                 if (element.type === 'text') {
@@ -1142,7 +1140,7 @@ class CanvasEditor {
      */
     async loadFromJSON(json) {
         try {
-            const {canvas: {width, height, elements}} = JSON.parse(json);
+            const {width, height, elements} = JSON.parse(json);
             this.resizeCanvas(width, height)
             for (let element of elements) {
                 if (element.type === 'text') {
