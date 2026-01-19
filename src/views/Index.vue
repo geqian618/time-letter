@@ -2680,7 +2680,6 @@ const switchBeforePreviewElement = async () => {
     backgroundCanvasEditor.clearCanvas();
 
     const beforeElement = currentElement.previousElementSibling || currentElement.parentNode.lastElementChild;
-    metadataOptions.value = beforeCanvas.metadata
     beforeElement.classList.add('active')
     beforeElement.setAttribute('selected', 'true')
 
@@ -2709,7 +2708,6 @@ const switchNextPreviewElement = async () => {
     backgroundCanvasEditor.clearCanvas();
 
     const nextElement = currentElement.nextElementSibling || currentElement.parentNode.firstElementChild;
-    metadataOptions.value = nextCanvas.metadata
     nextElement.classList.add('active')
     nextElement.setAttribute('selected', 'true')
     CanvasManager.setSelectedObject({path: nextCanvas.path, previewElement: nextElement})
