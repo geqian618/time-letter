@@ -2152,6 +2152,55 @@ const loadTextLabels = () => {
   textLabels.value = StorageManager.getTextLabels()
 }
 
+async function render(canvas) {
+  if (!canvas.completed) {
+    const image = await Image.fromURL(canvas.url, {
+      selectable: false,
+      cacheable: true,
+      meta: {...new PhotographOptions(), path: canvas.path}
+    });
+    const width = image.width;
+    const height = image.height;
+    const background = new Rect({width, height, meta: new BorderOptions()});
+    // 设置画布宽高等于缩放后的图片尺寸
+    canvasEditor.resizeCanvas(width, height);
+    backgroundCanvasEditor.resizeCanvas(width, height);
+    const {idealWidth, idealHeight} = previewContainer.value;
+    const initScale = Math.min(idealHeight / height, idealWidth / width);
+    const scale = initScale * projectSettings.value.others.defaultCanvasScale;
+    canvasEditor.setCenterZoom(scale)
+    backgroundCanvasEditor.setCenterZoom(scale)
+    backgroundCanvasEditor.addElement(background);
+    backgroundCanvasEditor.addElement(image);
+    backgroundCanvasEditor.renderAll()
+    scrollBarMoveToCenter(canvas)
+    borderOptions.value = background.meta
+    photographOptions.value = image.meta
+    metadataOptions.value = canvas.metadata
+    canvas.completed = true
+    canvas.initZoom = initScale
+    canvas.zoom = canvasEditor.getZoom()
+    canvas.width = width;
+    canvas.height = height
+    canvas.foreground = canvasEditor.exportToObject()
+    canvas.background = backgroundCanvasEditor.exportToObject()
+  } else {
+    const {foreground, background, zoom} = canvas;
+    await canvasEditor.loadFromObject(foreground)
+    await backgroundCanvasEditor.loadFromObject(background)
+    // 设置缩放
+    canvasEditor.setCenterZoom(zoom);
+    backgroundCanvasEditor.setCenterZoom(zoom);
+    canvasEditor.renderAll();
+    backgroundCanvasEditor.renderAll();
+    const elements = backgroundCanvasEditor.getElements();
+    borderOptions.value = elements[0].meta
+    photographOptions.value = elements[1].meta
+    metadataOptions.value = canvas.metadata
+    updateScrollBarPosition(canvas)
+  }
+}
+
 async function switchPreviewImage(event, canvas) {
 
   if (!event.ctrlKey && !event.shiftKey) {
@@ -2181,52 +2230,7 @@ async function switchPreviewImage(event, canvas) {
       // 设置选择样式
       event.target.classList.add('active')
 
-      if (!canvas.completed) {
-        const image = await Image.fromURL(canvas.url, {
-          selectable: false,
-          cacheable: true,
-          meta: {...new PhotographOptions(), path: canvas.path}
-        });
-        const width = image.width;
-        const height = image.height;
-        const background = new Rect({width, height, meta: new BorderOptions()});
-        // 设置画布宽高等于缩放后的图片尺寸
-        canvasEditor.resizeCanvas(width, height);
-        backgroundCanvasEditor.resizeCanvas(width, height);
-        const {idealWidth, idealHeight} = previewContainer.value;
-        const initScale = Math.min(idealHeight / height, idealWidth / width);
-        const scale = initScale * projectSettings.value.others.defaultCanvasScale;
-        canvasEditor.setCenterZoom(scale)
-        backgroundCanvasEditor.setCenterZoom(scale)
-        backgroundCanvasEditor.addElement(background);
-        backgroundCanvasEditor.addElement(image);
-        backgroundCanvasEditor.renderAll()
-        scrollBarMoveToCenter(canvas)
-        borderOptions.value = background.meta
-        photographOptions.value = image.meta
-        metadataOptions.value = canvas.metadata
-        canvas.completed = true
-        canvas.initZoom = initScale
-        canvas.zoom = canvasEditor.getZoom()
-        canvas.width = width;
-        canvas.height = height
-        canvas.foreground = canvasEditor.exportToObject()
-        canvas.background = backgroundCanvasEditor.exportToObject()
-      } else {
-        const {foreground, background, zoom} = canvas;
-        await canvasEditor.loadFromObject(foreground)
-        await backgroundCanvasEditor.loadFromObject(background)
-        // 设置缩放
-        canvasEditor.setCenterZoom(zoom);
-        backgroundCanvasEditor.setCenterZoom(zoom);
-        canvasEditor.renderAll();
-        backgroundCanvasEditor.renderAll();
-        const elements = backgroundCanvasEditor.getElements();
-        borderOptions.value = elements[0].meta
-        photographOptions.value = elements[1].meta
-        metadataOptions.value = canvas.metadata
-        updateScrollBarPosition(canvas)
-      }
+      await render(canvas);
     }
   }
 }
@@ -2668,13 +2672,12 @@ const switchBeforePreviewElement = async () => {
   const currentCanvas = availableCanvas.value.get(currentPath);
   const beforeCanvas = MapHelper.getBeforeValue(availableCanvas.value, currentPath);
   if (currentCanvas && beforeCanvas) {
-    if (currentElement) {
-      currentElement.setAttribute('selected', 'false')
-      currentElement.classList.remove('active')
-      selectedPreviewList.value.delete(currentPath)
-      currentCanvas.hide()
-      await nextTick()
-    }
+
+    currentElement.setAttribute('selected', 'false')
+    currentElement.classList.remove('active')
+    selectedPreviewList.value.delete(currentPath)
+    canvasEditor.clearCanvas();
+    backgroundCanvasEditor.clearCanvas();
 
     const beforeElement = currentElement.previousElementSibling || currentElement.parentNode.lastElementChild;
     metadataOptions.value = beforeCanvas.metadata
@@ -2684,9 +2687,7 @@ const switchBeforePreviewElement = async () => {
     CanvasManager.setSelectedObject({path: beforeCanvas.path, previewElement: beforeElement})
     selectedPreviewList.value.set(beforeCanvas.path, beforeElement)
 
-    beforeCanvas.show()
-    await nextTick()
-    await renderCanvas(beforeCanvas)
+    await render(beforeCanvas)
 
     // 方式二，过渡比较流畅
     scrollBarMoveToHorizontalCenter(previewList.value, beforeElement)
@@ -2698,14 +2699,14 @@ const switchNextPreviewElement = async () => {
   if (!currentPath) return
   const currentCanvas = availableCanvas.value.get(currentPath);
   const nextCanvas = MapHelper.getNextValue(availableCanvas.value, currentPath);
+
   if (currentCanvas && nextCanvas) {
-    if (currentElement) {
-      currentElement.setAttribute('selected', 'false')
-      currentElement.classList.remove('active')
-      selectedPreviewList.value.delete(currentPath)
-      currentCanvas.hide()
-      await nextTick()
-    }
+
+    currentElement.setAttribute('selected', 'false')
+    currentElement.classList.remove('active')
+    selectedPreviewList.value.delete(currentPath)
+    canvasEditor.clearCanvas();
+    backgroundCanvasEditor.clearCanvas();
 
     const nextElement = currentElement.nextElementSibling || currentElement.parentNode.firstElementChild;
     metadataOptions.value = nextCanvas.metadata
@@ -2714,9 +2715,7 @@ const switchNextPreviewElement = async () => {
     CanvasManager.setSelectedObject({path: nextCanvas.path, previewElement: nextElement})
     selectedPreviewList.value.set(nextCanvas.path, nextElement)
 
-    nextCanvas.show()
-    await nextTick()
-    await renderCanvas(nextCanvas)
+    await render(nextCanvas)
 
     // 方式二，过渡比较流畅
     scrollBarMoveToHorizontalCenter(previewList.value, nextElement)
