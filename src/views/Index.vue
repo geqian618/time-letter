@@ -2672,7 +2672,6 @@ const switchBeforePreviewElement = async () => {
   const currentCanvas = availableCanvas.value.get(currentPath);
   const beforeCanvas = MapHelper.getBeforeValue(availableCanvas.value, currentPath);
   if (currentCanvas && beforeCanvas) {
-
     currentElement.setAttribute('selected', 'false')
     currentElement.classList.remove('active')
     selectedPreviewList.value.delete(currentPath)
@@ -2700,7 +2699,6 @@ const switchNextPreviewElement = async () => {
   const nextCanvas = MapHelper.getNextValue(availableCanvas.value, currentPath);
 
   if (currentCanvas && nextCanvas) {
-
     currentElement.setAttribute('selected', 'false')
     currentElement.classList.remove('active')
     selectedPreviewList.value.delete(currentPath)
