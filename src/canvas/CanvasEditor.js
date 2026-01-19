@@ -1522,6 +1522,7 @@ class Text extends Element {
         if (start !== end) return
         const {fontColor, fontSize, spacing, chars} = this;
         const cursorWidth = 0.08 * fontSize;
+        const offset = Math.abs((spacing - cursorWidth) / 2)
         const char = chars[end];
         ctx.save()
         ctx.fillStyle = fontColor;
@@ -1532,10 +1533,10 @@ class Text extends Element {
             ctx.translate(-this.centerX, -this.centerY);
         }
         if (this.direction === 'horizontal') {
-            const startX = !char ? this.x + this.width + (spacing - cursorWidth) / 2 : char.x - (spacing - cursorWidth) / 2;
+            const startX = !char ? this.x + this.width + offset : char.x - offset;
             ctx.fillRect(startX, this.y, cursorWidth, this.height);
         } else {
-            const startY = !char ? this.y + this.height + (spacing - cursorWidth) / 2 : this.y + this.descent + (this.fontSize + this.spacing) * end - (spacing - cursorWidth) / 2;
+            const startY = !char ? this.y + this.height + offset : this.y + this.descent + (this.fontSize + this.spacing) * end - offset;
             ctx.fillRect(this.x, startY, this.width, cursorWidth);
         }
         ctx.restore();
