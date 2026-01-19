@@ -1817,7 +1817,6 @@ const renameTemplate = () => {
       }
     }
   })
-
 }
 
 const deleteTemplate = () => {
@@ -1870,11 +1869,11 @@ const saveTemplates = async () => {
   if (!saveTemplateForm) return
   saveTemplateForm.value.validate(async (valid, fields) => {
     if (valid) {
-      const {json: settings} = CanvasManager.getCurrentCanvas();
+      const {background, foreground} = CanvasManager.getCurrentCanvas();
       templates.value.push({
         templateId: Date.now(),
         templateName: newTemplate.value.templateName,
-        settings
+        settings: {background, foreground}
       })
       StorageManager.saveTemplates(templates.value)
       newTemplate.value.templateName = ''
