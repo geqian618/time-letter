@@ -3427,7 +3427,7 @@ const handleDropElement = async function (event) {
 
   const currentCanvas = CanvasManager.getCurrentCanvas();
   currentCanvas.zoom = canvasEditor.getZoom()
-  canvas.foreground = canvasEditor.exportToObject()
+  currentCanvas.foreground = canvasEditor.exportToObject()
 }
 
 const handleDropFiles = (event) => {
