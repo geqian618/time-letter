@@ -702,10 +702,6 @@
             </el-tooltip>
           </div>
 
-          <div class="tab-wrapper">
-            <el-button size="small" @click="canvasEditor.exportPNG('img.png')">导出</el-button>
-          </div>
-
           <div class="filter">
             <div class="filter-label">筛选：</div>
             <div class="filter-select">
