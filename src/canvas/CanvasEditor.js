@@ -1522,8 +1522,8 @@ class Text extends Element {
         if (start !== end) return
         const {fontColor, fontSize, spacing, chars} = this;
         const cursorWidth = 0.08 * fontSize;
-        const offset = Math.abs((spacing - cursorWidth) / 2)
         const char = chars[end];
+        const offset = Math.abs((spacing - cursorWidth) / 2)
         ctx.save()
         ctx.fillStyle = fontColor;
         if (this.angle !== 0) {
