@@ -1,4 +1,4 @@
-const {CanvasEditor, Text} = require("../canvas/NodeCanvasEditor");
+const {CanvasEditor} = require("../canvas/NodeCanvasEditor");
 const {createCanvas} = require('@napi-rs/canvas')
 const path = require("path");
 const {copyExifDataToBuffer} = require("../utils/exif-helper");
@@ -11,7 +11,7 @@ module.exports = async (params) => {
                 outputSettings: {
                     quality,
                     extname: extnameType,
-                    outputSize: {longSide, shortSide, width, height, type},
+                    outputSize: {width, height, type},
                     isSynchronizeMetadata,
                     fileNaming: {basename, prefix, suffix}
                 }
@@ -34,7 +34,22 @@ module.exports = async (params) => {
 
         const data = JSON.parse(json);
 
-        const {elements} = data
+        const {elements, width: originalWidth, height: originalHeight} = data
+
+        let scaleWidth, scaleHeight, scale;
+
+        if (type === 1) {
+            scale = width / originalWidth;
+            scaleWidth = width;
+            scaleHeight = originalHeight * scale
+        }
+
+        if (type === 2) {
+            scale = height / originalHeight;
+            scaleHeight = height;
+            scaleWidth = originalWidth * scale
+        }
+
 
         for (let element of elements) {
             if (element.type === 'image') {
@@ -42,21 +57,29 @@ module.exports = async (params) => {
             }
         }
 
-        const canvas = createCanvas(1000, 1000);
-        const canvasEditor = new CanvasEditor(canvas);
+        let originalCanvas = createCanvas(1000, 1000);
+        const canvasEditor = new CanvasEditor(originalCanvas);
         await canvasEditor.loadFromJSON(JSON.stringify(data))
         canvasEditor.renderAll()
 
+        if (type !== 0) {
+            const scaledCanvas = createCanvas(scaleWidth, scaleHeight);
+            const scaledCtx = scaledCanvas.getContext('2d');
+            scaledCtx.drawImage(originalCanvas, 0, 0, scaleWidth, scaleHeight);
+            originalCanvas = scaledCanvas;
+        }
+
         // 7. 保存图片 (使用 Buffer 写入)
         let buffer = outputExtname === 'png'
-            ? canvas.toBuffer('image/png')
-            : canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 100 : quality);
+            ? originalCanvas.toBuffer('image/png')
+            : originalCanvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 100 : quality);
 
         if (['jpeg', 'jpg'].includes(originalExtname) && ['jpeg', 'jpg'].includes(outputExtname) && isSynchronizeMetadata) {
             buffer = await copyExifDataToBuffer(filePath, buffer)
         }
 
         await fs.writeFile(outputPath, buffer);
+
     } catch (error) {
         throw error;
     }
@@ -74,79 +97,3 @@ const getExtname = (originalExtname, extnameType) => {
         return 'webp'
     }
 }
-
-
-// 定义策略配置
-const resizeStrategies = {
-    // 原始尺寸，不含边框
-    0: (image) => ({
-        width: image.width,
-        height: image.height
-    }),
-
-    // 原始尺寸，含边框
-    1: (image, {widthRatio}) => ({
-        width: image.width / widthRatio,
-        height: image.height / widthRatio
-    }),
-
-    // 长边固定，不包含边框
-    2: (image, {longSide}) => ({
-        width: image.height > image.width ?
-            longSide * image.width / image.height : longSide,
-        height: image.height > image.width ?
-            longSide : longSide * image.height / image.width
-    }),
-
-    // 长边固定，包含边框
-    3: (image, {longSide, widthRatio, heightRatio}) => ({
-        width: image.height > image.width ?
-            longSide * image.width / image.height / heightRatio :
-            longSide / widthRatio,
-        height: image.height > image.width ?
-            longSide / heightRatio :
-            longSide * image.height / image.width / widthRatio
-    }),
-
-    // 短边固定，不包含边框
-    4: (image, {shortSide, longSide}) => ({
-        width: image.height < image.width ?
-            shortSide * image.width / image.height : shortSide,
-        height: image.height < image.width ?
-            shortSide : longSide * image.height / image.width
-    }),
-
-    // 短边固定，包含边框
-    5: (image, {shortSide, longSide, widthRatio, heightRatio}) => ({
-        width: image.height < image.width ?
-            shortSide * image.width / image.height / heightRatio :
-            shortSide / widthRatio,
-        height: image.height < image.width ?
-            shortSide / heightRatio :
-            longSide * image.height / image.width / widthRatio
-    }),
-
-    // 宽固定，不包含边框
-    6: (image, {width}) => ({
-        width: width,
-        height: image.height * width / image.width
-    }),
-
-    // 宽固定，包含边框
-    7: (image, {width, widthRatio}) => ({
-        width: width / widthRatio,
-        height: image.height * width / image.width / widthRatio
-    }),
-
-    // 高固定，不包含边框
-    8: (image, {height}) => ({
-        width: image.width * height / image.height,
-        height: height
-    }),
-    // 高固定，包含边框
-    9: (image, {height, heightRatio}) => ({
-        width: image.width * height / image.height / heightRatio,
-        height: height / heightRatio
-    })
-};
-
