@@ -84,11 +84,11 @@ class CanvasEditor {
         }
 
         //设置高质量渲染选项
-        // this.ctx.patternQuality = 'best';
-        // this.ctx.quality = 'best'
-        // this.ctx.antialias = 'subpixel'
-        // this.ctx.imageSmoothingEnabled = true;
-        // this.ctx.imageSmoothingQuality = 'high'
+        this.ctx.patternQuality = 'best';
+        this.ctx.quality = 'best'
+        this.ctx.antialias = 'subpixel'
+        this.ctx.imageSmoothingEnabled = true;
+        this.ctx.imageSmoothingQuality = 'high'
 
         // 添加事件监听
         this.isBrowser && this.canvas.addEventListener('mousedown', this.handleMouseDown);
@@ -222,7 +222,6 @@ class CanvasEditor {
         if (callbacks && callbacks.size) {
             callbacks.forEach(callback => callback({x: element.x, y: element.y, target: element}))
         }
-        this.renderAll();
         return this.elements.length - 1;
     }
 
@@ -352,7 +351,6 @@ class CanvasEditor {
         this.elements = [];
         this.activeElements = [];
         this.isEditing && this.finishEditing();
-        this.renderAll();
     }
 
     /**
@@ -360,7 +358,6 @@ class CanvasEditor {
      */
     toggleGrid() {
         this.canvasConfig.showGrid = !this.canvasConfig.showGrid;
-        this.renderAll();
     }
 
     /**
@@ -1112,6 +1109,7 @@ class CanvasEditor {
     async loadFromObject(object) {
         if (!object) return;
         try {
+            this.clearCanvas();
             const {width, height, elements} = object;
             this.resizeCanvas(width, height)
             for (let element of elements) {
@@ -1121,13 +1119,15 @@ class CanvasEditor {
                 if (element.type === 'image') {
                     const image = this.cache.get(element.src);
                     const instance = image ? new Image(image, element) : await Image.fromURL(element.src, element);
-                    this.elements.push(instance)
+                    this.elements.push(instance);
+                    if (instance.cacheable && !this.cache.has(instance.src)) {
+                        this.cache.set(instance.src, instance.image);
+                    }
                 }
                 if (element.type === 'rect') {
                     this.elements.push(new Rect(element));
                 }
             }
-            this.renderAll();
         } catch (e) {
             console.error('导入失败:', e);
         }
@@ -1140,6 +1140,7 @@ class CanvasEditor {
      */
     async loadFromJSON(json) {
         try {
+            this.clearCanvas();
             const {width, height, elements} = JSON.parse(json);
             this.resizeCanvas(width, height)
             for (let element of elements) {
@@ -1150,12 +1151,14 @@ class CanvasEditor {
                     const image = this.cache.get(element.src);
                     const instance = image ? new Image(image, element) : await Image.fromURL(element.src, element);
                     this.elements.push(instance)
+                    if (instance.cacheable && !this.cache.has(element.src)) {
+                        this.cache.set(instance.src, instance.image);
+                    }
                 }
                 if (element.type === 'rect') {
                     this.elements.push(new Rect(element));
                 }
             }
-            this.renderAll();
         } catch (e) {
             console.error('导入失败:', e);
         }
@@ -1523,6 +1526,7 @@ class Text extends Element {
         const {fontColor, fontSize, spacing, chars} = this;
         const cursorWidth = 0.08 * fontSize;
         const char = chars[end];
+        const offset = Math.abs((spacing - cursorWidth) / 2)
         ctx.save()
         ctx.fillStyle = fontColor;
         if (this.angle !== 0) {
@@ -1532,10 +1536,10 @@ class Text extends Element {
             ctx.translate(-this.centerX, -this.centerY);
         }
         if (this.direction === 'horizontal') {
-            const startX = !char ? this.x + this.width + (spacing - cursorWidth) / 2 : char.x - (spacing - cursorWidth) / 2;
+            const startX = !char ? this.x + this.width + offset : char.x - offset;
             ctx.fillRect(startX, this.y, cursorWidth, this.height);
         } else {
-            const startY = !char ? this.y + this.height + (spacing - cursorWidth) / 2 : this.y + this.descent + (this.fontSize + this.spacing) * end - (spacing - cursorWidth) / 2;
+            const startY = !char ? this.y + this.height + offset : this.y + this.descent + (this.fontSize + this.spacing) * end - offset;
             ctx.fillRect(this.x, startY, this.width, cursorWidth);
         }
         ctx.restore();

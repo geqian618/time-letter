@@ -1918,7 +1918,7 @@ const useTemplate = async (settings, path) => {
   const {height: imageHeight, width: imageWidth} = canvas.metadata;
 
   const {idealWidth, idealHeight} = previewContainer.value;
-  const initZoom = Math.min(idealHeight / imageWidth, idealWidth / imageWidth);
+  const initZoom = Math.min(idealHeight / imageHeight, idealWidth / imageWidth);
   const zoom = initZoom * projectSettings.value.others.defaultCanvasScale;
 
   const border = background.elements[0];
@@ -2007,9 +2007,7 @@ const loadTextLabels = () => {
   textLabels.value = StorageManager.getTextLabels()
 }
 
-async function renderCanvas(canvas) {
-  canvasEditor.clearCanvas()
-  backgroundCanvasEditor.clearCanvas()
+const renderCanvas = async (canvas) => {
   if (!canvas.completed) {
     const image = await Image.fromURL(canvas.url, {
       selectable: false,
