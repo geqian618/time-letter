@@ -1,69 +1,67 @@
-import {ref} from 'vue'
+const canvases = new Map()
 
-const canvases = ref(new Map())
-
-const selectedObject = ref({
+const selectedObject = {
     path: '',
     previewElement: null,
     previewElementList: [],
     draggableElement: null
-});
+}
 
 
 const getSelectedObject = () => {
-    return selectedObject.value
+    return selectedObject
 }
 
 const getSelectedPath = () => {
-    return selectedObject.value.path
+    return selectedObject.path
 }
 
 
 const setSelectedObject = (newSelectedObject) => {
-    selectedObject.value = {...selectedObject.value, ...newSelectedObject}
+    Object.assign(selectedObject, newSelectedObject)
 }
 
 const getCanvas = (key) => {
-    return canvases.value.get(key);
+    return canvases.get(key);
 }
 
 const getCurrentCanvas = () => {
-    return canvases.value.get(selectedObject.value.path);
+    return canvases.get(selectedObject.path);
 }
 
 const getCanvases = () => {
-    return canvases.value;
+    return canvases;
 }
 
 const setCanvas = (key, value) => {
-    return canvases.value.set(key, value);
+    return canvases.set(key, value);
 }
 
 const hasCanvas = (key) => {
-    return canvases.value.has(key);
+    return canvases.has(key);
 }
 
 const deleteCanvas = (key) => {
-    return canvases.value.delete(key);
+    return canvases.delete(key);
 }
 
 const getAvailableCanvases = (filterType) => {
     if (filterType === 0) {
-        return canvases.value
+        return new Map(canvases)
     } else if (filterType === 1) {
-        return new Map(Array.from(canvases.value).filter(([path, {metadata}]) => metadata.width >= metadata.height))
+        return new Map(Array.from(canvases).filter(([path, {metadata}]) => metadata.width >= metadata.height))
     } else {
-        return new Map(Array.from(canvases.value).filter(([path, {metadata}]) => metadata.width < metadata.height))
+        return new Map(Array.from(canvases).filter(([path, {metadata}]) => metadata.width < metadata.height))
     }
 }
 
 const getSettingsFromCurrentCanvas = (element) => {
     if (element) {
         if (element instanceof HTMLDivElement) {
-            return getCanvas(selectedObject.value.path).settings.texts.get(element)
+            return getCanvas(selectedObject.path).settings.texts.get(element)
         }
         if (element instanceof HTMLImageElement) {
-            return getCanvas(selectedObject.value.path).settings.images.get(element)
+            return getCanvas(selectedObject.path).settings.images.get(element)
         }
     }
     throw new Error('Invalid parameter')
@@ -82,20 +80,20 @@ const getSettings = (key, element) => {
 }
 
 const getTexts = (key) => {
-    return canvases.value.get(key).settings.texts;
+    return canvases.get(key).settings.texts;
 }
 
 
 const getImages = (key) => {
-    return canvases.value.get(key).settings.images;
+    return canvases.get(key).settings.images;
 }
 
 const clearTexts = (key) => {
-    return canvases.value.get(key).settings.texts.clear()
+    return canvases.get(key).settings.texts.clear()
 }
 
 const clearImages = (key) => {
-    return canvases.value.get(key).settings.images.clear()
+    return canvases.get(key).settings.images.clear()
 }
 
 
@@ -113,16 +111,16 @@ const deleteElement = (key, element) => {
 const deleteElementFromCurrentCanvas = (element) => {
     if (element) {
         if (element instanceof HTMLDivElement) {
-            getCanvas(selectedObject.value.path).settings.texts.delete(element)
+            getCanvas(selectedObject.path).settings.texts.delete(element)
         }
         if (element instanceof HTMLImageElement) {
-            getCanvas(selectedObject.value.path).settings.images.delete(element)
+            getCanvas(selectedObject.path).settings.images.delete(element)
         }
     }
 }
 
 const isNotEmpty = () => {
-    return canvases.value.size > 0;
+    return canvases.size > 0;
 }
 
 

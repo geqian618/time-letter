@@ -1981,6 +1981,5 @@ class Rect extends Element {
     }
 }
 
-
 // 支持 ES6 模块
 export {CanvasEditor, Text, EditableText, Image, Rect};

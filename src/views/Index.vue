@@ -1198,6 +1198,7 @@ import {predefineColors} from '@/config/color-configuration'
 
 import DraggableElementFactory from "@/object/DraggableElementFactory";
 
+
 const filterType = ref(0)
 
 const matchFonts = ref([])
@@ -1381,14 +1382,10 @@ const setDefaultSelectedElement = async () => {
   if (paths.includes(selectedPath)) {
     nextSelectCanvas = availableCanvas.value.get(selectedPath);
     previewElement = nextSelectCanvas.getPreviewElement(previewList.value);
+    await renderCanvas(selectedCanvas)
   } else {
     nextSelectCanvas = availableCanvas.value.get(paths[0]);
     previewElement = nextSelectCanvas.getPreviewElement(previewList.value);
-    await nextTick()
-    selectedCanvas.hide()
-    await nextTick()
-    nextSelectCanvas.show()
-    await nextTick()
     await renderCanvas(nextSelectCanvas)
   }
   previewElement.classList.add('active')
@@ -1662,7 +1659,7 @@ const watchContextMenu = () => {
         synchronizeTemplate()
       } else if (type === 4) {
         const paths = Array.from(selectedPreviewList.value.keys());
-        paths.forEach(path => clearCanvasLabels(path))
+        paths.forEach(path => clearCanvasElements(path))
       } else if (type === 5) {
         const paths = Array.from(selectedPreviewList.value.keys());
         paths.forEach(path => clearCanvas(path))
@@ -1673,27 +1670,19 @@ const watchContextMenu = () => {
 
 const clearCanvas = (path) => {
   const canvas = CanvasManager.getCanvas(path);
-  clearCanvasLabels(path);
-  canvas.settings.border = new BorderSettings()
-  canvas.settings.photograph = new PhotographSettings()
-  if (path === CanvasManager.getSelectedPath()) {
-    borderOptions.value = canvas.settings.border.options
-    photographOptions.value = canvas.settings.photograph.options
-  }
-  renderBorders(path)
-  renderPhotograph(path)
+  clearCanvasElements(path);
+  borderOptions.value = new BorderOptions();
+  photographOptions.value = new PhotographOptions();
+  handleUpdateBorders()
+  handleUpdatePhotograph()
+  canvas.foreground = canvasEditor.exportToObject();
+  canvas.background = backgroundCanvasEditor.exportToObject();
 }
 
-const clearCanvasLabels = (path) => {
+const clearCanvasElements = (path) => {
   const canvas = CanvasManager.getCanvas(path);
-  for (let element of canvas.settings.images.keys()) {
-    element.remove()
-  }
-  for (let element of canvas.settings.texts.keys()) {
-    element.remove()
-  }
-  canvas.settings.texts.clear()
-  canvas.settings.images.clear()
+  canvasEditor.clearCanvas();
+  canvas.foreground = canvasEditor.exportToObject();
 }
 
 
@@ -1828,34 +1817,23 @@ const deleteTemplate = () => {
 }
 
 const synchronizeTemplate = () => {
-
   if (CanvasManager.getSelectedPath()) {
-    const {settings: templateSettings} = CanvasManager.getCurrentCanvas();
-    const targetSettings = {
-      border: templateSettings.border,
-      photograph: templateSettings.photograph,
-      images: Array.from(templateSettings.images.values()).map(item => {
-        item.synchronousMode = synchronousMode.value
-        return item
-      }),
-      texts: Array.from(templateSettings.texts.values()).map(item => {
-        item.synchronousMode = synchronousMode.value
-        return item
-      })
-    }
-
+    const {background, foreground, initZoom} = CanvasManager.getCurrentCanvas();
     selectedPreviewList.value.forEach((image, path) => {
       if (CanvasManager.getSelectedPath() !== path) {
-        let {settings: originalSettings} = CanvasManager.getCanvas(path);
-        for (let element of originalSettings.images.keys()) {
-          element.remove()
+        const {width, height, elements} = _.cloneDeep(foreground);
+        for (const element of elements) {
+          const left = element.x * initZoom;
+          const right = (width - element.x - element.width) * initZoom;
+          const top = element.y * initZoom;
+          const bottom = (height - element.y - element.height) * initZoom;
+          const horizontal = left < right ? 'left' : 'right';
+          const vertical = top < bottom ? 'top' : 'bottom';
+          element.position = [horizontal, vertical]
+          element.x = horizontal === 'left' ? left : right
+          element.y = vertical === 'top' ? top : bottom
         }
-        for (let element of originalSettings.texts.keys()) {
-          element.remove()
-        }
-        originalSettings.texts.clear()
-        originalSettings.images.clear()
-        useTemplate(_.cloneDeep(targetSettings), path)
+        useTemplate(_.cloneDeep({background, foreground: {width, height, elements}}), path)
       }
     })
   }
@@ -1865,11 +1843,31 @@ const saveTemplates = async () => {
   if (!saveTemplateForm) return
   saveTemplateForm.value.validate(async (valid, fields) => {
     if (valid) {
-      const {background, foreground} = CanvasManager.getCurrentCanvas();
+      const {initZoom, background, foreground} = CanvasManager.getCurrentCanvas();
+      const {width, height, elements} = foreground;
+      const items = []
+      for (const element of elements) {
+        const centerX = element.x + element.width / 2
+        const centerY = element.y + element.height / 2
+        const horizontal = centerX < width / 2 ? 'left' : 'right';
+        const vertical = centerY < height / 2 ? 'top' : 'bottom';
+        const item = {...element}
+        item.position = [horizontal, vertical]
+        item.centerX = horizontal === 'left' ? centerX * initZoom : (width - centerX) * initZoom
+        item.centerY = vertical === 'top' ? centerY * initZoom : (height - centerY) * initZoom
+        item.centerXRatio = horizontal === 'left' ? centerX / width : (width - centerX) / width
+        item.centerYRatio = vertical === 'top' ? centerY / height : (height - centerY) / height
+        item.width = element.width * initZoom
+        item.height = element.height * initZoom
+        if (element.type === 'text') {
+          item.fontSize = element.fontSize * initZoom
+        }
+        items.push(item)
+      }
       templates.value.push({
         templateId: Date.now(),
         templateName: newTemplate.value.templateName,
-        settings: {background, foreground}
+        settings: _.cloneDeep({background, foreground: {width, height, elements: items}})
       })
       StorageManager.saveTemplates(templates.value)
       newTemplate.value.templateName = ''
@@ -1906,17 +1904,6 @@ const openEnableTemplateDialog = ({settings}) => {
 
 const enableTemplate = () => {
   for (let path of selectedPreviewList.value.keys()) {
-    let {settings: originalSettings} = CanvasManager.getCanvas(path);
-    for (let element of originalSettings.images.keys()) {
-      element.remove()
-    }
-    for (let element of originalSettings.texts.keys()) {
-      element.remove()
-    }
-    originalSettings.texts.clear()
-    originalSettings.images.clear()
-    templateSettings.value.texts.forEach(item => item.synchronousMode = synchronousMode.value)
-    templateSettings.value.images.forEach(item => item.synchronousMode = synchronousMode.value)
     useTemplate(_.cloneDeep(templateSettings.value), path)
   }
   enableTemplateDialogVisible.value = false
@@ -1924,223 +1911,91 @@ const enableTemplate = () => {
 }
 
 
-function renderElementPosition(canvas, settings, element) {
-
-  const imageElement = canvas.getImageElement();
-
-  const canvasElement = imageElement.parentNode;
-
-  const backgroundElement = canvasElement.querySelector('.image-background');
-
-  const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement;
-
-  const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
-  const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
-  const backgroundLeft = Number.parseFloat(backgroundElement.style.left);
-  const backgroundRight = Number.parseFloat(backgroundElement.style.right);
-  const backgroundTop = Number.parseFloat(backgroundElement.style.top);
-  const backgroundBottom = Number.parseFloat(backgroundElement.style.bottom);
-
-  let {
-    width,
-    height,
-    references,
-    centerX,
-    centerXRatio,
-    centerY,
-    centerYRatio,
-    synchronousMode
-  } = settings
-
-  let offsetX = synchronousMode === 1 ? centerXRatio * backgroundWidth - width / 2 : centerX - width / 2;
-  let offsetY = synchronousMode === 1 ? centerYRatio * backgroundHeight - height / 2 : centerY - height / 2;
-
-  let left = backgroundLeft + offsetX;
-  let right = backgroundRight + offsetX;
-  let top = backgroundTop + offsetY;
-  let bottom = backgroundBottom + offsetY;
-
-  if (references.includes('left')) {
-    right = canvasWidth - left - width
-  }
-
-  if (references.includes('right')) {
-    left = canvasWidth - right - width
-  }
-
-  if (references.includes('top')) {
-    bottom = canvasHeight - top - height
-  }
-
-  if (references.includes('bottom')) {
-    top = canvasHeight - bottom - height
-  }
-
-  element.style.left = left + 'px'
-  element.style.top = top + 'px'
-  element.style.right = right + 'px'
-  element.style.bottom = bottom + 'px'
-
-  if (element instanceof HTMLImageElement) {
-    settings.options.imageWidthRatio = settings.width / backgroundWidth
-    settings.options.imageHeightRatio = settings.height / backgroundHeight
-  } else {
-    settings.options.fontSizeRatio = settings.options.fontSize / backgroundWidth
-  }
-}
-
-const useTemplate = async (targetSettings, path) => {
-
-  const {images, texts} = targetSettings
+const useTemplate = async (settings, path) => {
 
   const canvas = CanvasManager.getCanvas(path);
-  const canvasElement = canvas.getImageElement().parentNode
+  const {background, foreground} = settings;
+  const {height: imageHeight, width: imageWidth} = canvas.metadata;
 
-  canvas.settings.border = targetSettings.border
-  canvas.settings.photograph = targetSettings.photograph
-  canvas.settings.images = new Map()
-  canvas.settings.texts = new Map()
-  canvas.isUpdate = true
+  const {idealWidth, idealHeight} = previewContainer.value;
+  const initZoom = Math.min(idealHeight / imageWidth, idealWidth / imageWidth);
+  const zoom = initZoom * projectSettings.value.others.defaultCanvasScale;
 
-  if (path === CanvasManager.getSelectedPath()) {
-    borderOptions.value = canvas.settings.border.options
-    photographOptions.value = canvas.settings.photograph.options
-    await renderPhotograph(path)
-    await renderBorders(path)
+  const border = background.elements[0];
+  const photo = background.elements[1];
+  const borderOptions = border.meta;
+  const photoOptions = photo.meta;
+
+  const borderLeft = borderOptions.borderLeft / initZoom
+  const borderRight = borderOptions.borderRight / initZoom
+  const borderTop = borderOptions.borderTop / initZoom
+  const borderBottom = borderOptions.borderBottom / initZoom
+
+  const newWidth = imageWidth + borderLeft + borderRight
+  const newHeight = imageHeight + borderTop + borderBottom
+
+  background.width = foreground.width = newWidth
+  background.height = foreground.height = newHeight
+
+  border.radius = borderOptions.borderRadius / initZoom
+  border.width = newWidth
+  border.height = newHeight
+
+  if (border.type === 'image') {
+    border.backdropFilter = borderOptions.borderBlur / initZoom
+    border.src = canvas.url
+    borderOptions.path = canvas.path
   }
 
-  for (let settings of images) {
-    const factory = new DraggableElementFactory(settings, canvas.metadata);
-    const element = await factory.getElement()
-    if (element) {
-      if (path === CanvasManager.getSelectedPath()) {
-        renderElementPosition(canvas, settings, element);
-      }
-      canvasElement.appendChild(element)
-      canvas.settings.images.set(element, settings)
+  photo.src = canvas.url
+  photo.width = imageWidth
+  photo.height = imageHeight
+  photo.x = borderLeft
+  photo.y = borderTop
+  photo.radius = photoOptions.borderRadius / initZoom
+
+  photoOptions.path = canvas.path
+
+  for (let element of foreground.elements) {
+
+    const {position, centerXRatio, centerYRatio} = element;
+    const width = element.width / initZoom;
+    const height = element.height / initZoom;
+    const centerX = element.centerX / initZoom
+    const centerY = element.centerY / initZoom
+
+    if (synchronousMode.value === 0) {
+      element.x = position[0] === 'left' ? centerX - width / 2 : newWidth - (centerX + width / 2)
+      element.y = position[1] === 'top' ? centerY - height / 2 : newHeight - (centerY + height / 2)
+    }
+
+    if (synchronousMode.value === 1) {
+      element.x = position[0] === 'left' ? centerXRatio * newWidth - width / 2 : newWidth - (centerXRatio * newWidth + width / 2)
+      element.y = position[1] === 'top' ? centerYRatio * newHeight - height / 2 : newHeight - (centerYRatio * newHeight + height / 2)
+    }
+
+    if (element.type === 'text') {
+      element.fontSize = element.fontSize / initZoom
+    }
+
+    if (element.type === 'image') {
+      element.width = width;
+      element.height = height
     }
   }
 
-  for (let settings of texts) {
-    const factory = new DraggableElementFactory(settings, canvas.metadata);
-    const element = await factory.getElement();
-    if (element) {
-      if (path === CanvasManager.getSelectedPath()) {
-        renderElementPosition(canvas, settings, element)
-      }
-      canvasElement.appendChild(element)
-      canvas.settings.texts.set(element, settings)
-    }
-  }
-}
+  canvas.background = background
+  canvas.foreground = foreground
+  canvas.initZoom = initZoom;
+  canvas.zoom = canvas.zoom || zoom;
+  canvas.width = imageWidth;
+  canvas.height = imageHeight;
+  canvas.completed = true;
 
-
-function updateElementPosition(canvas, element, settings) {
-
-  const imageElement = canvas.getImageElement();
-
-  const canvasElement = imageElement.parentNode;
-
-  const backgroundElement = canvasElement.querySelector('.image-background');
-
-  const computedStyle = window.getComputedStyle(element);
-
-  const elementWidth = parseFloat(computedStyle.width);
-  const elementHeight = parseFloat(computedStyle.height);
-
-  const elementLeft = parseFloat(element.style.left) || parseFloat(computedStyle.left);
-  const elementTop = parseFloat(element.style.top) || parseFloat(computedStyle.top);
-  const elementRight = parseFloat(element.style.right) || parseFloat(computedStyle.right);
-  const elementBottom = parseFloat(element.style.bottom) || parseFloat(computedStyle.bottom);
-
-  const backgroundWidth = Number.parseFloat(backgroundElement.style.width);
-  const backgroundHeight = Number.parseFloat(backgroundElement.style.height);
-  const backgroundLeft = Number.parseFloat(backgroundElement.style.left);
-  const backgroundRight = Number.parseFloat(backgroundElement.style.right);
-  const backgroundTop = Number.parseFloat(backgroundElement.style.top);
-  const backgroundBottom = Number.parseFloat(backgroundElement.style.bottom);
-
-  let references = []
-
-  let centerX, centerY, centerXRatio, centerYRatio
-
-  let offsetLeft = elementLeft - backgroundLeft
-  let offsetLeftRatio = offsetLeft / backgroundWidth
-
-  let offsetRight = elementRight - backgroundRight
-  let offsetRightRatio = offsetRight / backgroundWidth
-
-  let offsetTop = elementTop - backgroundTop
-  let offsetTopRatio = offsetTop / backgroundHeight
-
-  let offsetBottom = elementBottom - backgroundBottom
-  let offsetBottomRatio = offsetBottom / backgroundHeight
-
-  if (offsetLeft > offsetRight) {
-    references.push('right')
-    centerX = offsetRight + elementWidth / 2
-  } else {
-    references.push('left')
-    centerX = offsetLeft + elementWidth / 2
+  if (CanvasManager.getSelectedPath() === path) {
+    renderCanvas(canvas)
   }
 
-  if (offsetTop > offsetBottom) {
-    references.push('bottom')
-    centerY = offsetBottom + elementHeight / 2
-  } else {
-    references.push('top')
-    centerY = offsetTop + elementHeight / 2
-  }
-
-  centerXRatio = centerX / backgroundWidth;
-  centerYRatio = centerY / backgroundHeight;
-
-  settings.references = references
-  settings.offsetLeft = offsetLeft
-  settings.offsetLeftRatio = offsetLeftRatio
-  settings.offsetRight = offsetRight
-  settings.offsetRightRatio = offsetRightRatio
-  settings.offsetTop = offsetTop
-  settings.offsetTopRatio = offsetTopRatio
-  settings.offsetBottom = offsetBottom
-  settings.offsetBottomRatio = offsetBottomRatio
-  settings.centerX = centerX
-  settings.centerY = centerY
-  settings.centerXRatio = centerXRatio
-  settings.centerYRatio = centerYRatio
-}
-
-const refreshCanvasElementPosition = (path) => {
-  const canvas = CanvasManager.getCanvas(path);
-  canvas.settings.texts.forEach((textLabel, element) => {
-    updateElementPosition(canvas, element, textLabel);
-  })
-
-  canvas.settings.images.forEach((imageLabel, element) => {
-    updateElementPosition(canvas, element, imageLabel);
-  })
-}
-
-
-const refreshTemplate = async (path) => {
-
-  const canvas = CanvasManager.getCanvas(path);
-
-  await renderBorders(path)
-
-  await renderPhotograph(path)
-
-  canvas.settings.texts.forEach((settings, element) => {
-    renderElementPosition(canvas, settings, element)
-  })
-
-  canvas.settings.images.forEach((settings, element) => {
-    renderElementPosition(canvas, settings, element)
-  })
-
-  await nextTick()
-  refreshCanvasElementPosition(path)
-  canvas.isUpdate = false
 }
 
 
@@ -2152,7 +2007,9 @@ const loadTextLabels = () => {
   textLabels.value = StorageManager.getTextLabels()
 }
 
-async function render(canvas) {
+async function renderCanvas(canvas) {
+  canvasEditor.clearCanvas()
+  backgroundCanvasEditor.clearCanvas()
   if (!canvas.completed) {
     const image = await Image.fromURL(canvas.url, {
       selectable: false,
@@ -2230,7 +2087,7 @@ async function switchPreviewImage(event, canvas) {
       // 设置选择样式
       event.target.classList.add('active')
 
-      await render(canvas);
+      await renderCanvas(canvas);
     }
   }
 }
@@ -2310,60 +2167,6 @@ const renderCanvasScrollbar = () => {
 }
 
 
-const initializeCanvasLayout = async (canvas) => {
-  const imageElement = canvas.getImageElement();
-  const canvasElement = imageElement.parentNode;
-  const backgroundElement = canvasElement.querySelector('.image-background');
-  const previewContainer = canvasElement.parentNode;
-  const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement
-  const {naturalWidth: imageWidth, naturalHeight: imageHeight} = imageElement
-
-  const {offsetWidth: containerRealWidth, offsetHeight: containerRealHeight} = previewContainer;
-  const {idealWidth: containerIdealWidth, idealHeight: containerIdealHeight} = previewContainer;
-
-  const {defaultCanvasScale} = projectSettings.value.others;
-
-  const baseScale = Math.min(containerIdealWidth / imageWidth, containerIdealHeight / imageHeight)
-
-  const newImageWidth = imageWidth * baseScale;
-  const newImageHeight = imageHeight * baseScale;
-
-  const offsetLeft = (canvasWidth - newImageWidth) / 2;
-  const offsetTop = (canvasHeight - newImageHeight) / 2;
-  const offsetRight = canvasWidth - offsetLeft - newImageWidth
-  const offsetBottom = canvasHeight - offsetTop - newImageHeight
-
-  imageElement.style.width = newImageWidth + 'px'
-  imageElement.style.height = newImageHeight + 'px'
-
-  backgroundElement.style.width = newImageWidth + 'px'
-  backgroundElement.style.height = newImageHeight + 'px'
-
-  imageElement.style.left = offsetLeft + 'px'
-  imageElement.style.top = offsetTop + 'px'
-  imageElement.style.right = offsetRight + 'px'
-  imageElement.style.bottom = offsetBottom + 'px'
-
-  backgroundElement.style.left = offsetLeft + 'px'
-  backgroundElement.style.top = offsetTop + 'px'
-  backgroundElement.style.right = offsetRight + 'px'
-  backgroundElement.style.bottom = offsetBottom + 'px'
-
-  scrollBarMoveToCenter(canvas)
-
-  canvas.completed = true
-
-  await nextTick()
-
-  const canvasScale = Math.min(containerRealWidth / containerIdealWidth, containerRealHeight / containerIdealHeight)
-
-  setZoom(canvas, canvasScale * defaultCanvasScale)
-
-  setTimeout(() => {
-    canvasElement.style.transition = 'transform 0.1s';
-  }, 0)
-}
-
 // 设置缩放比例
 function setZoom(canvas, zoom) {
 
@@ -2389,29 +2192,6 @@ function setZoom(canvas, zoom) {
   canvasElement.value.style.transformOrigin = `${centerX}px ${centerY}px`;
 
   canvas.zoom = newZoom
-}
-
-// 缩放函数
-function zoom(direction) {
-
-}
-
-
-const renderCanvas = async (canvas) => {
-
-  if (!canvas.completed) {
-    await initializeCanvasLayout(canvas)
-  }
-
-  updateScrollBarPosition(canvas)
-  metadataOptions.value = canvas.metadata
-  borderOptions.value = canvas.settings.border.options
-  photographOptions.value = canvas.settings.photograph.options
-
-  if (canvas.isUpdate) {
-    await refreshTemplate(canvas.path)
-  }
-
 }
 
 
@@ -2531,29 +2311,6 @@ const handleUpdatePhotograph = async () => {
   currentCanvas.background = backgroundCanvasEditor.exportToObject()
 }
 
-const renderPhotograph = async (path) => {
-  //停止监听 stopWatch();
-  const canvas = CanvasManager.getCanvas(path);
-  if (!canvas) return
-  const imageElement = canvas.getImageElement();
-  if (imageElement) {
-    const photograph = canvas.settings.photograph;
-    const {borderRadius, boxShadow: {offsetX, offsetY, blur, shadowColor}} = photograph.options;
-    imageElement.style.borderRadius = `${borderRadius}px`
-    imageElement.style.boxShadow = `${offsetX}px ${offsetY}px ${blur}px ${shadowColor}`
-
-    await nextTick();
-
-    const {offsetWidth, offsetHeight} = imageElement;
-
-    photograph.borderRadiusRatio = borderRadius / offsetWidth
-    photograph.offsetXRatio = offsetX / offsetWidth
-    photograph.offsetYRatio = offsetY / offsetHeight
-    photograph.blurRatio = blur / offsetWidth
-  }
-}
-
-
 const handleUpdateBorders = async () => {
   const currentCanvas = CanvasManager.getCurrentCanvas();
   if (!currentCanvas) return
@@ -2609,63 +2366,6 @@ const handleUpdateBorders = async () => {
 }
 
 
-const renderBorders = async (path) => {
-  const canvas = CanvasManager.getCanvas(path)
-  if (!canvas) return
-  const imageElement = canvas.getImageElement();
-  if (imageElement && imageElement.complete && imageElement.naturalWidth > 0) {
-    const backgroundElement = imageElement.parentNode.querySelector('.image-background');
-    const border = canvas.settings.border;
-    let {
-      borderLeft,
-      borderRight,
-      borderTop,
-      borderBottom,
-      borderColor,
-      borderType,
-      borderBlur,
-      borderRadius
-    } = border.options;
-
-    if (borderType === 0) {
-      backgroundElement.style.background = borderColor
-      backgroundElement.removeAttribute('blur-border')
-    } else if (borderType === 1) {
-      backgroundElement.setAttribute('blur-border', '')
-      backgroundElement.style.background = `url('${canvas.url}') center / cover`
-      backgroundElement.style.setProperty('--blur-intensity', borderBlur + 'px');
-    }
-
-    backgroundElement.style.borderRadius = borderRadius + 'px'
-
-    const imageWidth = Number.parseFloat(imageElement.style.width);
-    const imageHeight = Number.parseFloat(imageElement.style.height);
-    const imageLeft = Number.parseFloat(imageElement.style.left);
-    const imageRight = Number.parseFloat(imageElement.style.right);
-    const imageTop = Number.parseFloat(imageElement.style.top);
-    const imageBottom = Number.parseFloat(imageElement.style.bottom);
-
-    backgroundElement.style.width = (imageWidth + borderLeft + borderRight) + 'px'
-    backgroundElement.style.height = (imageHeight + borderTop + borderBottom) + 'px'
-    backgroundElement.style.left = (imageLeft - borderLeft) + 'px'
-    backgroundElement.style.top = (imageTop - borderTop) + 'px'
-    backgroundElement.style.right = (imageRight - borderRight) + 'px'
-    backgroundElement.style.bottom = (imageBottom - borderBottom) + 'px'
-
-    await nextTick()
-
-    const {clientWidth, clientHeight} = imageElement;
-
-    border.borderLeftRatio = borderLeft / clientWidth
-    border.borderRightRatio = borderRight / clientWidth
-    border.borderTopRatio = borderTop / clientHeight
-    border.borderBottomRatio = borderBottom / clientHeight
-    border.borderBlurRatio = borderBlur / clientWidth
-    border.borderRadiusRatio = borderRadius / clientWidth
-  }
-}
-
-
 const switchBeforePreviewElement = async () => {
   const {path: currentPath, previewElement: currentElement} = CanvasManager.getSelectedObject();
   if (!currentPath) return
@@ -2675,8 +2375,6 @@ const switchBeforePreviewElement = async () => {
     currentElement.setAttribute('selected', 'false')
     currentElement.classList.remove('active')
     selectedPreviewList.value.delete(currentPath)
-    canvasEditor.clearCanvas();
-    backgroundCanvasEditor.clearCanvas();
 
     const beforeElement = currentElement.previousElementSibling || currentElement.parentNode.lastElementChild;
     beforeElement.classList.add('active')
@@ -2685,7 +2383,7 @@ const switchBeforePreviewElement = async () => {
     CanvasManager.setSelectedObject({path: beforeCanvas.path, previewElement: beforeElement})
     selectedPreviewList.value.set(beforeCanvas.path, beforeElement)
 
-    await render(beforeCanvas)
+    await renderCanvas(beforeCanvas)
 
     // 方式二，过渡比较流畅
     scrollBarMoveToHorizontalCenter(previewList.value, beforeElement)
@@ -2702,8 +2400,6 @@ const switchNextPreviewElement = async () => {
     currentElement.setAttribute('selected', 'false')
     currentElement.classList.remove('active')
     selectedPreviewList.value.delete(currentPath)
-    canvasEditor.clearCanvas();
-    backgroundCanvasEditor.clearCanvas();
 
     const nextElement = currentElement.nextElementSibling || currentElement.parentNode.firstElementChild;
     nextElement.classList.add('active')
@@ -2711,7 +2407,7 @@ const switchNextPreviewElement = async () => {
     CanvasManager.setSelectedObject({path: nextCanvas.path, previewElement: nextElement})
     selectedPreviewList.value.set(nextCanvas.path, nextElement)
 
-    await render(nextCanvas)
+    await renderCanvas(nextCanvas)
 
     // 方式二，过渡比较流畅
     scrollBarMoveToHorizontalCenter(previewList.value, nextElement)
