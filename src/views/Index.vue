@@ -1158,7 +1158,7 @@
 
 import {nextTick, onBeforeUnmount, onMounted, ref, watch, computed} from "vue";
 
-import {CanvasEditor, Image, Text, EditableText, Rect} from '@/canvas/CanvasEditor'
+import {CanvasEditor, Image, Rect} from '@/canvas/CanvasEditor'
 
 import {useThrottle} from '@/utils/throttle'
 
@@ -1198,6 +1198,9 @@ import {predefineColors} from '@/config/color-configuration'
 
 import DraggableElementFactory from "@/object/DraggableElementFactory";
 
+import {getDate, getDateTime} from "@/utils/datetime";
+
+import {executeFunctionScript} from "@/utils/script-helper";
 
 const filterType = ref(0)
 
@@ -1454,7 +1457,7 @@ const watchImportImages = () => {
     if (data) {
       for (let [path, picture] of data) {
         if (!CanvasManager.hasCanvas(path)) {
-          let canvas = new Canvas()
+          const canvas = new Canvas()
           const metadata = await window.electronAPI.parsePhotoMetadata(path);
           if (metadata) {
             if (metadata.focalLength) {
@@ -1626,14 +1629,12 @@ const watchContextMenu = () => {
           CanvasManager.deleteCanvas(path)
           availableCanvas.value.delete(path)
           if (path === CanvasManager.getSelectedPath()) {
-            CanvasManager.setSelectedObject({path: '', previewElement: null})
+            clearCanvas()
           }
         }
         selectedPreviewList.value.clear();
       } else if (type === 1) {
-
         const paths = Array.from(selectedPreviewList.value.keys());
-
         const settings = paths.map((path, index) => {
           const canvas = CanvasManager.getCanvas(path);
           const {background: {elements: backgroundElements}, foreground: {elements: foregroundElements}} = canvas;
@@ -1642,15 +1643,12 @@ const watchContextMenu = () => {
           }
           return {filePath: path, index, json: JSON.stringify(canvas.background)}
         });
-
         window.electronAPI.requestExportFiles(_.cloneDeep({
           projectSettings: projectSettings.value,
           outputDirectory: data.outputDirectory,
           settings
         }))
-
         downloadProgressVisible.value = true
-
       } else if (type === 2) {
         saveTemplateDialogVisible.value = true
         clearFormValidate(saveTemplateForm)
@@ -1662,13 +1660,13 @@ const watchContextMenu = () => {
         paths.forEach(path => clearCanvasElements(path))
       } else if (type === 5) {
         const paths = Array.from(selectedPreviewList.value.keys());
-        paths.forEach(path => clearCanvas(path))
+        paths.forEach(path => resetCanvas(path))
       }
     }
   });
 }
 
-const clearCanvas = (path) => {
+const resetCanvas = (path) => {
   const canvas = CanvasManager.getCanvas(path);
   clearCanvasElements(path);
   borderOptions.value = new BorderOptions();
@@ -1677,6 +1675,14 @@ const clearCanvas = (path) => {
   handleUpdatePhotograph()
   canvas.foreground = canvasEditor.exportToObject();
   canvas.background = backgroundCanvasEditor.exportToObject();
+}
+
+const clearCanvas = () => {
+  canvasEditor.clearCanvas();
+  backgroundCanvasEditor.clearCanvas()
+  canvasEditor.renderAll();
+  backgroundCanvasEditor.renderAll();
+  CanvasManager.setSelectedObject({path: '', previewElement: null})
 }
 
 const clearCanvasElements = (path) => {
@@ -1703,7 +1709,6 @@ const handleFocalLength = (type) => {
       } else if (type === 1 && projectSettings.value.metadata.other.enableEquivalentFocalSegment) {
         metadata.focalLength = Number.parseInt(metadata.originalFocalLength * projectSettings.value.metadata.other.conversionMultiple)
       }
-
       if (path === CanvasManager.getSelectedPath()) {
         metadataOptions.value = metadata
       }
@@ -1717,10 +1722,7 @@ watch(projectSettings, (newVal, oldVal) => {
   settings.availableFonts = Array.from(settings.availableFonts.entries())
   StorageManager.saveProjectSettings(settings)
 }, {
-  //深度监视（监视属性变化）
-  deep: true,
-  //immediate 立即触发一次监视
-  //immediate: true
+  deep: true
 });
 
 
@@ -1819,21 +1821,29 @@ const deleteTemplate = () => {
 const synchronizeTemplate = () => {
   if (CanvasManager.getSelectedPath()) {
     const {background, foreground, initZoom} = CanvasManager.getCurrentCanvas();
+    const {width, height, elements} = foreground;
     selectedPreviewList.value.forEach((image, path) => {
       if (CanvasManager.getSelectedPath() !== path) {
-        const {width, height, elements} = _.cloneDeep(foreground);
+        const items = []
         for (const element of elements) {
-          const left = element.x * initZoom;
-          const right = (width - element.x - element.width) * initZoom;
-          const top = element.y * initZoom;
-          const bottom = (height - element.y - element.height) * initZoom;
-          const horizontal = left < right ? 'left' : 'right';
-          const vertical = top < bottom ? 'top' : 'bottom';
-          element.position = [horizontal, vertical]
-          element.x = horizontal === 'left' ? left : right
-          element.y = vertical === 'top' ? top : bottom
+          const centerX = element.x + element.width / 2
+          const centerY = element.y + element.height / 2
+          const horizontal = centerX < width / 2 ? 'left' : 'right';
+          const vertical = centerY < height / 2 ? 'top' : 'bottom';
+          const item = {...element}
+          item.position = [horizontal, vertical]
+          item.centerX = horizontal === 'left' ? centerX * initZoom : (width - centerX) * initZoom
+          item.centerY = vertical === 'top' ? centerY * initZoom : (height - centerY) * initZoom
+          item.centerXRatio = horizontal === 'left' ? centerX / width : (width - centerX) / width
+          item.centerYRatio = vertical === 'top' ? centerY / height : (height - centerY) / height
+          item.width = element.width * initZoom
+          item.height = element.height * initZoom
+          if (element.type === 'text') {
+            item.fontSize = element.fontSize * initZoom
+          }
+          items.push(item)
         }
-        useTemplate(_.cloneDeep({background, foreground: {width, height, elements}}), path)
+        useTemplate(_.cloneDeep({background, foreground: {width, height, elements: items}}), path)
       }
     })
   }
@@ -1975,7 +1985,8 @@ const useTemplate = async (settings, path) => {
     }
 
     if (element.type === 'text') {
-      element.fontSize = element.fontSize / initZoom
+      element.fontSize = element.fontSize / initZoom;
+      element.text = getText({path, ...element.meta})
     }
 
     if (element.type === 'image') {
@@ -1993,9 +2004,37 @@ const useTemplate = async (settings, path) => {
   canvas.completed = true;
 
   if (CanvasManager.getSelectedPath() === path) {
-    renderCanvas(canvas)
+    await renderCanvas(canvas);
   }
 
+}
+
+
+const getText = (meta) => {
+  const {path, type, content, expression} = meta
+  switch (type) {
+    case 'date':
+      return getDate();
+    case 'datetime':
+      return getDateTime();
+    case 'script':
+      return executeFunctionScript(expression);
+    case 'text':
+      return content;
+    case 'metadata':
+      return (() => {
+        let content = '';
+        const {metadata} = CanvasManager.getCanvas(path);
+        if (metadata) {
+          content = metadata[expression];
+          const format = projectSettings.value.metadata.formats[expression];
+          if (format) {
+            content = format.replace('${' + expression + '}', content);
+          }
+        }
+        return content;
+      })();
+  }
 }
 
 
@@ -2223,8 +2262,7 @@ const handleSelectPreviewElement = (event, canvas) => {
     element.classList.remove('active');
     selectedPreviewList.value.delete(canvas.path)
     if (CanvasManager.getSelectedPath() === canvas.path) {
-      CanvasManager.setSelectedObject({path: '', previewElement: null})
-      canvas.hide()
+      clearCanvas()
     }
   } else {
     element.classList.add('active');
