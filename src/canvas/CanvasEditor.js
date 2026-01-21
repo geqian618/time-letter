@@ -1112,22 +1112,7 @@ class CanvasEditor {
             this.clearCanvas();
             const {width, height, elements} = object;
             this.resizeCanvas(width, height)
-            for (let element of elements) {
-                if (element.type === 'text') {
-                    this.elements.push(new Text(element.text, element))
-                }
-                if (element.type === 'image') {
-                    const image = this.cache.get(element.src);
-                    const instance = image ? new Image(image, element) : await Image.fromURL(element.src, element);
-                    this.elements.push(instance);
-                    if (instance.cacheable && !this.cache.has(instance.src)) {
-                        this.cache.set(instance.src, instance.image);
-                    }
-                }
-                if (element.type === 'rect') {
-                    this.elements.push(new Rect(element));
-                }
-            }
+            this.elements = elements;
         } catch (e) {
             console.error('导入失败:', e);
         }
@@ -1850,6 +1835,266 @@ class Image extends Element {
 
 }
 
+
+class LazyImage extends Element {
+
+    constructor(src, options = {}) {
+        super(options);
+        this.type = 'image'
+        this.image = null
+        this.src = src
+        this.crossOrigin = options.crossOrigin || 'anonymous'
+        this.cacheable = options.cacheable || false
+        this.scale = options.scale || 1
+        this.width = options.width
+        this.height = options.height
+        this.alpha = options.alpha || 1
+        this.angle = options.angle || 0
+        // 圆角属性
+        this.radius = options.radius || 0;
+
+        // 图片阴影
+        this.shadow = {
+            color: 'rgba(0,0,0,1)',
+            blur: 0,
+            offsetX: 0,
+            offsetY: 0,
+            ...options.shadow
+        };
+
+        // backdrop-filter 效果配置
+        this.backdropFilter = options.backdropFilter || false;  // 是否启用背景模糊
+        this.backdropBlur = options.backdropBlur || 0;  // 模糊强度
+        this.backdropBrightness = options.backdropBrightness || 1.0;  // 亮度
+        this.backdropSaturation = options.backdropSaturation || 1.0;  // 饱和度
+        this.backdropOpacity = options.backdropOpacity || 0.3;  // 模糊层不透明度
+
+        // 缓存模糊效果的 canvas
+        this._backdropCache = null;
+        this._lastBackdropConfig = null;
+
+    }
+
+    load() {
+        return new Promise((resolve, reject) => {
+            if (!this.src) {
+                return reject(`Failed to load image: src is null`);
+            }
+            if (typeof window !== 'undefined') {
+                const image = new window.Image();
+                image.onload = () => {
+                    const {naturalWidth, naturalHeight} = image;
+                    // 如果没有设置宽高，使用图片原始尺寸
+                    if (!this.width && !this.height) {
+                        this.width = naturalWidth;
+                        this.height = naturalHeight;
+                    }
+                    // 如果只设置了宽度，按比例计算高度
+                    else if (this.width && !this.height) {
+                        this.height = this.width * naturalHeight / naturalWidth;
+                    }
+                    // 如果只设置了高度，按比例计算宽度
+                    else if (this.height && !this.width) {
+                        this.width = this.height * naturalWidth / naturalHeight;
+                    }
+                    resolve();
+                };
+                image.onerror = () => {
+                    reject(`Failed to load image: ${this.src}`);
+                };
+                image.src = this.src;
+                image.crossOrigin = this.crossOrigin;
+                this.image = image;
+            } else {
+                const {loadImage} = require('@napi-rs/canvas')
+                loadImage(this.src).then(image => {
+                    this.image = image;
+                    const {naturalWidth, naturalHeight} = image;
+                    // 如果没有设置宽高，使用图片原始尺寸
+                    if (!this.width && !this.height) {
+                        this.width = naturalWidth;
+                        this.height = naturalHeight;
+                    }
+                    // 如果只设置了宽度，按比例计算高度
+                    else if (this.width && !this.height) {
+                        this.height = this.width * naturalHeight / naturalWidth;
+                    }
+                    // 如果只设置了高度，按比例计算宽度
+                    else if (this.height && !this.width) {
+                        this.width = this.height * naturalWidth / naturalHeight;
+                    }
+                    resolve()
+                }).catch(err => {
+                    reject(`Failed to load image from URL: ${this.src}. ${err.message}`)
+                })
+            }
+        })
+    }
+
+    contains(x, y) {
+
+        // 如果未旋转，使用原来的轴对齐边界框检测
+        if (this.angle === 0) {
+            return x >= this.x && x <= this.x + this.width * this.scale && y >= this.y && y <= this.y + this.height * this.scale;
+        }
+
+        // 对于旋转的文本，将点击点反向旋转回文本的局部坐标系
+        // 计算文本中心点（旋转中心）
+        const centerX = this.x + this.width * this.scale / 2;
+        const centerY = this.y + this.height * this.scale / 2;
+
+        // 将点相对于中心点平移
+        const translatedX = x - centerX;
+        const translatedY = y - centerY;
+
+        // 计算反向旋转角度（弧度）
+        const angleRad = -this.angle * Math.PI / 180;
+
+        // 反向旋转点（绕中心点反向旋转）
+        const rotatedX = translatedX * Math.cos(angleRad) - translatedY * Math.sin(angleRad);
+        const rotatedY = translatedX * Math.sin(angleRad) + translatedY * Math.cos(angleRad);
+
+        // 将点平移回原坐标系
+        const localX = rotatedX + centerX;
+        const localY = rotatedY + centerY;
+
+        // 检查反向旋转后的点是否在原始（未旋转）的边界框内
+        return localX >= this.x && localX <= this.x + this.width * this.scale && localY >= this.y && localY <= this.y + this.height * this.scale;
+    }
+
+    draw(ctx) {
+        if (!this.image) {
+            console.error(`Failed to load image: ${this.src}`)
+            return
+        }
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+
+        const x = this.x;
+        const y = this.y;
+        const width = this.width * this.scale;
+        const height = this.height * this.scale;
+        const radius = Math.min(this.radius, width / 2, height / 2);
+
+        const {color: shadowColor, blur: shadowBlur, offsetX: shadowOffsetX, offsetY: shadowOffsetY} = this.shadow;
+        const hasShadow = shadowColor && (shadowBlur > 0 || shadowOffsetX !== 0 || shadowOffsetY !== 0);
+
+        // 先绘制阴影（如果存在）
+        if (hasShadow) {
+            ctx.shadowColor = shadowColor;
+            ctx.shadowBlur = shadowBlur;
+            ctx.shadowOffsetX = shadowOffsetX;
+            ctx.shadowOffsetY = shadowOffsetY;
+
+            this._createRoundedRectPath(ctx, x, y, width, height, radius);
+            ctx.fillStyle = 'rgba(0,0,0,1)';
+            ctx.fill();
+
+            // 重要：清除阴影设置，避免影响后续绘制
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+        }
+
+        // 设置变换
+        if (this.angle !== 0) {
+            const centerX = x + width / 2;
+            const centerY = y + height / 2;
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.translate(-centerX, -centerY);
+        }
+
+        if (this.backdropBlur) {
+            ctx.filter = `blur(${this.backdropBlur}px)`;
+        }
+
+        // 创建圆角裁剪区域并绘制图像
+        this._createRoundedRectPath(ctx, x, y, width, height, radius);
+
+        ctx.clip();
+
+        ctx.drawImage(this.image, x, y, width, height);
+
+        ctx.restore();
+    }
+
+    // 修改后的通用圆角矩形路径方法
+    _createRoundedRectPath(ctx, x, y, width, height, radius) {
+        if (radius <= 0) {
+            ctx.beginPath();
+            ctx.rect(x, y, width, height);
+            return;
+        }
+        radius = Math.min(radius, width / 2, height / 2);
+
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+    }
+
+    selection(ctx) {
+        const color = 'red', lineCap = 'butt'
+        const baseWidth = Math.max(this.width, this.height) * this.scale;
+        const lineWidth = 0.02 * baseWidth
+        ctx.save();
+        ctx.setLineDash([0.06 * baseWidth, 0.03 * baseWidth]);
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = color;
+        ctx.lineCap = lineCap;
+
+        if (this.angle !== 0) {
+            // 计算文本中心点
+            const centerX = this.x + this.width * this.scale / 2;
+            const centerY = this.y + this.height * this.scale / 2;
+            // 平移到文本中心点，旋转，再平移回来
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.translate(-centerX, -centerY);
+        }
+
+        // 如果设置了圆角，绘制圆角选择框
+        if (this.radius > 0) {
+            const x = this.x - lineWidth;
+            const y = this.y - lineWidth;
+            const width = this.width * this.scale + 2 * lineWidth;
+            const height = this.height * this.scale + 2 * lineWidth;
+            const radius = Math.min(this.radius, width / 2, height / 2);
+
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        } else {
+            // 绘制直角选择框
+            ctx.beginPath();
+            ctx.rect(this.x - lineWidth, this.y - lineWidth,
+                this.width * this.scale + 2 * lineWidth,
+                this.height * this.scale + 2 * lineWidth);
+        }
+
+        ctx.stroke();
+        ctx.restore();
+    }
+
+}
+
 class Rect extends Element {
     constructor(options) {
         super(options);
@@ -1985,4 +2230,4 @@ class Rect extends Element {
 }
 
 // 支持 ES6 模块
-export {CanvasEditor, Text, EditableText, Image, Rect};
+export {CanvasEditor, Text, EditableText, Image, Rect, LazyImage};

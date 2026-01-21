@@ -1158,7 +1158,7 @@
 
 import {nextTick, onBeforeUnmount, onMounted, ref, watch, computed} from "vue";
 
-import {CanvasEditor, Image, Rect} from '@/canvas/CanvasEditor'
+import {CanvasEditor, Image, LazyImage, Rect} from '@/canvas/CanvasEditor'
 
 import {useThrottle} from '@/utils/throttle'
 
@@ -1468,7 +1468,8 @@ const watchImportImages = () => {
             }
             canvas.metadata = metadata
           }
-          CanvasManager.setCanvas(path, Object.assign(new Canvas(), canvas, picture))
+          CanvasManager.setCanvas(path, Object.assign(canvas, picture))
+          // 检测到图片导入立即触发渲染
           availableCanvas.value = CanvasManager.getAvailableCanvases(filterType.value)
         }
       }
@@ -1637,11 +1638,33 @@ const watchContextMenu = () => {
         const paths = Array.from(selectedPreviewList.value.keys());
         const settings = paths.map((path, index) => {
           const canvas = CanvasManager.getCanvas(path);
-          const {background: {elements: backgroundElements}, foreground: {elements: foregroundElements}} = canvas;
-          for (let element of foregroundElements) {
-            backgroundElements.push(element);
+          if (!canvas.completed) {
+            const {height: imageHeight, width: imageWidth} = canvas.metadata;
+            const background = {
+              width: imageWidth,
+              height: imageHeight,
+              elements: [
+                new Rect({imageWidth, imageHeight, meta: new BorderOptions()}),
+                new LazyImage(canvas.url, {
+                  selectable: false,
+                  cacheable: true,
+                  meta: {...new PhotographOptions(), path: canvas.path}
+                })
+              ]
+            };
+            return {filePath: path, index, json: JSON.stringify(background)}
           }
-          return {filePath: path, index, json: JSON.stringify(canvas.background)}
+          let {background, foreground} = canvas;
+          if (typeof background === 'string') {
+            background = JSON.parse(background)
+          }
+          if (typeof foreground === 'string') {
+            foreground = JSON.parse(foreground)
+          }
+          for (let element of foreground.elements) {
+            background.elements.push(element);
+          }
+          return {filePath: path, index, json: JSON.stringify(background)}
         });
         window.electronAPI.requestExportFiles(_.cloneDeep({
           projectSettings: projectSettings.value,
@@ -1995,8 +2018,8 @@ const useTemplate = async (settings, path) => {
     }
   }
 
-  canvas.background = background
-  canvas.foreground = foreground
+  canvas.background = JSON.stringify(background)
+  canvas.foreground = JSON.stringify(foreground)
   canvas.initZoom = initZoom;
   canvas.zoom = canvas.zoom || zoom;
   canvas.width = imageWidth;
@@ -2080,8 +2103,8 @@ const renderCanvas = async (canvas) => {
     canvas.background = backgroundCanvasEditor.exportToObject()
   } else {
     const {foreground, background, zoom} = canvas;
-    await canvasEditor.loadFromObject(foreground)
-    await backgroundCanvasEditor.loadFromObject(background)
+    typeof foreground === 'string' ? await canvasEditor.loadFromJSON(foreground) : await canvasEditor.loadFromObject(foreground)
+    typeof background === 'string' ? await backgroundCanvasEditor.loadFromJSON(background) : await backgroundCanvasEditor.loadFromObject(background)
     // 设置缩放
     canvasEditor.setCenterZoom(zoom);
     backgroundCanvasEditor.setCenterZoom(zoom);
