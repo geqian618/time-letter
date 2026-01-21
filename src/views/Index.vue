@@ -79,7 +79,7 @@
         </div>
 
         <div class="preview-container" id="preview-container" ref="previewContainer" @mousedown="triggerContextMenu">
-          <canvas id="canvas" ref="canvasElement"></canvas>
+          <canvas id="foreground-canvas" ref="canvasElement"></canvas>
           <canvas id="background-canvas" ref="backgroundElement"></canvas>
         </div>
 
@@ -3536,12 +3536,11 @@ onBeforeUnmount(() => {
       background: var(--preview-background-color);
       width: var(--preview-container-width);
       height: 100%;
-      position: relative;
       display: flex;
       justify-content: center;
       align-items: center;
 
-      #canvas {
+      #foreground-canvas {
         position: absolute;
         z-index: 10;
         background-color: transparent;

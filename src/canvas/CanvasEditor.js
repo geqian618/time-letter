@@ -33,6 +33,22 @@ class CanvasEditor {
 
         this.activeElements = [];
 
+        this.width = options.width || 0;
+
+        this.height = options.height || 0;
+
+        this.zoom = options.zoom || 1;
+
+        this.dpr = window.devicePixelRatio || 1;
+
+        this.backgroundColor = options.backgroundColor || 'rgba(255,255,255,0)';
+
+        this.showGrid = options.showGrid || false;
+
+        this.gridSize = options.gridSize || 20;
+
+        this.gridColor = options.gridColor || '#e3e0e0';
+
         // 编辑状态
         this.editingText = null;
         this.isEditing = false;
@@ -40,23 +56,11 @@ class CanvasEditor {
         this.cursorEnd = 0
 
         this.cursorBlinkInterval = null;
+
         this.isCursorVisible = true;
 
         // 动态创建的输入框
         this.hiddenInput = null;
-
-        // 默认配置
-        this.canvasConfig = {
-            width: options.width || canvas.width,
-            height: options.height || canvas.height,
-            cursorWidth: 1,
-            zoom: 1,
-            selectionColor: 'rgb(59,103,225,0.5)',
-            backgroundColor: options.backgroundColor || 'rgba(255,255,255,0)',
-            showGrid: options.showGrid || false,
-            gridSize: options.gridSize || 20,
-            gridColor: options.gridColor || '#e3e0e0'
-        };
 
         // 事件回调
         this.eventCallbacks = new Map();
@@ -77,11 +81,9 @@ class CanvasEditor {
      */
     initCanvas() {
 
-        const {width, height} = this.canvasConfig;
-        if (width && height) {
-            this.canvas.width = width
-            this.canvas.height = height
-        }
+        this.canvas.width = this.width * this.dpr;
+
+        this.canvas.height = this.height * this.dpr;
 
         //设置高质量渲染选项
         this.ctx.patternQuality = 'best';
@@ -357,7 +359,7 @@ class CanvasEditor {
      * 切换网格背景显示
      */
     toggleGrid() {
-        this.canvasConfig.showGrid = !this.canvasConfig.showGrid;
+        this.showGrid = !this.showGrid;
     }
 
     /**
@@ -570,11 +572,11 @@ class CanvasEditor {
      * 绘制网格背景
      */
     drawGrid() {
-        if (!this.canvasConfig.showGrid) return;
-        this.ctx.strokeStyle = this.canvasConfig.gridColor;
+        if (!this.showGrid) return;
+        this.ctx.strokeStyle = this.gridColor;
         this.ctx.lineWidth = 0.5;
         // 绘制垂直线
-        for (let x = 0; x <= this.canvas.width; x += this.canvasConfig.gridSize) {
+        for (let x = 0; x <= this.canvas.width; x += this.gridSize) {
             this.ctx.beginPath();
             this.ctx.moveTo(x, 0);
             this.ctx.lineTo(x, this.canvas.height);
@@ -582,7 +584,7 @@ class CanvasEditor {
         }
 
         // 绘制水平线
-        for (let y = 0; y <= this.canvas.height; y += this.canvasConfig.gridSize) {
+        for (let y = 0; y <= this.canvas.height; y += this.gridSize) {
             this.ctx.beginPath();
             this.ctx.moveTo(0, y);
             this.ctx.lineTo(this.canvas.width, y);
@@ -610,8 +612,7 @@ class CanvasEditor {
      * 绘制背景
      */
     drawBackgroundColor() {
-        const {backgroundColor} = this.canvasConfig;
-        this.drawFillRect(0, 0, this.canvas.width, this.canvas.height, backgroundColor)
+        this.drawFillRect(0, 0, this.canvas.width, this.canvas.height, this.backgroundColor)
     }
 
 
@@ -620,7 +621,7 @@ class CanvasEditor {
      * @param color
      */
     setBackgroundColor(color) {
-        this.canvasConfig.backgroundColor = color
+        this.backgroundColor = color
     }
 
     /**
@@ -629,7 +630,7 @@ class CanvasEditor {
      */
     setCenterZoom(zoom) {
         if (zoom > 0) {
-            this.ctx.zoom = this.canvasConfig.zoom = zoom
+            this.zoom = zoom
             this.canvas.style.transform = `scale(${zoom})`
             this.canvas.style.transformOrigin = 'center center';
         }
@@ -643,7 +644,7 @@ class CanvasEditor {
      */
     setZoom(zoom, pointX, pointY) {
         if (zoom > 0) {
-            this.ctx.zoom = this.canvasConfig.zoom = zoom
+            this.zoom = zoom
             this.canvas.style.transform = `scale(${zoom})`
             this.canvas.style.transformOrigin = `${pointX}px ${pointY}px`;
         }
@@ -654,7 +655,7 @@ class CanvasEditor {
      * @returns {number}
      */
     getZoom() {
-        return this.canvasConfig.zoom
+        return this.zoom
     }
 
 
@@ -693,65 +694,6 @@ class CanvasEditor {
         }
     }
 
-
-    /**
-     * 绘制光标
-     * @param textObj
-     * @param cursorWidth
-     */
-    drawCursor(textObj, cursorWidth) {
-        const {x, y, fontColor, fontSize, spacing} = textObj;
-        const cursorX = x + this.getSubTextMetrics(textObj, 0, this.cursorStart).width;
-        this.ctx.fillStyle = fontColor;
-        this.ctx.fillRect(
-            cursorX + (spacing - cursorWidth) / 2,
-            y,
-            cursorWidth,
-            fontSize
-        );
-    }
-
-
-    /**
-     * 绘制文本编辑状态背景颜色
-     * @param element
-     */
-    drawEditBackground(element) {
-        const {x, y, height, highlightColor} = element
-        const metrics = this.getTextMetrics(element);
-        const margin = 0.3 * height;
-        const width = metrics.width + 2 * margin
-        const {ascent} = element;
-        this.drawFillRect(x - margin, y - margin - ascent, width, height, highlightColor)
-        if (this.cursorStart !== this.cursorEnd) {
-            const {startX, endX} = this.getRangeByIndex(element, this.cursorStart, this.cursorEnd);
-            this.drawFillRect(startX, y, endX - startX, height + 2 * margin, this.canvasConfig.selectionColor)
-        }
-    }
-
-
-    /**
-     * 绘制选中元素状态
-     * @param x
-     * @param y
-     * @param width
-     * @param height
-     * @param options
-     */
-    drawActiveRect(x, y, width, height, options = {}) {
-        const {dashPattern = [5, 3], lineWidth = 1, color = 'red', lineCap = 'butt'} = options;
-        const zoom = this.canvasConfig.zoom;
-        this.ctx.save();
-        this.ctx.setLineDash([dashPattern[0] / zoom, dashPattern[1] / zoom]);
-        this.ctx.lineWidth = lineWidth / zoom;
-        this.ctx.strokeStyle = color;
-        this.ctx.lineCap = lineCap;
-
-        this.ctx.beginPath();
-        this.ctx.rect(x, y, width, height);
-        this.ctx.stroke();
-        this.ctx.restore();
-    }
 
     /**
      * 填充矩形
@@ -902,7 +844,6 @@ class CanvasEditor {
      */
     handleInput(event) {
         if (!this.editingText || !this.hiddenInput) return;
-        const oldText = this.editingText.text;
         const newText = event.target.value;
         // 更新文本
         this.editingText.text = newText;
@@ -1065,8 +1006,8 @@ class CanvasEditor {
      * @param {number} height - 新高度
      */
     resizeCanvas(width, height) {
-        this.canvas.width = this.canvasConfig.width = width;
-        this.canvas.height = this.canvasConfig.height = height;
+        this.canvas.width = this.width = width;
+        this.canvas.height = this.height = height;
     }
 
     /**
