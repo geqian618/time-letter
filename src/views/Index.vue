@@ -3161,11 +3161,9 @@ const handleDropElement = async function (event) {
 
   if (!dragElement) return;
 
-  const {x, y, scaleY, scaleX} = canvasEditor.getCanvasInternalPosition(event);
+  dragElement.x = event.offsetX - offsetX / canvasEditor.getZoom()
 
-  dragElement.x = x - offsetX * scaleX
-
-  dragElement.y = y - offsetY * scaleY
+  dragElement.y = event.offsetY - offsetY / canvasEditor.getZoom()
 
   canvasEditor.addElement(dragElement)
 

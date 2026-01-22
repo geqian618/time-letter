@@ -718,7 +718,7 @@ class CanvasEditor {
      */
     handleEditText(params) {
         const {event, element} = params;
-        const {x, y} = this.getCanvasInternalPosition(event);
+        const {offsetX: x, offsetY: y} = event;
         if (element && element.editable) {
             this.clearActiveElements()
             if (this.isEditing && this.editingText !== element) {
@@ -738,16 +738,13 @@ class CanvasEditor {
     /**
      * 通过鼠标事件获取触发位置在 canvas 内部的坐标
      * @param event
-     * @returns {{scaleX: number, scaleY: number, x: number, y: number}}
+     * @returns {x: number, y: number}
      */
-    getCanvasInternalPosition(event) {
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.width / rect.width;
-        const scaleY = this.canvas.height / rect.height;
-        // 计算 Canvas 坐标系中的位置
-        const x = (event.clientX - rect.left) * scaleX;
-        const y = (event.clientY - rect.top) * scaleY;
-        return {x, y, scaleX, scaleY}
+    getCanvasPosition(event) {
+        return {
+            x: event.offsetX,
+            y: event.offsetY
+        }
     }
 
 
@@ -757,7 +754,7 @@ class CanvasEditor {
      */
     handleMouseDown(event) {
         const startTime = Date.now();
-        const {x: startX, y: startY} = this.getCanvasInternalPosition(event);
+        const {offsetX: startX, offsetY: startY} = event;
         const element = this.getElementAt(startX, startY, element => element.selectable);
         if (!element) {
             this.handleCancelActive()
@@ -769,7 +766,7 @@ class CanvasEditor {
         const centerY = element.centerY
         const handleMousemove = (e) => {
             const interval = Date.now() - startTime;
-            const {x: moveX, y: moveY} = this.getCanvasInternalPosition(e);
+            const {offsetX: moveX, offsetY: moveY} = e;
             if (interval > 200 && (startX !== moveX || startY !== moveY)) {
                 if (element.type === 'text' && element.status === Element.EDITING) {
                     // 选中文本
@@ -794,7 +791,7 @@ class CanvasEditor {
             }
         }
         const handleMouseup = (e) => {
-            const {x: endX, y: endY} = this.getCanvasInternalPosition(e);
+            const {offsetX: endX, offsetY: endY} = e;
             if (startX === endX && startY === endY) {
                 if (element.type === 'text' && (element.status === Element.SELECTED || element.status === Element.EDITING)) {
                     this.handleEditText({event, element})
