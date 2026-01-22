@@ -101,8 +101,8 @@ class CanvasEditor {
 
         const dpr = window.devicePixelRatio || 1;
 
-        this.canvas.width = this.width * dpr * this.zoom;
-        this.canvas.height = this.height * dpr * this.zoom;
+        this.canvas.width = this.width * this.zoom * dpr;
+        this.canvas.height = this.height * this.zoom * dpr;
 
         this.canvas.style.width = `${this.width * this.zoom}px`;
         this.canvas.style.height = `${this.height * this.zoom}px`;
@@ -1011,8 +1011,9 @@ class CanvasEditor {
      * @param {number} height - 新高度
      */
     resizeCanvas(width, height) {
-        this.canvas.width = this.width = width;
-        this.canvas.height = this.height = height;
+        this.width = width;
+        this.height = height;
+        this.setupCanvas()
     }
 
     /**
