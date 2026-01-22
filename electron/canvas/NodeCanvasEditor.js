@@ -39,8 +39,6 @@ class CanvasEditor {
 
         this.zoom = options.zoom || 1;
 
-        this.dpr = window.devicePixelRatio || 1;
-
         this.backgroundColor = options.backgroundColor || 'rgba(255,255,255,0)';
 
         this.showGrid = options.showGrid || false;
@@ -76,15 +74,30 @@ class CanvasEditor {
         this.initCanvas();
     }
 
+
+    /**
+     * 设置 Canvas 尺寸和缩放
+     */
+    setupCanvas() {
+
+        const dpr = window.devicePixelRatio || 1;
+
+        this.canvas.width = this.width * dpr * this.zoom;
+        this.canvas.height = this.height * dpr * this.zoom;
+
+        this.canvas.style.width = `${this.width * this.zoom}px`;
+        this.canvas.style.height = `${this.height * this.zoom}px`;
+
+        this.ctx.scale(dpr * this.zoom, dpr * this.zoom);
+
+        this.ctx.clearRect(0, 0, this.width, this.height);
+    }
+
+
     /**
      * 初始化编辑器
      */
     initCanvas() {
-
-        this.canvas.width = this.width * this.dpr;
-
-        this.canvas.height = this.height * this.dpr;
-
         //设置高质量渲染选项
         this.ctx.patternQuality = 'best';
         this.ctx.quality = 'best'
@@ -92,8 +105,11 @@ class CanvasEditor {
         this.ctx.imageSmoothingEnabled = true;
         this.ctx.imageSmoothingQuality = 'high'
 
-        // 添加事件监听
-        this.isBrowser && this.canvas.addEventListener('mousedown', this.handleMouseDown);
+        // 仅浏览器环境生效
+        if (this.isBrowser) {
+            this.setupCanvas();
+            this.canvas.addEventListener('mousedown', this.handleMouseDown);
+        }
     }
 
 
@@ -598,7 +614,7 @@ class CanvasEditor {
      */
     renderAll() {
         // 清除画布
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.clearRect(0, 0, this.width, this.height);
         // 绘制背景
         this.drawBackgroundColor()
         // 绘制网格背景
@@ -612,7 +628,7 @@ class CanvasEditor {
      * 绘制背景
      */
     drawBackgroundColor() {
-        this.drawFillRect(0, 0, this.canvas.width, this.canvas.height, this.backgroundColor)
+        this.drawFillRect(0, 0, this.width, this.height, this.backgroundColor)
     }
 
 
@@ -628,26 +644,11 @@ class CanvasEditor {
      * 通过中心点设置缩放
      * @param zoom
      */
-    setCenterZoom(zoom) {
-        if (zoom > 0) {
-            this.zoom = zoom
-            this.canvas.style.transform = `scale(${zoom})`
-            this.canvas.style.transformOrigin = 'center center';
-        }
-    }
-
-    /**
-     * 通过指定点设置缩放
-     * @param zoom
-     * @param pointX
-     * @param pointY
-     */
-    setZoom(zoom, pointX, pointY) {
-        if (zoom > 0) {
-            this.zoom = zoom
-            this.canvas.style.transform = `scale(${zoom})`
-            this.canvas.style.transformOrigin = `${pointX}px ${pointY}px`;
-        }
+    setZoom(zoom) {
+        if (zoom <= 0) return
+        this.zoom = zoom
+        this.setupCanvas();
+        this.renderAll();
     }
 
     /**
@@ -665,8 +666,8 @@ class CanvasEditor {
      */
     getCenterPoint() {
         return {
-            x: this.canvas.width / 2,
-            y: this.canvas.height / 2
+            x: this.width / 2,
+            y: this.height / 2
         }
     }
 
@@ -739,10 +740,17 @@ class CanvasEditor {
      * @returns {x: number, y: number}
      */
     getCanvasPosition(event) {
+        const rect = this.canvas.getBoundingClientRect();
+        // 计算相对于Canvas元素的坐标
+        const clientX = event.clientX - rect.left;
+        const clientY = event.clientY - rect.top;
+        // 转换为Canvas内部坐标（考虑缩放）
+        const canvasX = (clientX / (this.width * this.zoom)) * this.width;
+        const canvasY = (clientY / (this.height * this.zoom)) * this.height;
         return {
-            x: event.offsetX,
-            y: event.offsetY
-        }
+            x: Math.max(0, Math.min(canvasX, this.width)),
+            y: Math.max(0, Math.min(canvasY, this.height))
+        };
     }
 
 
@@ -752,7 +760,7 @@ class CanvasEditor {
      */
     handleMouseDown(event) {
         const startTime = Date.now();
-        const {offsetX: startX, offsetY: startY} = event;
+        const {x: startX, y: startY} = this.getCanvasPosition(event);
         const element = this.getElementAt(startX, startY, element => element.selectable);
         if (!element) {
             this.handleCancelActive()
@@ -762,7 +770,7 @@ class CanvasEditor {
         let beforeMoveY = startY
         const handleMousemove = (e) => {
             const interval = Date.now() - startTime;
-            const {offsetX: moveX, offsetY: moveY} = e;
+            const {x: moveX, y: moveY} = this.getCanvasPosition(e);
             if (interval > 200 && (startX !== moveX || startY !== moveY)) {
                 if (element.type === 'text' && element.status === Element.EDITING) {
                     // 选中文本
@@ -789,7 +797,7 @@ class CanvasEditor {
             }
         }
         const handleMouseup = (e) => {
-            const {offsetX: endX, offsetY: endY} = e;
+            const {x: endX, y: endY} = this.getCanvasPosition(e);
             if (startX === endX && startY === endY) {
                 if (element.type === 'text' && (element.status === Element.SELECTED || element.status === Element.EDITING)) {
                     this.handleEditText({event, element})
@@ -1031,8 +1039,8 @@ class CanvasEditor {
      */
     exportToObject() {
         return {
-            width: this.canvas.width,
-            height: this.canvas.height,
+            width: this.width,
+            height: this.height,
             elements: this.elements
         }
     }
@@ -2164,6 +2172,5 @@ class Rect extends Element {
         ctx.clip();
     }
 }
-
 
 module.exports = {CanvasEditor, Text, EditableText, Image, Rect, LazyImage};

@@ -79,6 +79,7 @@ class CanvasEditor {
      * 设置 Canvas 尺寸和缩放
      */
     setupCanvas() {
+
         const dpr = window.devicePixelRatio || 1;
 
         this.canvas.width = this.width * dpr * this.zoom;
@@ -88,6 +89,7 @@ class CanvasEditor {
         this.canvas.style.height = `${this.height * this.zoom}px`;
 
         this.ctx.scale(dpr * this.zoom, dpr * this.zoom);
+
         this.ctx.clearRect(0, 0, this.width, this.height);
     }
 
@@ -96,7 +98,6 @@ class CanvasEditor {
      * 初始化编辑器
      */
     initCanvas() {
-        this.setupCanvas();
         //设置高质量渲染选项
         this.ctx.patternQuality = 'best';
         this.ctx.quality = 'best'
@@ -104,8 +105,11 @@ class CanvasEditor {
         this.ctx.imageSmoothingEnabled = true;
         this.ctx.imageSmoothingQuality = 'high'
 
-        // 添加事件监听
-        this.isBrowser && this.canvas.addEventListener('mousedown', this.handleMouseDown);
+        // 仅浏览器环境生效
+        if (this.isBrowser) {
+            this.setupCanvas();
+            this.canvas.addEventListener('mousedown', this.handleMouseDown);
+        }
     }
 
 
@@ -624,7 +628,7 @@ class CanvasEditor {
      * 绘制背景
      */
     drawBackgroundColor() {
-        this.drawFillRect(0, 0, this.canvas.width, this.canvas.height, this.backgroundColor)
+        this.drawFillRect(0, 0, this.width, this.height, this.backgroundColor)
     }
 
 
@@ -640,26 +644,11 @@ class CanvasEditor {
      * 通过中心点设置缩放
      * @param zoom
      */
-    setCenterZoom(zoom) {
-        if (zoom > 0) {
-            this.zoom = zoom
-            this.setupCanvas();
-            this.renderAll();
-        }
-    }
-
-    /**
-     * 通过指定点设置缩放
-     * @param zoom
-     * @param pointX
-     * @param pointY
-     */
-    setZoom(zoom, pointX, pointY) {
-        if (zoom > 0) {
-            this.zoom = zoom
-            this.setupCanvas()
-            this.renderAll();
-        }
+    setZoom(zoom) {
+        if (zoom <= 0) return
+        this.zoom = zoom
+        this.setupCanvas();
+        this.renderAll();
     }
 
     /**
@@ -677,8 +666,8 @@ class CanvasEditor {
      */
     getCenterPoint() {
         return {
-            x: this.canvas.width / 2,
-            y: this.canvas.height / 2
+            x: this.width / 2,
+            y: this.height / 2
         }
     }
 
@@ -1050,8 +1039,8 @@ class CanvasEditor {
      */
     exportToObject() {
         return {
-            width: this.canvas.width,
-            height: this.canvas.height,
+            width: this.width,
+            height: this.height,
             elements: this.elements
         }
     }

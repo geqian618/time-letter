@@ -2085,8 +2085,8 @@ const renderCanvas = async (canvas) => {
     const {idealWidth, idealHeight} = previewContainer.value;
     const initScale = Math.min(idealHeight / height, idealWidth / width);
     const scale = initScale * projectSettings.value.others.defaultCanvasScale;
-    canvasEditor.setCenterZoom(scale)
-    backgroundCanvasEditor.setCenterZoom(scale)
+    canvasEditor.setZoom(scale)
+    backgroundCanvasEditor.setZoom(scale)
     backgroundCanvasEditor.addElement(background);
     backgroundCanvasEditor.addElement(image);
     backgroundCanvasEditor.renderAll()
@@ -2106,8 +2106,8 @@ const renderCanvas = async (canvas) => {
     typeof foreground === 'string' ? await canvasEditor.loadFromJSON(foreground) : await canvasEditor.loadFromObject(foreground)
     typeof background === 'string' ? await backgroundCanvasEditor.loadFromJSON(background) : await backgroundCanvasEditor.loadFromObject(background)
     // 设置缩放
-    canvasEditor.setCenterZoom(zoom);
-    backgroundCanvasEditor.setCenterZoom(zoom);
+    canvasEditor.setZoom(zoom);
+    backgroundCanvasEditor.setZoom(zoom);
     canvasEditor.renderAll();
     backgroundCanvasEditor.renderAll();
     const elements = backgroundCanvasEditor.getElements();
@@ -3220,8 +3220,8 @@ const handleCanvasResize = (event) => {
   let newZoom = direction === 'in' ? zoom + zoomStep : zoom - zoomStep;
   newZoom = Math.min(Math.max(minZoom, newZoom), maxZoom);
   canvas.zoom = newZoom
-  canvasEditor.setCenterZoom(newZoom)
-  backgroundCanvasEditor.setCenterZoom(newZoom)
+  canvasEditor.setZoom(newZoom)
+  backgroundCanvasEditor.setZoom(newZoom)
 }
 
 const handleDragMoveCanvas = (event) => {
