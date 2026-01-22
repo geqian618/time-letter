@@ -727,8 +727,6 @@ class CanvasEditor {
             }
             // 计算点击位置对应的光标索引
             const index = this.getCursorIndexFromText(element, x, y);
-
-            console.log(index)
             // 如果是双击，直接进入编辑模式
             this.startEditing(element, index);
         }
