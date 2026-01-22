@@ -1879,8 +1879,7 @@ const deleteTemplate = () => {
 
 const synchronizeTemplate = () => {
   if (CanvasManager.getSelectedPath()) {
-    const {background, foreground, initZoom} = CanvasManager.getCurrentCanvas();
-    const {width, height, elements} = foreground;
+    const {background, foreground: {width, height, elements}, initZoom} = CanvasManager.getCurrentCanvas();
     selectedPreviewList.value.forEach((image, path) => {
       if (CanvasManager.getSelectedPath() !== path) {
         const items = []
@@ -3578,14 +3577,15 @@ onBeforeUnmount(() => {
       background: var(--preview-background-color);
       width: var(--preview-container-width);
       height: 100%;
+      position: relative;
       display: flex;
       justify-content: center;
       align-items: center;
 
       #foreground-canvas {
         position: absolute;
-        z-index: 10;
         background-color: transparent;
+        z-index: 1;
       }
 
       #background-canvas {
