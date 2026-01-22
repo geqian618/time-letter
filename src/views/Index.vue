@@ -79,8 +79,10 @@
         </div>
 
         <div class="preview-container" id="preview-container" ref="previewContainer" @mousedown="triggerContextMenu">
-          <canvas id="background-canvas" ref="backgroundElement"></canvas>
-          <canvas id="foreground-canvas" ref="canvasElement"></canvas>
+          <div class="canvas-wrapper" ref="canvasWrapper">
+            <canvas id="background-canvas" ref="backgroundElement"></canvas>
+            <canvas id="foreground-canvas" ref="canvasElement"></canvas>
+          </div>
         </div>
 
         <div class="page-right">
@@ -1258,6 +1260,8 @@ const previewContainer = ref(null)
 
 const canvasElement = ref(null)
 
+const canvasWrapper = ref(null)
+
 const backgroundElement = ref(null)
 
 const previewList = ref(null);
@@ -1769,7 +1773,7 @@ const handleFocalLength = (type) => {
         metadata.focalLength = Number.parseInt(metadata.originalFocalLength * projectSettings.value.metadata.other.conversionMultiple)
       }
       if (path === CanvasManager.getSelectedPath()) {
-        metadataOptions.value = metadata
+        metadataOptions.value = {...metadata}
       }
     }
   }
@@ -2118,6 +2122,8 @@ const renderCanvas = async (canvas) => {
     canvasEditor.resizeCanvas(width, height);
     backgroundCanvasEditor.resizeCanvas(width, height);
     const {idealWidth, idealHeight} = previewContainer.value;
+    canvasWrapper.value.style.width = Math.max(width, idealWidth) + 'px'
+    canvasWrapper.value.style.height = Math.max(height, idealHeight) + 'px'
     const initScale = Math.min(idealHeight / height, idealWidth / width);
     const scale = initScale * projectSettings.value.others.defaultCanvasScale;
     canvasEditor.setZoom(scale)
@@ -2140,16 +2146,19 @@ const renderCanvas = async (canvas) => {
     const {foreground, background, zoom} = canvas;
     typeof foreground === 'string' ? await canvasEditor.loadFromJSON(foreground) : await canvasEditor.loadFromObject(foreground)
     typeof background === 'string' ? await backgroundCanvasEditor.loadFromJSON(background) : await backgroundCanvasEditor.loadFromObject(background)
+    const {idealWidth, idealHeight} = previewContainer.value;
+    canvasWrapper.value.style.width = Math.max(background.width, idealWidth) + 'px'
+    canvasWrapper.value.style.height = Math.max(background.height, idealHeight) + 'px'
     // 设置缩放
     canvasEditor.setZoom(zoom);
     backgroundCanvasEditor.setZoom(zoom);
     backgroundCanvasEditor.renderAll();
     canvasEditor.renderAll();
+    updateScrollBarPosition(canvas)
     const elements = backgroundCanvasEditor.getElements();
     borderOptions.value = elements[0].meta
     photographOptions.value = elements[1].meta
     metadataOptions.value = canvas.metadata
-    updateScrollBarPosition(canvas)
     if (typeof foreground === 'string') {
       canvas.foreground = canvasEditor.exportToObject();
     }
@@ -2307,11 +2316,11 @@ const handleScrollBarMoveToCenter = () => {
 // 初始化时自动滚动到图形内容区域
 function scrollBarMoveToCenter(canvas) {
   if (!canvas) return
-  const {offsetWidth: canvasWidth, offsetHeight: canvasHeight} = canvasElement.value
+  const {offsetWidth: canvasWrapperWidth, offsetHeight: canvasWrapperHeight} = canvasWrapper.value
   const {offsetWidth: previewContainerWidth, offsetHeight: previewContainerHeight} = previewContainer.value
   // 计算滚动位置，使图形内容居中
-  const scrollLeft = (canvasWidth - previewContainerWidth) / 2;
-  const scrollTop = (canvasHeight - previewContainerHeight) / 2;
+  const scrollLeft = (canvasWrapperWidth - previewContainerWidth) / 2;
+  const scrollTop = (canvasWrapperHeight - previewContainerHeight) / 2;
   // 设置滚动位置
   previewContainer.value.scrollLeft = Math.max(0, scrollLeft);
   previewContainer.value.scrollTop = Math.max(0, scrollTop);
@@ -3578,18 +3587,24 @@ onBeforeUnmount(() => {
       width: var(--preview-container-width);
       height: 100%;
       position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
 
-      #foreground-canvas {
-        position: absolute;
-        background-color: transparent;
-        z-index: 1;
-      }
+      .canvas-wrapper {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
 
-      #background-canvas {
-        position: absolute;
+        #foreground-canvas {
+          position: absolute;
+          background-color: transparent;
+          z-index: 1;
+        }
+
+        #background-canvas {
+          position: absolute;
+        }
+
       }
     }
 

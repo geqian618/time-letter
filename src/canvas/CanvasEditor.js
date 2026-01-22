@@ -33,9 +33,9 @@ class CanvasEditor {
 
         this.activeElements = [];
 
-        this.width = options.width || 0;
+        this.width = options.width || this.canvas.width || 0;
 
-        this.height = options.height || 0;
+        this.height = options.height || this.canvas.height || 0;
 
         this.zoom = options.zoom || 1;
 
@@ -90,6 +90,9 @@ class CanvasEditor {
         if (this.isBrowser) {
             this.setupCanvas();
             this.canvas.addEventListener('mousedown', this.handleMouseDown);
+        } else {
+            this.canvas.width = this.width;
+            this.canvas.height = this.height;
         }
     }
 
@@ -1013,7 +1016,12 @@ class CanvasEditor {
     resizeCanvas(width, height) {
         this.width = width;
         this.height = height;
-        this.setupCanvas()
+        if (this.isBrowser) {
+            this.setupCanvas()
+        } else {
+            this.canvas.width = this.width;
+            this.canvas.height = this.height;
+        }
     }
 
     /**
