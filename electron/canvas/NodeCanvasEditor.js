@@ -760,10 +760,8 @@ class CanvasEditor {
             this.handleCancelActive()
             return
         }
-        const offsetX = startX - element.x
-        const offsetY = startY - element.y
-        const centerX = element.centerX
-        const centerY = element.centerY
+        let beforeMoveX = startX;
+        let beforeMoveY = startY
         const handleMousemove = (e) => {
             const interval = Date.now() - startTime;
             const {offsetX: moveX, offsetY: moveY} = e;
@@ -778,10 +776,12 @@ class CanvasEditor {
                 } else if (element.draggable) {
                     this.removeActiveElement(element)
                     this.canvas.style.cursor = 'move';
-                    element.x = moveX - offsetX;
-                    element.y = moveY - offsetY;
-                    element.centerX = centerX + (moveX - startX)
-                    element.centerY = centerY + (moveY - startY)
+                    element.x += moveX - beforeMoveX;
+                    element.y += moveY - beforeMoveY;
+                    element.centerX += moveX - beforeMoveX
+                    element.centerY += moveY - beforeMoveY
+                    beforeMoveX = moveX;
+                    beforeMoveY = moveY
                     const callbacks = this.eventCallbacks.get(MOVE_OBJECT);
                     if (callbacks && callbacks.size) {
                         callbacks.forEach(callback => callback({x: moveX, y: moveY, target: element}))
