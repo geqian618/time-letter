@@ -3421,6 +3421,7 @@ onBeforeUnmount(() => {
   height: 100vh;
   border: 1px solid var(--border-color);
   border-top: none;
+  overflow: hidden;
 
   .page-main {
     width: 100%;
