@@ -71,7 +71,26 @@ class CanvasEditor {
         this.handleMouseDown = this.handleMouseDown.bind(this);
 
         // 初始化
-        this.initCanvas();
+        this.init();
+    }
+
+
+    /**
+     * 初始化编辑器
+     */
+    init() {
+        //设置高质量渲染选项
+        this.ctx.patternQuality = 'best';
+        this.ctx.quality = 'best'
+        this.ctx.antialias = 'subpixel'
+        this.ctx.imageSmoothingEnabled = true;
+        this.ctx.imageSmoothingQuality = 'high'
+
+        // 仅浏览器环境生效
+        if (this.isBrowser) {
+            this.setupCanvas();
+            this.canvas.addEventListener('mousedown', this.handleMouseDown);
+        }
     }
 
 
@@ -91,25 +110,6 @@ class CanvasEditor {
         this.ctx.scale(dpr * this.zoom, dpr * this.zoom);
 
         this.ctx.clearRect(0, 0, this.width, this.height);
-    }
-
-
-    /**
-     * 初始化编辑器
-     */
-    initCanvas() {
-        //设置高质量渲染选项
-        this.ctx.patternQuality = 'best';
-        this.ctx.quality = 'best'
-        this.ctx.antialias = 'subpixel'
-        this.ctx.imageSmoothingEnabled = true;
-        this.ctx.imageSmoothingQuality = 'high'
-
-        // 仅浏览器环境生效
-        if (this.isBrowser) {
-            this.setupCanvas();
-            this.canvas.addEventListener('mousedown', this.handleMouseDown);
-        }
     }
 
 
