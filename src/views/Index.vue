@@ -1156,7 +1156,7 @@
 
 <script setup lang="js">
 
-import {nextTick, onBeforeUnmount, onMounted, ref, watch, computed} from "vue";
+import {nextTick, onBeforeUnmount, onMounted, shallowRef, ref, watch, computed} from "vue";
 
 import {CanvasEditor, Image, LazyImage, Rect} from '@/canvas/CanvasEditor'
 
@@ -1208,7 +1208,7 @@ const matchFonts = ref([])
 
 const templateSettings = ref({})
 
-const availableCanvas = ref(new Map())
+const availableCanvas = shallowRef(new Map())
 
 const zoomOptions = {
   minZoom: 0.01,
@@ -2144,18 +2144,18 @@ const renderCanvas = async (canvas) => {
     // 设置缩放
     canvasEditor.setZoom(zoom);
     backgroundCanvasEditor.setZoom(zoom);
-    canvasEditor.renderAll();
     backgroundCanvasEditor.renderAll();
+    canvasEditor.renderAll();
     const elements = backgroundCanvasEditor.getElements();
     borderOptions.value = elements[0].meta
     photographOptions.value = elements[1].meta
     metadataOptions.value = canvas.metadata
     updateScrollBarPosition(canvas)
-    if (foreground === 'string') {
-      canvas.foreground = canvasEditor.exportToObject()
+    if (typeof foreground === 'string') {
+      canvas.foreground = canvasEditor.exportToObject();
     }
-    if (background === 'string') {
-      canvas.foreground = backgroundCanvasEditor.exportToObject()
+    if (typeof background === 'string') {
+      canvas.background = backgroundCanvasEditor.exportToObject()
     }
   }
 }
