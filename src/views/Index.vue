@@ -1690,14 +1690,37 @@ const watchContextMenu = () => {
 }
 
 const resetCanvas = (path) => {
-  const canvas = CanvasManager.getCanvas(path);
+
   clearCanvasElements(path);
-  borderOptions.value = new BorderOptions();
-  photographOptions.value = new PhotographOptions();
-  handleUpdateBorders()
-  handleUpdatePhotograph()
-  canvas.foreground = canvasEditor.exportToObject();
-  canvas.background = backgroundCanvasEditor.exportToObject();
+
+  const canvas = CanvasManager.getCanvas(path);
+  const {metadata: {width, height}} = canvas;
+  let background = canvas.background;
+  let foreground = canvas.foreground;
+
+  if (background) {
+    if (typeof background === 'string') {
+      background = JSON.parse(background);
+    }
+    background.elements[0] = new Rect({width, height, meta: new BorderOptions()});
+    background.elements[1].y = background.elements[1].x = 0
+    background.width = width;
+    background.height = height;
+    canvas.background = JSON.stringify(background);
+  }
+
+  if (foreground) {
+    if (typeof foreground === 'string') {
+      foreground = JSON.parse(foreground);
+    }
+    foreground.width = width;
+    foreground.height = height;
+    canvas.foreground = JSON.stringify(foreground);
+  }
+
+  if (path === CanvasManager.getSelectedPath()) {
+    renderCanvas(canvas)
+  }
 }
 
 const clearCanvas = () => {
@@ -1710,8 +1733,21 @@ const clearCanvas = () => {
 
 const clearCanvasElements = (path) => {
   const canvas = CanvasManager.getCanvas(path);
-  canvasEditor.clearCanvas();
-  canvas.foreground = canvasEditor.exportToObject();
+  let foreground = canvas.foreground;
+
+  if (!foreground) return
+
+  if (typeof foreground === 'string') {
+    foreground = JSON.parse(foreground);
+  }
+
+  foreground.elements = [];
+  canvas.foreground = JSON.stringify(foreground);
+
+  if (path === CanvasManager.getSelectedPath()) {
+    canvasEditor.clearCanvas();
+    canvasEditor.renderAll()
+  }
 }
 
 
@@ -2115,6 +2151,12 @@ const renderCanvas = async (canvas) => {
     photographOptions.value = elements[1].meta
     metadataOptions.value = canvas.metadata
     updateScrollBarPosition(canvas)
+    if (foreground === 'string') {
+      canvas.foreground = canvasEditor.exportToObject()
+    }
+    if (background === 'string') {
+      canvas.foreground = backgroundCanvasEditor.exportToObject()
+    }
   }
 }
 
@@ -2898,7 +2940,7 @@ const handleEditorElement = (event) => {
       e.preventDefault();
       dragElement.textContent = originalText;
       dragElement.blur();
-      return;
+
     }
 
     // 对于其他按键，不需要特别处理，contentEditable会处理光标位置
@@ -3161,9 +3203,11 @@ const handleDropElement = async function (event) {
 
   if (!dragElement) return;
 
-  dragElement.x = event.offsetX - offsetX / canvasEditor.getZoom()
+  const {x, y} = canvasEditor.getCanvasPosition(event);
 
-  dragElement.y = event.offsetY - offsetY / canvasEditor.getZoom()
+  dragElement.x = x - offsetX / canvasEditor.getZoom();
+
+  dragElement.y = y - offsetY / canvasEditor.getZoom();
 
   canvasEditor.addElement(dragElement)
 

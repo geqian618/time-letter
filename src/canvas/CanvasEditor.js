@@ -366,9 +366,11 @@ class CanvasEditor {
      * 清理画布
      */
     clearCanvas() {
+        this.isEditing && this.finishEditing();
         this.elements = [];
         this.activeElements = [];
-        this.isEditing && this.finishEditing();
+        // 清除画布
+        this.ctx.clearRect(0, 0, this.width, this.height);
     }
 
     /**
@@ -1071,7 +1073,7 @@ class CanvasEditor {
         try {
             this.clearCanvas();
             const {width, height, elements} = JSON.parse(json);
-            this.resizeCanvas(width, height)
+            this.resizeCanvas(width, height);
             for (let element of elements) {
                 if (element.type === 'text') {
                     this.elements.push(new Text(element.text, element))
