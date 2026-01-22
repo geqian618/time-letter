@@ -79,8 +79,8 @@
         </div>
 
         <div class="preview-container" id="preview-container" ref="previewContainer" @mousedown="triggerContextMenu">
-          <canvas id="foreground-canvas" ref="canvasElement"></canvas>
           <canvas id="background-canvas" ref="backgroundElement"></canvas>
+          <canvas id="foreground-canvas" ref="canvasElement"></canvas>
         </div>
 
         <div class="page-right">
