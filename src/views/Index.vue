@@ -1696,11 +1696,15 @@ const watchContextMenu = () => {
 
 const resetCanvas = (path) => {
 
-  clearCanvasElements(path);
-
   const canvas = CanvasManager.getCanvas(path);
 
   const {metadata: {width:imageWidth, height:imageHeight}} = canvas;
+
+  const foreground = {
+    width: imageWidth,
+    height: imageHeight,
+    elements: []
+  };
 
   const background = {
     width: imageWidth,
@@ -1715,6 +1719,8 @@ const resetCanvas = (path) => {
     ]
   };
 
+  canvas.foreground = JSON.stringify(foreground);
+
   canvas.background = JSON.stringify(background);
 
   if (path === CanvasManager.getSelectedPath()) {
@@ -1726,13 +1732,15 @@ const clearCanvasElements = (path) => {
 
   const canvas = CanvasManager.getCanvas(path);
 
-  const {metadata: {width:imageWidth, height:imageHeight}} = canvas;
+  let foreground = canvas.foreground;
 
-  const foreground = {
-    width: imageWidth,
-    height: imageHeight,
-    elements: []
-  };
+  if (!foreground) return
+
+  if (typeof foreground === 'string') {
+    foreground = JSON.parse(foreground);
+  }
+
+  foreground.elements = [];
 
   canvas.foreground = JSON.stringify(foreground);
 
@@ -1740,7 +1748,6 @@ const clearCanvasElements = (path) => {
     canvasEditor.clearCanvas();
     canvasEditor.renderAll()
   }
-
 }
 
 
