@@ -1699,34 +1699,50 @@ const resetCanvas = (path) => {
   clearCanvasElements(path);
 
   const canvas = CanvasManager.getCanvas(path);
-  const {metadata: {width, height}} = canvas;
-  let background = canvas.background;
-  let foreground = canvas.foreground;
 
-  if (background) {
-    if (typeof background === 'string') {
-      background = JSON.parse(background);
-    }
-    background.elements[0] = new Rect({width, height, meta: new BorderOptions()});
-    background.elements[1].y = background.elements[1].x = 0
-    background.width = width;
-    background.height = height;
-    canvas.background = JSON.stringify(background);
-  }
+  const {metadata: {width:imageWidth, height:imageHeight}} = canvas;
 
-  if (foreground) {
-    if (typeof foreground === 'string') {
-      foreground = JSON.parse(foreground);
-    }
-    foreground.width = width;
-    foreground.height = height;
-    canvas.foreground = JSON.stringify(foreground);
-  }
+  const background = {
+    width: imageWidth,
+    height: imageHeight,
+    elements: [
+      new Rect({imageWidth, imageHeight, meta: new BorderOptions()}),
+      new LazyImage(canvas.url, {
+        selectable: false,
+        cacheable: true,
+        meta: {...new PhotographOptions(), path: canvas.path}
+      })
+    ]
+  };
+
+  canvas.background = JSON.stringify(background);
 
   if (path === CanvasManager.getSelectedPath()) {
     renderCanvas(canvas)
   }
 }
+
+const clearCanvasElements = (path) => {
+
+  const canvas = CanvasManager.getCanvas(path);
+
+  const {metadata: {width:imageWidth, height:imageHeight}} = canvas;
+
+  const foreground = {
+    width: imageWidth,
+    height: imageHeight,
+    elements: []
+  };
+
+  canvas.foreground = JSON.stringify(foreground);
+
+  if (path === CanvasManager.getSelectedPath()) {
+    canvasEditor.clearCanvas();
+    canvasEditor.renderAll()
+  }
+
+}
+
 
 const clearCanvas = () => {
   canvasEditor.clearCanvas();
@@ -1734,25 +1750,6 @@ const clearCanvas = () => {
   canvasEditor.renderAll();
   backgroundCanvasEditor.renderAll();
   CanvasManager.setSelectedObject({path: '', previewElement: null})
-}
-
-const clearCanvasElements = (path) => {
-  const canvas = CanvasManager.getCanvas(path);
-  let foreground = canvas.foreground;
-
-  if (!foreground) return
-
-  if (typeof foreground === 'string') {
-    foreground = JSON.parse(foreground);
-  }
-
-  foreground.elements = [];
-  canvas.foreground = JSON.stringify(foreground);
-
-  if (path === CanvasManager.getSelectedPath()) {
-    canvasEditor.clearCanvas();
-    canvasEditor.renderAll()
-  }
 }
 
 
