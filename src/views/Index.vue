@@ -1213,9 +1213,9 @@ const templateSettings = ref({})
 const availableCanvas = shallowRef(new Map())
 
 const zoomOptions = {
-  minZoom: 0.05,
+  minZoom: 0.1,
   maxZoom: 5,
-  zoomStep: 0.1
+  zoomStep: 0.05
 }
 
 let canvasEditor = null;
@@ -2132,6 +2132,8 @@ const loadTextLabels = () => {
 }
 
 const renderCanvas = async (canvas) => {
+  canvasElement.value.classList.remove('scale-animation')
+  backgroundElement.value.classList.remove('scale-animation')
   if (!canvas.completed) {
     const image = await Image.fromURL(canvas.url, {
       selectable: false,
@@ -2189,7 +2191,10 @@ const renderCanvas = async (canvas) => {
       canvas.background = backgroundCanvasEditor.exportToObject()
     }
   }
+  canvasElement.value.classList.add('scale-animation')
+  backgroundElement.value.classList.add('scale-animation')
 }
+
 
 async function switchPreviewImage(event, canvas) {
   if (!event.ctrlKey && !event.shiftKey) {
@@ -3627,10 +3632,16 @@ onBeforeUnmount(() => {
           position: absolute;
           background-color: transparent;
           z-index: 1;
+          will-change: width, height;
+        }
+
+        .scale-animation {
+          transition: width 0.2s, height 0.2s;
         }
 
         #background-canvas {
           position: absolute;
+          will-change: width, height;
         }
 
       }
