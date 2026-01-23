@@ -79,6 +79,7 @@ class CanvasEditor {
      * 初始化编辑器
      */
     init() {
+
         //设置高质量渲染选项
         this.ctx.patternQuality = 'best';
         this.ctx.quality = 'best'
@@ -86,13 +87,11 @@ class CanvasEditor {
         this.ctx.imageSmoothingEnabled = true;
         this.ctx.imageSmoothingQuality = 'high'
 
+        this.setupCanvas();
+
         // 仅浏览器环境生效
         if (this.isBrowser) {
-            this.setupCanvas();
             this.canvas.addEventListener('mousedown', this.handleMouseDown);
-        } else {
-            this.canvas.width = this.width;
-            this.canvas.height = this.height;
         }
     }
 
@@ -101,17 +100,23 @@ class CanvasEditor {
      * 设置 Canvas 尺寸和缩放
      */
     setupCanvas() {
-
-        const dpr = window.devicePixelRatio || 1;
-
-        this.canvas.width = this.width * this.zoom * dpr;
-        this.canvas.height = this.height * this.zoom * dpr;
-
-        this.canvas.style.width = `${this.width * this.zoom}px`;
-        this.canvas.style.height = `${this.height * this.zoom}px`;
-
-        this.ctx.scale(dpr * this.zoom, dpr * this.zoom);
-
+        const dpr = this.isBrowser ? (window.devicePixelRatio || 1) : 1;
+        // 计算尺寸
+        const physicalWidth = this.width * this.zoom * dpr;
+        const physicalHeight = this.height * this.zoom * dpr;
+        // 设置物理尺寸
+        this.canvas.width = physicalWidth;
+        this.canvas.height = physicalHeight;
+        // 浏览器环境设置样式
+        if (this.isBrowser && this.canvas.style) {
+            const cssWidth = this.width * this.zoom;
+            const cssHeight = this.height * this.zoom;
+            this.canvas.style.width = `${cssWidth}px`;
+            this.canvas.style.height = `${cssHeight}px`;
+        }
+        // 重置并应用变换
+        this.ctx.setTransform(dpr * this.zoom, 0, 0, dpr * this.zoom, 0, 0);
+        // 清除画布
         this.ctx.clearRect(0, 0, this.width, this.height);
     }
 
@@ -157,7 +162,7 @@ class CanvasEditor {
         this.hiddenInput.style.overflow = 'hidden';
         this.hiddenInput.style.clip = 'rect(0, 0, 0, 0)';
 
-        // 添加到body
+        // 添加到 body
         document.body.appendChild(this.hiddenInput);
 
         // 添加事件监听
@@ -1016,12 +1021,7 @@ class CanvasEditor {
     resizeCanvas(width, height) {
         this.width = width;
         this.height = height;
-        if (this.isBrowser) {
-            this.setupCanvas()
-        } else {
-            this.canvas.width = this.width;
-            this.canvas.height = this.height;
-        }
+        this.setupCanvas()
     }
 
     /**
@@ -1050,6 +1050,7 @@ class CanvasEditor {
      */
     exportToObject() {
         return {
+            zoom: this.zoom,
             width: this.width,
             height: this.height,
             elements: this.elements
@@ -1064,8 +1065,9 @@ class CanvasEditor {
     async loadFromObject(object) {
         if (!object) return;
         try {
+            const {width, height, zoom, elements} = object;
+            this.zoom = zoom;
             this.clearCanvas();
-            const {width, height, elements} = object;
             this.resizeCanvas(width, height)
             this.elements = elements;
         } catch (e) {
@@ -1080,8 +1082,9 @@ class CanvasEditor {
      */
     async loadFromJSON(json) {
         try {
+            const {width, height, elements, zoom} = JSON.parse(json);
+            this.zoom = zoom;
             this.clearCanvas();
-            const {width, height, elements} = JSON.parse(json);
             this.resizeCanvas(width, height);
             for (let element of elements) {
                 if (element.type === 'text') {
@@ -1328,17 +1331,25 @@ class Text extends Element {
         // 字体颜色
         ctx.fillStyle = this.fontColor;
 
+        // 获取当前变换矩阵的缩放比例
+        const currentTransform = ctx.getTransform();
+        const scaleX = currentTransform.a; // 水平缩放
+        const scaleY = currentTransform.d; // 垂直缩放
+        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
+
         // 默认不透明黑色
         ctx.shadowColor = this.shadow.color;
         // 默认模糊 0 像素
-        ctx.shadowBlur = this.shadow.blur;
+        ctx.shadowBlur = this.shadow.blur * avgScale;
         // 默认X偏移
-        ctx.shadowOffsetX = this.shadow.offsetX;
+        ctx.shadowOffsetX = this.shadow.offsetX * avgScale;
         // 默认Y偏移
-        ctx.shadowOffsetY = this.shadow.offsetY;
+        ctx.shadowOffsetY = this.shadow.offsetY * avgScale;
 
         const metrics = ctx.measureText(this.text);
+
         this.#ascent = metrics.actualBoundingBoxAscent;
+
         this.#descent = metrics.actualBoundingBoxDescent;
 
         let {chars, height, width} = this.direction === 'vertical'
@@ -1575,10 +1586,6 @@ class Image extends Element {
         this.backdropSaturation = options.backdropSaturation || 1.0;  // 饱和度
         this.backdropOpacity = options.backdropOpacity || 0.3;  // 模糊层不透明度
 
-        // 缓存模糊效果的 canvas
-        this._backdropCache = null;
-        this._lastBackdropConfig = null;
-
         const {naturalWidth, naturalHeight} = image;
         const {width, height} = options;
 
@@ -1614,7 +1621,6 @@ class Image extends Element {
                 };
                 image.src = src;
                 image.crossOrigin = options.crossOrigin;
-
             } else {
                 const {loadImage} = require('@napi-rs/canvas')
                 loadImage(src).then(image => {
@@ -1674,12 +1680,18 @@ class Image extends Element {
         const {color: shadowColor, blur: shadowBlur, offsetX: shadowOffsetX, offsetY: shadowOffsetY} = this.shadow;
         const hasShadow = shadowColor && (shadowBlur > 0 || shadowOffsetX !== 0 || shadowOffsetY !== 0);
 
+        // 获取当前变换矩阵的缩放比例
+        const currentTransform = ctx.getTransform();
+        const scaleX = currentTransform.a; // 水平缩放
+        const scaleY = currentTransform.d; // 垂直缩放
+        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
+
         // 先绘制阴影（如果存在）
         if (hasShadow) {
             ctx.shadowColor = shadowColor;
-            ctx.shadowBlur = shadowBlur;
-            ctx.shadowOffsetX = shadowOffsetX;
-            ctx.shadowOffsetY = shadowOffsetY;
+            ctx.shadowBlur = shadowBlur * avgScale;
+            ctx.shadowOffsetX = shadowOffsetX * avgScale;
+            ctx.shadowOffsetY = shadowOffsetY * avgScale;
 
             this._createRoundedRectPath(ctx, x, y, width, height, radius);
             ctx.fillStyle = 'rgba(0,0,0,1)';
@@ -1702,7 +1714,7 @@ class Image extends Element {
         }
 
         if (this.backdropBlur) {
-            ctx.filter = `blur(${this.backdropBlur}px)`;
+            ctx.filter = `blur(${this.backdropBlur * avgScale}px)`;
         }
 
         // 创建圆角裁剪区域并绘制图像
@@ -1824,10 +1836,6 @@ class LazyImage extends Element {
         this.backdropSaturation = options.backdropSaturation || 1.0;  // 饱和度
         this.backdropOpacity = options.backdropOpacity || 0.3;  // 模糊层不透明度
 
-        // 缓存模糊效果的 canvas
-        this._backdropCache = null;
-        this._lastBackdropConfig = null;
-
     }
 
     load() {
@@ -1934,12 +1942,18 @@ class LazyImage extends Element {
         const {color: shadowColor, blur: shadowBlur, offsetX: shadowOffsetX, offsetY: shadowOffsetY} = this.shadow;
         const hasShadow = shadowColor && (shadowBlur > 0 || shadowOffsetX !== 0 || shadowOffsetY !== 0);
 
+        // 获取当前变换矩阵的缩放比例
+        const currentTransform = ctx.getTransform();
+        const scaleX = currentTransform.a; // 水平缩放
+        const scaleY = currentTransform.d; // 垂直缩放
+        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
+
         // 先绘制阴影（如果存在）
         if (hasShadow) {
             ctx.shadowColor = shadowColor;
-            ctx.shadowBlur = shadowBlur;
-            ctx.shadowOffsetX = shadowOffsetX;
-            ctx.shadowOffsetY = shadowOffsetY;
+            ctx.shadowBlur = shadowBlur * avgScale;
+            ctx.shadowOffsetX = shadowOffsetX * avgScale;
+            ctx.shadowOffsetY = shadowOffsetY * avgScale;
 
             this._createRoundedRectPath(ctx, x, y, width, height, radius);
             ctx.fillStyle = 'rgba(0,0,0,1)';
@@ -1962,7 +1976,7 @@ class LazyImage extends Element {
         }
 
         if (this.backdropBlur) {
-            ctx.filter = `blur(${this.backdropBlur}px)`;
+            ctx.filter = `blur(${this.backdropBlur * avgScale}px)`;
         }
 
         // 创建圆角裁剪区域并绘制图像

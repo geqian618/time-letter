@@ -1638,6 +1638,7 @@ const watchContextMenu = () => {
           }
         }
         selectedPreviewList.value.clear();
+        availableCanvas.value = CanvasManager.getAvailableCanvases(filterType.value)
       } else if (type === 1) {
         const paths = Array.from(selectedPreviewList.value.keys());
         const settings = paths.map((path, index) => {
@@ -1916,7 +1917,7 @@ const saveTemplates = async () => {
   saveTemplateForm.value.validate(async (valid, fields) => {
     if (valid) {
       const {initZoom, background, foreground} = CanvasManager.getCurrentCanvas();
-      const {width, height, elements} = foreground;
+      const {width, height, elements, zoom} = foreground;
       const items = []
       for (const element of elements) {
         const centerX = element.x + element.width / 2
@@ -1939,7 +1940,7 @@ const saveTemplates = async () => {
       templates.value.push({
         templateId: Date.now(),
         templateName: newTemplate.value.templateName,
-        settings: _.cloneDeep({background, foreground: {width, height, elements: items}})
+        settings: _.cloneDeep({background, foreground: {width, height, zoom, elements: items}})
       })
       StorageManager.saveTemplates(templates.value)
       newTemplate.value.templateName = ''
@@ -2057,13 +2058,22 @@ const useTemplate = async (settings, path) => {
     }
   }
 
+
   canvas.background = JSON.stringify(background)
   canvas.foreground = JSON.stringify(foreground)
   canvas.initZoom = initZoom;
   canvas.zoom = canvas.zoom || zoom;
   canvas.width = imageWidth;
   canvas.height = imageHeight;
-  canvas.completed = true;
+
+  if (!canvas.completed) {
+    // 计算滚动位置，使图形内容居中
+    const scrollLeft = (imageWidth - idealWidth) / 2;
+    const scrollTop = (imageHeight - idealHeight) / 2;
+    canvas.scrollLeft = Math.max(0, scrollLeft);
+    canvas.scrollTop = Math.max(0, scrollTop);
+    canvas.completed = true;
+  }
 
   if (CanvasManager.getSelectedPath() === path) {
     await renderCanvas(canvas);
@@ -2122,8 +2132,6 @@ const renderCanvas = async (canvas) => {
     canvasEditor.resizeCanvas(width, height);
     backgroundCanvasEditor.resizeCanvas(width, height);
     const {idealWidth, idealHeight} = previewContainer.value;
-    canvasWrapper.value.style.width = Math.max(width, idealWidth) + 'px'
-    canvasWrapper.value.style.height = Math.max(height, idealHeight) + 'px'
     const initScale = Math.min(idealHeight / height, idealWidth / width);
     const scale = initScale * projectSettings.value.others.defaultCanvasScale;
     canvasEditor.setZoom(scale)
@@ -2131,6 +2139,8 @@ const renderCanvas = async (canvas) => {
     backgroundCanvasEditor.addElement(background);
     backgroundCanvasEditor.addElement(image);
     backgroundCanvasEditor.renderAll()
+    canvasWrapper.value.style.width = Math.max(width, idealWidth) + 'px'
+    canvasWrapper.value.style.height = Math.max(height, idealHeight) + 'px'
     scrollBarMoveToCenter(canvas)
     borderOptions.value = background.meta
     photographOptions.value = image.meta
@@ -2143,18 +2153,18 @@ const renderCanvas = async (canvas) => {
     canvas.foreground = canvasEditor.exportToObject()
     canvas.background = backgroundCanvasEditor.exportToObject()
   } else {
-    const {foreground, background, zoom} = canvas;
+    const {foreground, background, zoom, metadata: {width: imageWidth, height: imageHeight}} = canvas;
     typeof foreground === 'string' ? await canvasEditor.loadFromJSON(foreground) : await canvasEditor.loadFromObject(foreground)
     typeof background === 'string' ? await backgroundCanvasEditor.loadFromJSON(background) : await backgroundCanvasEditor.loadFromObject(background)
     const {idealWidth, idealHeight} = previewContainer.value;
-    canvasWrapper.value.style.width = Math.max(background.width, idealWidth) + 'px'
-    canvasWrapper.value.style.height = Math.max(background.height, idealHeight) + 'px'
     // 设置缩放
     canvasEditor.setZoom(zoom);
     backgroundCanvasEditor.setZoom(zoom);
     backgroundCanvasEditor.renderAll();
     canvasEditor.renderAll();
-    updateScrollBarPosition(canvas)
+    canvasWrapper.value.style.width = Math.max(imageWidth, idealWidth) + 'px'
+    canvasWrapper.value.style.height = Math.max(imageHeight, idealHeight) + 'px'
+    updateScrollBar(canvas)
     const elements = backgroundCanvasEditor.getElements();
     borderOptions.value = elements[0].meta
     photographOptions.value = elements[1].meta
@@ -2202,7 +2212,7 @@ async function switchPreviewImage(event, canvas) {
   }
 }
 
-const updateScrollBarPosition = (canvas) => {
+const updateScrollBar = (canvas) => {
   // 设置滚动位置
   previewContainer.value.scrollLeft = canvas.scrollLeft;
   previewContainer.value.scrollTop = canvas.scrollTop;
@@ -2415,7 +2425,12 @@ const handleUpdatePhotograph = async () => {
   const elements = backgroundCanvasEditor.getElements();
   const image = elements[1];
   image.radius = borderRadius / initZoom;
-  image.shadow = {...shadow, blur: shadow.blur / initZoom};
+  image.shadow = {
+    ...shadow,
+    blur: shadow.blur / initZoom,
+    offsetX: shadow.offsetX / initZoom,
+    offsetY: shadow.offsetY / initZoom
+  };
   backgroundCanvasEditor.renderAll();
   currentCanvas.background = backgroundCanvasEditor.exportToObject()
 }

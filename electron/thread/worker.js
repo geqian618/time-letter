@@ -31,9 +31,9 @@ module.exports = async (params) => {
 
     const outputPath = path.join(outputDirectory, filename + "." + outputExtname)
 
-    const data = JSON.parse(json);
+    const settings = JSON.parse(json);
 
-    const {elements, width: originalWidth, height: originalHeight} = data
+    const {elements, width: originalWidth, height: originalHeight} = settings
 
     for (let element of elements) {
         if (element.type === 'image') {
@@ -41,33 +41,23 @@ module.exports = async (params) => {
         }
     }
 
-    let targetCanvas = createCanvas(1000, 1000);
-    const canvasEditor = new CanvasEditor(targetCanvas);
-    await canvasEditor.loadFromJSON(JSON.stringify(data))
-    canvasEditor.renderAll()
-
-    if (type !== 0) {
-        let scaleWidth, scaleHeight, scale;
-        if (type === 1) {
-            scale = width / originalWidth;
-            scaleWidth = width;
-            scaleHeight = originalHeight * scale
-        }
-        if (type === 2) {
-            scale = height / originalHeight;
-            scaleHeight = height;
-            scaleWidth = originalWidth * scale
-        }
-        const scaledCanvas = createCanvas(scaleWidth, scaleHeight);
-        const scaledCtx = scaledCanvas.getContext('2d');
-        scaledCtx.drawImage(targetCanvas, 0, 0, scaleWidth, scaleHeight);
-        targetCanvas = scaledCanvas;
+    if (type === 0) {
+        settings.zoom = 1
+    } else if (type === 1) {
+        settings.zoom = width / originalWidth
+    } else if (type === 2) {
+        settings.zoom = height / originalHeight
     }
+
+    const canvas = createCanvas(originalWidth, originalHeight);
+    const canvasEditor = new CanvasEditor(canvas);
+    await canvasEditor.loadFromJSON(JSON.stringify(settings))
+    canvasEditor.renderAll()
 
     // 7. 保存图片 (使用 Buffer 写入)
     let buffer = outputExtname === 'png'
-        ? targetCanvas.toBuffer('image/png')
-        : targetCanvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 100 : quality);
+        ? canvas.toBuffer('image/png')
+        : canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 100 : quality);
 
     if (['jpeg', 'jpg'].includes(originalExtname) && ['jpeg', 'jpg'].includes(outputExtname) && isSynchronizeMetadata) {
         buffer = await copyExifDataToBuffer(filePath, buffer)
