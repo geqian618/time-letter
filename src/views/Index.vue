@@ -1213,9 +1213,9 @@ const templateSettings = ref({})
 const availableCanvas = shallowRef(new Map())
 
 const zoomOptions = {
-  minZoom: 0.01,
+  minZoom: 0.05,
   maxZoom: 5,
-  zoomStep: 0.01
+  zoomStep: 0.1
 }
 
 let canvasEditor = null;
@@ -1702,7 +1702,7 @@ const resetCanvas = (path) => {
 
   const canvas = CanvasManager.getCanvas(path);
 
-  const {metadata: {width:imageWidth, height:imageHeight}} = canvas;
+  const {metadata: {width: imageWidth, height: imageHeight}} = canvas;
 
   const foreground = {
     width: imageWidth,
@@ -1851,11 +1851,16 @@ watch(() => imageOptions.value, async (newVal, oldValue) => {
 
 
 const handleCanvasScale = () => {
-  const zoom = projectSettings.value.others.defaultCanvasScale;
+  const defaultCanvasScale = projectSettings.value.others.defaultCanvasScale;
   const canvases = CanvasManager.getCanvases();
   canvases.forEach(canvas => {
     if (canvas.completed) {
-      setZoom(canvas, zoom)
+      const newZoom = defaultCanvasScale * canvas.initZoom;
+      canvas.zoom = newZoom;
+      if (canvas.path === CanvasManager.getSelectedPath()) {
+        canvasEditor.setZoom(newZoom);
+        backgroundCanvasEditor.setZoom(newZoom);
+      }
     }
   })
 }
@@ -2187,7 +2192,6 @@ const renderCanvas = async (canvas) => {
 }
 
 async function switchPreviewImage(event, canvas) {
-
   if (!event.ctrlKey && !event.shiftKey) {
     if (!selectedPreviewList.value.has(canvas.path)) {
       // 清空选中元素
@@ -3290,10 +3294,11 @@ const handleCanvasResize = (event) => {
   const direction = event.deltaY < 0 ? 'in' : 'out';
   const canvas = CanvasManager.getCurrentCanvas();
   if (!canvas) return
+  const initZoom = canvas.initZoom;
   const zoom = canvasEditor.getZoom();
   const {zoomStep, maxZoom, minZoom} = zoomOptions;
-  let newZoom = direction === 'in' ? zoom + zoomStep : zoom - zoomStep;
-  newZoom = Math.min(Math.max(minZoom, newZoom), maxZoom);
+  let newZoom = direction === 'in' ? zoom + initZoom * zoomStep : zoom - initZoom * zoomStep;
+  newZoom = Math.min(Math.max(minZoom * initZoom, newZoom), maxZoom * initZoom);
   canvas.zoom = newZoom
   canvasEditor.setZoom(newZoom)
   backgroundCanvasEditor.setZoom(newZoom)
@@ -3312,7 +3317,6 @@ const handleDragMoveCanvas = (event) => {
     const maxScrollTop = Math.max(0, scrollHeight - clientHeight);
     const startX = event.clientX;
     const startY = event.clientY;
-
     const handleMousemove = function (event) {
       // 取消拖拽模式，不更改滚动条位置
       if (!isCanvasDraggingMode) return
