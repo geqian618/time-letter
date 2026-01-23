@@ -1659,16 +1659,21 @@ const watchContextMenu = () => {
             };
             return {filePath: path, index, json: JSON.stringify(background)}
           }
-          let {background, foreground} = canvas;
+
+          let {background, foreground} = _.cloneDeep(canvas);
+
           if (typeof background === 'string') {
             background = JSON.parse(background)
           }
+
           if (typeof foreground === 'string') {
             foreground = JSON.parse(foreground)
           }
+
           for (let element of foreground.elements) {
             background.elements.push(element);
           }
+
           return {filePath: path, index, json: JSON.stringify(background)}
         });
         window.electronAPI.requestExportFiles(_.cloneDeep({
