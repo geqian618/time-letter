@@ -1263,9 +1263,9 @@ const previewList = ref(null);
 
 const menuRef = ref(null)
 
-const templateRef = ref()
+const templateRef = ref(null)
 
-const textLabelRef = ref()
+const textLabelRef = ref(null)
 
 const textMarks = ref(null)
 
