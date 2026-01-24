@@ -1983,6 +1983,10 @@ class LazyImage extends Element {
             ctx.filter = `blur(${this.backdropBlur * avgScale}px)`;
         }
 
+        // 在设置 filter 之后，重新设置图像平滑质量
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
         // 创建圆角裁剪区域并绘制图像
         this._createRoundedRectPath(ctx, x, y, width, height, radius);
 
