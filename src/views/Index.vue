@@ -1178,7 +1178,6 @@ import {projectSettings, outputSizeOptions, originalMetadata, downloadThreadsOpt
 
 import {
   TextLabel,
-  BorderSettings,
   Metadata,
   ImageSettings,
   TextSettings,
@@ -1187,7 +1186,6 @@ import {
   BorderOptions,
   FontSettings,
   PhotographOptions,
-  PhotographSettings
 } from '@/object/Configuration'
 
 import {Canvas} from '@/object/Canvas'
@@ -1221,8 +1219,6 @@ const zoomOptions = {
 let canvasEditor = null;
 
 let backgroundCanvasEditor = null;
-
-let clickTimeout = null;
 
 let scrollTimeout = null;
 
@@ -1311,10 +1307,7 @@ const saveTemplateForm = ref({});
 
 const textLabelForm = ref({});
 
-const renameTemplateForm = ref()
-
-let pendingAnimationFrame = null;
-
+const renameTemplateForm = ref(null)
 
 const saveTemplateRules = {
   templateName: [
