@@ -3636,7 +3636,7 @@ onBeforeUnmount(() => {
         }
 
         .scale-animation {
-          transition: width 0.2s, height 0.2s;
+          transition: width 0.1s, height 0.1s;
         }
 
         #background-canvas {
