@@ -1032,7 +1032,6 @@
               <div class="option">
                 <span class="label">线程数：</span>
                 <el-select class="value"
-                           @change="createThreadPool"
                            v-model="projectSettings.performance.downloadThreads"
                            size="small">
                   <el-option
@@ -1472,11 +1471,6 @@ const watchImportImages = () => {
       }
     }
   });
-}
-
-const createThreadPool = () => {
-  const maxThreads = projectSettings.value.performance.downloadThreads;
-  window.electronAPI.createThreadPool(maxThreads)
 }
 
 const triggerContextMenu = (e) => {
@@ -2914,7 +2908,6 @@ const bindEventListener = () => {
 }
 
 onMounted(() => {
-  createThreadPool()
   loadTemplates()
   loadTextLabels()
   watchImportImages()
