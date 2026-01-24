@@ -1950,12 +1950,17 @@ const saveTemplates = async () => {
         }
         items.push(item)
       }
-      templates.value.push({
+
+      const newTemplates = [...templates.value, {
         templateId: Date.now(),
         templateName: newTemplate.value.templateName,
         settings: _.cloneDeep({background, foreground: {width, height, zoom, elements: items}})
-      })
-      StorageManager.saveTemplates(templates.value)
+      }]
+
+      templates.value = []
+      await nextTick();
+      templates.value = newTemplates;
+      StorageManager.saveTemplates(newTemplates)
       newTemplate.value.templateName = ''
       saveTemplateDialogVisible.value = false
     }
