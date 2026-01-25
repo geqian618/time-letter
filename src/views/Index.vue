@@ -2102,7 +2102,7 @@ const getText = (meta) => {
         if (metadata) {
           content = metadata[expression];
           const format = projectSettings.value.metadata.formats[expression];
-          if (format) {
+          if (content && format) {
             content = format.replace('${' + expression + '}', content);
           }
         }
