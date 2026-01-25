@@ -729,12 +729,12 @@ class CanvasEditor {
      */
     handleEditText(params) {
         const {event, element} = params;
-        const {offsetX: x, offsetY: y} = event;
+        const {x, y} = this.getCanvasPosition(event);
         if (element && element.editable) {
             this.clearActiveElements()
             if (this.isEditing && this.editingText !== element) {
                 this.finishEditing()
-                return
+                return;
             }
             // 计算点击位置对应的光标索引
             const index = this.getCursorIndexFromText(element, x, y);
@@ -769,59 +769,70 @@ class CanvasEditor {
      * @param event
      */
     handleMouseDown(event) {
+        if (event.button !== 0) return;
         const startTime = Date.now();
         const {x: startX, y: startY} = this.getCanvasPosition(event);
         const element = this.getElementAt(startX, startY, element => element.selectable);
+
         if (!element) {
-            this.handleCancelActive()
-            return
+            this.handleCancelActive();
+            return;
         }
-        let beforeMoveX = startX;
-        let beforeMoveY = startY
+
+        let lastMoveX = startX;
+        let lastMoveY = startY;
+
         const handleMousemove = (e) => {
             const interval = Date.now() - startTime;
             const {x: moveX, y: moveY} = this.getCanvasPosition(e);
             if (interval > 200 && (startX !== moveX || startY !== moveY)) {
                 if (element.type === 'text' && element.status === Element.EDITING) {
-                    // 选中文本
                     this.cursorEnd = this.getCursorIndexFromText(element, moveX, moveY);
                     if (this.cursorEnd !== this.cursorStart) {
-                        this.updateInputSelection()
-                        this.renderAll()
+                        this.updateInputSelection();
+                        this.renderAll();
                     }
                 } else if (element.draggable) {
-                    this.removeActiveElement(element)
+                    this.removeActiveElement(element);
                     this.canvas.style.cursor = 'move';
-                    element.x += moveX - beforeMoveX;
-                    element.y += moveY - beforeMoveY;
-                    element.centerX += moveX - beforeMoveX
-                    element.centerY += moveY - beforeMoveY
-                    beforeMoveX = moveX;
-                    beforeMoveY = moveY
+                    element.x += moveX - lastMoveX;
+                    element.y += moveY - lastMoveY;
+                    element.centerX += moveX - lastMoveX;
+                    element.centerY += moveY - lastMoveY;
+                    lastMoveX = moveX;
+                    lastMoveY = moveY;
+
                     const callbacks = this.eventCallbacks.get(MOVE_OBJECT);
                     if (callbacks && callbacks.size) {
-                        callbacks.forEach(callback => callback({x: moveX, y: moveY, target: element}))
+                        callbacks.forEach(callback => callback({x: moveX, y: moveY, target: element}));
                     }
-                    this.renderAll()
+                    this.renderAll();
                 }
             }
-        }
+        };
+
         const handleMouseup = (e) => {
-            const {x: endX, y: endY} = this.getCanvasPosition(e);
-            if (startX === endX && startY === endY) {
-                if (element.type === 'text' && (element.status === Element.SELECTED || element.status === Element.EDITING)) {
-                    this.handleEditText({event, element})
-                } else {
-                    this.editingText && this.finishEditing()
-                    this.handleActiveElement({x: endX, y: endY, target: element})
+            // 如果是左键抬起，执行点击逻辑
+            if (e.button === 0) {
+                const {x: endX, y: endY} = this.getCanvasPosition(e);
+                if (startX === endX && startY === endY) {
+                    if (element.type === 'text' && (element.status === Element.SELECTED || element.status === Element.EDITING)) {
+                        this.handleEditText({event: e, element});
+                    } else {
+                        this.editingText && this.finishEditing();
+                        this.handleActiveElement({x: endX, y: endY, target: element});
+                    }
                 }
             }
-            !this.isEditing && (this.canvas.style.cursor = '');
-            this.canvas.removeEventListener('mousemove', handleMousemove)
-            document.removeEventListener('mouseup', handleMouseup)
-        }
-        this.canvas.addEventListener('mousemove', handleMousemove)
-        document.addEventListener('mouseup', handleMouseup)
+            if (!this.isEditing) {
+                this.canvas.style.cursor = ''
+            }
+            this.canvas.removeEventListener('mousemove', handleMousemove);
+            document.removeEventListener('mouseup', handleMouseup);
+        };
+
+        this.canvas.addEventListener('mousemove', handleMousemove);
+        document.addEventListener('mouseup', handleMouseup, true);
     }
 
     handleActiveElement(event) {
