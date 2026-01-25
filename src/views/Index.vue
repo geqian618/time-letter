@@ -1782,15 +1782,24 @@ watch(textOptions, async (newVal, oldValue) => {
   const activeElements = canvasEditor.getActiveElements();
   if (!canvas || !activeElements.length) return
   const initZoom = canvas.initZoom;
-  const element = _.cloneDeep(newVal);
-  element.fontSize = element.fontSize / initZoom
-  element.spacing = element.spacing / initZoom
-  element.shadow.offsetX = element.shadow.offsetX / initZoom
-  element.shadow.offsetY = element.shadow.offsetY / initZoom
-  element.shadow.blur = element.shadow.blur / initZoom
-  canvasEditor.updateElement(element)
+  const {direction, fontFamily, fontSize, fontStyle, fontWeight, fontColor, angle, shadow, spacing, zIndex} = newVal;
+  for (const activeElement of activeElements) {
+    if (activeElement.type !== 'text') continue;
+    activeElement.direction = direction;
+    activeElement.fontFamily = fontFamily;
+    activeElement.fontStyle = fontStyle;
+    activeElement.fontWeight = fontWeight;
+    activeElement.fontColor = fontColor;
+    activeElement.angle = angle;
+    activeElement.zIndex = zIndex;
+    activeElement.fontSize = fontSize / initZoom
+    activeElement.spacing = spacing / initZoom
+    activeElement.shadow.offsetX = shadow.offsetX / initZoom
+    activeElement.shadow.offsetY = shadow.offsetY / initZoom
+    activeElement.shadow.blur = shadow.blur / initZoom
+    activeElement.shadow.color = shadow.color
+  }
   canvasEditor.renderAll()
-  canvas.zoom = canvasEditor.getZoom()
   canvas.foreground = canvasEditor.exportToObject()
 }, {
   deep: true,
@@ -1803,13 +1812,19 @@ watch(() => imageOptions.value, async (newVal, oldValue) => {
   const activeElements = canvasEditor.getActiveElements();
   if (!canvas || !activeElements.length) return
   const initZoom = canvas.initZoom;
-  const element = _.cloneDeep(newVal);
-  element.shadow.offsetX = element.shadow.offsetX / initZoom
-  element.shadow.offsetY = element.shadow.offsetY / initZoom
-  element.shadow.blur = element.shadow.blur / initZoom
-  canvasEditor.updateElement(element)
+  const {scale, angle, zIndex, alpha, shadow} = newVal;
+  for (const activeElement of activeElements) {
+    if (activeElement.type !== 'image') continue;
+    activeElement.scale = scale;
+    activeElement.angle = angle;
+    activeElement.zIndex = zIndex;
+    activeElement.alpha = alpha;
+    activeElement.shadow.offsetX = shadow.offsetX / initZoom
+    activeElement.shadow.offsetY = shadow.offsetY / initZoom
+    activeElement.shadow.blur = shadow.blur / initZoom
+    activeElement.shadow.color = shadow.color;
+  }
   canvasEditor.renderAll()
-  canvas.zoom = canvasEditor.getZoom()
   canvas.foreground = canvasEditor.exportToObject()
 }, {
   //深度监视（监视属性变化）
