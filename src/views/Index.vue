@@ -2243,12 +2243,13 @@ const initCanvasSize = () => {
       const target = event.target;
       const {x, y, ...element} = _.cloneDeep(target);
       if (target.type === 'text') {
-        const {fontSize, spacing, shadow: {offsetX, offsetY, blur}} = element;
+        const {fontSize, spacing, order, shadow: {offsetX, offsetY, blur}} = element;
         element.fontSize = Number.parseInt(fontSize * initZoom)
         element.spacing = Number.parseInt(spacing * initZoom)
         element.shadow.offsetX = Number.parseInt(offsetX * initZoom)
         element.shadow.offsetY = Number.parseInt(offsetY * initZoom)
         element.shadow.blur = Number.parseInt(blur * initZoom)
+        element.zIndex = order
         textOptions.value = element
         if (projectSettings.value.others.optionAnchorPoint) {
           handleOpenSubMenu('3')
@@ -2257,10 +2258,11 @@ const initCanvasSize = () => {
           })
         }
       } else if (target.type === 'image') {
-        const {shadow: {offsetX, offsetY, blur}} = element;
+        const {order, shadow: {offsetX, offsetY, blur}} = element;
         element.shadow.offsetX = Number.parseInt(offsetX * initZoom)
         element.shadow.offsetY = Number.parseInt(offsetY * initZoom)
         element.shadow.blur = Number.parseInt(blur * initZoom)
+        element.zIndex = order
         imageOptions.value = element
         if (projectSettings.value.others.optionAnchorPoint) {
           handleOpenSubMenu('4')
