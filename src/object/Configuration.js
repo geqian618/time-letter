@@ -148,8 +148,6 @@ export class FontSettings {
         this.familyAlias = '';
         this.url = '';
         this.path = '';
-        this.offsetX = 0;
-        this.offsetY = 0;
         this.editable = false;
     }
 }

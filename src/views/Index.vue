@@ -1058,28 +1058,6 @@
                 <div v-show="!scope.row.editable">{{ scope.row.familyAlias }}</div>
               </template>
             </el-table-column>
-            <el-table-column prop="tips" label="X轴偏移量" show-overflow-tooltip>
-              <template #default="scope">
-                <input type="number"
-                       @focusout="handleStopActivateInput(scope.row)"
-                       v-show="scope.row.editable"
-                       style="height: 100%;width: 60px;background-color: transparent;outline: none;border: none"
-                       v-model="scope.row.offsetX"
-                       :step="0.01">
-                <div v-show="!scope.row.editable">{{ scope.row.offsetX }}</div>
-              </template>
-            </el-table-column>
-            <el-table-column prop="content" label="Y轴偏移量" show-overflow-tooltip>
-              <template #default="scope">
-                <input type="number"
-                       @focusout="handleStopActivateInput(scope.row)"
-                       v-show="scope.row.editable"
-                       style="height: 100%;width: 60px;background-color: transparent;outline: none;border: none"
-                       v-model="scope.row.offsetY"
-                       :step="0.01">
-                <div v-show="!scope.row.editable">{{ scope.row.offsetY }}</div>
-              </template>
-            </el-table-column>
           </el-table>
         </el-tab-pane>
         <el-tab-pane label="其他">
@@ -1157,13 +1135,13 @@
 
 <script setup lang="js">
 
-import {nextTick, onBeforeUnmount, onMounted, shallowRef, ref, watch, computed} from "vue";
+import {nextTick, onBeforeUnmount, onMounted, shallowRef, ref, toRaw, watch, computed} from "vue";
 
 import {CanvasEditor, Image, LazyImage, Rect} from '@/canvas/CanvasEditor'
 
 import {useThrottle} from '@/utils/throttle'
 
-import FontLoader from '@/utils/FontLoader'
+import FontManager from '@/utils/FontManager'
 
 import _ from 'lodash';
 
@@ -1414,7 +1392,7 @@ const watchImportFonts = () => {
           if (font.url) {
             try {
               // 加载字体
-              FontLoader.loadFont(family, font.url)
+              FontManager.loadFont(family, font.url)
               if (type === 0) {
                 setTimeout(() => {
                   Notification.success(`字体 ${family} 加载成功`, '提示')
@@ -1430,11 +1408,13 @@ const watchImportFonts = () => {
             fontSettings.family = family
             fontSettings.familyAlias = family
             projectSettings.value.availableFonts.set(family, {...fontSettings, ...font});
+            StorageManager.saveProjectSettings(projectSettings.value)
           }
         }
       } else if (type === 1) {
         const family = data.family;
         projectSettings.value.availableFonts.delete(family)
+        StorageManager.saveProjectSettings(projectSettings.value)
       }
     }
   })
