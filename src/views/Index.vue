@@ -1791,7 +1791,7 @@ watch(textOptions, async (newVal, oldValue) => {
       activeElement.fontWeight = fontWeight;
       activeElement.fontColor = fontColor;
       activeElement.angle = angle;
-      activeElement.zIndex = zIndex;
+      activeElement.order = zIndex;
       activeElement.fontSize = fontSize / initZoom
       activeElement.spacing = spacing / initZoom
       activeElement.shadow.offsetX = shadow.offsetX / initZoom
@@ -1818,7 +1818,7 @@ watch(() => imageOptions.value, async (newVal, oldValue) => {
     if (activeElement.type === 'image') {
       activeElement.scale = scale;
       activeElement.angle = angle;
-      activeElement.zIndex = zIndex;
+      activeElement.order = zIndex;
       activeElement.alpha = alpha;
       activeElement.shadow.offsetX = shadow.offsetX / initZoom
       activeElement.shadow.offsetY = shadow.offsetY / initZoom
@@ -2271,8 +2271,8 @@ const initCanvasSize = () => {
       }
     })
 
-    canvasEditor.on('updated:object', (event) => {
-
+    canvasEditor.on('update:object', (event) => {
+      // console.log('修改元素', event)
     })
 
     canvasEditor.on('move:object', (event) => {
@@ -2282,7 +2282,7 @@ const initCanvasSize = () => {
     })
 
     canvasEditor.on('add:object', (event) => {
-      console.log('添加元素', event)
+      // console.log('添加元素', event)
     })
 
   }, 1000)
@@ -2491,8 +2491,13 @@ const handleUpdateBorders = async () => {
     background.backdropBlur = borderBlur;
   }
   currentCanvas.background = backgroundCanvasEditor.exportToObject()
+  canvasElement.value.classList.remove('scale-animation')
+  backgroundElement.value.classList.remove('scale-animation')
+  await nextTick();
   backgroundCanvasEditor.renderAll()
   canvasEditor.renderAll()
+  canvasElement.value.classList.add('scale-animation')
+  backgroundElement.value.classList.add('scale-animation')
 }
 
 

@@ -4,6 +4,8 @@ const MOVE_OBJECT = 'move:object'
 
 const ADD_OBJECT = 'add:object'
 
+const UPDATE_OBJECT = 'update:object'
+
 
 /**
  * Canvas 文本编辑器类
@@ -93,6 +95,8 @@ class CanvasEditor {
         if (this.isBrowser) {
             this.canvas.addEventListener('mousedown', this.handleMouseDown);
         }
+
+        this.resetElements([]);
     }
 
 
@@ -127,12 +131,12 @@ class CanvasEditor {
      * @param callback
      */
     on(event, callback) {
-        let events = this.eventCallbacks.get(event);
-        if (!events) {
-            events = new Set();
-            this.eventCallbacks.set(event, events);
+        let callbacks = this.eventCallbacks.get(event);
+        if (!callbacks) {
+            callbacks = new Set();
+            this.eventCallbacks.set(event, callbacks);
         }
-        events.add(callback);
+        callbacks.add(callback);
     }
 
 
@@ -284,7 +288,7 @@ class CanvasEditor {
         // 获取要删除的id集合
         const targets = new Set(elementArray.map(element => element.id));
         // 过滤掉匹配id的元素
-        this.elements = this.elements.filter(element => !targets.has(element.id));
+        this.resetElements(this.elements.filter(element => !targets.has(element.id)))
         // 同时删除激活元素
         this.activeElements = this.activeElements.filter(element => !targets.has(element.id));
     }
@@ -294,8 +298,32 @@ class CanvasEditor {
      * 移除全部元素
      */
     clearElements() {
-        this.elements = [];
+        this.resetElements([])
         this.activeElements = [];
+    }
+
+
+    /**
+     * 重置元素
+     */
+    resetElements(array) {
+        if (!this.isBrowser) {
+            this.elements = array;
+            return;
+        }
+        this.elements = new ReactiveObserver(array, (value) => {
+            const {target, property} = value;
+            if (['chars', 'ascent', 'descent', 'centerX', 'centerY', 'status'].includes(property)) return;
+            const callbacks = this.eventCallbacks.get(UPDATE_OBJECT);
+            if (callbacks && callbacks.size) {
+                callbacks.forEach(callback => callback(target))
+            }
+            if (property === 'order') {
+                this.elements.sort((a, b) => a.order - b.order);
+            }
+        }, {
+            deep: true
+        })
     }
 
 
@@ -375,7 +403,7 @@ class CanvasEditor {
      */
     clearCanvas() {
         this.isEditing && this.finishEditing();
-        this.elements = [];
+        this.resetElements([])
         this.activeElements = [];
         // 清除画布
         this.ctx.clearRect(0, 0, this.width, this.height);
@@ -1187,6 +1215,8 @@ class Element {
 
         this.status = 'none'
 
+        this.order = options.order || 0;
+
         // 是否可选中
         this.selectable = options.selectable !== undefined ? options.selectable : true;
 
@@ -1268,6 +1298,15 @@ class Text extends Element {
         return this.#descent;
     }
 
+    set ascent(value) {
+        this.#ascent = value;
+    }
+
+
+    set descent(value) {
+        this.#descent = value;
+    }
+
 
     // 外部可访问
     get width() {
@@ -1277,6 +1316,16 @@ class Text extends Element {
     // 外部可访问
     get height() {
         return this.#height;
+    }
+
+
+    set width(value) {
+        this.#width = value;
+    }
+
+
+    set height(value) {
+        this.#height = value;
     }
 
 
@@ -1305,6 +1354,11 @@ class Text extends Element {
         return this.#chars;
     }
 
+
+    // 外部可访问
+    set chars(value) {
+        this.#chars = value;
+    }
 
     contains(x, y) {
 
@@ -1359,9 +1413,9 @@ class Text extends Element {
 
         const metrics = ctx.measureText(this.text);
 
-        this.#ascent = metrics.actualBoundingBoxAscent;
+        this.ascent = metrics.actualBoundingBoxAscent;
 
-        this.#descent = metrics.actualBoundingBoxDescent;
+        this.descent = metrics.actualBoundingBoxDescent;
 
         let {chars, height, width} = this.direction === 'vertical'
             ? this.parseVerticalChars(ctx)
@@ -1369,8 +1423,8 @@ class Text extends Element {
 
         if (!this.centerX || !this.centerY || this.angle === 0) {
             // 计算文本中心点
-            this.#centerX = this.x + width / 2;
-            this.#centerY = this.y + height / 2;
+            this.centerX = this.x + width / 2;
+            this.centerY = this.y + height / 2;
         }
 
         if (this.angle !== 0) {
@@ -1392,9 +1446,9 @@ class Text extends Element {
             ctx.fillText(char.char, char.x, char.y);
         }
 
-        this.#width = width || (this.direction === 'horizontal' ? this.fontSize / 10 : this.fontSize)
-        this.#height = height || (this.direction === 'horizontal' ? this.fontSize : this.fontSize / 10)
-        this.#chars = chars;
+        this.width = width || (this.direction === 'horizontal' ? this.fontSize / 10 : this.fontSize)
+        this.height = height || (this.direction === 'horizontal' ? this.fontSize : this.fontSize / 10)
+        this.chars = chars;
 
         ctx.restore();
     }
@@ -2216,4 +2270,263 @@ class Rect extends Element {
     }
 }
 
-export {CanvasEditor, Text, EditableText, Image, Rect, LazyImage};
+
+class ReactiveObserver {
+    /**
+     *
+     * @param target
+     * @param callback
+     * @param options ① deep 深度监听  ② shouldProxy 代理条件函数
+     * @returns {*}
+     */
+    constructor(target, callback, options = {}) {
+        this.callback = callback;
+        this.proxyToRaw = new WeakMap();
+        this.rawToProxy = new WeakMap();
+        this.deep = options.deep === true;
+        this.shouldProxy = options.shouldProxy || this.defaultShouldProxy.bind(this);
+
+        // 创建代理并返回
+        const proxy = this.createProxy(target);
+
+        // 保存根代理
+        this.rootProxy = proxy;
+
+        return proxy;
+    }
+
+    // 深度比较两个值是否相等
+    deepEqual(a, b) {
+        if (a === b) return true;
+        if (Number.isNaN(a) && Number.isNaN(b)) return true;
+        if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) {
+            return false;
+        }
+        if (Object.prototype.toString.call(a) !== Object.prototype.toString.call(b)) {
+            return false;
+        }
+        if (Array.isArray(a)) {
+            if (a.length !== b.length) return false;
+            for (let i = 0; i < a.length; i++) {
+                if (!this.deepEqual(a[i], b[i])) return false;
+            }
+            return true;
+        }
+        const keysA = Object.keys(a);
+        const keysB = Object.keys(b);
+        if (keysA.length !== keysB.length) return false;
+        for (const key of keysA) {
+            if (!keysB.includes(key) || !this.deepEqual(a[key], b[key])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // 默认的代理检查函数
+    defaultShouldProxy(value) {
+        if (!value || typeof value !== 'object') {
+            return false;
+        }
+        const type = Object.prototype.toString.call(value).slice(8, -1);
+        const excludedTypes = [
+            'HTMLImageElement',
+            'HTMLCanvasElement',
+            'HTMLVideoElement',
+            'HTMLAudioElement',
+            'File',
+            'Blob',
+            'Image',
+            'ImageData',
+            'ImageBitmap',
+            'OffscreenCanvas',
+            'CanvasRenderingContext2D',
+            'WebGLRenderingContext',
+            'Date',
+            'RegExp',
+            'Error',
+            'Promise',
+            'Map',
+            'Set',
+            'WeakMap',
+            'WeakSet',
+            'ArrayBuffer',
+            'DataView',
+            'Int8Array',
+            'Uint8Array',
+            'Uint8ClampedArray',
+            'Int16Array',
+            'Uint16Array',
+            'Int32Array',
+            'Uint32Array',
+            'Float32Array',
+            'Float64Array'
+        ];
+        if (excludedTypes.includes(type)) {
+            return false;
+        }
+        if (value.nodeType !== undefined) {
+            return false;
+        }
+        return type === 'Object' || type === 'Array';
+    }
+
+    createProxy(target) {
+        // 如果传入的是代理，尝试获取原始对象
+        let rawTarget = target;
+        if (this.proxyToRaw.has(target)) {
+            rawTarget = this.proxyToRaw.get(target);
+        }
+
+        // 如果原始对象已经有代理，返回代理
+        if (this.rawToProxy.has(rawTarget)) {
+            return this.rawToProxy.get(rawTarget);
+        }
+
+        // 检查是否需要代理这个对象
+        if (!this.shouldProxy(rawTarget)) {
+            return target; // 直接返回原对象，不创建代理
+        }
+
+        const handler = {
+            get: (obj, prop) => {
+                const value = obj[prop];
+                // 只在开启深度代理时，对需要代理的对象递归创建代理
+                if (this.deep && value && typeof value === 'object') {
+                    // 使用shouldProxy检查是否需要代理
+                    if (this.shouldProxy(value)) {
+                        return this.createProxy(value);
+                    }
+                }
+                return value;
+            },
+
+            set: (obj, prop, value) => {
+                const oldValue = obj[prop];
+
+                // 检查新旧值是否相等
+                const isEqual = this.deepEqual(oldValue, value);
+
+                // 只有在值实际改变时才更新和触发回调
+                if (!isEqual) {
+                    // 只在开启深度代理时，对新值是对象/数组进行代理
+                    if (this.deep && value && typeof value === 'object') {
+                        // 使用shouldProxy检查是否需要代理
+                        if (this.shouldProxy(value)) {
+                            obj[prop] = this.createProxy(value);
+                        } else {
+                            obj[prop] = value;
+                        }
+                    } else {
+                        obj[prop] = value;
+                    }
+
+                    // 触发回调，添加根对象属性
+                    const proxy = this.rawToProxy.get(obj);
+                    this.callback({
+                        target: proxy || obj, // 优先使用代理对象
+                        root: this.rootProxy, // 添加根代理对象
+                        property: prop,
+                        oldValue,
+                        newValue: value,
+                        type: 'set'
+                    });
+                }
+                return true;
+            },
+
+            deleteProperty: (obj, prop) => {
+                const oldValue = obj[prop];
+                const success = delete obj[prop];
+                if (success) {
+                    // 触发回调，添加根对象属性
+                    const proxy = this.rawToProxy.get(obj);
+                    this.callback({
+                        target: proxy || obj, // 优先使用代理对象
+                        root: this.rootProxy, // 添加根代理对象
+                        property: prop,
+                        oldValue,
+                        newValue: undefined,
+                        type: 'delete'
+                    });
+                }
+                return success;
+            }
+        };
+
+        // 处理数组方法
+        if (Array.isArray(rawTarget)) {
+            handler.get = (obj, prop) => {
+                // 拦截数组变异方法
+                if (typeof prop === 'string' && ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse'].includes(prop)) {
+                    return (...args) => {
+                        const oldArray = [...obj];
+                        const result = Array.prototype[prop].apply(obj, args);
+
+                        // 只在开启深度代理时，对新添加的对象元素进行代理
+                        if (this.deep && ['push', 'unshift', 'splice'].includes(prop)) {
+                            const startIndex = prop === 'push' ? obj.length - args.length :
+                                prop === 'unshift' ? 0 : args[0];
+
+                            for (let i = 0; i < args.length; i++) {
+                                const arg = args[i];
+                                if (arg && typeof arg === 'object' && this.shouldProxy(arg)) {
+                                    const index = startIndex + i;
+                                    obj[index] = this.createProxy(arg);
+                                }
+                            }
+                        }
+
+                        // 检查数组是否实际改变
+                        const isArrayChanged = !this.deepEqual(oldArray, obj);
+
+                        if (isArrayChanged) {
+                            // 触发回调，添加根对象属性
+                            const proxy = this.rawToProxy.get(obj);
+                            this.callback({
+                                target: proxy || obj, // 优先使用代理对象
+                                root: this.rootProxy, // 添加根代理对象
+                                property: prop,
+                                oldValue: oldArray,
+                                newValue: [...obj],
+                                type: 'array-mutation',
+                                args
+                            });
+                        }
+                        return result;
+                    };
+                }
+                const value = obj[prop];
+                // 只在开启深度代理时，对需要代理的对象进行递归代理
+                if (this.deep && value && typeof value === 'object' && this.shouldProxy(value)) {
+                    return this.createProxy(value);
+                }
+                return value;
+            };
+        }
+
+        const proxy = new Proxy(rawTarget, handler)
+        // 建立双向映射
+        this.rawToProxy.set(rawTarget, proxy);
+        this.proxyToRaw.set(proxy, rawTarget);
+
+        // 如果这是根代理，保存它
+        if (!this.rootProxy) {
+            this.rootProxy = proxy;
+        }
+
+        return proxy;
+    }
+
+    // 可选：提供方法来动态改变深度代理设置
+    setDeep(deep) {
+        this.deep = deep;
+    }
+
+    // 可选：提供方法获取根代理
+    getRoot() {
+        return this.rootProxy;
+    }
+}
+
+export {CanvasEditor, Text, EditableText, Image, Rect, LazyImage, ReactiveObserver};
