@@ -1687,7 +1687,6 @@ class Image extends Element {
         const width = this.width * this.scale;
         const height = this.height * this.scale;
         const radius = Math.min(this.radius, width / 2, height / 2);
-
         const {color: shadowColor, blur: shadowBlur, offsetX: shadowOffsetX, offsetY: shadowOffsetY} = this.shadow;
         const hasShadow = shadowColor && (shadowBlur > 0 || shadowOffsetX !== 0 || shadowOffsetY !== 0);
 
@@ -1696,6 +1695,15 @@ class Image extends Element {
         const scaleX = currentTransform.a; // 水平缩放
         const scaleY = currentTransform.d; // 垂直缩放
         const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
+
+        // 设置变换
+        if (this.angle !== 0) {
+            const centerX = x + width / 2;
+            const centerY = y + height / 2;
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.translate(-centerX, -centerY);
+        }
 
         // 先绘制阴影（如果存在）
         if (hasShadow) {
@@ -1713,15 +1721,6 @@ class Image extends Element {
             ctx.shadowBlur = 0;
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
-        }
-
-        // 设置变换
-        if (this.angle !== 0) {
-            const centerX = x + width / 2;
-            const centerY = y + height / 2;
-            ctx.translate(centerX, centerY);
-            ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
         }
 
         if (this.backdropBlur) {
@@ -1963,6 +1962,15 @@ class LazyImage extends Element {
         const scaleY = currentTransform.d; // 垂直缩放
         const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
 
+        // 设置变换
+        if (this.angle !== 0) {
+            const centerX = x + width / 2;
+            const centerY = y + height / 2;
+            ctx.translate(centerX, centerY);
+            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.translate(-centerX, -centerY);
+        }
+
         // 先绘制阴影（如果存在）
         if (hasShadow) {
             ctx.shadowColor = shadowColor;
@@ -1979,15 +1987,6 @@ class LazyImage extends Element {
             ctx.shadowBlur = 0;
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
-        }
-
-        // 设置变换
-        if (this.angle !== 0) {
-            const centerX = x + width / 2;
-            const centerY = y + height / 2;
-            ctx.translate(centerX, centerY);
-            ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
         }
 
         if (this.backdropBlur) {
