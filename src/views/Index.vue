@@ -1784,20 +1784,21 @@ watch(textOptions, async (newVal, oldValue) => {
   const initZoom = canvas.initZoom;
   const {direction, fontFamily, fontSize, fontStyle, fontWeight, fontColor, angle, shadow, spacing, zIndex} = newVal;
   for (const activeElement of activeElements) {
-    if (activeElement.type !== 'text') continue;
-    activeElement.direction = direction;
-    activeElement.fontFamily = fontFamily;
-    activeElement.fontStyle = fontStyle;
-    activeElement.fontWeight = fontWeight;
-    activeElement.fontColor = fontColor;
-    activeElement.angle = angle;
-    activeElement.zIndex = zIndex;
-    activeElement.fontSize = fontSize / initZoom
-    activeElement.spacing = spacing / initZoom
-    activeElement.shadow.offsetX = shadow.offsetX / initZoom
-    activeElement.shadow.offsetY = shadow.offsetY / initZoom
-    activeElement.shadow.blur = shadow.blur / initZoom
-    activeElement.shadow.color = shadow.color
+    if (activeElement.type === 'text') {
+      activeElement.direction = direction;
+      activeElement.fontFamily = fontFamily;
+      activeElement.fontStyle = fontStyle;
+      activeElement.fontWeight = fontWeight;
+      activeElement.fontColor = fontColor;
+      activeElement.angle = angle;
+      activeElement.zIndex = zIndex;
+      activeElement.fontSize = fontSize / initZoom
+      activeElement.spacing = spacing / initZoom
+      activeElement.shadow.offsetX = shadow.offsetX / initZoom
+      activeElement.shadow.offsetY = shadow.offsetY / initZoom
+      activeElement.shadow.blur = shadow.blur / initZoom
+      activeElement.shadow.color = shadow.color
+    }
   }
   canvasEditor.renderAll()
   canvas.foreground = canvasEditor.exportToObject()
@@ -1814,15 +1815,16 @@ watch(() => imageOptions.value, async (newVal, oldValue) => {
   const initZoom = canvas.initZoom;
   const {scale, angle, zIndex, alpha, shadow} = newVal;
   for (const activeElement of activeElements) {
-    if (activeElement.type !== 'image') continue;
-    activeElement.scale = scale;
-    activeElement.angle = angle;
-    activeElement.zIndex = zIndex;
-    activeElement.alpha = alpha;
-    activeElement.shadow.offsetX = shadow.offsetX / initZoom
-    activeElement.shadow.offsetY = shadow.offsetY / initZoom
-    activeElement.shadow.blur = shadow.blur / initZoom
-    activeElement.shadow.color = shadow.color;
+    if (activeElement.type === 'image') {
+      activeElement.scale = scale;
+      activeElement.angle = angle;
+      activeElement.zIndex = zIndex;
+      activeElement.alpha = alpha;
+      activeElement.shadow.offsetX = shadow.offsetX / initZoom
+      activeElement.shadow.offsetY = shadow.offsetY / initZoom
+      activeElement.shadow.blur = shadow.blur / initZoom
+      activeElement.shadow.color = shadow.color;
+    }
   }
   canvasEditor.renderAll()
   canvas.foreground = canvasEditor.exportToObject()
