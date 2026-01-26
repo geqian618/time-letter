@@ -54,7 +54,7 @@ class DraggableElementFactory {
             const {zoom} = CanvasManager.getCurrentCanvas();
             // 对于非图片元素（如div），直接返回
             if (this.settings.tagName === 'div') {
-                const {type, content, expression, options: {fontSize}} = this.settings
+                const {type, content, expression, fontSize = 14} = this.settings
                 const context = this.#getText();
                 const text = new EditableText(context, {
                     fontSize: Math.floor(fontSize / zoom),

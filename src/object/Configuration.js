@@ -1,12 +1,36 @@
+export class CanvasSettings {
+    constructor() {
+        this.metadata = null;
+        this.completed = false;
+        this.scrollLeft = 0;
+        this.scrollTop = 0;
+        this.zoom = 1;
+        this.imageElement = null;
+        this.path = '';
+        this.url = '';
+        this.filename = '';
+        this.extname = '';
+    }
+
+    getImageElement() {
+        if (!this.imageElement) {
+            this.imageElement = document.getElementById(this.path);
+        }
+        return this.imageElement;
+    }
+
+    getPreviewElement(previewList) {
+        const escapedPath = this.path.replace(/\\/g, '\\\\');
+        return previewList.querySelector(`[path="${escapedPath}"]`);
+    }
+}
+
 // 基础阴影类
 export class ShadowSettings {
     constructor() {
         this.offsetX = 0;
         this.offsetY = 0;
-        this.offsetXRatio = 0;
-        this.offsetYRatio = 0;
         this.blur = 0;
-        this.blurRatio = 0;
         this.color = 'rgb(0,0,0,1)';
     }
 }
@@ -26,7 +50,6 @@ export class ImageOptions {
 export class PhotographOptions {
     constructor() {
         this.borderRadius = 0;
-        this.borderRadiusRatio = 0;
         this.shadow = new ShadowSettings();
     }
 }
@@ -47,58 +70,6 @@ export class TextOptions {
     }
 }
 
-// 图片设置类
-export class ImageSettings {
-    constructor() {
-        this.tagName = '';
-        this.path = '';
-        this.url = '';
-        this.offsetLeft = 0;
-        this.offsetLeftRatio = 0;
-        this.offsetRight = 0;
-        this.offsetRightRatio = 0;
-        this.offsetTop = 0;
-        this.offsetTopRatio = 0;
-        this.offsetBottom = 0;
-        this.offsetBottomRatio = 0;
-        this.width = 0;
-        this.height = 0;
-        this.originalWidth = 0;
-        this.originalHeight = 0;
-        this.references = [];
-        this.synchronousMode = 0;
-        this.options = new ImageOptions();
-    }
-}
-
-// 文本设置类
-export class TextSettings {
-    constructor() {
-        this.tagName = '';
-        this.type = 'text';
-        this.expression = '';
-        this.content = '';
-        this.offsetLeft = 0;
-        this.offsetLeftRatio = 0;
-        this.offsetRight = 0;
-        this.offsetRightRatio = 0;
-        this.offsetTop = 0;
-        this.offsetTopRatio = 0;
-        this.offsetBottom = 0;
-        this.offsetBottomRatio = 0;
-        this.references = [];
-        this.synchronousMode = 0;
-        this.options = new TextOptions();
-    }
-}
-
-// 文本设置类
-export class PhotographSettings {
-    constructor() {
-        this.options = new PhotographOptions();
-    }
-}
-
 // 元数据类
 export class Metadata {
     constructor() {
@@ -112,19 +83,6 @@ export class Metadata {
         this.shootingTime = '';
         this.width = null;
         this.height = null;
-    }
-}
-
-// 边框设置类
-export class BorderSettings {
-    constructor() {
-        this.borderLeftRatio = 0;
-        this.borderRightRatio = 0;
-        this.borderTopRatio = 0;
-        this.borderBottomRatio = 0;
-        this.borderBlurRatio = 0;
-        this.borderRadiusRatio = 0;
-        this.options = new BorderOptions()
     }
 }
 
@@ -175,7 +133,6 @@ export class Configuration {
         this.metadata = new Metadata();
         this.image = new ImageSettings();
         this.text = new TextSettings();
-        this.border = new BorderSettings();
     }
 }
 

@@ -1156,16 +1156,13 @@ import {projectSettings, outputSizeOptions, originalMetadata, downloadThreadsOpt
 import {
   TextLabel,
   Metadata,
-  ImageSettings,
-  TextSettings,
   TextOptions,
   ImageOptions,
   BorderOptions,
   FontSettings,
   PhotographOptions,
+  CanvasSettings
 } from '@/object/Configuration'
-
-import {Canvas} from '@/object/Canvas'
 
 import CanvasManager from "@/object/CanvasManager";
 
@@ -1433,7 +1430,7 @@ const watchImportImages = () => {
     if (data) {
       for (let [path, picture] of data) {
         if (!CanvasManager.hasCanvas(path)) {
-          const canvas = new Canvas()
+          const settings = new CanvasSettings()
           const metadata = await window.electronAPI.parsePhotoMetadata(path);
           if (metadata) {
             if (metadata.focalLength) {
@@ -1442,9 +1439,9 @@ const watchImportImages = () => {
                 metadata.focalLength = Number.parseInt(metadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
               }
             }
-            canvas.metadata = metadata
+            settings.metadata = metadata
           }
-          CanvasManager.setCanvas(path, Object.assign(canvas, picture))
+          CanvasManager.setCanvas(path, Object.assign(settings, picture))
           // 检测到图片导入立即触发渲染
           availableCanvas.value = CanvasManager.getAvailableCanvases(filterType.value)
         }
@@ -2697,9 +2694,9 @@ const handleDragStart = function (event) {
   let settings;
 
   if (component instanceof HTMLImageElement) {
-    settings = {...new ImageSettings(), url, path, tagName, width, height}
+    settings = {url, path, tagName, width, height}
   } else {
-    settings = {...new TextSettings(), type, content, expression, tagName}
+    settings = {type, content, expression, tagName}
   }
 
   // 关键：设置拖拽数据传输
@@ -3219,6 +3216,7 @@ onBeforeUnmount(() => {
                     color: var(--main-font-color);
 
                     .text-mark {
+                      background-color: var(--expand-area-background-color);
                       width: fit-content;
                       height: fit-content;
                       cursor: move;
