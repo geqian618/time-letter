@@ -1245,10 +1245,6 @@ class Text extends Element {
 
     #chars = []
 
-    #ascent = 0;
-
-    #descent = 0;
-
     constructor(text, options = {}) {
         super(options);
         // 元素类型
@@ -1285,26 +1281,6 @@ class Text extends Element {
             offsetY: 0,
             ...options.shadow
         };
-    }
-
-
-    // 外部可访问
-    get ascent() {
-        return this.#ascent;
-    }
-
-    // 外部可访问
-    get descent() {
-        return this.#descent;
-    }
-
-    set ascent(value) {
-        this.#ascent = value;
-    }
-
-
-    set descent(value) {
-        this.#descent = value;
     }
 
 
@@ -1411,12 +1387,6 @@ class Text extends Element {
         // 默认Y偏移
         ctx.shadowOffsetY = this.shadow.offsetY * avgScale;
 
-        const metrics = ctx.measureText(this.text);
-
-        this.ascent = metrics.actualBoundingBoxAscent;
-
-        this.descent = metrics.actualBoundingBoxDescent;
-
         let {chars, height, width} = this.direction === 'vertical'
             ? this.parseVerticalChars(ctx)
             : this.parseHorizontalChars(ctx)
@@ -1456,9 +1426,24 @@ class Text extends Element {
 
     parseHorizontalChars(ctx) {
         let currentX = this.x;
-        let currentY = this.y + this.ascent;
         const chars = [];
         let maxCharHeight = 0;
+        let maxAscent = 0;
+        // 获取最大高度和 ascent
+        for (let i = 0; i < this.text.length; i++) {
+            const char = this.text[i];
+            const {
+                actualBoundingBoxAscent: ascent,
+                actualBoundingBoxDescent: descent
+            } = ctx.measureText(char);
+
+            const charHeight = ascent + descent;
+            maxCharHeight = Math.max(maxCharHeight, charHeight);
+            maxAscent = Math.max(maxAscent, ascent);
+        }
+        // 计算垂直居中的基线位置
+        // 假设 this.y 是文字区域的中心点 y 坐标
+        const baselineY = this.y + maxAscent;
         for (let i = 0; i < this.text.length; i++) {
             const char = this.text[i];
             const {
@@ -1466,9 +1451,16 @@ class Text extends Element {
                 actualBoundingBoxAscent: ascent,
                 actualBoundingBoxDescent: descent
             } = ctx.measureText(char);
-            const charHeight = ascent + descent
-            maxCharHeight = Math.max(maxCharHeight, charHeight);
-            chars.push({char, x: currentX, y: currentY, width: charWidth, height: charHeight});
+            const charHeight = ascent + descent;
+            // 垂直居中：让每个字符的 ascent 对齐到基准线
+            const charY = baselineY;
+            chars.push({
+                char,
+                x: currentX,
+                y: charY,
+                width: charWidth,
+                height: charHeight
+            });
             currentX += charWidth + (i < this.text.length - 1 ? this.spacing : 0);
         }
         return {
@@ -1606,8 +1598,8 @@ class Text extends Element {
             if (start !== end) {
                 const startIndex = Math.max(0, Math.min(start, end));
                 const endIndex = Math.min(text.length, Math.max(start, end));
-                const startY = startIndex === 0 ? y : y + this.descent + startIndex * (rawHeight + spacing) - spacing / 2;
-                const endY = endIndex === text.length ? y + height : y + this.descent + endIndex * (rawHeight + spacing) - spacing / 2;
+                const startY = startIndex === 0 ? y : y + startIndex * (rawHeight + spacing) - spacing / 2;
+                const endY = endIndex === text.length ? y + height : y + endIndex * (rawHeight + spacing) - spacing / 2;
                 ctx.fillStyle = 'rgb(59,103,225,0.5)';
                 ctx.fillRect(x, startY, width, endY - startY);
             }
