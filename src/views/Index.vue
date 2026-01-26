@@ -439,7 +439,7 @@
                         <div class="value">
                           <el-slider
                               :min="100"
-                              :max="900"
+                              :max="600"
                               v-model="textOptions.fontWeight"
                               show-alpha
                               :step="100"
