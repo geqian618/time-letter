@@ -33,7 +33,15 @@ module.exports = async (params) => {
 
     const settings = JSON.parse(json);
 
-    const {elements, width: originalWidth, height: originalHeight} = settings
+    const {elements, width: originalWidth, height: originalHeight} = settings;
+
+    const background = elements[0];
+
+    const {borderLeft, borderRight, borderTop, borderBottom} = background.meta;
+
+    if (borderLeft === 0 && borderRight === 0 && borderTop === 0 && borderBottom === 0) {
+        elements.splice(0, 1);
+    }
 
     for (let element of elements) {
         if (element.type === 'image') {

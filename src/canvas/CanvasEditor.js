@@ -2143,7 +2143,7 @@ class Rect extends Element {
         this.type = 'rect'
         this.width = options.width || 0
         this.height = options.height || 0
-        this.fill = options.fill || 'rgba(255,255,255,1)'
+        this.fill = options.fill || 'rgba(255,255,255,0)'
         this.radius = options.radius || 0
         this.stroke = options.stroke || 'rgba(0,0,0,1)'
         this.strokeWidth = options.strokeWidth || 0

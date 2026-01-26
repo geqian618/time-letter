@@ -76,6 +76,7 @@ function formatDateTime(DateTimeOriginal) {
 }
 
 async function parsePhotoMetadata(filePath) {
+    const {width, height} = await createSharp(filePath).metadata();
     try {
         const metadata = await parseMetadata(filePath);
         const {
@@ -89,7 +90,6 @@ async function parsePhotoMetadata(filePath) {
                 DateTimeOriginal = ''
             } = {}
         } = metadata;
-        const {width, height} = await createSharp(filePath).metadata();
         return {
             iso: ISO,
             cameraBrand: Make,
@@ -106,8 +106,7 @@ async function parsePhotoMetadata(filePath) {
             resolution: await getImageResolution(filePath)
         }
     } catch (err) {
-        console.log(err)
-        return {}
+        return {width, height}
     }
 }
 
