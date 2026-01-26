@@ -1479,10 +1479,10 @@ class Text extends Element {
     }
 
     parseVerticalChars(ctx) {
-        let currentY = this.y + this.ascent;
         const chars = [];
         let maxCharWidth = 0;
-        // 先测量所有字符的宽度，找出最大宽度
+        let maxCharHeight = 0;
+        // 先测量所有字符的尺寸
         for (let i = 0; i < this.text.length; i++) {
             const char = this.text[i];
             const {
@@ -1490,22 +1490,31 @@ class Text extends Element {
                 actualBoundingBoxAscent: ascent,
                 actualBoundingBoxDescent: descent
             } = ctx.measureText(char);
-            const height = ascent + descent
+            const height = ascent + descent;
             chars.push({width, char, height, ascent, descent});
             maxCharWidth = Math.max(maxCharWidth, width);
+            maxCharHeight = Math.max(maxCharHeight, height);
         }
-        // 根据居中对齐方式计算x坐标
+        // 计算垂直排列的布局
+        const totalHeight = this.text.length * this.fontSize + (this.text.length - 1) * this.spacing;
+        let currentY = this.y;
+        // 计算每个字符的位置，使其在各自的单元格内居中
         for (let i = 0; i < this.text.length; i++) {
             const char = chars[i];
-            // 计算当前字符在最大宽度内居中的x坐标
+            // 计算当前行的矩形区域
+            const cellTop = currentY;
+            const cellBottom = cellTop + this.fontSize;
+            const cellCenterY = (cellTop + cellBottom) / 2;
+            // 水平居中：在最大宽度内居中
             char.x = this.x + (maxCharWidth - char.width) / 2;
-            const rowCenterY = currentY + this.fontSize / 2;
-            char.y = rowCenterY + (char.height / 2 - char.ascent);
+            // 垂直居中：在单元格内垂直居中
+            // 使用字符的实际基线来调整位置，使字符在单元格内垂直居中
+            char.y = cellCenterY - char.descent + (char.ascent + char.descent) / 2;
             currentY += this.fontSize + (i < this.text.length - 1 ? this.spacing : 0);
         }
         return {
             width: maxCharWidth,
-            height: currentY - (this.y + this.ascent),
+            height: totalHeight,
             chars
         };
     }
@@ -1555,7 +1564,7 @@ class Text extends Element {
             const startX = !char ? this.x + this.width + offset : char.x - offset;
             ctx.fillRect(startX, this.y, cursorWidth, this.height);
         } else {
-            const startY = !char ? this.y + this.height + offset : this.y + this.descent + (this.fontSize + this.spacing) * end - offset;
+            const startY = !char ? this.y + this.height + offset : this.y + (this.fontSize + this.spacing) * end - offset;
             ctx.fillRect(this.x, startY, this.width, cursorWidth);
         }
         ctx.restore();
