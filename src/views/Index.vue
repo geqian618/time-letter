@@ -2838,7 +2838,7 @@ const handleDragMoveCanvas = (event) => {
 
 
 const triggerDragCanvas = (event) => {
-  if (event.code === 'Space') {
+  if (event.code === 'Space' && !canvasEditor.isEditing) {
     isCanvasDraggingMode = true;
     // 设置全局样式提示用户
     previewContainer.value.style.cursor = 'grab';
