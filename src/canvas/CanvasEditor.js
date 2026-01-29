@@ -2130,7 +2130,6 @@ class LazyImage extends Element {
                 this.width * this.scale + 2 * lineWidth,
                 this.height * this.scale + 2 * lineWidth);
         }
-
         ctx.stroke();
         ctx.restore();
     }

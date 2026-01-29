@@ -2048,7 +2048,7 @@ const useTemplate = async (settings, path) => {
 
     if (element.type === 'text') {
       element.fontSize = element.fontSize / initZoom;
-      element.text = getText({path, ...element.meta})
+      element.text = getText({path, ...element.meta, content: element.text})
     }
 
     if (element.type === 'image') {
@@ -2839,7 +2839,6 @@ const handleDragMoveCanvas = (event) => {
 
 const triggerDragCanvas = (event) => {
   if (event.code === 'Space') {
-    event.preventDefault();
     isCanvasDraggingMode = true;
     // 设置全局样式提示用户
     previewContainer.value.style.cursor = 'grab';
