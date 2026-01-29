@@ -2057,11 +2057,10 @@ const useTemplate = async (settings, path) => {
     }
   }
 
-
   canvas.background = JSON.stringify(background)
   canvas.foreground = JSON.stringify(foreground)
   canvas.initZoom = initZoom;
-  canvas.zoom = zoom;
+  canvas.zoom = canvas.zoom !== 1 ? canvas.zoom : zoom;
   canvas.width = imageWidth;
   canvas.height = imageHeight;
 
