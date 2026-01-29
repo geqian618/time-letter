@@ -817,24 +817,41 @@ class CanvasEditor {
             const interval = Date.now() - startTime;
             const {x: moveX, y: moveY} = this.getCanvasPosition(e);
             if (interval > 200 && (startX !== moveX || startY !== moveY)) {
+
                 if (element.type === 'text' && element.status === Element.EDITING) {
                     this.cursorEnd = this.getCursorIndexFromText(element, moveX, moveY);
                     if (this.cursorEnd !== this.cursorStart) {
                         this.updateInputSelection();
                         this.renderAll();
                     }
-                } else if (element.draggable) {
-                    this.removeActiveElement(element);
+                }
+
+                if (element.draggable && (element.status === Element.NONE || this.hasActiveElement(element))) {
                     this.canvas.style.cursor = 'move';
-                    element.x += moveX - lastMoveX;
-                    element.y += moveY - lastMoveY;
-                    element.centerX += moveX - lastMoveX;
-                    element.centerY += moveY - lastMoveY;
+                    // 计算偏移量
+                    const offsetX = moveX - lastMoveX;
+                    const offsetY = moveY - lastMoveY;
+                    // 确定要拖拽的元素列表
+                    const targetElements = element.status === Element.NONE
+                        ? [element]
+                        : Array.from(this.activeElements).filter(el => el.draggable);
+                    // 拖拽所有选中的元素
+                    for (let el of targetElements) {
+                        el.x += offsetX;
+                        el.y += offsetY;
+                        el.centerX += offsetX;
+                        el.centerY += offsetY;
+                        // 触发回调
+                        const callbacks = this.eventCallbacks.get(MOVE_OBJECT);
+                        if (callbacks && callbacks.size) {
+                            callbacks.forEach(callback => callback({x: moveX, y: moveY, target: el}));
+                        }
+                    }
+                    // 更新最后移动位置并重新渲染
                     lastMoveX = moveX;
                     lastMoveY = moveY;
-                    const callbacks = this.eventCallbacks.get(MOVE_OBJECT);
-                    if (callbacks && callbacks.size) {
-                        callbacks.forEach(callback => callback({x: moveX, y: moveY, target: element}));
+                    if (element.status === Element.NONE) {
+                        this.removeActiveElements(this.activeElements);
                     }
                     this.renderAll();
                 }
