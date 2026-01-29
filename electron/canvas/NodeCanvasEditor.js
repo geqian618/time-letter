@@ -338,7 +338,7 @@ class CanvasEditor {
     removeActiveElement(element) {
         let index = this.activeElements.findIndex(item => item.id === element.id);
         while (index !== -1) {
-            const removeObj = this.activeElements.splice(index, 1);
+            const removeObj = this.activeElements.splice(index, 1)[0];
             removeObj.status = Element.NONE
             index = this.activeElements.findIndex(item => item.id === element.id);
         }
@@ -356,7 +356,10 @@ class CanvasEditor {
         // 统一转换为数组
         const elementArray = Array.isArray(elements) ? elements : [elements];
         // 获取要删除的id集合
-        const targets = new Set(elementArray.map(element => element.id));
+        const targets = new Set(elementArray.map(element => {
+            element.status = Element.NONE;
+            return element.id;
+        }));
         // 过滤掉匹配id的元素
         this.activeElements = this.activeElements.filter(element => !targets.has(element.id));
     }
@@ -829,7 +832,6 @@ class CanvasEditor {
                     element.centerY += moveY - lastMoveY;
                     lastMoveX = moveX;
                     lastMoveY = moveY;
-
                     const callbacks = this.eventCallbacks.get(MOVE_OBJECT);
                     if (callbacks && callbacks.size) {
                         callbacks.forEach(callback => callback({x: moveX, y: moveY, target: element}));
@@ -2130,7 +2132,6 @@ class LazyImage extends Element {
                 this.width * this.scale + 2 * lineWidth,
                 this.height * this.scale + 2 * lineWidth);
         }
-
         ctx.stroke();
         ctx.restore();
     }
@@ -2143,7 +2144,7 @@ class Rect extends Element {
         this.type = 'rect'
         this.width = options.width || 0
         this.height = options.height || 0
-        this.fill = options.fill || 'rgba(255,255,255,1)'
+        this.fill = options.fill || 'rgba(255,255,255,0)'
         this.radius = options.radius || 0
         this.stroke = options.stroke || 'rgba(0,0,0,1)'
         this.strokeWidth = options.strokeWidth || 0
