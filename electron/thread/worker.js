@@ -58,6 +58,8 @@ module.exports = async (params) => {
         settings.zoom = width / originalWidth
     } else if (type === 2) {
         settings.zoom = height / originalHeight
+    } else if (type === 3) {
+        settings.zoom = Math.min(width / originalWidth, height / originalHeight)
     }
 
     const canvas = createCanvas(originalWidth, originalHeight);

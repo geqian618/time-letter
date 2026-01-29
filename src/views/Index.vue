@@ -885,16 +885,16 @@
                       :value="item.value"/>
                 </el-select>
               </div>
-              <div class="option" v-show="projectSettings.outputSettings.outputSize.type === 1">
-                <span class="label">宽尺寸：</span>
+              <div class="option" v-show="[1,3].includes(projectSettings.outputSettings.outputSize.type)">
+                <span class="label">宽度：</span>
                 <el-input v-model.number="projectSettings.outputSettings.outputSize.width"
                           size="small"
                           class="value"
                           placeholder="宽尺寸"/>
                 <span>&nbsp;px</span>
               </div>
-              <div class="option" v-show="projectSettings.outputSettings.outputSize.type === 2">
-                <span class="label">高尺寸：</span>
+              <div class="option" v-show="[2,3].includes(projectSettings.outputSettings.outputSize.type)">
+                <span class="label">高度：</span>
                 <el-input v-model.number="projectSettings.outputSettings.outputSize.height"
                           size="small"
                           class="value"
