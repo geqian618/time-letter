@@ -866,7 +866,10 @@ class CanvasEditor {
                     if (element.type === 'text' && (element.status === Element.SELECTED || element.status === Element.EDITING)) {
                         this.handleEditText({event: e, element});
                     } else {
-                        this.editingText && this.finishEditing();
+                        this.isEditing && this.finishEditing();
+                        if (!event.ctrlKey && !event.metaKey) {
+                            this.removeActiveElements(this.activeElements);
+                        }
                         this.handleActiveElement({x: endX, y: endY, target: element});
                     }
                 }
