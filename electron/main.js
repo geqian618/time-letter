@@ -39,6 +39,7 @@ let tray = null;
  * 创建主窗口
  */
 const createMainWindow = () => {
+
     const winState = new WinState({
         defaultWidth: 1000,
         defaultHeight: 600,
@@ -247,6 +248,7 @@ const registerCustomProtocol = () => {
  * 设置应用生命周期事件
  */
 const setupAppLifecycle = () => {
+
     // 激活应用
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
