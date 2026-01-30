@@ -1800,20 +1800,31 @@ class Image extends Element {
             ctx.shadowOffsetY = 0;
         }
 
-        if (this.backdropBlur) {
-            ctx.filter = `blur(${this.backdropBlur * avgScale}px)`;
-        }
 
-        // 在设置 filter 之后，重新设置图像平滑质量
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-
-        // 创建圆角裁剪区域并绘制图像
+        // 创建圆角路径并裁剪
         this._createRoundedRectPath(ctx, x, y, width, height, radius);
-
         ctx.clip();
 
-        ctx.drawImage(this.image, x, y, width, height);
+        // 如果有背景模糊效果
+        if (this.backdropBlur && this.backdropBlur > 0) {
+            // 计算模糊扩展区域（防止边缘半透明）
+            const blurAmount = this.backdropBlur * avgScale;
+            // 扩展区域，通常是模糊半径的2倍
+            const expansion = Math.ceil(blurAmount * 2);
+            // 保存当前上下文状态
+            ctx.save();
+            // 应用模糊滤镜
+            ctx.filter = `blur(${blurAmount}px)`;
+            // 在扩展区域内绘制图像
+            ctx.drawImage(this.image, x - expansion, y - expansion, width + 2 * expansion, height + 2 * expansion);
+            // 恢复上下文状态（这会清除filter）
+            ctx.restore();
+        } else {
+            // 设置图像平滑质量
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(this.image, x, y, width, height);
+        }
 
         ctx.restore();
     }
@@ -2029,7 +2040,6 @@ class LazyImage extends Element {
         const width = this.width * this.scale;
         const height = this.height * this.scale;
         const radius = Math.min(this.radius, width / 2, height / 2);
-
         const {color: shadowColor, blur: shadowBlur, offsetX: shadowOffsetX, offsetY: shadowOffsetY} = this.shadow;
         const hasShadow = shadowColor && (shadowBlur > 0 || shadowOffsetX !== 0 || shadowOffsetY !== 0);
 
@@ -2066,20 +2076,31 @@ class LazyImage extends Element {
             ctx.shadowOffsetY = 0;
         }
 
-        if (this.backdropBlur) {
-            ctx.filter = `blur(${this.backdropBlur * avgScale}px)`;
-        }
 
-        // 在设置 filter 之后，重新设置图像平滑质量
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-
-        // 创建圆角裁剪区域并绘制图像
+        // 创建圆角路径并裁剪
         this._createRoundedRectPath(ctx, x, y, width, height, radius);
-
         ctx.clip();
 
-        ctx.drawImage(this.image, x, y, width, height);
+        // 如果有背景模糊效果
+        if (this.backdropBlur && this.backdropBlur > 0) {
+            // 计算模糊扩展区域（防止边缘半透明）
+            const blurAmount = this.backdropBlur * avgScale;
+            // 扩展区域，通常是模糊半径的2倍
+            const expansion = Math.ceil(blurAmount * 2);
+            // 保存当前上下文状态
+            ctx.save();
+            // 应用模糊滤镜
+            ctx.filter = `blur(${blurAmount}px)`;
+            // 在扩展区域内绘制图像
+            ctx.drawImage(this.image, x - expansion, y - expansion, width + 2 * expansion, height + 2 * expansion);
+            // 恢复上下文状态（这会清除filter）
+            ctx.restore();
+        } else {
+            // 设置图像平滑质量
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(this.image, x, y, width, height);
+        }
 
         ctx.restore();
     }
