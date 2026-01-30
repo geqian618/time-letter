@@ -74,11 +74,9 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
     await Promise.allSettled(workers);
 
     // 导出完成后，销毁线程池
-    threadPool.destroy().then(() => {
-        console.log('Thread pool destroyed');
-    }).catch(error => {
-        console.warn('Failed to destroy thread pool:', error.message);
-    });
+    await threadPool.destroy();
+
+    console.log('threadPool destroy...')
 
     function updateProgress() {
         progressCallback({
