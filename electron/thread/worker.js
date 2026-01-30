@@ -46,9 +46,10 @@ module.exports = async (params) => {
     for (let element of elements) {
         if (element.type === 'image') {
             element.src = element.meta.path
+            element.blur = element.blur * 0.95;
         }
         if (element.shadow) {
-            element.shadow.blur = element.shadow.blur * 0.7
+            element.shadow.blur = element.shadow.blur * 0.7;
         }
     }
 

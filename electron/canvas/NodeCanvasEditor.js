@@ -6,7 +6,6 @@ const ADD_OBJECT = 'add:object'
 
 const UPDATE_OBJECT = 'update:object'
 
-
 /**
  * Canvas 文本编辑器类
  * 封装 Canvas 文本编辑功能
@@ -1657,6 +1656,8 @@ class Image extends Element {
         this.angle = options.angle || 0
         // 圆角属性
         this.radius = options.radius || 0;
+        // 模糊强度
+        this.blur = options.blur || 0;
 
         // 图片阴影
         this.shadow = {
@@ -1666,13 +1667,6 @@ class Image extends Element {
             offsetY: 0,
             ...options.shadow
         };
-
-        // backdrop-filter 效果配置
-        this.backdropFilter = options.backdropFilter || false;  // 是否启用背景模糊
-        this.backdropBlur = options.backdropBlur || 0;  // 模糊强度
-        this.backdropBrightness = options.backdropBrightness || 1.0;  // 亮度
-        this.backdropSaturation = options.backdropSaturation || 1.0;  // 饱和度
-        this.backdropOpacity = options.backdropOpacity || 0.3;  // 模糊层不透明度
 
         const {naturalWidth, naturalHeight} = image;
         const {width, height} = options;
@@ -1805,9 +1799,9 @@ class Image extends Element {
         ctx.clip();
 
         // 如果有背景模糊效果
-        if (this.backdropBlur && this.backdropBlur > 0) {
+        if (this.blur && this.blur > 0) {
             // 计算模糊扩展区域（防止边缘半透明）
-            const blurAmount = this.backdropBlur * avgScale;
+            const blurAmount = this.blur * avgScale;
             // 扩展区域，通常是模糊半径的2倍
             const expansion = Math.ceil(blurAmount * 2);
             // 保存当前上下文状态
@@ -1920,6 +1914,8 @@ class LazyImage extends Element {
         this.angle = options.angle || 0
         // 圆角属性
         this.radius = options.radius || 0;
+        // 模糊强度
+        this.blur = blur || 0;
 
         // 图片阴影
         this.shadow = {
@@ -1929,14 +1925,6 @@ class LazyImage extends Element {
             offsetY: 0,
             ...options.shadow
         };
-
-        // backdrop-filter 效果配置
-        this.backdropFilter = options.backdropFilter || false;  // 是否启用背景模糊
-        this.backdropBlur = options.backdropBlur || 0;  // 模糊强度
-        this.backdropBrightness = options.backdropBrightness || 1.0;  // 亮度
-        this.backdropSaturation = options.backdropSaturation || 1.0;  // 饱和度
-        this.backdropOpacity = options.backdropOpacity || 0.3;  // 模糊层不透明度
-
     }
 
     load() {
@@ -2080,9 +2068,9 @@ class LazyImage extends Element {
         ctx.clip();
 
         // 如果有背景模糊效果
-        if (this.backdropBlur && this.backdropBlur > 0) {
+        if (this.blur && this.blur > 0) {
             // 计算模糊扩展区域（防止边缘半透明）
-            const blurAmount = this.backdropBlur * avgScale;
+            const blurAmount = this.blur * avgScale;
             // 扩展区域，通常是模糊半径的2倍
             const expansion = Math.ceil(blurAmount * 2);
             // 保存当前上下文状态

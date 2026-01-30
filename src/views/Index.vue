@@ -2014,7 +2014,7 @@ const useTemplate = async (settings, path) => {
   border.height = newHeight
 
   if (border.type === 'image') {
-    border.backdropFilter = borderOptions.borderBlur / initZoom
+    border.blur = borderOptions.borderBlur / initZoom
     border.src = canvas.url
     borderOptions.path = canvas.path
   }
@@ -2477,8 +2477,7 @@ const handleUpdateBorders = async () => {
       width: newWidth,
       height: newHeight,
       radius: borderRadius,
-      backdropBlur: borderBlur,
-      backdropFilter: true,
+      blur: borderBlur,
       meta: {path: target.meta.path, ...background.meta}
     })
   } else {
@@ -2486,7 +2485,7 @@ const handleUpdateBorders = async () => {
     background.height = newHeight;
     background.fill = borderColor;
     background.radius = borderRadius;
-    background.backdropBlur = borderBlur;
+    background.blur = borderBlur;
   }
   currentCanvas.background = backgroundCanvasEditor.exportToObject()
   canvasElement.value.classList.remove('scale-animation')
