@@ -78,6 +78,7 @@ module.exports = async (params) => {
 
     await fs.writeFile(outputPath, buffer);
 
+    return null;
 };
 
 
