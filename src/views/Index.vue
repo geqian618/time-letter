@@ -3103,7 +3103,7 @@ onBeforeUnmount(() => {
       width: var(--preview-container-width);
       height: 100%;
       position: relative;
-      border: 1px solid #a6a6a6;
+      border: 1px solid #919191;
 
       .canvas-wrapper {
         width: 100vw;

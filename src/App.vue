@@ -28,7 +28,7 @@ import {RouterView} from 'vue-router'
   --menu-background-color: #343434;
   --menu-icon-color: #c2c1c1;
   --main-font-color: #A9A9A9;
-  --preview-background-color: #737373;
+  --preview-background-color: #606060;
   --dialog-main-background-color: #FFFFFF;
 }
 
