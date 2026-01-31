@@ -3056,7 +3056,6 @@ onBeforeUnmount(() => {
           .templates-options {
             background-color: var(--menu-background-color);
             border-bottom: 1px solid #a2a4a6;
-            padding: 0 1px;
 
             .templates {
               background-color: var(--expand-area-background-color);
@@ -3104,6 +3103,7 @@ onBeforeUnmount(() => {
       width: var(--preview-container-width);
       height: 100%;
       position: relative;
+      border: 1px solid #a6a6a6;
 
       .canvas-wrapper {
         width: 100vw;
