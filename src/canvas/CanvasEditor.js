@@ -66,10 +66,10 @@ class CanvasEditor {
 
         // 绑定事件处理函数
         this.handleKeyDown = this.handleKeyDown.bind(this);
-        this.handleKeyUp = this.handleKeyUp.bind(this);
         this.handleInput = this.handleInput.bind(this);
-        this.handleBlur = this.handleBlur.bind(this);
         this.handleMouseDown = this.handleMouseDown.bind(this);
+        // this.handleKeyUp = this.handleKeyUp.bind(this);
+        // this.handleBlur = this.handleBlur.bind(this);
 
         // 初始化
         this.init();
@@ -170,9 +170,9 @@ class CanvasEditor {
 
         // 添加事件监听
         this.hiddenInput.addEventListener('keydown', this.handleKeyDown);
-        this.hiddenInput.addEventListener('keyup', this.handleKeyUp);
         this.hiddenInput.addEventListener('input', this.handleInput);
-        this.hiddenInput.addEventListener('blur', this.handleBlur);
+        // this.hiddenInput.addEventListener('keyup', this.handleKeyUp);
+        // this.hiddenInput.addEventListener('blur', this.handleBlur);
 
         return this.hiddenInput;
     }
@@ -183,6 +183,7 @@ class CanvasEditor {
      * @param {number} index - 光标位置
      */
     startEditing(textObj, index) {
+
         if (textObj.status === Element.EDITING) {
             // 如果已经在编辑同一文本，只更新光标位置
             this.cursorEnd = this.cursorStart = index;
@@ -190,11 +191,12 @@ class CanvasEditor {
             this.updateInputSelection();
             return;
         }
+
         textObj.status = Element.EDITING
         this.editingText = textObj;
         this.isEditing = true;
         this.isCursorVisible = true;
-        this.cursorEnd = this.cursorStart = index;
+        this.cursorEnd = this.cursorStart = textObj.text.length;
 
         this.canvas.style.cursor = textObj.direction === 'horizontal' ? 'text' : 'vertical-text';
 
@@ -816,7 +818,6 @@ class CanvasEditor {
             const interval = Date.now() - startTime;
             const {x: moveX, y: moveY} = this.getCanvasPosition(e);
             if (interval > 200 && (startX !== moveX || startY !== moveY)) {
-
                 if (element.type === 'text' && element.status === Element.EDITING) {
                     this.cursorEnd = this.getCursorIndexFromText(element, moveX, moveY);
                     if (this.cursorEnd !== this.cursorStart) {
@@ -881,7 +882,7 @@ class CanvasEditor {
         };
 
         this.canvas.addEventListener('mousemove', handleMousemove);
-        document.addEventListener('mouseup', handleMouseup, true);
+        document.addEventListener('mouseup', handleMouseup);
     }
 
     handleActiveElement(event) {
@@ -906,7 +907,6 @@ class CanvasEditor {
             this.hiddenInput.focus()
             const start = Math.min(this.cursorStart, this.cursorEnd);
             const end = Math.max(this.cursorStart, this.cursorEnd);
-
             this.hiddenInput.setSelectionRange(start, end);
         }, 0);
     }
@@ -972,6 +972,14 @@ class CanvasEditor {
                 this.updateInputSelection();
                 this.renderAll();
                 break;
+            case 'a':
+                if ((event.ctrlKey || event.metaKey)) {
+                    this.cursorStart = 0;
+                    this.cursorEnd = this.editingText.text.length;
+                    this.updateInputSelection();
+                    this.renderAll();
+                }
+                break;
             case 'Delete':
                 break;
         }
@@ -996,22 +1004,13 @@ class CanvasEditor {
     /**
      * 处理键盘松开事件
      */
-    handleKeyUp() {
-        if (!this.editingText || !this.hiddenInput) return;
-        // 更新光标位置
-        this.cursorEnd = this.cursorStart = this.hiddenInput.selectionStart;
-        this.renderAll();
+    handleKeyUp(event) {
     }
 
     /**
      * 处理失去焦点事件
      */
-    handleBlur() {
-        setTimeout(() => {
-            if (this.editingText && this.hiddenInput && document.activeElement !== this.hiddenInput) {
-                // this.finishEditing();
-            }
-        }, 100);
+    handleBlur(event) {
     }
 
     /**
