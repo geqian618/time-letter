@@ -2512,6 +2512,7 @@ const handleUpdateBorders = async () => {
   }
 
   currentCanvas.borderOptions = _.cloneDeep(borderOptions.value)
+  currentCanvas.foreground = canvasEditor.exportToObject()
   currentCanvas.background = backgroundCanvasEditor.exportToObject()
   canvasElement.value.classList.remove('scale-animation')
   backgroundElement.value.classList.remove('scale-animation')
