@@ -2149,11 +2149,12 @@ const renderCanvas = async (canvas) => {
     photographOptions.value = image.meta
     metadataOptions.value = canvas.metadata
     canvas.completed = true
-    canvas.initZoom = initScale
-    canvas.zoom = canvasEditor.getZoom()
     canvas.width = width;
     canvas.height = height
-    canvas.borderOptions = background.meta
+    canvas.initZoom = initScale
+    canvas.zoom = canvasEditor.getZoom()
+    canvas.borderOptions = _.cloneDeep(background.meta)
+    canvas.photographOptions = _.cloneDeep(image.meta)
     canvas.foreground = canvasEditor.exportToObject()
     canvas.background = backgroundCanvasEditor.exportToObject()
   } else {
@@ -2440,6 +2441,7 @@ const handleUpdatePhotograph = async () => {
     offsetY: shadow.offsetY / initZoom
   };
   backgroundCanvasEditor.renderAll();
+  currentCanvas.photographOptions = _.cloneDeep(photographOptions.value)
   currentCanvas.background = backgroundCanvasEditor.exportToObject()
 }
 
