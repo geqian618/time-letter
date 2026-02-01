@@ -2120,6 +2120,8 @@ const renderCanvas = async (canvas) => {
   canvasElement.value.classList.remove('scale-animation')
   backgroundElement.value.classList.remove('scale-animation')
   if (!canvas.completed) {
+    canvasEditor.clearCanvas();
+    backgroundCanvasEditor.clearCanvas();
     const image = await Image.fromURL(canvas.url, {
       selectable: false,
       cacheable: true,
@@ -2498,7 +2500,7 @@ const handleUpdateBorders = async () => {
 }
 
 
-const switchBeforePreviewElement = async () => {
+const switchBeforePreviewElement = useThrottle(async () => {
   const {path: currentPath, previewElement: currentElement} = CanvasManager.getSelectedObject();
   if (!currentPath) return
   const currentCanvas = availableCanvas.value.get(currentPath);
@@ -2520,9 +2522,9 @@ const switchBeforePreviewElement = async () => {
     // 方式二，过渡比较流畅
     scrollBarMoveToHorizontalCenter(previewList.value, beforeElement)
   }
-}
+}, 200)
 
-const switchNextPreviewElement = async () => {
+const switchNextPreviewElement = useThrottle(async () => {
   const {path: currentPath, previewElement: currentElement} = CanvasManager.getSelectedObject();
   if (!currentPath) return
   const currentCanvas = availableCanvas.value.get(currentPath);
@@ -2544,7 +2546,7 @@ const switchNextPreviewElement = async () => {
     // 方式二，过渡比较流畅
     scrollBarMoveToHorizontalCenter(previewList.value, nextElement)
   }
-}
+}, 200)
 
 
 function scrollBarMoveToHorizontalCenter(container, element) {
