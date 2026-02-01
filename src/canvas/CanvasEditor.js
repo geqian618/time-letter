@@ -1815,8 +1815,6 @@ class Image extends Element {
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(this.image, this.x, this.y, width, height);
-
-            console.log(this.x, this.y)
         }
 
         ctx.restore();
@@ -2037,8 +2035,6 @@ class LazyImage extends Element {
         ctx.save();
         ctx.globalAlpha = this.alpha;
 
-        const x = this.x;
-        const y = this.y;
         const width = this.width * this.scale;
         const height = this.height * this.scale;
         const radius = Math.min(this.radius, width / 2, height / 2);
@@ -2075,7 +2071,7 @@ class LazyImage extends Element {
             ctx.shadowOffsetX = shadowOffsetX * avgScale;
             ctx.shadowOffsetY = shadowOffsetY * avgScale;
 
-            this._createRoundedRectPath(ctx, x, y, width, height, radius);
+            this._createRoundedRectPath(ctx, this.x, this.y, width, height, radius);
             ctx.fillStyle = 'rgba(0,0,0,1)';
             ctx.fill();
 
@@ -2087,7 +2083,7 @@ class LazyImage extends Element {
         }
 
         // 创建圆角路径并裁剪
-        this._createRoundedRectPath(ctx, x, y, width, height, radius);
+        this._createRoundedRectPath(ctx, this.x, this.y, width, height, radius);
         ctx.clip();
 
         // 如果有背景模糊效果
@@ -2101,14 +2097,14 @@ class LazyImage extends Element {
             // 应用模糊滤镜
             ctx.filter = `blur(${blurAmount}px)`;
             // 在扩展区域内绘制图像
-            ctx.drawImage(this.image, x - expansion, y - expansion, width + 2 * expansion, height + 2 * expansion);
+            ctx.drawImage(this.image, this.x - expansion, this.y - expansion, width + 2 * expansion, height + 2 * expansion);
             // 恢复上下文状态（这会清除filter）
             ctx.restore();
         } else {
             // 设置图像平滑质量
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(this.image, x, y, width, height);
+            ctx.drawImage(this.image, this.x, this.y, width, height);
         }
 
         ctx.restore();
