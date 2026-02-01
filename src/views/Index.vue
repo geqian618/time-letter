@@ -2678,15 +2678,19 @@ const handleKeyDownMoveElement = (event) => {
     switch (event.key) {
       case 'ArrowUp':
         activeElement.y -= step;
+        activeElement.centerY -= step;
         break;
       case 'ArrowDown':
         activeElement.y += step;
+        activeElement.centerY += step;
         break;
       case 'ArrowLeft':
         activeElement.x -= step;
+        activeElement.centerX -= step;
         break;
       case 'ArrowRight':
         activeElement.x += step;
+        activeElement.centerX += step;
         break;
     }
   }

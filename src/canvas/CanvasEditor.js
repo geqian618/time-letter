@@ -1614,6 +1614,10 @@ class EditableText extends Text {
 
 class Image extends Element {
 
+    #centerX = 0;
+
+    #centerY = 0;
+
     constructor(image, options = {}) {
         if (!image) {
             throw new Error('Failed to load image, image is null');
@@ -1662,6 +1666,25 @@ class Image extends Element {
 
     }
 
+
+    set centerX(value) {
+        this.#centerX = value;
+    }
+
+
+    set centerY(value) {
+        this.#centerY = value;
+    }
+
+    get centerX() {
+        return this.#centerX;
+    }
+
+
+    get centerY() {
+        return this.#centerY;
+    }
+
     static fromURL(src, options = {}) {
         return new Promise((resolve, reject) => {
             if (!src) {
@@ -1696,14 +1719,9 @@ class Image extends Element {
             return x >= this.x && x <= this.x + this.width * this.scale && y >= this.y && y <= this.y + this.height * this.scale;
         }
 
-        // 对于旋转的文本，将点击点反向旋转回文本的局部坐标系
-        // 计算文本中心点（旋转中心）
-        const centerX = this.x + this.width * this.scale / 2;
-        const centerY = this.y + this.height * this.scale / 2;
-
         // 将点相对于中心点平移
-        const translatedX = x - centerX;
-        const translatedY = y - centerY;
+        const translatedX = x - this.centerX;
+        const translatedY = y - this.centerY;
 
         // 计算反向旋转角度（弧度）
         const angleRad = -this.angle * Math.PI / 180;
@@ -1713,8 +1731,8 @@ class Image extends Element {
         const rotatedY = translatedX * Math.sin(angleRad) + translatedY * Math.cos(angleRad);
 
         // 将点平移回原坐标系
-        const localX = rotatedX + centerX;
-        const localY = rotatedY + centerY;
+        const localX = rotatedX + this.centerX;
+        const localY = rotatedY + this.centerY;
 
         // 检查反向旋转后的点是否在原始（未旋转）的边界框内
         return localX >= this.x && localX <= this.x + this.width * this.scale && localY >= this.y && localY <= this.y + this.height * this.scale;
@@ -1728,8 +1746,6 @@ class Image extends Element {
         ctx.save();
         ctx.globalAlpha = this.alpha;
 
-        const x = this.x;
-        const y = this.y;
         const width = this.width * this.scale;
         const height = this.height * this.scale;
         const radius = Math.min(this.radius, width / 2, height / 2);
@@ -1742,13 +1758,20 @@ class Image extends Element {
         const scaleY = currentTransform.d; // 垂直缩放
         const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
 
+        if (!this.centerX || !this.centerY || this.angle === 0) {
+            // 计算文本中心点
+            this.centerX = this.x + width / 2;
+            this.centerY = this.y + height / 2;
+        }
+
         // 设置变换
         if (this.angle !== 0) {
-            const centerX = x + width / 2;
-            const centerY = y + height / 2;
-            ctx.translate(centerX, centerY);
+            // 根据新的宽高和原中心点重新计算位置
+            this.x = this.centerX - width / 2;
+            this.y = this.centerY - height / 2;
+            ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
+            ctx.translate(-this.centerX, -this.centerY);
         }
 
         // 先绘制阴影（如果存在）
@@ -1758,7 +1781,7 @@ class Image extends Element {
             ctx.shadowOffsetX = shadowOffsetX * avgScale;
             ctx.shadowOffsetY = shadowOffsetY * avgScale;
 
-            this._createRoundedRectPath(ctx, x, y, width, height, radius);
+            this._createRoundedRectPath(ctx, this.x, this.y, width, height, radius);
             ctx.fillStyle = 'rgba(0,0,0,1)';
             ctx.fill();
 
@@ -1770,7 +1793,7 @@ class Image extends Element {
         }
 
         // 创建圆角路径并裁剪
-        this._createRoundedRectPath(ctx, x, y, width, height, radius);
+        this._createRoundedRectPath(ctx, this.x, this.y, width, height, radius);
         ctx.clip();
 
         // 如果有背景模糊效果
@@ -1784,14 +1807,16 @@ class Image extends Element {
             // 应用模糊滤镜
             ctx.filter = `blur(${blurAmount}px)`;
             // 在扩展区域内绘制图像
-            ctx.drawImage(this.image, x - expansion, y - expansion, width + 2 * expansion, height + 2 * expansion);
+            ctx.drawImage(this.image, this.x - expansion, this.y - expansion, width + 2 * expansion, height + 2 * expansion);
             // 恢复上下文状态（这会清除filter）
             ctx.restore();
         } else {
             // 设置图像平滑质量
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(this.image, x, y, width, height);
+            ctx.drawImage(this.image, this.x, this.y, width, height);
+
+            console.log(this.x, this.y)
         }
 
         ctx.restore();
@@ -1830,13 +1855,10 @@ class Image extends Element {
         ctx.lineCap = lineCap;
 
         if (this.angle !== 0) {
-            // 计算文本中心点
-            const centerX = this.x + this.width * this.scale / 2;
-            const centerY = this.y + this.height * this.scale / 2;
             // 平移到文本中心点，旋转，再平移回来
-            ctx.translate(centerX, centerY);
+            ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
+            ctx.translate(-this.centerX, -this.centerY);
         }
 
         // 如果设置了圆角，绘制圆角选择框
@@ -1875,6 +1897,10 @@ class Image extends Element {
 
 class LazyImage extends Element {
 
+    #centerX = 0;
+
+    #centerY = 0;
+
     constructor(src, options = {}) {
         super(options);
         this.type = 'image'
@@ -1900,6 +1926,25 @@ class LazyImage extends Element {
             offsetY: 0,
             ...options.shadow
         };
+    }
+
+
+    set centerX(value) {
+        this.#centerX = value;
+    }
+
+
+    set centerY(value) {
+        this.#centerY = value;
+    }
+
+    get centerX() {
+        return this.#centerX;
+    }
+
+
+    get centerY() {
+        return this.#centerY;
     }
 
     load() {
@@ -1965,14 +2010,9 @@ class LazyImage extends Element {
             return x >= this.x && x <= this.x + this.width * this.scale && y >= this.y && y <= this.y + this.height * this.scale;
         }
 
-        // 对于旋转的文本，将点击点反向旋转回文本的局部坐标系
-        // 计算文本中心点（旋转中心）
-        const centerX = this.x + this.width * this.scale / 2;
-        const centerY = this.y + this.height * this.scale / 2;
-
         // 将点相对于中心点平移
-        const translatedX = x - centerX;
-        const translatedY = y - centerY;
+        const translatedX = x - this.centerX;
+        const translatedY = y - this.centerY;
 
         // 计算反向旋转角度（弧度）
         const angleRad = -this.angle * Math.PI / 180;
@@ -1982,8 +2022,8 @@ class LazyImage extends Element {
         const rotatedY = translatedX * Math.sin(angleRad) + translatedY * Math.cos(angleRad);
 
         // 将点平移回原坐标系
-        const localX = rotatedX + centerX;
-        const localY = rotatedY + centerY;
+        const localX = rotatedX + this.centerX;
+        const localY = rotatedY + this.centerY;
 
         // 检查反向旋转后的点是否在原始（未旋转）的边界框内
         return localX >= this.x && localX <= this.x + this.width * this.scale && localY >= this.y && localY <= this.y + this.height * this.scale;
@@ -2011,13 +2051,21 @@ class LazyImage extends Element {
         const scaleY = currentTransform.d; // 垂直缩放
         const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
 
+        if (!this.centerX || !this.centerY || this.angle === 0) {
+            // 计算文本中心点
+            this.centerX = this.x + width / 2;
+            this.centerY = this.y + height / 2;
+        }
+
         // 设置变换
         if (this.angle !== 0) {
-            const centerX = x + width / 2;
-            const centerY = y + height / 2;
-            ctx.translate(centerX, centerY);
+            // 根据新的宽高和原中心点重新计算位置
+            this.x = this.centerX - width / 2;
+            this.y = this.centerY - height / 2;
+
+            ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
+            ctx.translate(-this.centerX, -this.centerY);
         }
 
         // 先绘制阴影（如果存在）
@@ -2099,13 +2147,10 @@ class LazyImage extends Element {
         ctx.lineCap = lineCap;
 
         if (this.angle !== 0) {
-            // 计算文本中心点
-            const centerX = this.x + this.width * this.scale / 2;
-            const centerY = this.y + this.height * this.scale / 2;
             // 平移到文本中心点，旋转，再平移回来
-            ctx.translate(centerX, centerY);
+            ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
+            ctx.translate(-this.centerX, -this.centerY);
         }
 
         // 如果设置了圆角，绘制圆角选择框
@@ -2141,6 +2186,11 @@ class LazyImage extends Element {
 }
 
 class Rect extends Element {
+
+    #centerX = 0;
+
+    #centerY = 0;
+
     constructor(options) {
         super(options);
         this.type = 'rect'
@@ -2162,26 +2212,41 @@ class Rect extends Element {
         };
     }
 
+
+    set centerX(value) {
+        this.#centerX = value;
+    }
+
+
+    set centerY(value) {
+        this.#centerY = value;
+    }
+
+    get centerX() {
+        return this.#centerX;
+    }
+
+
+    get centerY() {
+        return this.#centerY;
+    }
+
     contains(x, y) {
         // 如果未旋转，使用原来的轴对齐边界框检测
         if (this.angle === 0) {
             return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
         }
-        // 对于旋转的文本，将点击点反向旋转回文本的局部坐标系
-        // 计算文本中心点（旋转中心）
-        const centerX = this.x + this.width / 2;
-        const centerY = this.y + this.height / 2;
         // 将点相对于中心点平移
-        const translatedX = x - centerX;
-        const translatedY = y - centerY;
+        const translatedX = x - this.centerX;
+        const translatedY = y - this.centerY;
         // 计算反向旋转角度（弧度）
         const angleRad = -this.angle * Math.PI / 180;
         // 反向旋转点（绕中心点反向旋转）
         const rotatedX = translatedX * Math.cos(angleRad) - translatedY * Math.sin(angleRad);
         const rotatedY = translatedX * Math.sin(angleRad) + translatedY * Math.cos(angleRad);
         // 将点平移回原坐标系
-        const localX = rotatedX + centerX;
-        const localY = rotatedY + centerY;
+        const localX = rotatedX + this.centerX;
+        const localY = rotatedY + this.centerY;
         // 检查反向旋转后的点是否在原始（未旋转）的边界框内
         return localX >= this.x && localX <= this.x + this.width && localY >= this.y && localY <= this.y + this.height;
     }
@@ -2196,13 +2261,10 @@ class Rect extends Element {
         ctx.strokeStyle = color;
         ctx.lineCap = lineCap;
         if (this.angle !== 0) {
-            // 计算文本中心点
-            const centerX = this.x + this.width / 2;
-            const centerY = this.y + this.height / 2;
             // 平移到文本中心点，旋转，再平移回来
-            ctx.translate(centerX, centerY);
+            ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
+            ctx.translate(-this.centerX, -this.centerY);
         }
         ctx.beginPath();
         ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width + 2 * lineWidth, this.height + 2 * lineWidth);
@@ -2227,14 +2289,21 @@ class Rect extends Element {
         ctx.shadowOffsetX = shadowOffsetX || 0;
         ctx.shadowOffsetY = shadowOffsetY || 0;
 
+        if (!this.centerX || !this.centerY || this.angle === 0) {
+            // 计算文本中心点
+            this.centerX = this.x + this.width / 2;
+            this.centerY = this.y + this.height / 2;
+        }
+
         if (this.angle !== 0) {
-            // 将画布原点移动到图片中心点
-            const centerX = this.x + this.width / 2;
-            const centerY = this.y + this.height / 2;
-            ctx.translate(centerX, centerY);
+            // 根据新的宽高和原中心点重新计算位置
+            this.x = this.centerX - this.width / 2;
+            this.y = this.centerY - this.height / 2;
+
+            ctx.translate(this.centerX, this.centerY);
             // 旋转画布
             ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-centerX, -centerY);
+            ctx.translate(-this.centerX, -this.centerY);
         }
 
         // 绘制圆角
