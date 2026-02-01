@@ -93,6 +93,7 @@ class CanvasEditor {
         // 仅浏览器环境生效
         if (this.isBrowser) {
             this.canvas.addEventListener('mousedown', this.handleMouseDown);
+            this.createHiddenInput();
         }
 
         this.resetElements([]);
@@ -143,11 +144,7 @@ class CanvasEditor {
      * 创建隐藏输入框
      */
     createHiddenInput() {
-        // 如果已存在输入框，先移除
-        if (this.hiddenInput) {
-            this.removeHiddenInput();
-        }
-        // 创建新的输入框
+        // 创建不显示的输入框
         this.hiddenInput = document.createElement('input');
         this.hiddenInput.type = 'text';
         this.hiddenInput.style.position = 'fixed';
@@ -187,21 +184,18 @@ class CanvasEditor {
         if (textObj.status === Element.EDITING) {
             // 如果已经在编辑同一文本，只更新光标位置
             this.cursorEnd = this.cursorStart = index;
-            this.renderAll();
             this.updateInputSelection();
+            this.renderAll();
             return;
         }
 
         textObj.status = Element.EDITING
+        textObj.oldText = textObj.text;
         this.editingText = textObj;
         this.isEditing = true;
         this.isCursorVisible = true;
         this.cursorEnd = this.cursorStart = textObj.text.length;
-
         this.canvas.style.cursor = textObj.direction === 'horizontal' ? 'text' : 'vertical-text';
-
-        // 动态创建隐藏输入框
-        this.createHiddenInput();
 
         // 设置隐藏输入框的值
         this.hiddenInput.value = textObj.text;
@@ -227,9 +221,9 @@ class CanvasEditor {
         if (this.hiddenInput) {
             // 移除事件监听
             this.hiddenInput.removeEventListener('keydown', this.handleKeyDown);
-            this.hiddenInput.removeEventListener('keyup', this.handleKeyUp);
             this.hiddenInput.removeEventListener('input', this.handleInput);
-            this.hiddenInput.removeEventListener('blur', this.handleBlur);
+            // this.hiddenInput.removeEventListener('keyup', this.handleKeyUp);
+            // this.hiddenInput.removeEventListener('blur', this.handleBlur);
 
             // 从DOM中移除
             if (this.hiddenInput.parentNode) {
@@ -438,7 +432,6 @@ class CanvasEditor {
      * @returns {TextMetrics} 截取文本度量
      */
     getSubTextMetrics(textObj, startIndex, endIndex) {
-
         const {text, spacing, fontStyle, fontWeight, fontSize, fontFamily} = textObj;
         // 设置字体（与 drawText 保持一致）
         this.ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px "${fontFamily}", "Microsoft YaHei", sans-serif`;
@@ -469,29 +462,6 @@ class CanvasEditor {
         };
     }
 
-
-    getRangeByIndex(textObj, startIndex, endIndex) {
-        const {x, text, spacing, fontStyle, fontWeight, fontSize, fontFamily} = textObj;
-        // 设置字体（与 drawText 保持一致）
-        this.ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px "${fontFamily}", "Microsoft YaHei", sans-serif`;
-        let startX = x;
-        let endX = x;
-        const minIndex = Math.max(0, Math.min(startIndex, endIndex));
-        const maxIndex = Math.min(text.length, Math.max(startIndex, endIndex));
-        for (let i = 0; i < text.length; i++) {
-            const char = text[i];
-            const charWidth = this.ctx.measureText(char).width;
-            if (i < minIndex) {
-                startX += charWidth + spacing;
-            }
-            if (i < maxIndex) {
-                endX += charWidth + spacing;
-            }
-        }
-        startX = Math.max(0, startX - spacing)
-        endX = Math.max(0, endX - spacing)
-        return {startX, endX}
-    }
 
     /**
      * 根据点击位置计算光标位置
@@ -640,7 +610,6 @@ class CanvasEditor {
             this.ctx.lineTo(x, this.canvas.height);
             this.ctx.stroke();
         }
-
         // 绘制水平线
         for (let y = 0; y <= this.canvas.height; y += this.gridSize) {
             this.ctx.beginPath();
@@ -885,6 +854,11 @@ class CanvasEditor {
         document.addEventListener('mouseup', handleMouseup);
     }
 
+
+    /**
+     * 激活元素
+     * @param event
+     */
     handleActiveElement(event) {
         const target = event.target;
         this.activeElements.push(event.target)
@@ -901,7 +875,7 @@ class CanvasEditor {
      * 更新输入框的光标位置
      */
     updateInputSelection() {
-        if (!this.editingText || !this.hiddenInput) return;
+        if (!this.hiddenInput) return;
         // 设置输入框的光标位置
         setTimeout(() => {
             this.hiddenInput.focus()
@@ -916,7 +890,7 @@ class CanvasEditor {
      * @param {Event} event - 输入事件
      */
     handleInput(event) {
-        if (!this.editingText || !this.hiddenInput) return;
+        if (!this.isEditing || !this.editingText || !this.hiddenInput) return;
         const newText = event.target.value;
         // 更新文本
         this.editingText.text = newText;
@@ -932,7 +906,7 @@ class CanvasEditor {
      * @param {Event} event - 键盘事件
      */
     handleKeyDown(event) {
-        if (!this.editingText) return;
+        if (!this.isEditing || !this.editingText || !this.hiddenInput) return;
         switch (event.key) {
             case 'Enter':
                 event.preventDefault();
@@ -991,12 +965,12 @@ class CanvasEditor {
      *
      */
     handleCancelActive() {
+        if (this.isEditing) {
+            this.finishEditing()
+        }
         if (this.activeElements.length > 0) {
             this.clearActiveElements()
             this.renderAll();
-        }
-        if (this.editingText) {
-            this.finishEditing()
         }
     }
 
@@ -1017,43 +991,45 @@ class CanvasEditor {
      * 完成编辑
      */
     finishEditing() {
-        if (this.editingText && this.hiddenInput) {
-            this.canvas.style.cursor = '';
-            this.editingText.status = Element.NONE
-            // 更新文本
-            this.editingText.text = this.hiddenInput.value;
-            if (!this.editingText.text) {
-                this.removeElement(this.editingText)
-            }
-            this.removeActiveElement(this.editingText)
-            this.cleanup();
-            this.renderAll();
+        if (!this.isEditing || !this.editingText || !this.hiddenInput) return;
+        this.canvas.style.cursor = '';
+        this.editingText.status = Element.NONE
+        // 更新文本
+        this.editingText.text = this.hiddenInput.value;
+        // 移除旧文本
+        delete this.editingText.oldText
+        if (!this.editingText.text) {
+            this.removeElement(this.editingText)
         }
+        this.removeActiveElement(this.editingText)
+        this.cleanupEditing();
+        this.renderAll();
     }
 
     /**
      * 取消编辑
      */
     cancelEditing() {
-        if (this.editingText) {
-            this.canvas.style.cursor = '';
-            this.editingText.status = Element.NONE
-            // 如果文本为空，移除它
-            if (!this.hiddenInput.value) {
-                this.removeElement(this.editingText)
-            }
-            this.removeActiveElement(this.editingText)
-            this.cleanup();
-            this.renderAll();
+        if (!this.isEditing || !this.editingText || !this.hiddenInput) return;
+        this.canvas.style.cursor = '';
+        this.editingText.status = Element.NONE
+        // 恢复原来的文本
+        this.editingText.text = this.editingText.oldText;
+        // 移除旧文本
+        delete this.editingText.oldText
+        // 如果文本为空，移除它
+        if (!this.editingText.text) {
+            this.removeElement(this.editingText)
         }
+        this.removeActiveElement(this.editingText)
+        this.cleanupEditing();
+        this.renderAll();
     }
 
     /**
      * 清理编辑状态
      */
-    cleanup() {
-        // 移除隐藏输入框
-        this.removeHiddenInput();
+    cleanupEditing() {
         this.editingText = null;
         this.isEditing = false;
         this.cursorEnd = this.cursorStart = 0;
