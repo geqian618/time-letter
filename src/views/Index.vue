@@ -2057,6 +2057,7 @@ const useTemplate = async (settings, path) => {
     }
   }
 
+  canvas.borderOptions = _.cloneDeep(border.meta)
   canvas.background = JSON.stringify(background)
   canvas.foreground = JSON.stringify(foreground)
   canvas.initZoom = initZoom;
@@ -2152,6 +2153,7 @@ const renderCanvas = async (canvas) => {
     canvas.zoom = canvasEditor.getZoom()
     canvas.width = width;
     canvas.height = height
+    canvas.borderOptions = background.meta
     canvas.foreground = canvasEditor.exportToObject()
     canvas.background = backgroundCanvasEditor.exportToObject()
   } else {
@@ -2444,8 +2446,15 @@ const handleUpdatePhotograph = async () => {
 const handleUpdateBorders = async () => {
   const currentCanvas = CanvasManager.getCurrentCanvas();
   if (!currentCanvas) return
-  const {width, height, initZoom} = currentCanvas;
-  let {
+
+  const {
+    width,
+    height,
+    initZoom,
+    borderOptions: {borderLeft: lastBorderLeft, borderTop: lastBorderTop}
+  } = currentCanvas;
+
+  const {
     borderLeft,
     borderRight,
     borderTop,
@@ -2455,40 +2464,52 @@ const handleUpdateBorders = async () => {
     borderType,
     borderBlur
   } = borderOptions.value;
+
   const elements = backgroundCanvasEditor.getElements();
   const background = elements[0];
   const target = elements[1];
-  borderLeft = borderLeft / initZoom
-  borderRight = borderRight / initZoom
-  borderTop = borderTop / initZoom
-  borderBottom = borderBottom / initZoom
-  borderRadius = borderRadius / initZoom
-  borderBlur = borderBlur / initZoom
-  target.x = borderLeft
-  target.y = borderTop
-  const newWidth = width + borderLeft + borderRight
-  const newHeight = height + borderTop + borderBottom
+
+  const newBorderLeft = borderLeft / initZoom
+  const newBorderRight = borderRight / initZoom
+  const newBorderTop = borderTop / initZoom
+  const newBorderBottom = borderBottom / initZoom
+  const newBorderRadius = borderRadius / initZoom
+  const newBorderBlur = borderBlur / initZoom
+  target.x = newBorderLeft
+  target.y = newBorderTop
+  const newWidth = width + newBorderLeft + newBorderRight
+  const newHeight = height + newBorderTop + newBorderBottom
   backgroundCanvasEditor.resizeCanvas(newWidth, newHeight)
   canvasEditor.resizeCanvas(newWidth, newHeight)
+
   scrollBarMoveToCenter(currentCanvas)
 
   if (borderType === 0 && background.type !== 'rect') {
-    elements[0] = new Rect({width: newWidth, height: newHeight, radius: borderRadius, fill: borderColor});
+    elements[0] = new Rect({width: newWidth, height: newHeight, radius: newBorderRadius, fill: borderColor});
   } else if (borderType === 1 && background.type !== 'image') {
     elements[0] = new Image(target.image, {
       width: newWidth,
       height: newHeight,
-      radius: borderRadius,
-      blur: borderBlur,
+      radius: newBorderRadius,
+      blur: newBorderBlur,
       meta: {path: target.meta.path, ...background.meta}
     })
   } else {
     background.width = newWidth;
     background.height = newHeight;
     background.fill = borderColor;
-    background.radius = borderRadius;
-    background.blur = borderBlur;
+    background.radius = newBorderRadius;
+    background.blur = newBorderBlur;
   }
+
+  if (borderLeft !== lastBorderLeft || borderTop !== lastBorderTop) {
+    for (let element of canvasEditor.getElements()) {
+      element.x += (borderLeft - lastBorderLeft) / initZoom;
+      element.y += (borderTop - lastBorderTop) / initZoom;
+    }
+  }
+
+  currentCanvas.borderOptions = _.cloneDeep(borderOptions.value)
   currentCanvas.background = backgroundCanvasEditor.exportToObject()
   canvasElement.value.classList.remove('scale-animation')
   backgroundElement.value.classList.remove('scale-animation')
