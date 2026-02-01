@@ -17,7 +17,7 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
     const maxThreads = projectSettings.performance.downloadThreads === -1 ? os.cpus().length : Math.max(1, projectSettings.performance.downloadThreads);
 
     // 创建线程池
-    const threadPool = new Piscina({
+    let threadPool = new Piscina({
         filename: path.resolve(__dirname, 'worker.js'),
         maxThreads,
         minThreads: 0,
@@ -75,6 +75,8 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
 
     // 导出完成后，销毁线程池
     await threadPool.destroy();
+
+    threadPool = null;
 
     console.log('threadPool destroy...')
 
