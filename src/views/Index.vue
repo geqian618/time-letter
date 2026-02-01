@@ -2662,11 +2662,13 @@ const handleMoveScrollbar = (event) => {
 
 const handleKeyDownMoveElement = (event) => {
 
+  const activeElement = document.activeElement;
+
   const validKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
 
   const canvas = CanvasManager.getCurrentCanvas();
 
-  if (!validKeys.includes(event.key) || !canvas) return;
+  if (!validKeys.includes(event.key) || !canvas || activeElement !== document.body) return;
 
   event.preventDefault();
 
