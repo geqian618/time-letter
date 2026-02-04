@@ -46,20 +46,20 @@ const projectSettings = ref({
     availableFonts: new Map(),
     resize: {
         leftSidebar: {
-            width: 0,
-            height: 0
+            width: '18%',
+            height: '75%'
         },
         previewContainer: {
-            width: 0,
-            height: 0
+            width: '60%',
+            height: '75%'
         },
         rightSidebar: {
-            width: 0,
-            height: 0
+            width: '22%',
+            height: '75%'
         },
         bottomSidebar: {
-            width: 0,
-            height: 0
+            width: '100%',
+            height: '25%'
         }
     }
 })
