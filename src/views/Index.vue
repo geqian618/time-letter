@@ -282,6 +282,23 @@
                         </div>
                       </li>
                       <li class="option">
+                        <div class="label">下边框</div>
+                        <div class="value">
+                          <el-slider @input="handleUpdateBorders"
+                                     size="small"
+                                     :show-tooltip="false"
+                                     :min="sliderRange.min"
+                                     :max="sliderRange.max"
+                                     v-model="borderOptions.borderBottom"
+                                     placement="top"/>
+                          <input type="number"
+                                 class="number-input"
+                                 @input="handleUpdateBorders"
+                                 v-model="borderOptions.borderBottom"
+                                 step="1">
+                        </div>
+                      </li>
+                      <li class="option">
                         <div class="label">左边框</div>
                         <div class="value">
                           <el-slider @input="handleUpdateBorders"
@@ -311,23 +328,6 @@
                                  class="number-input"
                                  @input="handleUpdateBorders"
                                  v-model="borderOptions.borderRight"
-                                 step="1">
-                        </div>
-                      </li>
-                      <li class="option">
-                        <div class="label">下边框</div>
-                        <div class="value">
-                          <el-slider @input="handleUpdateBorders"
-                                     size="small"
-                                     :show-tooltip="false"
-                                     :min="sliderRange.min"
-                                     :max="sliderRange.max"
-                                     v-model="borderOptions.borderBottom"
-                                     placement="top"/>
-                          <input type="number"
-                                 class="number-input"
-                                 @input="handleUpdateBorders"
-                                 v-model="borderOptions.borderBottom"
                                  step="1">
                         </div>
                       </li>
