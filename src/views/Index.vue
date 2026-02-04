@@ -951,13 +951,19 @@
               </div>
               <div class="option">
                 <span class="label">前缀：</span>
-                <el-input class="value" v-model="projectSettings.outputSettings.fileNaming.prefix"
-                          size="small"></el-input>
+                <el-input class="value"
+                          spellcheck="false"
+                          v-model="projectSettings.outputSettings.fileNaming.prefix"
+                          size="small">
+                </el-input>
               </div>
               <div class="option">
                 <span class="label">后缀：</span>
-                <el-input class="value" v-model="projectSettings.outputSettings.fileNaming.suffix"
-                          size="small"></el-input>
+                <el-input class="value"
+                          spellcheck="false"
+                          v-model="projectSettings.outputSettings.fileNaming.suffix"
+                          size="small">
+                </el-input>
               </div>
             </div>
           </div>
@@ -968,35 +974,59 @@
             <div class="options">
               <div class="option">
                 <span class="label">相机品牌：</span>
-                <el-input class="metadata-input" v-model="projectSettings.metadata.formats.cameraBrand"></el-input>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          v-model="projectSettings.metadata.formats.cameraBrand">
+                </el-input>
               </div>
               <div class="option">
                 <span class="label">相机型号：</span>
-                <el-input class="metadata-input" v-model="projectSettings.metadata.formats.cameraModel"></el-input>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          v-model="projectSettings.metadata.formats.cameraModel">
+                </el-input>
               </div>
               <div class="option">
                 <span class="label">镜头型号：</span>
-                <el-input class="metadata-input" v-model="projectSettings.metadata.formats.lensModel"></el-input>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          v-model="projectSettings.metadata.formats.lensModel">
+                </el-input>
               </div>
               <div class="option">
                 <span class="label">焦段：</span>
-                <el-input class="metadata-input" v-model="projectSettings.metadata.formats.focalLength"></el-input>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          v-model="projectSettings.metadata.formats.focalLength">
+                </el-input>
               </div>
               <div class="option">
                 <span class="label">ISO：</span>
-                <el-input class="metadata-input" v-model="projectSettings.metadata.formats.iso"></el-input>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          v-model="projectSettings.metadata.formats.iso">
+                </el-input>
               </div>
               <div class="option">
                 <span class="label">快门：</span>
-                <el-input class="metadata-input" v-model="projectSettings.metadata.formats.shutter"></el-input>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          v-model="projectSettings.metadata.formats.shutter">
+                </el-input>
               </div>
               <div class="option">
                 <span class="label">光圈：</span>
-                <el-input class="metadata-input" v-model="projectSettings.metadata.formats.aperture"></el-input>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          v-model="projectSettings.metadata.formats.aperture">
+                </el-input>
               </div>
               <div class="option">
                 <span class="label">拍摄日期：</span>
-                <el-input class="metadata-input" v-model="projectSettings.metadata.formats.shootingTime"></el-input>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          v-model="projectSettings.metadata.formats.shootingTime">
+                </el-input>
               </div>
             </div>
           </div>
@@ -1015,6 +1045,7 @@
               <div class="option">
                 <span class="label">转换倍数：</span>
                 <el-input class="value"
+                          spellcheck="false"
                           @change="handleFocalLength(1)"
                           v-model="projectSettings.metadata.other.conversionMultiple">
                 </el-input>
