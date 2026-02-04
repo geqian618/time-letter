@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="page-layout">
+    <div class="page-layout" ref="page">
       <div class="page-main" ref="pageMain">
         <div class="page-left">
           <div class="left-resize" ref="leftResize"></div>
@@ -1280,6 +1280,8 @@ const bottomResize = ref(null);
 
 const pageMain = ref(null);
 
+const page = ref(null);
+
 const menuRef = ref(null)
 
 const templateRef = ref(null)
@@ -2282,27 +2284,40 @@ const initAreaResize = () => {
   const root = document.documentElement;
   const rootStyle = root.style;
 
-  if (leftSidebarResize.width && previewContainerResize.width && rightSidebarResize.width) {
+  if (leftSidebarResize.width) {
     rootStyle.setProperty('--page-left-width', leftSidebarResize.width)
+  }
+
+  if (rightSidebarResize.width) {
     rootStyle.setProperty('--page-right-width', rightSidebarResize.width)
+  }
+
+  if (previewContainerResize.width) {
     rootStyle.setProperty('--preview-container-width', previewContainerResize.width)
   }
 
-  if (previewContainerResize.height && bottomSidebarResize.height) {
+
+  if (previewContainerResize.height) {
     rootStyle.setProperty('--page-main-height', previewContainerResize.height)
+  }
+
+  if (bottomSidebarResize.height) {
     rootStyle.setProperty('--page-bottom-height', bottomSidebarResize.height)
   }
 }
 
 const initCanvasSize = () => {
 
-  const {previewContainer: previewContainerResize} = projectSettings.value.resize;
 
   setTimeout(() => {
 
-    previewContainer.value.idealWidth = previewContainerResize.width || previewContainer.value.clientWidth
+    const {previewContainer: previewContainerResize} = projectSettings.value.resize;
 
-    previewContainer.value.idealHeight = previewContainerResize.height || previewContainer.value.clientHeight
+    const {clientWidth, clientHeight} = page.value;
+
+    previewContainer.value.idealWidth = Number.parseFloat(previewContainerResize.width || 0) / 100 * clientWidth || previewContainer.value.clientWidth
+
+    previewContainer.value.idealHeight = Number.parseFloat(previewContainerResize.height || 0) / 100 * clientHeight || previewContainer.value.clientHeight
 
     renderCanvasScrollbar()
 
@@ -2939,14 +2954,15 @@ const handleDragMoveCanvas = (event) => {
 
 
 const handleLeftSidebarResize = (e) => {
-  const {clientWidth} = document.documentElement;
+
   let lastMoveX = e.clientX;
+  const {clientWidth, clientHeight} = page.value;
   const leftSidebar = leftResize.value.parentNode;
 
   // 获取当前百分比值
   const rootStyle = getComputedStyle(document.documentElement);
-  let sidebarPercent = parseFloat(rootStyle.getPropertyValue('--page-left-width')) || 30;
-  let previewPercent = parseFloat(rootStyle.getPropertyValue('--preview-container-width')) || 70;
+  let sidebarPercent = parseFloat(rootStyle.getPropertyValue('--page-left-width'))
+  let previewPercent = parseFloat(rootStyle.getPropertyValue('--preview-container-width'));
 
   const handleMove = (event) => {
 
@@ -2975,9 +2991,11 @@ const handleLeftSidebarResize = (e) => {
       rootStyle.setProperty('--page-left-width', `${sidebarPercent}%`);
       rootStyle.setProperty('--preview-container-width', `${previewPercent}%`);
 
+      previewContainer.value.idealWidth = newPreviewPercent / 100 * clientWidth;
+
       // 存储到项目设置
-      projectSettings.value.resize.leftSidebar.width = sidebarPercent;
-      projectSettings.value.resize.previewContainer.width = previewPercent;
+      projectSettings.value.resize.leftSidebar.width = `${sidebarPercent}%`;
+      projectSettings.value.resize.previewContainer.width = `${previewPercent}%`;
       StorageManager.saveProjectSettings(projectSettings.value);
     }
   };
@@ -2994,8 +3012,8 @@ const handleLeftSidebarResize = (e) => {
 
 const handleRightSidebarResize = (e) => {
 
-  const {clientWidth} = document.documentElement;
   let lastMoveX = e.clientX;
+  const {clientWidth, clientHeight} = page.value;
   const rightSidebar = rightResize.value.parentNode;
 
   // 获取当前百分比值
@@ -3032,9 +3050,11 @@ const handleRightSidebarResize = (e) => {
       rootStyle.setProperty('--page-right-width', `${sidebarPercent}%`);
       rootStyle.setProperty('--preview-container-width', `${previewPercent}%`);
 
+      previewContainer.value.idealWidth = newPreviewPercent / 100 * clientWidth;
+
       // 存储到项目设置
-      projectSettings.value.resize.leftSidebar.width = sidebarPercent;
-      projectSettings.value.resize.previewContainer.width = previewPercent;
+      projectSettings.value.resize.rightSidebar.width = `${sidebarPercent}%`;
+      projectSettings.value.resize.previewContainer.width = `${previewPercent}%`;
       StorageManager.saveProjectSettings(projectSettings.value);
     }
   };
@@ -3051,8 +3071,8 @@ const handleRightSidebarResize = (e) => {
 
 const handleBottomSidebarResize = (e) => {
 
-  const {clientHeight} = document.documentElement;
   let lastMoveY = e.clientY;
+  const {clientWidth, clientHeight} = page.value;
   const bottomSidebar = bottomResize.value.parentNode;
 
   // 获取当前百分比值
@@ -3087,10 +3107,12 @@ const handleBottomSidebarResize = (e) => {
       rootStyle.setProperty('--page-bottom-height', `${sidebarPercent}%`);
       rootStyle.setProperty('--page-main-height', `${previewPercent}%`);
 
+      previewContainer.value.idealHeight = newPreviewPercent / 100 * clientHeight;
+
       // 存储到项目设置
       projectSettings.value.resize.bottomSidebar.height = `${sidebarPercent}%`;
       projectSettings.value.resize.previewContainer.height = `${previewPercent}%`;
-      projectSettings.value.resize.leftSidebar.height = `${previewPercent}%`;
+      projectSettings.value.resize.leftSidebar.height = `${previewPercent}`;
       projectSettings.value.resize.rightSidebar.height = `${previewPercent}%`;
       StorageManager.saveProjectSettings(projectSettings.value);
     }
