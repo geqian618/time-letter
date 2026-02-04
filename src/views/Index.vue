@@ -2283,14 +2283,14 @@ const initAreaResize = () => {
   const rootStyle = root.style;
 
   if (leftSidebarResize.width && previewContainerResize.width && rightSidebarResize.width) {
-    rootStyle.setProperty('--page-left-width', leftSidebarResize.width + 'px')
-    rootStyle.setProperty('--page-right-width', rightSidebarResize.width + 'px')
-    rootStyle.setProperty('--preview-container-width', previewContainerResize.width + 'px')
+    rootStyle.setProperty('--page-left-width', leftSidebarResize.width)
+    rootStyle.setProperty('--page-right-width', rightSidebarResize.width)
+    rootStyle.setProperty('--preview-container-width', previewContainerResize.width)
   }
 
   if (previewContainerResize.height && bottomSidebarResize.height) {
-    rootStyle.setProperty('--page-main-height', previewContainerResize.height + 'px')
-    rootStyle.setProperty('--page-bottom-height', bottomSidebarResize.height + 'px')
+    rootStyle.setProperty('--page-main-height', previewContainerResize.height)
+    rootStyle.setProperty('--page-bottom-height', bottomSidebarResize.height)
   }
 }
 
@@ -2940,28 +2940,48 @@ const handleDragMoveCanvas = (event) => {
 
 const handleLeftSidebarResize = (e) => {
 
+  const {clientWidth} = document.documentElement;
+
   let lastMoveX = e.clientX;
 
+  // 获取当前百分比值
+  const rootStyle = getComputedStyle(document.documentElement);
+  let sidebarPercent = parseFloat(rootStyle.getPropertyValue('--page-left-width')) || 30;
+  let previewPercent = parseFloat(rootStyle.getPropertyValue('--preview-container-width')) || 70;
+
   const handleMove = (event) => {
+
     const moveX = event.clientX;
     const offsetX = moveX - lastMoveX;
     lastMoveX = moveX;
-    const sidebar = leftResize.value.parentNode;
-    const {width: sidebarWidth} = window.getComputedStyle(sidebar);
-    const {width: previewContainerWidth, minWidth} = window.getComputedStyle(previewContainer.value);
-    const newSidebarWidth = Number.parseFloat(sidebarWidth) + offsetX;
-    const newPreviewContainerWidth = Number.parseFloat(previewContainerWidth) - offsetX;
-    if (newPreviewContainerWidth >= Number.parseFloat(minWidth)) {
-      sidebar.style.width = newSidebarWidth + 'px';
-      previewContainer.value.style.width = newPreviewContainerWidth + 'px';
-      previewContainer.value.idealWidth = newPreviewContainerWidth
-      StorageManager.saveProjectSettings(projectSettings.value);
 
-      projectSettings.value.resize.leftSidebar.width = newSidebarWidth;
-      projectSettings.value.resize.previewContainer.width = newPreviewContainerWidth;
-      scrollBarMoveToCenter(CanvasManager.getCurrentCanvas())
+    // 计算偏移量对应的百分比变化
+    const offsetPercent = (offsetX / clientWidth) * 100;
+
+    const newSidebarPercent = sidebarPercent + offsetPercent;
+    const newPreviewPercent = previewPercent - offsetPercent;
+
+    const {minWidth: previewMinWidth = 0} = window.getComputedStyle(previewContainer.value);
+    const {minWidth: sidebarMinWidth = 0} = window.getComputedStyle(leftResize.value);
+
+    const previewMinWidthPercent = (parseFloat(previewMinWidth) / clientWidth) * 100;
+    const sidebarMinWidthPercent = (parseFloat(sidebarMinWidth) / clientWidth) * 100;
+
+    // 验证两个约束条件
+    if (newPreviewPercent >= previewMinWidthPercent && newSidebarPercent >= sidebarMinWidthPercent) {
+      sidebarPercent = newSidebarPercent;
+      previewPercent = newPreviewPercent;
+
+      const rootStyle = document.documentElement.style;
+      rootStyle.setProperty('--page-left-width', `${sidebarPercent}%`);
+      rootStyle.setProperty('--preview-container-width', `${previewPercent}%`);
+
+      // 存储到项目设置
+      projectSettings.value.resize.leftSidebar.width = sidebarPercent;
+      projectSettings.value.resize.previewContainer.width = previewPercent;
+      StorageManager.saveProjectSettings(projectSettings.value);
     }
-  }
+  };
 
   const handleUp = (event) => {
     document.removeEventListener('mousemove', handleMove)
@@ -2972,30 +2992,52 @@ const handleLeftSidebarResize = (e) => {
   document.addEventListener('mouseup', handleUp)
 }
 
-const handRightSidebarResize = (e) => {
+
+const handleRightSidebarResize = (e) => {
+
+  const {clientWidth} = document.documentElement;
   let lastMoveX = e.clientX;
+
+  // 获取当前百分比值
+  const rootStyle = getComputedStyle(document.documentElement);
+  let sidebarPercent = parseFloat(rootStyle.getPropertyValue('--page-right-width')) || 30;
+  let previewPercent = parseFloat(rootStyle.getPropertyValue('--preview-container-width')) || 70;
+
   const handleMove = (event) => {
+
     const moveX = event.clientX;
     const offsetX = moveX - lastMoveX;
     lastMoveX = moveX;
-    const sidebar = rightResize.value.parentNode;
-    const {width: sidebarWidth} = window.getComputedStyle(sidebar);
-    const {width: previewContainerWidth, minWidth} = window.getComputedStyle(previewContainer.value);
-    const newSidebarWidth = Number.parseFloat(sidebarWidth) - offsetX;
-    const newPreviewContainerWidth = Number.parseFloat(previewContainerWidth) + offsetX;
 
-    if (newPreviewContainerWidth >= Number.parseFloat(minWidth)) {
-      sidebar.style.width = newSidebarWidth + 'px';
-      previewContainer.value.style.width = newPreviewContainerWidth + 'px';
-      previewContainer.value.idealWidth = newPreviewContainerWidth
-      scrollBarMoveToCenter(CanvasManager.getCurrentCanvas())
+    // 计算偏移量对应的百分比变化
+    const offsetPercent = (offsetX / clientWidth) * 100;
 
-      projectSettings.value.resize.rightSidebar.width = newSidebarWidth;
-      projectSettings.value.resize.previewContainer.width = newPreviewContainerWidth;
+    const newSidebarPercent = sidebarPercent - offsetPercent;
+    const newPreviewPercent = previewPercent + offsetPercent;
+
+    const {minWidth: previewMinWidth = 0} = window.getComputedStyle(previewContainer.value);
+    const {minWidth: sidebarMinWidth = 0} = window.getComputedStyle(rightResize.value);
+
+    const previewMinWidthPercent = (parseFloat(previewMinWidth) / clientWidth) * 100;
+    const sidebarMinWidthPercent = (parseFloat(sidebarMinWidth) / clientWidth) * 100;
+
+    // 验证两个约束条件
+    if (newPreviewPercent >= previewMinWidthPercent && newSidebarPercent >= sidebarMinWidthPercent) {
+
+      sidebarPercent = newSidebarPercent;
+
+      previewPercent = newPreviewPercent;
+
+      const rootStyle = document.documentElement.style;
+      rootStyle.setProperty('--page-right-width', `${sidebarPercent}%`);
+      rootStyle.setProperty('--preview-container-width', `${previewPercent}%`);
+
+      // 存储到项目设置
+      projectSettings.value.resize.leftSidebar.width = sidebarPercent;
+      projectSettings.value.resize.previewContainer.width = previewPercent;
       StorageManager.saveProjectSettings(projectSettings.value);
-
     }
-  }
+  };
 
   const handleUp = (event) => {
     document.removeEventListener('mousemove', handleMove)
@@ -3004,40 +3046,58 @@ const handRightSidebarResize = (e) => {
 
   document.addEventListener('mousemove', handleMove)
   document.addEventListener('mouseup', handleUp)
-
 }
 
 
 const handleBottomSidebarResize = (e) => {
 
+  const {clientHeight} = document.documentElement;
+
   let lastMoveY = e.clientY;
 
+  // 获取当前百分比值
+  const rootStyle = getComputedStyle(document.documentElement);
+  let sidebarPercent = parseFloat(rootStyle.getPropertyValue('--page-bottom-height')) || 30;
+  let previewPercent = parseFloat(rootStyle.getPropertyValue('--page-main-height')) || 70;
+
   const handleMove = (event) => {
+
     const moveY = event.clientY;
+
     const offsetY = moveY - lastMoveY;
+
     lastMoveY = moveY;
-    const sidebar = bottomResize.value.parentNode;
-    const {height: sidebarHeight} = window.getComputedStyle(sidebar);
-    const {height: previewContainerHeight, minHeight} = window.getComputedStyle(pageMain.value);
-    const newSidebarHeight = Number.parseFloat(sidebarHeight) - offsetY;
-    const newPreviewContainerHeight = Number.parseFloat(previewContainerHeight) + offsetY;
-    if (newPreviewContainerHeight >= Number.parseFloat(minHeight)) {
-      sidebar.style.height = newSidebarHeight + 'px';
-      pageMain.value.style.height = newPreviewContainerHeight + 'px';
-      previewContainer.value.idealHeight = newPreviewContainerHeight
-      scrollBarMoveToCenter(CanvasManager.getCurrentCanvas())
 
-      projectSettings.value.resize.bottomSidebar.height = newSidebarHeight;
-      projectSettings.value.resize.previewContainer.height = newPreviewContainerHeight;
-      projectSettings.value.resize.leftSidebar.height = newPreviewContainerHeight;
-      projectSettings.value.resize.rightSidebar.height = newPreviewContainerHeight;
+    // 计算偏移量对应的百分比变化
+    const offsetPercent = (offsetY / clientHeight) * 100;
 
-      console.log(projectSettings.value.resize)
+    const newSidebarPercent = sidebarPercent - offsetPercent;
+    const newPreviewPercent = previewPercent + offsetPercent;
 
+    const {minHeight: previewMinHeight = 0} = window.getComputedStyle(previewContainer.value);
+    const {minHeight: sidebarMinHeight = 0} = window.getComputedStyle(leftResize.value);
+
+    const previewMinWidthPercent = (parseFloat(previewMinHeight) / clientHeight) * 100;
+    const sidebarMinWidthPercent = (parseFloat(sidebarMinHeight) / clientHeight) * 100;
+
+    // 验证两个约束条件
+    if (newPreviewPercent >= previewMinWidthPercent && newSidebarPercent >= sidebarMinWidthPercent) {
+
+      sidebarPercent = newSidebarPercent;
+      previewPercent = newPreviewPercent;
+
+      const rootStyle = document.documentElement.style;
+      rootStyle.setProperty('--page-bottom-height', `${sidebarPercent}%`);
+      rootStyle.setProperty('--page-main-height', `${previewPercent}%`);
+
+      // 存储到项目设置
+      projectSettings.value.resize.bottomSidebar.height = `${sidebarPercent}%`;
+      projectSettings.value.resize.previewContainer.height = `${previewPercent}%`;
+      projectSettings.value.resize.leftSidebar.height = `${previewPercent}%`;
+      projectSettings.value.resize.rightSidebar.height = `${previewPercent}%`;
       StorageManager.saveProjectSettings(projectSettings.value);
-
     }
-  }
+  };
 
   const handleUp = (event) => {
     document.removeEventListener('mousemove', handleMove)
@@ -3047,7 +3107,6 @@ const handleBottomSidebarResize = (e) => {
   document.addEventListener('mousemove', handleMove)
   document.addEventListener('mouseup', handleUp)
 }
-
 
 const triggerDragCanvas = (event) => {
   if (event.code === 'Space' && !canvasEditor.isEditing) {
@@ -3116,7 +3175,7 @@ const bindEventListener = () => {
   useEventListener(previewContainer.value, 'wheel', handleCanvasResize, {passive: false});
 
   useEventListener(leftResize.value, 'mousedown', handleLeftSidebarResize)
-  useEventListener(rightResize.value, 'mousedown', handRightSidebarResize)
+  useEventListener(rightResize.value, 'mousedown', handleRightSidebarResize)
   useEventListener(bottomResize.value, 'mousedown', handleBottomSidebarResize)
 
   useEventListener(document, 'keydown', handleRemoveElement)
