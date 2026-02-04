@@ -43,7 +43,25 @@ const projectSettings = ref({
         defaultCanvasScale: 0.75,
         enableScrollbar: true
     },
-    availableFonts: new Map()
+    availableFonts: new Map(),
+    resize: {
+        leftSidebar: {
+            width: 0,
+            height: 0
+        },
+        previewContainer: {
+            width: 0,
+            height: 0
+        },
+        rightSidebar: {
+            width: 0,
+            height: 0
+        },
+        bottomSidebar: {
+            width: 0,
+            height: 0
+        }
+    }
 })
 
 

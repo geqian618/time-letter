@@ -1,8 +1,9 @@
 <template>
   <div>
     <div class="page-layout">
-      <div class="page-main">
+      <div class="page-main" ref="pageMain">
         <div class="page-left">
+          <div class="left-resize" ref="leftResize"></div>
           <el-aside>
             <el-scrollbar>
               <el-menu :default-openeds="['1']">
@@ -79,6 +80,7 @@
         </div>
 
         <div class="preview-container" id="preview-container" ref="previewContainer" @mousedown="triggerContextMenu">
+          <div></div>
           <div class="canvas-wrapper" ref="canvasWrapper">
             <canvas id="background-canvas" ref="backgroundElement"></canvas>
             <canvas id="foreground-canvas" ref="canvasElement"></canvas>
@@ -86,6 +88,7 @@
         </div>
 
         <div class="page-right">
+          <div class="right-resize" ref="rightResize"></div>
           <div class="settings-details">
             <el-aside>
               <el-scrollbar>
@@ -673,6 +676,7 @@
 
 
       <div class="page-bottom">
+        <div class="bottom-resize" ref="bottomResize"></div>
         <div class="function-tabs">
           <div class="tab-wrapper">
             <el-tooltip effect="dark" content="上一张" placement="top">
@@ -1267,6 +1271,14 @@ const canvasWrapper = ref(null)
 const backgroundElement = ref(null)
 
 const previewList = ref(null);
+
+const leftResize = ref(null);
+
+const rightResize = ref(null);
+
+const bottomResize = ref(null);
+
+const pageMain = ref(null);
 
 const menuRef = ref(null)
 
@@ -2257,13 +2269,40 @@ const updateScrollBar = (canvas) => {
   previewContainer.value.scrollTop = canvas.scrollTop;
 }
 
+
+const initAreaResize = () => {
+
+  const {
+    leftSidebar: leftSidebarResize,
+    previewContainer: previewContainerResize,
+    rightSidebar: rightSidebarResize,
+    bottomSidebar: bottomSidebarResize
+  } = projectSettings.value.resize;
+
+  const root = document.documentElement;
+  const rootStyle = root.style;
+
+  if (leftSidebarResize.width && previewContainerResize.width && rightSidebarResize.width) {
+    rootStyle.setProperty('--page-left-width', leftSidebarResize.width + 'px')
+    rootStyle.setProperty('--page-right-width', rightSidebarResize.width + 'px')
+    rootStyle.setProperty('--preview-container-width', previewContainerResize.width + 'px')
+  }
+
+  if (previewContainerResize.height && bottomSidebarResize.height) {
+    rootStyle.setProperty('--page-main-height', previewContainerResize.height + 'px')
+    rootStyle.setProperty('--page-bottom-height', bottomSidebarResize.height + 'px')
+  }
+}
+
 const initCanvasSize = () => {
+
+  const {previewContainer: previewContainerResize} = projectSettings.value.resize;
 
   setTimeout(() => {
 
-    previewContainer.value.idealWidth = previewContainer.value.clientWidth
+    previewContainer.value.idealWidth = previewContainerResize.width || previewContainer.value.clientWidth
 
-    previewContainer.value.idealHeight = previewContainer.value.clientHeight
+    previewContainer.value.idealHeight = previewContainerResize.height || previewContainer.value.clientHeight
 
     renderCanvasScrollbar()
 
@@ -2899,6 +2938,117 @@ const handleDragMoveCanvas = (event) => {
 };
 
 
+const handleLeftSidebarResize = (e) => {
+
+  let lastMoveX = e.clientX;
+
+  const handleMove = (event) => {
+    const moveX = event.clientX;
+    const offsetX = moveX - lastMoveX;
+    lastMoveX = moveX;
+    const sidebar = leftResize.value.parentNode;
+    const {width: sidebarWidth} = window.getComputedStyle(sidebar);
+    const {width: previewContainerWidth, minWidth} = window.getComputedStyle(previewContainer.value);
+    const newSidebarWidth = Number.parseFloat(sidebarWidth) + offsetX;
+    const newPreviewContainerWidth = Number.parseFloat(previewContainerWidth) - offsetX;
+    if (newPreviewContainerWidth >= Number.parseFloat(minWidth)) {
+      sidebar.style.width = newSidebarWidth + 'px';
+      previewContainer.value.style.width = newPreviewContainerWidth + 'px';
+      previewContainer.value.idealWidth = newPreviewContainerWidth
+      StorageManager.saveProjectSettings(projectSettings.value);
+
+      projectSettings.value.resize.leftSidebar.width = newSidebarWidth;
+      projectSettings.value.resize.previewContainer.width = newPreviewContainerWidth;
+      scrollBarMoveToCenter(CanvasManager.getCurrentCanvas())
+    }
+  }
+
+  const handleUp = (event) => {
+    document.removeEventListener('mousemove', handleMove)
+    document.removeEventListener('mouseup', handleUp)
+  }
+
+  document.addEventListener('mousemove', handleMove)
+  document.addEventListener('mouseup', handleUp)
+}
+
+const handRightSidebarResize = (e) => {
+  let lastMoveX = e.clientX;
+  const handleMove = (event) => {
+    const moveX = event.clientX;
+    const offsetX = moveX - lastMoveX;
+    lastMoveX = moveX;
+    const sidebar = rightResize.value.parentNode;
+    const {width: sidebarWidth} = window.getComputedStyle(sidebar);
+    const {width: previewContainerWidth, minWidth} = window.getComputedStyle(previewContainer.value);
+    const newSidebarWidth = Number.parseFloat(sidebarWidth) - offsetX;
+    const newPreviewContainerWidth = Number.parseFloat(previewContainerWidth) + offsetX;
+
+    if (newPreviewContainerWidth >= Number.parseFloat(minWidth)) {
+      sidebar.style.width = newSidebarWidth + 'px';
+      previewContainer.value.style.width = newPreviewContainerWidth + 'px';
+      previewContainer.value.idealWidth = newPreviewContainerWidth
+      scrollBarMoveToCenter(CanvasManager.getCurrentCanvas())
+
+      projectSettings.value.resize.rightSidebar.width = newSidebarWidth;
+      projectSettings.value.resize.previewContainer.width = newPreviewContainerWidth;
+      StorageManager.saveProjectSettings(projectSettings.value);
+
+    }
+  }
+
+  const handleUp = (event) => {
+    document.removeEventListener('mousemove', handleMove)
+    document.removeEventListener('mouseup', handleUp)
+  }
+
+  document.addEventListener('mousemove', handleMove)
+  document.addEventListener('mouseup', handleUp)
+
+}
+
+
+const handleBottomSidebarResize = (e) => {
+
+  let lastMoveY = e.clientY;
+
+  const handleMove = (event) => {
+    const moveY = event.clientY;
+    const offsetY = moveY - lastMoveY;
+    lastMoveY = moveY;
+    const sidebar = bottomResize.value.parentNode;
+    const {height: sidebarHeight} = window.getComputedStyle(sidebar);
+    const {height: previewContainerHeight, minHeight} = window.getComputedStyle(pageMain.value);
+    const newSidebarHeight = Number.parseFloat(sidebarHeight) - offsetY;
+    const newPreviewContainerHeight = Number.parseFloat(previewContainerHeight) + offsetY;
+    if (newPreviewContainerHeight >= Number.parseFloat(minHeight)) {
+      sidebar.style.height = newSidebarHeight + 'px';
+      pageMain.value.style.height = newPreviewContainerHeight + 'px';
+      previewContainer.value.idealHeight = newPreviewContainerHeight
+      scrollBarMoveToCenter(CanvasManager.getCurrentCanvas())
+
+      projectSettings.value.resize.bottomSidebar.height = newSidebarHeight;
+      projectSettings.value.resize.previewContainer.height = newPreviewContainerHeight;
+      projectSettings.value.resize.leftSidebar.height = newPreviewContainerHeight;
+      projectSettings.value.resize.rightSidebar.height = newPreviewContainerHeight;
+
+      console.log(projectSettings.value.resize)
+
+      StorageManager.saveProjectSettings(projectSettings.value);
+
+    }
+  }
+
+  const handleUp = (event) => {
+    document.removeEventListener('mousemove', handleMove)
+    document.removeEventListener('mouseup', handleUp)
+  }
+
+  document.addEventListener('mousemove', handleMove)
+  document.addEventListener('mouseup', handleUp)
+}
+
+
 const triggerDragCanvas = (event) => {
   if (event.code === 'Space' && !canvasEditor.isEditing) {
     event.preventDefault();
@@ -2965,6 +3115,10 @@ const bindEventListener = () => {
   useEventListener(previewContainer.value, 'mousedown', handleDragMoveCanvas);
   useEventListener(previewContainer.value, 'wheel', handleCanvasResize, {passive: false});
 
+  useEventListener(leftResize.value, 'mousedown', handleLeftSidebarResize)
+  useEventListener(rightResize.value, 'mousedown', handRightSidebarResize)
+  useEventListener(bottomResize.value, 'mousedown', handleBottomSidebarResize)
+
   useEventListener(document, 'keydown', handleRemoveElement)
   useEventListener(document, 'keydown', handleKeyDownMoveElement)
   useEventListener(document, 'keydown', triggerDragCanvas)
@@ -2981,6 +3135,7 @@ onMounted(() => {
   watchDownloadProgress()
   editorOutputSettings()
   loadProjectSettings()
+  initAreaResize()
   initCanvasSize()
   bindEventListener()
 })
@@ -3015,6 +3170,20 @@ onBeforeUnmount(() => {
       background: var(--expand-area-background-color);
       box-sizing: border-box;
       flex-shrink: 0;
+      position: relative;
+
+      .left-resize {
+        position: absolute;
+        height: 100%;
+        width: 6px;
+        right: -3px;
+        top: 0;
+        z-index: 1;
+      }
+
+      .left-resize:hover {
+        cursor: ew-resize; /* 左右箭头 */
+      }
 
       .el-aside {
         color: var(--el-text-color-primary);
@@ -3168,6 +3337,8 @@ onBeforeUnmount(() => {
       height: 100%;
       position: relative;
       border: 1px solid #919191;
+      min-width: 300px;
+      min-height: 100px;
 
       .canvas-wrapper {
         width: 100vw;
@@ -3199,6 +3370,20 @@ onBeforeUnmount(() => {
       width: var(--page-right-width);
       height: 100%;
       background: var(--expand-area-background-color);
+      position: relative;
+
+      .right-resize {
+        position: absolute;
+        height: 100%;
+        width: 6px;
+        left: -3px;
+        top: 0;
+        z-index: 1;
+      }
+
+      .right-resize:hover {
+        cursor: ew-resize; /* 左右箭头 */
+      }
 
       .settings-details {
         width: 100%;
@@ -3380,12 +3565,26 @@ onBeforeUnmount(() => {
 
   .page-bottom {
     width: 100%;
-    height: var(--page-bootom-height);
+    height: var(--page-bottom-height);
     border-top: 1px solid var(--border-color);
+    position: relative;
+
+    .bottom-resize {
+      position: absolute;
+      width: 100%;
+      height: 6px;
+      top: -3px;
+      left: 0;
+      z-index: 1;
+    }
+
+    .bottom-resize:hover {
+      cursor: ns-resize; /* 左右箭头 */
+    }
 
     .function-tabs {
       width: 100%;
-      height: 25%;
+      height: 40px;
       background: var(--expand-area-background-color);
       display: flex;
       justify-content: left;
@@ -3453,7 +3652,7 @@ onBeforeUnmount(() => {
     .preview-list {
       box-sizing: border-box;
       width: 100%;
-      height: 75%;
+      height: calc(100% - 40px);
       display: flex;
       justify-content: start;
       background: var(--expand-area-background-color);
