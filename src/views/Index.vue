@@ -1051,6 +1051,7 @@
             <el-table-column prop="familyAlias" label="字体别名" show-overflow-tooltip>
               <template #default="scope">
                 <input type="text"
+                       spellcheck="false"
                        @focusout="handleStopActivateInput(scope.row)"
                        v-show="scope.row.editable"
                        style="height: 100%;user-select: none;width: fit-content;background-color: transparent;outline: none;border: none"
