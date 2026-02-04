@@ -3081,6 +3081,7 @@ const handleBottomSidebarResize = (e) => {
   let previewPercent = parseFloat(rootStyle.getPropertyValue('--page-main-height'));
 
   const handleMove = (event) => {
+
     const moveY = event.clientY;
     const offsetY = moveY - lastMoveY;
     lastMoveY = moveY;
