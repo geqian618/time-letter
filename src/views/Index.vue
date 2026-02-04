@@ -2939,10 +2939,9 @@ const handleDragMoveCanvas = (event) => {
 
 
 const handleLeftSidebarResize = (e) => {
-
   const {clientWidth} = document.documentElement;
-
   let lastMoveX = e.clientX;
+  const leftSidebar = leftResize.value.parentNode;
 
   // 获取当前百分比值
   const rootStyle = getComputedStyle(document.documentElement);
@@ -2962,7 +2961,7 @@ const handleLeftSidebarResize = (e) => {
     const newPreviewPercent = previewPercent - offsetPercent;
 
     const {minWidth: previewMinWidth = 0} = window.getComputedStyle(previewContainer.value);
-    const {minWidth: sidebarMinWidth = 0} = window.getComputedStyle(leftResize.value);
+    const {minWidth: sidebarMinWidth = 0} = window.getComputedStyle(leftSidebar);
 
     const previewMinWidthPercent = (parseFloat(previewMinWidth) / clientWidth) * 100;
     const sidebarMinWidthPercent = (parseFloat(sidebarMinWidth) / clientWidth) * 100;
@@ -2997,11 +2996,12 @@ const handleRightSidebarResize = (e) => {
 
   const {clientWidth} = document.documentElement;
   let lastMoveX = e.clientX;
+  const rightSidebar = rightResize.value.parentNode;
 
   // 获取当前百分比值
   const rootStyle = getComputedStyle(document.documentElement);
-  let sidebarPercent = parseFloat(rootStyle.getPropertyValue('--page-right-width')) || 30;
-  let previewPercent = parseFloat(rootStyle.getPropertyValue('--preview-container-width')) || 70;
+  let sidebarPercent = parseFloat(rootStyle.getPropertyValue('--page-right-width'));
+  let previewPercent = parseFloat(rootStyle.getPropertyValue('--preview-container-width'));
 
   const handleMove = (event) => {
 
@@ -3016,7 +3016,7 @@ const handleRightSidebarResize = (e) => {
     const newPreviewPercent = previewPercent + offsetPercent;
 
     const {minWidth: previewMinWidth = 0} = window.getComputedStyle(previewContainer.value);
-    const {minWidth: sidebarMinWidth = 0} = window.getComputedStyle(rightResize.value);
+    const {minWidth: sidebarMinWidth = 0} = window.getComputedStyle(rightSidebar);
 
     const previewMinWidthPercent = (parseFloat(previewMinWidth) / clientWidth) * 100;
     const sidebarMinWidthPercent = (parseFloat(sidebarMinWidth) / clientWidth) * 100;
@@ -3052,20 +3052,17 @@ const handleRightSidebarResize = (e) => {
 const handleBottomSidebarResize = (e) => {
 
   const {clientHeight} = document.documentElement;
-
   let lastMoveY = e.clientY;
+  const bottomSidebar = bottomResize.value.parentNode;
 
   // 获取当前百分比值
   const rootStyle = getComputedStyle(document.documentElement);
-  let sidebarPercent = parseFloat(rootStyle.getPropertyValue('--page-bottom-height')) || 30;
-  let previewPercent = parseFloat(rootStyle.getPropertyValue('--page-main-height')) || 70;
+  let sidebarPercent = parseFloat(rootStyle.getPropertyValue('--page-bottom-height'));
+  let previewPercent = parseFloat(rootStyle.getPropertyValue('--page-main-height'));
 
   const handleMove = (event) => {
-
     const moveY = event.clientY;
-
     const offsetY = moveY - lastMoveY;
-
     lastMoveY = moveY;
 
     // 计算偏移量对应的百分比变化
@@ -3075,13 +3072,13 @@ const handleBottomSidebarResize = (e) => {
     const newPreviewPercent = previewPercent + offsetPercent;
 
     const {minHeight: previewMinHeight = 0} = window.getComputedStyle(previewContainer.value);
-    const {minHeight: sidebarMinHeight = 0} = window.getComputedStyle(leftResize.value);
+    const {minHeight: sidebarMinHeight = 0} = window.getComputedStyle(bottomSidebar);
 
-    const previewMinWidthPercent = (parseFloat(previewMinHeight) / clientHeight) * 100;
-    const sidebarMinWidthPercent = (parseFloat(sidebarMinHeight) / clientHeight) * 100;
+    const previewMinHeightPercent = (parseFloat(previewMinHeight) / clientHeight) * 100;
+    const sidebarMinHeightPercent = (parseFloat(sidebarMinHeight) / clientHeight) * 100;
 
     // 验证两个约束条件
-    if (newPreviewPercent >= previewMinWidthPercent && newSidebarPercent >= sidebarMinWidthPercent) {
+    if (newPreviewPercent >= previewMinHeightPercent && newSidebarPercent >= sidebarMinHeightPercent) {
 
       sidebarPercent = newSidebarPercent;
       previewPercent = newPreviewPercent;
@@ -3230,6 +3227,7 @@ onBeforeUnmount(() => {
       box-sizing: border-box;
       flex-shrink: 0;
       position: relative;
+      min-width: 100px;
 
       .left-resize {
         position: absolute;
@@ -3430,6 +3428,7 @@ onBeforeUnmount(() => {
       height: 100%;
       background: var(--expand-area-background-color);
       position: relative;
+      min-width: 100px;
 
       .right-resize {
         position: absolute;
@@ -3627,6 +3626,7 @@ onBeforeUnmount(() => {
     height: var(--page-bottom-height);
     border-top: 1px solid var(--border-color);
     position: relative;
+    min-height: 100px;
 
     .bottom-resize {
       position: absolute;
