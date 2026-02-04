@@ -50,7 +50,7 @@ const createApplicationMenu = (mainWindow) => {
             label: '扩展',
             submenu: [
                 {
-                    label: '文本',
+                    label: '文本库',
                     submenu: [
                         {
                             label: '新增',
@@ -65,7 +65,7 @@ const createApplicationMenu = (mainWindow) => {
                     ],
                 },
                 {
-                    label: '图片',
+                    label: '图片库',
                     submenu: [
                         {
                             label: '导入',
@@ -81,7 +81,7 @@ const createApplicationMenu = (mainWindow) => {
                     ]
                 },
                 {
-                    label: '字体',
+                    label: '字体库',
                     submenu: [
                         {
                             label: '导入',
