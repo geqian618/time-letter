@@ -2984,6 +2984,7 @@ const handleLeftSidebarResize = (e) => {
 
     // 验证两个约束条件
     if (newPreviewPercent >= previewMinWidthPercent && newSidebarPercent >= sidebarMinWidthPercent) {
+
       sidebarPercent = newSidebarPercent;
       previewPercent = newPreviewPercent;
 
