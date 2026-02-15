@@ -174,7 +174,6 @@ const setupIpcHandlers = () => {
                 buttonLabel: '选择',
                 properties: ['multiSelections', 'createDirectory', 'openFile', 'openDirectory']
             })
-
             return !canceled && filePaths?.length ? filePaths[0] : null
         } catch (error) {
             console.error('选择目录失败:', error)
