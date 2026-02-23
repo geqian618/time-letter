@@ -34,6 +34,9 @@ class CanvasEditor {
 
         this.activeElements = [];
 
+        // canvas 宽高是否必须为整数值
+        this.strictIntegerDimensions = options.strictIntegerDimensions || false;
+
         this.width = options.width || this.canvas.width || 0;
 
         this.height = options.height || this.canvas.height || 0;
@@ -108,8 +111,8 @@ class CanvasEditor {
         const physicalWidth = this.width * this.zoom * dpr;
         const physicalHeight = this.height * this.zoom * dpr;
         // 设置物理尺寸
-        this.canvas.width = physicalWidth;
-        this.canvas.height = physicalHeight;
+        this.canvas.width = this.strictIntegerDimensions ? Math.round(physicalWidth) : physicalWidth;
+        this.canvas.height = this.strictIntegerDimensions ? Math.round(physicalHeight) : physicalHeight;
         // 浏览器环境设置样式
         if (this.isBrowser && this.canvas.style) {
             const cssWidth = this.width * this.zoom;
