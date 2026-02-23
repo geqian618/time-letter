@@ -64,6 +64,7 @@ const createMainWindow = () => {
     // 加载应用
     loadAppContent(mainWindow)
 
+    // WinState 管理窗口
     winState.manage(mainWindow)
 
     // 初始化组件

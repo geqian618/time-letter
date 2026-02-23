@@ -10,7 +10,6 @@ const interrupt = new Int32Array(sab);
 // 初始值为 0（未中断）
 Atomics.store(interrupt, 0, 0);
 
-
 const exportFiles = async ({projectSettings, outputDirectory, settings}, progressCallback) => {
 
     // 根据设置创建线程池
