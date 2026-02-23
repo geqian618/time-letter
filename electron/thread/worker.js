@@ -63,7 +63,7 @@ module.exports = async (params) => {
     }
 
     const canvas = createCanvas(originalWidth, originalHeight);
-    const canvasEditor = new CanvasEditor(canvas);
+    const canvasEditor = new CanvasEditor(canvas, {strictIntegerDimensions: true});
     await canvasEditor.loadFromJSON(JSON.stringify(settings))
     canvasEditor.renderAll()
 
