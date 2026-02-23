@@ -10,7 +10,7 @@ module.exports = async (params) => {
             outputSettings: {
                 quality,
                 extname: extnameType,
-                outputSize: {width, height, type},
+                outputSize: {width, height, maxWidth, maxHeight, type},
                 isSynchronizeMetadata,
                 fileNaming: {basename, prefix, suffix}
             }
@@ -59,7 +59,7 @@ module.exports = async (params) => {
     } else if (type === 2) {
         settings.zoom = height / originalHeight
     } else if (type === 3) {
-        settings.zoom = Math.min(width / originalWidth, height / originalHeight)
+        settings.zoom = Math.min(maxWidth / originalWidth, maxHeight / originalHeight)
     }
 
     const canvas = createCanvas(originalWidth, originalHeight);

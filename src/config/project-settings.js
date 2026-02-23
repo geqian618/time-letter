@@ -4,10 +4,10 @@ const projectSettings = ref({
     outputSettings: {
         outputSize: {
             type: 0,
-            longSide: 1920,
-            shortSide: 1080,
             width: 1920,
-            height: 1080
+            height: 1080,
+            maxWidth: 1920,
+            maxHeight: 1080
         },
         extname: 0,
         quality: 100,
