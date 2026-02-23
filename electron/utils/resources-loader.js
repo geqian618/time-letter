@@ -1,8 +1,9 @@
+const {getResourcePath, localPathToProtocolUrl} = require('./path-helper')
+const {reloadFonts} = require('./font-manager')
 const path = require('path');
 const fs = require('fs');
-const {getResourcePath, localPathToProtocolUrl} = require('./path-helper')
+
 const resourcesPath = getResourcePath()
-const {reloadFonts} = require('./font-manager')
 
 const loadImageLabels = (window) => {
     fs.readdir(resourcesPath, (err, filenames) => {
