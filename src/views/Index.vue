@@ -95,7 +95,7 @@
                 <el-menu :default-openeds="['1']" ref="menuRef" @open="handleOpenMenu" @close="handleCloseMenu">
                   <el-sub-menu index="1">
                     <template #title>
-                      <span>基本</span>
+                      <span>元数据</span>
                     </template>
                     <ul class="options metadata">
                       <li class="option">
