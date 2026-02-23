@@ -120,6 +120,7 @@ function formatShutterSpeed(seconds) {
         const rounded = Math.round(seconds * 10) / 10;
         return rounded % 1 === 0 ? `${rounded}s` : `${rounded}s`;
     }
+
     // 小于1秒的处理（分数形式）
     const MAX_DENOMINATOR = 10000;
     let bestNumerator = 0;
