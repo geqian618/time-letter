@@ -167,5 +167,4 @@ async function writeExifDataToBuffer(exifData, targetBuffer) {
     return Buffer.from(newData, 'binary');
 }
 
-
 module.exports = {copyExifDataToFile, copyExifDataToBuffer, readExifData, writeExifDataToBuffer, writeExifDataToFile}
