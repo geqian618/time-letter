@@ -7,9 +7,9 @@
   "scripts": {
     "electron:serve": "concurrently -n \"VITE,NODE\" -c \"blue,green\" -k \"npm run vite:start\" \"npm run electron:start\"",
     "electron:start": "wait-on http://localhost:5173 && chcp 65001 && cross-env NODE_ENV=development electron .",
+    "electron:build": "vite build && electron-builder",
     "vite:start": "vite",
     "vite:build": "vite build",
-    "electron:build": "vite build && electron-builder",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
