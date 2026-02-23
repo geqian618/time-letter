@@ -1,7 +1,7 @@
-const fs = require('fs');
 const Exif = require("exif");
-const createSharp = require("sharp");
 const path = require("path");
+const createSharp = require("sharp");
+const fs = require('fs');
 
 async function parseMetadata(imagePath) {
     try {
