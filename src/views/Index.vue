@@ -1120,7 +1120,7 @@
             <span class="border-label">个性化</span>
             <div class="options">
               <div class="option">
-                <span class="label">选项锚点：</span>
+                <span class="label">属性锚点：</span>
                 <el-switch
                     v-model="projectSettings.others.optionAnchorPoint"
                     class="value"
