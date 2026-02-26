@@ -907,20 +907,20 @@
               </div>
 
               <div class="option" v-show="projectSettings.outputSettings.outputSize.type===3">
-                <span class="label">高度：</span>
+                <span class="label">最大宽度：</span>
                 <el-input v-model.number="projectSettings.outputSettings.outputSize.maxWidth"
                           size="small"
                           class="value"
-                          placeholder="高尺寸"/>
+                          placeholder="最大宽度"/>
                 <span>&nbsp;px</span>
               </div>
 
               <div class="option" v-show="projectSettings.outputSettings.outputSize.type===3">
-                <span class="label">高度：</span>
+                <span class="label">最大高度：</span>
                 <el-input v-model.number="projectSettings.outputSettings.outputSize.maxHeight"
                           size="small"
                           class="value"
-                          placeholder="高尺寸"/>
+                          placeholder="最大高度"/>
                 <span>&nbsp;px</span>
               </div>
 

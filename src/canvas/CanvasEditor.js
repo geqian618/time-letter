@@ -1796,9 +1796,11 @@ class Image extends Element {
             ctx.shadowOffsetY = 0;
         }
 
-        // 创建圆角路径并裁剪
-        this._createRoundedRectPath(ctx, this.x, this.y, width, height, radius);
-        ctx.clip();
+        if (this.radius && this.radius > 0) {
+            // 创建圆角路径并裁剪
+            this._createRoundedRectPath(ctx, x, y, width, height, radius);
+            ctx.clip();
+        }
 
         // 如果有背景模糊效果
         if (this.blur && this.blur > 0) {
@@ -2086,9 +2088,11 @@ class LazyImage extends Element {
             ctx.shadowOffsetY = 0;
         }
 
-        // 创建圆角路径并裁剪
-        this._createRoundedRectPath(ctx, this.x, this.y, width, height, radius);
-        ctx.clip();
+        if (this.radius && this.radius > 0) {
+            // 创建圆角路径并裁剪
+            this._createRoundedRectPath(ctx, x, y, width, height, radius);
+            ctx.clip();
+        }
 
         // 如果有背景模糊效果
         if (this.blur && this.blur > 0) {
