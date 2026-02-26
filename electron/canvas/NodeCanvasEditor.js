@@ -123,8 +123,8 @@ class CanvasEditor {
         }
 
         // 重新计算缩放因子，使逻辑坐标精确对应物理像素
-        const scaleX = physicalWidth / this.width;
-        const scaleY = physicalHeight / this.height;
+        const scaleX = this.strictIntegerDimensions ? physicalWidth / this.width : this.zoom * dpr;
+        const scaleY = this.strictIntegerDimensions ? physicalHeight / this.height : this.zoom * dpr;
 
         // 重置并应用变换
         this.ctx.setTransform(scaleX, 0, 0, scaleY, 0, 0);
