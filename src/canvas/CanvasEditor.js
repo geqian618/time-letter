@@ -121,8 +121,14 @@ class CanvasEditor {
             this.canvas.style.width = `${cssWidth}px`;
             this.canvas.style.height = `${cssHeight}px`;
         }
+
+        // 重新计算缩放因子，使逻辑坐标精确对应物理像素
+        const scaleX = physicalWidth / this.width;
+        const scaleY = physicalHeight / this.height;
+
         // 重置并应用变换
-        this.ctx.setTransform(dpr * this.zoom, 0, 0, dpr * this.zoom, 0, 0);
+        this.ctx.setTransform(scaleX, 0, 0, scaleY, 0, 0);
+
         // 清除画布
         this.ctx.clearRect(0, 0, this.width, this.height);
     }
@@ -1798,7 +1804,7 @@ class Image extends Element {
 
         if (this.radius && this.radius > 0) {
             // 创建圆角路径并裁剪
-            this._createRoundedRectPath(ctx, x, y, width, height, radius);
+            this._createRoundedRectPath(ctx, this.x, this.y, width, height, radius);
             ctx.clip();
         }
 
@@ -2090,7 +2096,7 @@ class LazyImage extends Element {
 
         if (this.radius && this.radius > 0) {
             // 创建圆角路径并裁剪
-            this._createRoundedRectPath(ctx, x, y, width, height, radius);
+            this._createRoundedRectPath(ctx, this.x, this.y, width, height, radius);
             ctx.clip();
         }
 
