@@ -1267,7 +1267,7 @@ class Text extends Element {
         // 元素类型
         this.type = 'text';
         // 文本内容
-        this.text = text || '';
+        this.text = (text === null || text === undefined) ? '' : String(text);
         // 文本排列方向
         this.direction = options.direction || 'horizontal';
         // 可编辑
