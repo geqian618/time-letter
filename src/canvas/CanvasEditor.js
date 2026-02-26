@@ -107,18 +107,29 @@ class CanvasEditor {
      * 设置 Canvas 尺寸和缩放
      */
     setupCanvas() {
+
         const dpr = this.isBrowser ? (window.devicePixelRatio || 1) : 1;
+
+        // 重新计算缩放因子，使逻辑坐标精确对应物理像素
+        let scaleX = this.zoom * dpr;
+        let scaleY = this.zoom * dpr;
+
         // 计算尺寸
         let physicalWidth = this.width * this.zoom * dpr;
         let physicalHeight = this.height * this.zoom * dpr;
+
         // canvas 宽高是否必须为整数值
         if (this.strictIntegerDimensions) {
-            physicalWidth = Math.round(physicalWidth)
-            physicalHeight = Math.round(physicalHeight)
+            physicalWidth = Math.round(physicalWidth);
+            physicalHeight = Math.round(physicalHeight);
+            scaleX = physicalWidth / this.width;
+            scaleY = physicalHeight / this.height;
         }
+
         // 设置物理尺寸
         this.canvas.width = physicalWidth;
         this.canvas.height = physicalHeight;
+
         // 浏览器环境设置样式
         if (this.isBrowser && this.canvas.style) {
             const cssWidth = this.width * this.zoom;
@@ -126,9 +137,6 @@ class CanvasEditor {
             this.canvas.style.width = `${cssWidth}px`;
             this.canvas.style.height = `${cssHeight}px`;
         }
-        // 重新计算缩放因子，使逻辑坐标精确对应物理像素
-        const scaleX = this.strictIntegerDimensions ? physicalWidth / this.width : this.zoom * dpr;
-        const scaleY = this.strictIntegerDimensions ? physicalHeight / this.height : this.zoom * dpr;
 
         // 重置并应用变换
         this.ctx.setTransform(scaleX, 0, 0, scaleY, 0, 0);
