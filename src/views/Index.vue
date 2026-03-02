@@ -3180,8 +3180,8 @@ const handleBottomSidebarResize = (e) => {
 
 const triggerDragCanvas = (event) => {
   const activeElement = document.activeElement;
-  const isInputFocused = activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement;
-  if (event.code === 'Space' && !isInputFocused && !canvasEditor.isEditing) {
+  const isEditableElement = activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement;
+  if (event.code === 'Space' && !isEditableElement && !canvasEditor.isEditing) {
     event.preventDefault();
     isCanvasDraggingMode = true;
     // 设置全局样式提示用户
