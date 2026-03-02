@@ -3179,7 +3179,8 @@ const handleBottomSidebarResize = (e) => {
 }
 
 const triggerDragCanvas = (event) => {
-  const isInputFocused = document.activeElement instanceof HTMLInputElement;
+  const activeElement = document.activeElement;
+  const isInputFocused = activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement;
   if (event.code === 'Space' && !isInputFocused && !canvasEditor.isEditing) {
     event.preventDefault();
     isCanvasDraggingMode = true;
