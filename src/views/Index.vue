@@ -80,7 +80,6 @@
         </div>
 
         <div class="preview-container" id="preview-container" ref="previewContainer" @mousedown="triggerContextMenu">
-          <div></div>
           <div class="canvas-wrapper" ref="canvasWrapper">
             <canvas id="background-canvas" ref="backgroundElement"></canvas>
             <canvas id="foreground-canvas" ref="canvasElement"></canvas>
@@ -3180,7 +3179,8 @@ const handleBottomSidebarResize = (e) => {
 }
 
 const triggerDragCanvas = (event) => {
-  if (event.code === 'Space' && !canvasEditor.isEditing) {
+  const isInputFocused = document.activeElement instanceof HTMLInputElement;
+  if (event.code === 'Space' && !isInputFocused && !canvasEditor.isEditing) {
     event.preventDefault();
     isCanvasDraggingMode = true;
     // 设置全局样式提示用户
