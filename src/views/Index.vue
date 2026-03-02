@@ -1810,6 +1810,7 @@ const clearCanvas = () => {
 
 const resetMetadataSettings = () => {
   projectSettings.value.metadata = _.cloneDeep(originalMetadata)
+  handleUpdateMetadata();
   StorageManager.saveProjectSettings(projectSettings.value)
 }
 
