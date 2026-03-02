@@ -999,6 +999,7 @@
                 <span class="label">相机品牌：</span>
                 <el-input spellcheck="false"
                           class="metadata-input"
+                          @change="handleUpdateMetadata"
                           v-model="projectSettings.metadata.formats.cameraBrand">
                 </el-input>
               </div>
@@ -1006,6 +1007,7 @@
                 <span class="label">相机型号：</span>
                 <el-input spellcheck="false"
                           class="metadata-input"
+                          @change="handleUpdateMetadata"
                           v-model="projectSettings.metadata.formats.cameraModel">
                 </el-input>
               </div>
@@ -1013,6 +1015,7 @@
                 <span class="label">镜头型号：</span>
                 <el-input spellcheck="false"
                           class="metadata-input"
+                          @change="handleUpdateMetadata"
                           v-model="projectSettings.metadata.formats.lensModel">
                 </el-input>
               </div>
@@ -1020,6 +1023,7 @@
                 <span class="label">焦段：</span>
                 <el-input spellcheck="false"
                           class="metadata-input"
+                          @change="handleUpdateMetadata"
                           v-model="projectSettings.metadata.formats.focalLength">
                 </el-input>
               </div>
@@ -1027,6 +1031,7 @@
                 <span class="label">ISO：</span>
                 <el-input spellcheck="false"
                           class="metadata-input"
+                          @change="handleUpdateMetadata"
                           v-model="projectSettings.metadata.formats.iso">
                 </el-input>
               </div>
@@ -1034,6 +1039,7 @@
                 <span class="label">快门：</span>
                 <el-input spellcheck="false"
                           class="metadata-input"
+                          @change="handleUpdateMetadata"
                           v-model="projectSettings.metadata.formats.shutter">
                 </el-input>
               </div>
@@ -1041,6 +1047,7 @@
                 <span class="label">光圈：</span>
                 <el-input spellcheck="false"
                           class="metadata-input"
+                          @change="handleUpdateMetadata"
                           v-model="projectSettings.metadata.formats.aperture">
                 </el-input>
               </div>
@@ -1048,6 +1055,7 @@
                 <span class="label">拍摄日期：</span>
                 <el-input spellcheck="false"
                           class="metadata-input"
+                          @change="handleUpdateMetadata"
                           v-model="projectSettings.metadata.formats.shootingTime">
                 </el-input>
               </div>
@@ -1498,10 +1506,17 @@ const watchImportImages = () => {
           const settings = new CanvasSettings()
           const metadata = await window.electronAPI.parsePhotoMetadata(path);
           if (metadata) {
+            settings.originalMetadata = _.cloneDeep(metadata);
             if (metadata.focalLength) {
-              metadata.originalFocalLength = metadata.focalLength
               if (projectSettings.value.metadata.other.enableEquivalentFocalSegment) {
                 metadata.focalLength = Number.parseInt(metadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
+              }
+            }
+            for (let key in metadata) {
+              const format = projectSettings.value.metadata.formats[key];
+              const value = metadata[key];
+              if (value && format) {
+                metadata[key] = format.replace('${' + key + '}', value);
               }
             }
             settings.metadata = metadata
@@ -1801,17 +1816,40 @@ const resetMetadataSettings = () => {
 
 const handleFocalLength = (type) => {
   for (let [path, canvas] of CanvasManager.getCanvases()) {
+    const originalMetadata = canvas.originalMetadata;
     const metadata = canvas.metadata;
-    if (metadata && metadata.focalLength) {
+    let newFocalLength;
+    if (originalMetadata && originalMetadata.focalLength) {
       if (type === 0) {
-        metadata.focalLength = projectSettings.value.metadata.other.enableEquivalentFocalSegment
-            ? Number.parseInt(metadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
-            : metadata.originalFocalLength
+        newFocalLength = projectSettings.value.metadata.other.enableEquivalentFocalSegment
+            ? Number.parseInt(originalMetadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
+            : originalMetadata.focalLength
       } else if (type === 1 && projectSettings.value.metadata.other.enableEquivalentFocalSegment) {
-        metadata.focalLength = Number.parseInt(metadata.originalFocalLength * projectSettings.value.metadata.other.conversionMultiple)
+        newFocalLength = Number.parseInt(originalMetadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
       }
-      if (path === CanvasManager.getSelectedPath()) {
-        metadataOptions.value = {...metadata}
+      const format = projectSettings.value.metadata.formats['focalLength'];
+      if (format) {
+        newFocalLength = format.replace('${focalLength}', newFocalLength)
+        path === CanvasManager.getSelectedPath() ? metadataOptions.value.focalLength = newFocalLength : metadata.focalLength = newFocalLength
+      }
+    }
+  }
+}
+
+
+const handleUpdateMetadata = () => {
+  const canvases = CanvasManager.getCanvases();
+  for (let [path, canvas] of canvases) {
+    if (canvas && canvas.originalMetadata) {
+      const originalMetadata = canvas.originalMetadata;
+      const metadata = canvas.metadata;
+      for (let key in originalMetadata) {
+        const format = projectSettings.value.metadata.formats[key];
+        let value = originalMetadata[key];
+        if (value && format) {
+          value = format.replace('${' + key + '}', value);
+          CanvasManager.getSelectedPath() === path ? metadataOptions.value[key] = value : metadata[key] = value
+        }
       }
     }
   }
@@ -2159,16 +2197,8 @@ const getText = (meta) => {
       return content;
     case 'metadata':
       return (() => {
-        let content = '';
         const {metadata} = CanvasManager.getCanvas(path);
-        if (metadata) {
-          content = metadata[expression];
-          const format = projectSettings.value.metadata.formats[expression];
-          if (content && format) {
-            content = format.replace('${' + expression + '}', content);
-          }
-        }
-        return content;
+        return metadata ? metadata[expression] : ''
       })();
   }
 }

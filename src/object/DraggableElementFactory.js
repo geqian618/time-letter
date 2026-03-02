@@ -38,14 +38,7 @@ class DraggableElementFactory {
             console.warn('Metadata dependencies not set');
             return '';
         }
-        let content = this.metadataOptions[attribute];
-        if (!content) {
-            return '';
-        }
-        const format = projectSettings.value.metadata.formats[attribute];
-        if (format) {
-            return format.replace('${' + attribute + '}', content);
-        }
+        return this.metadataOptions[attribute] || '';
     }
 
 
