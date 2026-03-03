@@ -47,17 +47,6 @@ async function parseMetadata(imagePath) {
     }
 }
 
-/**
- * 获取图片分辨率
- * @settings imagePath
- * @returns {Promise<{width: undefined, height: undefined}>}
- */
-async function getImageResolution(imagePath) {
-    const {width, height} = await createSharp(imagePath).metadata();
-    return width + ' x ' + height
-}
-
-
 function getFileSize(filePath) {
     const size = fs.statSync(filePath)?.size;
     return size ? (size / 1024 / 1024).toFixed(2) + ' MB' : size
@@ -101,7 +90,7 @@ async function parsePhotoMetadata(filePath) {
             height,
             filename: path.basename(filePath),
             fileSize: getFileSize(filePath),
-            resolution: await getImageResolution(filePath)
+            resolution: `${width} x ${height}`
         }
     } catch (err) {
         return {width, height}
