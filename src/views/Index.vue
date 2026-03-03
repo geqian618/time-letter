@@ -3933,7 +3933,7 @@ onBeforeUnmount(() => {
     display: flex;
     flex-direction: column;
     justify-content: start;
-    gap: 20px;
+    gap: 10px;
 
     .introduction, .contact, .author {
       width: 100%;
