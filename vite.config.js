@@ -23,5 +23,18 @@ export default defineConfig({
     },
     build: {
         sourcemap: false, // 禁止生成 .map 文件
+        minify: 'terser', // 使用terser进行压缩混淆
+        assetsInlineLimit: 1,
+        chunkSizeWarningLimit: 2000,
+        terserOptions: {
+            compress: {
+                drop_console: true, // 移除 console
+                drop_debugger: true // 移除 debugger
+            },
+            format: {
+                comments: false
+            },
+            mangle: true, // 混淆变量名（默认开启）
+        }
     }
 })
