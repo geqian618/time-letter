@@ -2,7 +2,6 @@ const {dialog, Menu, shell} = require('electron');
 const path = require('path')
 const fs = require('fs')
 const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('../utils/path-helper')
-const {createChildWindow} = require('../components/ChildWindow')
 const {registerFont} = require('../utils/font-manager')
 
 const resourcesPath = getResourcePath()
@@ -120,7 +119,7 @@ const createApplicationMenu = (mainWindow) => {
                 },
                 {
                     label: '关于',
-                    click: createChildWindow
+                    click: openAboutDialog
                 }
             ]
         }
@@ -242,5 +241,9 @@ const editorOutputSettings = () => {
     window.webContents.send('editor-output-settings')
 }
 
+
+const openAboutDialog = () => {
+    window.webContents.send('watch-about-dialog')
+}
 
 module.exports = createApplicationMenu

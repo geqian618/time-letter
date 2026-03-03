@@ -1192,6 +1192,25 @@
       </template>
     </el-dialog>
 
+
+    <el-dialog v-model="aboutDialogVisible" title="关于" width="600" align-center draggable>
+      <div class="about">
+        <div class="introduction">
+          <span class="title">简介：</span>
+          <div class="value">“时光信笺”是一款简易、灵活性高、扩展性极强的照片水印、边框绘制工具</div>
+        </div>
+        <div class="contact">
+          <span class="title">联系与赞赏：</span>
+          <img src="../assets/images/二维码.jpg">
+          <img src="../assets/images/赞赏码.jpg">
+        </div>
+        <div class="author">
+          <span class="title">作者：</span>
+          <div class="value">秋风吹落了秋枫</div>
+        </div>
+      </div>
+    </el-dialog>
+
   </div>
 </template>
 
@@ -1333,6 +1352,8 @@ const editorTextLabelDialogVisible = ref(false)
 const downloadProgressVisible = ref(false)
 
 const enableTemplateDialogVisible = ref(false)
+
+const aboutDialogVisible = ref(false)
 
 const outputSettingsVisible = ref(false)
 
@@ -1552,6 +1573,13 @@ const watchTemplateContextMenu = () => {
     } else if (type === 1) {
       renameDialogVisible.value = true
     }
+  })
+}
+
+
+const watchAboutDialog = () => {
+  window.electronAPI.watchAboutDialog((event) => {
+    aboutDialogVisible.value = true;
   })
 }
 
@@ -3262,6 +3290,7 @@ onMounted(() => {
   watchImportFonts()
   watchContextMenu()
   watchTemplateContextMenu()
+  watchAboutDialog()
   watchLabelResources()
   watchDownloadProgress()
   editorOutputSettings()
@@ -3897,6 +3926,29 @@ onBeforeUnmount(() => {
 
 
 .el-dialog {
+
+  .about {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    gap: 20px;
+
+    .introduction, .contact, .author {
+      width: 100%;
+      display: flex;
+      justify-content: start;
+
+      span {
+        font-weight: bold;
+      }
+
+      img {
+        width: 240px;
+        height: 260px;
+      }
+    }
+  }
 
   .download-progress {
     padding: 10px;
