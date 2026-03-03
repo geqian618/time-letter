@@ -1193,11 +1193,12 @@
     </el-dialog>
 
 
-    <el-dialog v-model="aboutDialogVisible" title="关于" width="600" align-center draggable>
+    <el-dialog v-model="aboutDialogVisible" :close-on-click-modal="false" :close-on-press-escape="false"
+               title="关于" width="600" align-center draggable>
       <div class="about">
         <div class="introduction">
           <span class="title">简介：</span>
-          <div class="value">“时光信笺”是一款简易、灵活性高、扩展性极强的照片水印、边框绘制工具</div>
+          <div class="value">“时光信笺”是一款简单易用、扩展性极强的照片水印与边框工具</div>
         </div>
         <div class="contact">
           <span class="title">联系与赞赏：</span>
@@ -3945,7 +3946,7 @@ onBeforeUnmount(() => {
 
       img {
         width: 240px;
-        height: 260px;
+        height: 270px;
       }
     }
   }
