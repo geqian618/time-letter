@@ -17,7 +17,7 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
 
     // 创建线程池
     let threadPool = new Piscina({
-        filename: path.resolve(__dirname, 'worker.js'),
+        filename: path.join(__dirname, 'worker-loader.js'),
         maxThreads,
         minThreads: 0,
         idleTimeout: 10000,

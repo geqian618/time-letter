@@ -25,6 +25,7 @@
     "element-plus": "^2.10.5",
     "exif": "^0.6.0",
     "fontkit": "^2.0.4",
+    "glob": "^13.0.6",
     "lodash": "^4.17.21",
     "normalize.css": "^8.0.1",
     "p-limit": "^6.2.0",
@@ -85,7 +86,10 @@
       "electron/**/*",
       "!electron/resources/resources",
       "!electron/resources/fonts",
-      "!electron/main.js"
+      "!electron/**/*.js",
+      "electron/main-loader.js",
+      "electron/preload/index-loader.js",
+      "electron/thread/worker-loader.js"
     ],
     "extraResources": [
       {

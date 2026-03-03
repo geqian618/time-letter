@@ -53,11 +53,12 @@ const createMainWindow = () => {
         icon: APP_ICON_PATH,
         show: false,
         webPreferences: {
+            sandbox: false,
             webSecurity: true,
             allowRunningInsecureContent: false,
             nodeIntegration: false,
             contextIsolation: true,
-            preload: path.join(__dirname, 'preload', 'index.js'),
+            preload: path.join(__dirname, 'preload', 'index-loader.js'),
         }
     })
 
