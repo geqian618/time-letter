@@ -16,11 +16,10 @@ module.exports = async (params) => {
             }
         },
         outputDirectory,
-        setting: {json, filePath, index}
+        setting: {json, filePath, index, filename: originalName}
     } = params
 
     const parsed = path.parse(filePath);
-    const originalName = parsed.name;
     const originalExtname = parsed.ext.slice(1);
 
     let filename = basename === 0 ? originalName : basename === 1 ? String(index) : crypto.randomUUID().replaceAll('-', '')

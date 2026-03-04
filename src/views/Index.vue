@@ -164,6 +164,15 @@
                           <el-input spellcheck="false" v-model="metadataOptions.shootingTime" size="small"/>
                         </div>
                       </li>
+                      <li class="option">
+                        <div class="label">
+                          <div class="text-mark" draggable="true" type="metadata" expression="filename">文件名称
+                          </div>
+                        </div>
+                        <div class="value">
+                          <el-input spellcheck="false" v-model="metadataOptions.filename" size="small"/>
+                        </div>
+                      </li>
                     </ul>
                   </el-sub-menu>
                   <el-sub-menu index="5">
@@ -1058,6 +1067,14 @@
                           v-model="projectSettings.metadata.formats.shootingTime">
                 </el-input>
               </div>
+              <div class="option">
+                <span class="label">文件名称：</span>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          @change="handleUpdateMetadata"
+                          v-model="projectSettings.metadata.formats.filename">
+                </el-input>
+              </div>
             </div>
           </div>
 
@@ -1715,8 +1732,8 @@ const watchContextMenu = () => {
         const paths = Array.from(selectedPreviewList.value.keys());
         const settings = paths.map((path, index) => {
           const canvas = CanvasManager.getCanvas(path);
+          const {height: imageHeight, width: imageWidth, filename} = canvas.metadata;
           if (!canvas.completed) {
-            const {height: imageHeight, width: imageWidth} = canvas.metadata;
             const background = {
               width: imageWidth,
               height: imageHeight,
@@ -1729,7 +1746,7 @@ const watchContextMenu = () => {
                 })
               ]
             };
-            return {filePath: path, index, json: JSON.stringify(background)}
+            return {filePath: path, index, filename, json: JSON.stringify(background)}
           }
 
           let {background, foreground} = _.cloneDeep(canvas);
@@ -1745,7 +1762,7 @@ const watchContextMenu = () => {
           for (let element of foreground.elements) {
             background.elements.push(element);
           }
-          return {filePath: path, index, json: JSON.stringify(background)}
+          return {filePath: path, index, filename, json: JSON.stringify(background)}
         });
         window.electronAPI.requestExportFiles(_.cloneDeep({
           projectSettings: projectSettings.value,
