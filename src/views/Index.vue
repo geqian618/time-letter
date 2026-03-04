@@ -843,7 +843,7 @@
 
 
     <el-dialog v-model="editorTextLabelDialogVisible" title="编辑文本标签" width="60%" draggable>
-      <el-table size="small" height="400" :data="textLabels" border>
+      <el-table size="small" max-height="400" :data="textLabels" border>
         <el-table-column prop="type" label="标签类型" show-overflow-tooltip/>
         <el-table-column prop="tips" label="提示信息" show-overflow-tooltip/>
         <el-table-column label="文本内容" min-width="150" show-overflow-tooltip>
