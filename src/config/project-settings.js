@@ -27,7 +27,8 @@ const projectSettings = ref({
             focalLength: '${focalLength}',
             shutter: '${shutter}',
             aperture: '${aperture}',
-            shootingTime: '${shootingTime}'
+            shootingTime: '${shootingTime}',
+            filename: '${filename}'
         },
         other: {
             enableEquivalentFocalSegment: false,
@@ -74,7 +75,8 @@ const originalMetadata = {
         focalLength: '${focalLength}',
         shutter: '${shutter}',
         aperture: '${aperture}',
-        shootingTime: '${shootingTime}'
+        shootingTime: '${shootingTime}',
+        filename: '${filename}'
     },
     other: {
         enableEquivalentFocalSegment: false,

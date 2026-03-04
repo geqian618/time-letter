@@ -88,7 +88,7 @@ async function parsePhotoMetadata(filePath) {
             shootingTime: DateTimeOriginal ? formatDateTime(DateTimeOriginal) : '',
             width,
             height,
-            filename: path.basename(filePath),
+            filename: path.parse(filePath)?.name,
             fileSize: getFileSize(filePath),
             resolution: `${width} x ${height}`
         }
