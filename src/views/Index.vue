@@ -1217,6 +1217,12 @@
           <span class="title">简介：</span>
           <div class="value">“时光信笺”是一款简单易用、扩展性极强的照片水印与边框工具</div>
         </div>
+        <div class="purpose">
+          <span class="title">缘由：</span>
+          <div class="value">
+            旨在封存更多当下足迹，寄送给未来的自己。灵感来自网络上的埋信仪式：“寻一块地，埋一封信，给xx年后的自己”
+          </div>
+        </div>
         <div class="contact">
           <span class="title">联系与赞赏：</span>
           <img src="../assets/images/二维码.jpg">
@@ -3952,13 +3958,14 @@ onBeforeUnmount(() => {
     justify-content: start;
     gap: 10px;
 
-    .introduction, .contact, .author {
+    .introduction, .purpose, .contact, .author {
       width: 100%;
       display: flex;
       justify-content: start;
 
       span {
         font-weight: bold;
+        min-width: 43px;
       }
 
       img {
