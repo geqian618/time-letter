@@ -1292,7 +1292,6 @@ const availableCanvas = shallowRef(new Map())
 const zoomOptions = {
   minZoom: 0.1,
   maxZoom: 5,
-  zoomStep: 0.05
 }
 
 let canvasEditor = null;
@@ -3004,8 +3003,8 @@ const handleCanvasResize = (event) => {
   if (!canvas) return
   const initZoom = canvas.initZoom;
   const zoom = canvasEditor.getZoom();
-  const {zoomStep, maxZoom, minZoom} = zoomOptions;
-  let newZoom = direction === 'in' ? zoom + initZoom * zoomStep : zoom - initZoom * zoomStep;
+  const {maxZoom, minZoom} = zoomOptions;
+  let newZoom = direction === 'in' ?  zoom + zoom * 0.1 :  zoom - zoom * 0.1;
   newZoom = Math.min(Math.max(minZoom * initZoom, newZoom), maxZoom * initZoom);
   canvas.zoom = newZoom
   canvasEditor.setZoom(newZoom)
