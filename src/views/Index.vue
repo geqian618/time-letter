@@ -1291,7 +1291,7 @@ const availableCanvas = shallowRef(new Map())
 
 const zoomOptions = {
   minZoom: 0.1,
-  maxZoom: 5,
+  maxZoom: 5
 }
 
 let canvasEditor = null;
