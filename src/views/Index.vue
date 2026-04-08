@@ -177,7 +177,7 @@
                   </el-sub-menu>
                   <el-sub-menu index="5">
                     <template #title>
-                      <span>前景</span>
+                      <span>照片</span>
                     </template>
                     <ul class="options">
                       <li class="option">
