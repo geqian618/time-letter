@@ -3962,6 +3962,7 @@ onBeforeUnmount(() => {
     flex-direction: column;
     justify-content: start;
     gap: 10px;
+    font-family: "黑体", "Microsoft YaHei", sans-serif;
 
     .introduction, .version, .purpose, .contact, .author {
       width: 100%;
