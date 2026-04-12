@@ -1211,22 +1211,28 @@
 
 
     <el-dialog v-model="aboutDialogVisible" :close-on-click-modal="false" :close-on-press-escape="false"
-               title="关于" width="600" align-center draggable>
+               title="关于" width="650" align-center draggable>
       <div class="about">
         <div class="introduction">
           <span class="title">简介：</span>
-          <div class="value">“时光信笺”是一款简单易用、扩展性极强的照片水印与边框工具</div>
+          <div class="value">“时光信笺”是一款简单易用、扩展性极强的照片水印与边框工具。</div>
         </div>
         <div class="purpose">
-          <span class="title">缘由：</span>
+          <span class="title">由来：</span>
           <div class="value">
-            旨在封存更多当下足迹，寄送给未来的自己。灵感来自网络上的埋信仪式：“寻一块地，埋一封信，给xx年后的自己”
+            灵感来自网络上的埋信仪式：“寻一块地，埋一封信，给xx年后的自己”。旨在留存更多当下足迹，寄送给未来的自己。
           </div>
         </div>
         <div class="contact">
           <span class="title">联系与赞赏：</span>
-          <img src="../assets/images/二维码.jpg">
-          <img src="../assets/images/赞赏码.jpg">
+          <div class="value">
+            <img src="../assets/images/二维码.jpg">
+            <img src="../assets/images/赞赏码.jpg">
+          </div>
+        </div>
+        <div class="version">
+          <span class="title">版本：</span>
+          <div class="value">v2.0</div>
         </div>
         <div class="author">
           <span class="title">作者：</span>
@@ -3004,7 +3010,7 @@ const handleCanvasResize = (event) => {
   const initZoom = canvas.initZoom;
   const zoom = canvasEditor.getZoom();
   const {maxZoom, minZoom} = zoomOptions;
-  let newZoom = direction === 'in' ?  zoom + zoom * 0.1 :  zoom - zoom * 0.1;
+  let newZoom = direction === 'in' ? zoom + zoom * 0.1 : zoom - zoom * 0.1;
   newZoom = Math.min(Math.max(minZoom * initZoom, newZoom), maxZoom * initZoom);
   canvas.zoom = newZoom
   canvasEditor.setZoom(newZoom)
@@ -3957,7 +3963,7 @@ onBeforeUnmount(() => {
     justify-content: start;
     gap: 10px;
 
-    .introduction, .purpose, .contact, .author {
+    .introduction, .version, .purpose, .contact, .author {
       width: 100%;
       display: flex;
       justify-content: start;
@@ -3967,10 +3973,17 @@ onBeforeUnmount(() => {
         min-width: 43px;
       }
 
-      img {
-        width: 240px;
-        height: 270px;
+      .value:has(img) {
+        padding: 5px;
+        border: 1px solid #efefef;
+        border-radius: 3px;
+
+        img {
+          width: 240px;
+          height: 270px;
+        }
       }
+
     }
   }
 
