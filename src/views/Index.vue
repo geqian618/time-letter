@@ -1304,6 +1304,8 @@ let canvasEditor = null;
 
 let backgroundCanvasEditor = null;
 
+let renderVersion = 0;
+
 let scrollTimeout = null;
 
 let isCanvasDraggingMode = false
@@ -2270,6 +2272,7 @@ const loadTextLabels = () => {
 }
 
 const renderCanvas = async (canvas) => {
+  const currentVersion = ++renderVersion;
   canvasElement.value.classList.remove('scale-animation')
   backgroundElement.value.classList.remove('scale-animation')
   if (!canvas.completed) {
@@ -2280,6 +2283,10 @@ const renderCanvas = async (canvas) => {
       cacheable: true,
       meta: {...new PhotographOptions(), path: canvas.path}
     });
+
+    // 非最终渲染图片，放弃渲染
+    if (currentVersion !== renderVersion) return;
+
     const width = image.width;
     const height = image.height;
     const background = new Rect({width, height, meta: new BorderOptions()});
@@ -2294,6 +2301,10 @@ const renderCanvas = async (canvas) => {
     backgroundCanvasEditor.addElement(background);
     backgroundCanvasEditor.addElement(image);
     backgroundCanvasEditor.renderAll()
+
+    // 非最终渲染图片，放弃更新数据
+    if (currentVersion !== renderVersion) return;
+
     canvasWrapper.value.style.width = Math.max(width, idealWidth) + 'px'
     canvasWrapper.value.style.height = Math.max(height, idealHeight) + 'px'
     scrollBarMoveToCenter(canvas)
@@ -2312,13 +2323,25 @@ const renderCanvas = async (canvas) => {
   } else {
     const {foreground, background, zoom, metadata: {width: imageWidth, height: imageHeight}} = canvas;
     typeof foreground === 'string' ? await canvasEditor.loadFromJSON(foreground) : await canvasEditor.loadFromObject(foreground)
+
+    // 非最终渲染图片，放弃渲染
+    if (currentVersion !== renderVersion) return;
+
     typeof background === 'string' ? await backgroundCanvasEditor.loadFromJSON(background) : await backgroundCanvasEditor.loadFromObject(background)
+
+    // 非最终渲染图片，放弃渲染
+    if (currentVersion !== renderVersion) return;
+
     const {idealWidth, idealHeight} = previewContainer.value;
     // 设置缩放
     canvasEditor.setZoom(zoom);
     backgroundCanvasEditor.setZoom(zoom);
     backgroundCanvasEditor.renderAll();
     canvasEditor.renderAll();
+
+    // 非最终渲染图片，放弃更新数据
+    if (currentVersion !== renderVersion) return;
+
     canvasWrapper.value.style.width = Math.max(imageWidth, idealWidth) + 'px'
     canvasWrapper.value.style.height = Math.max(imageHeight, idealHeight) + 'px'
     updateScrollBar(canvas)
