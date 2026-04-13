@@ -269,6 +269,23 @@ const setupAppLifecycle = () => {
             app.quit()
         }
     })
+
+    // 尝试获取单例锁
+    if (app.requestSingleInstanceLock()) {
+        // 成功获取锁，没有实例在运行，正常启动应用
+        app.on('second-instance', (event, commandLine, workingDirectory) => {
+            // 当用户再次尝试启动应用时，聚焦到已有窗口
+            if (mainWindow) {
+                if (mainWindow.isMinimized()) {
+                    mainWindow.restore();
+                }
+                mainWindow.focus();
+            }
+        });
+    } else {
+        // 如果没有获取到锁，说明已有实例在运行，直接退出当前启动的进程
+        app.quit();
+    }
 }
 
 /**
