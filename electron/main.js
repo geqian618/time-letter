@@ -276,8 +276,6 @@ const setupAppLifecycle = () => {
         app.on('second-instance', (event, commandLine, workingDirectory) => {
             // 当用户再次尝试启动应用时，聚焦到已有窗口
             if (mainWindow) {
-                // 确保窗口从隐藏状态恢复
-                mainWindow.show();
                 if (mainWindow.isMinimized()) {
                     mainWindow.restore();
                 }
