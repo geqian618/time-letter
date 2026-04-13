@@ -1211,7 +1211,7 @@
 
 
     <el-dialog v-model="aboutDialogVisible" :close-on-click-modal="false" :close-on-press-escape="false"
-               title="关于" width="650" align-center draggable>
+               title="关于" width="700" align-center draggable>
       <div class="about">
         <div class="introduction">
           <span class="title">简介：</span>
