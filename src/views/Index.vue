@@ -2703,14 +2703,21 @@ const handleUpdateBorders = async () => {
   scrollBarMoveToCenter(currentCanvas)
 
   if (borderType === 0 && background.type !== 'rect') {
-    elements[0] = new Rect({width: newWidth, height: newHeight, radius: newBorderRadius, fill: borderColor});
+    delete background.meta.path
+    elements[0] = new Rect({
+      width: newWidth,
+      height: newHeight,
+      radius: newBorderRadius,
+      fill: borderColor,
+      meta: background.meta
+    });
   } else if (borderType === 1 && background.type !== 'image') {
     elements[0] = new Image(target.image, {
       width: newWidth,
       height: newHeight,
       radius: newBorderRadius,
       blur: newBorderBlur,
-      meta: {path: target.meta.path, ...background.meta}
+      meta: Object.assign(background.meta, {path: target.meta.path})
     })
   } else {
     background.width = newWidth;
@@ -2727,15 +2734,11 @@ const handleUpdateBorders = async () => {
     }
   }
 
-  canvasElement.value.classList.remove('scale-animation')
-  backgroundElement.value.classList.remove('scale-animation')
-  await nextTick();
-  backgroundCanvasEditor.renderAll()
-  canvasEditor.renderAll()
-
   currentCanvas.borderOptions = _.cloneDeep(borderOptions.value)
   currentCanvas.foreground = canvasEditor.exportToObject()
-  currentCanvas.background = backgroundCanvasEditor.exportToObject()
+  currentCanvas.background = backgroundCanvasEditor.exportToObject();
+
+  await renderCanvas(currentCanvas)
 }
 
 
