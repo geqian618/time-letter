@@ -1217,7 +1217,7 @@
       <div class="about">
         <div class="introduction">
           <span class="title">简介：</span>
-          <div class="value">“时光信笺”是一款简单易用、扩展性极强的照片水印与边框工具。</div>
+          <div class="value">“时光信笺”是一款简单易用、扩展性极强、本地运行且无需联网的照片水印与边框工具。</div>
         </div>
         <div class="purpose">
           <span class="title">由来：</span>
