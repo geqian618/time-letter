@@ -2276,9 +2276,9 @@ const loadTextLabels = () => {
 }
 
 const renderCanvas = async (canvas) => {
-  const currentVersion = ++renderVersion;
   canvasElement.value.classList.remove('scale-animation')
   backgroundElement.value.classList.remove('scale-animation')
+  const currentVersion = ++renderVersion;
   if (!canvas.completed) {
     canvasEditor.clearCanvas();
     backgroundCanvasEditor.clearCanvas();
@@ -2360,8 +2360,6 @@ const renderCanvas = async (canvas) => {
       canvas.background = backgroundCanvasEditor.exportToObject()
     }
   }
-  canvasElement.value.classList.add('scale-animation')
-  backgroundElement.value.classList.add('scale-animation')
 }
 
 
@@ -2667,7 +2665,6 @@ const handleUpdatePhotograph = async () => {
 const handleUpdateBorders = async () => {
   const currentCanvas = CanvasManager.getCurrentCanvas();
   if (!currentCanvas) return
-
   const {
     width,
     height,
@@ -2730,16 +2727,15 @@ const handleUpdateBorders = async () => {
     }
   }
 
-  currentCanvas.borderOptions = _.cloneDeep(borderOptions.value)
-  currentCanvas.foreground = canvasEditor.exportToObject()
-  currentCanvas.background = backgroundCanvasEditor.exportToObject()
   canvasElement.value.classList.remove('scale-animation')
   backgroundElement.value.classList.remove('scale-animation')
   await nextTick();
   backgroundCanvasEditor.renderAll()
   canvasEditor.renderAll()
-  canvasElement.value.classList.add('scale-animation')
-  backgroundElement.value.classList.add('scale-animation')
+
+  currentCanvas.borderOptions = _.cloneDeep(borderOptions.value)
+  currentCanvas.foreground = canvasEditor.exportToObject()
+  currentCanvas.background = backgroundCanvasEditor.exportToObject()
 }
 
 
@@ -3030,6 +3026,8 @@ const handleCanvasResize = (event) => {
   const direction = event.deltaY < 0 ? 'in' : 'out';
   const canvas = CanvasManager.getCurrentCanvas();
   if (!canvas) return
+  canvasElement.value.classList.add('scale-animation')
+  backgroundElement.value.classList.add('scale-animation')
   const initZoom = canvas.initZoom;
   const zoom = canvasEditor.getZoom();
   const {maxZoom, minZoom} = zoomOptions;
