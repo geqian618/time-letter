@@ -28,11 +28,13 @@
                     <span>图片库</span>
                   </template>
                   <div class="image-marks" ref="imageMarks">
-                    <img class="image-mark" v-for="([key, label]) in imageLabels"
-                         :path="label.path"
-                         :key="label.path"
-                         draggable="true"
-                         :src="label.url">
+                    <div class="image-item" v-for="([key, label]) in imageLabels" draggable="false">
+                      <img class="image-mark"
+                           :path="label.path"
+                           :key="label.path"
+                           draggable="true"
+                           :src="label.url">
+                    </div>
                   </div>
                 </el-sub-menu>
                 <el-sub-menu index="3" class="text-marks-options">
@@ -3481,22 +3483,32 @@ onBeforeUnmount(() => {
             border-bottom: 1px solid #a2a4a6;
 
             .image-marks {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr); /* 三等分列宽 */
+              gap: 10px;
               padding: 10px;
-              column-count: 3; /* 列数 */
-              column-gap: 10px; /* 列间距 */
               background-color: var(--expand-area-background-color);
 
-              .image-mark {
-                display: block;
-                width: 100%;
-                cursor: move;
-                user-select: none;
-                margin-bottom: 10px; /* 项目间距 */
-                break-inside: avoid; /* 防止项目被截断 */
-              }
+              .image-item {
+                /* 不需要设置高度，用 aspect-ratio 设置宽高比例 */
+                aspect-ratio: 5 / 4; /* 或根据需求设为 4/3、16/9 等 */
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background: #ffffff; /* 可选，占位背景 */
+                border-radius: 2px;
+                padding: 5%;
 
-              .image-mark:hover {
-                background: #e3f2fd;
+                .image-mark {
+                  max-width: 100%;
+                  max-height: 100%;
+                  width: auto; /* 由图片实际宽度决定 */
+                  height: auto; /* 由图片实际高度决定 */
+                  object-fit: contain; // 此时 contain 或 cover 才能生效
+                  display: block;
+                  cursor: move;
+                  user-select: none;
+                }
               }
             }
           }
@@ -3900,6 +3912,7 @@ onBeforeUnmount(() => {
 
     }
   }
+
 }
 
 
