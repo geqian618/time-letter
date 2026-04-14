@@ -844,7 +844,7 @@
     </el-dialog>
 
 
-    <el-dialog v-model="editorTextLabelDialogVisible" title="编辑文本标签" width="60%" draggable>
+    <el-dialog v-model="editorTextLabelDialogVisible" title="编辑文本" width="60%" draggable>
       <el-table size="small" max-height="400" :data="textLabels" border>
         <el-table-column prop="type" label="标签类型" show-overflow-tooltip/>
         <el-table-column prop="tips" label="提示信息" show-overflow-tooltip/>
@@ -1419,7 +1419,7 @@ const saveTemplateRules = {
 
 const textLabelRules = {
   type: [
-    {required: true, message: '文本标签类型不能为空', trigger: 'blur'},
+    {required: true, message: '文本类型不能为空', trigger: 'blur'},
   ],
   tips: [
     {required: true, message: '提示信息不能为空', trigger: 'blur'},
@@ -1439,7 +1439,7 @@ const renameTemplateRules = {
 }
 
 const textLabelDialogTitle = computed(() => {
-  return handleTextLabelType.value === 0 ? '新增文本标签' : '编辑文本标签'
+  return handleTextLabelType.value === 0 ? '新增文本' : '编辑文本'
 })
 
 
