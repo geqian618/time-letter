@@ -2940,13 +2940,9 @@ const handleDragStart = function (event) {
   const width = componentRect.width;
   const height = componentRect.height;
 
-  let settings;
-
-  if (component instanceof HTMLImageElement) {
-    settings = {url, path, tagName, width, height}
-  } else {
-    settings = {type, content, expression, tagName}
-  }
+  const settings = component instanceof HTMLImageElement
+      ? {url, path, tagName, width, height}
+      : {type, content, expression, tagName}
 
   // 关键：设置拖拽数据传输
   event.dataTransfer.setData('text/plain', JSON.stringify({settings, mouse: {offsetX, offsetY}}));
