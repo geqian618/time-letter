@@ -1840,7 +1840,6 @@ class Image extends Element {
             ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(this.image, this.x, this.y, width, height);
         }
-
         ctx.restore();
     }
 
