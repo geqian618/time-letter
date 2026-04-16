@@ -2662,7 +2662,7 @@ const handleUpdatePhotograph = async () => {
   currentCanvas.background = backgroundCanvasEditor.exportToObject()
 }
 
-const handleUpdateBorders = async () => {
+const handleUpdateBorders = () => {
   const currentCanvas = CanvasManager.getCurrentCanvas();
   if (!currentCanvas) return
   const {
@@ -2734,11 +2734,14 @@ const handleUpdateBorders = async () => {
     }
   }
 
+  canvasElement.value.classList.remove('scale-animation')
+  backgroundElement.value.classList.remove('scale-animation')
+  canvasEditor.renderAll();
+  backgroundCanvasEditor.renderAll();
+
   currentCanvas.borderOptions = _.cloneDeep(borderOptions.value)
   currentCanvas.foreground = canvasEditor.exportToObject()
   currentCanvas.background = backgroundCanvasEditor.exportToObject();
-
-  await renderCanvas(currentCanvas)
 }
 
 
