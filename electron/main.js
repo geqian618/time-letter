@@ -1,6 +1,6 @@
-const {app, ipcMain, protocol, BrowserWindow, Menu, dialog} = require('electron')
+const {app, ipcMain, protocol, globalShortcut, BrowserWindow, Menu, dialog} = require('electron')
 const WinState = require('electron-win-state').default
-const path = require('path')
+const path = require('path');
 
 // 工具模块
 const imageParser = require('./utils/image-parser')
@@ -15,6 +15,7 @@ const createTray = require('./components/Tray')
 const createApplicationMenu = require('./components/ApplicationMenu')
 const createContextMenu = require('./components/ContextMenu')
 const createTemplateContextMenu = require('./components/TemplateContextMenu')
+const registerGlobalShortcut = require('./components/registerGlobalShortcut')
 
 // 配置常量
 const {APP_NAME, APP_ICON_PATH, APP_VERSION} = require('./constant/ProjectConstants')
@@ -96,11 +97,13 @@ const initializeComponents = (window) => {
 
     applicationMenu = createApplicationMenu(window);
 
-    tray = createTray(window)
-
     contextMenu = createContextMenu(window);
 
     templateContextMenu = createTemplateContextMenu(window);
+
+    tray = createTray(window)
+
+    registerGlobalShortcut(window);
 
     imageWatcher.fileWatcher(window, resourcesPath)
 
@@ -257,10 +260,12 @@ const setupAppLifecycle = () => {
         }
     })
 
-    // 应用退出前
-    app.on('before-quit', () => {
+    // 所有窗口已关闭，应用即将退出
+    app.on('will-quit', () => {
         imageWatcher.closeWatcher()
-        fontWatcher.closeWatcher()
+        fontWatcher.closeWatcher();
+        // 注销全局快捷键
+        globalShortcut.unregisterAll();
     })
 
     // 所有窗口关闭
