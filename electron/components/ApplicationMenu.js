@@ -97,16 +97,15 @@ const createApplicationMenu = (mainWindow) => {
                 }
             ]
         },
-        {
-            label: '工具',
-            submenu: [
-                {
-                    label: '图片搬运',
-                    accelerator: 'ctrl+r',
-                    role: ''
-                },
-            ]
-        },
+        // {
+        //     label: '工具',
+        //     submenu: [
+        //         {
+        //             label: '图片搬运',
+        //             role: ''
+        //         },
+        //     ]
+        // },
         {
             label: '帮助',
             submenu: [
