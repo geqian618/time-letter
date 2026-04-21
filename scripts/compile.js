@@ -18,15 +18,10 @@ files.forEach(file => {
         electronPath: require('electron'),
         electron: true, // 关键！指定为 Electron 编译
         compileAsModule: true,
-
     }).then(() => {
         console.log(`Success: ${file}`);
     }).catch(err => {
         console.error(`Error compiling ${file}:`, err);
     });
-
-
-
-
 
 });
