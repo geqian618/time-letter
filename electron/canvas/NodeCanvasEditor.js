@@ -928,16 +928,17 @@ class CanvasEditor {
      */
     handleKeyDown(event) {
         if (!this.isEditing || !this.editingText || !this.hiddenInput) return;
-        switch (event.key) {
-            case 'Enter':
+        const lowerCaseKey = event.key.toLowerCase();
+        switch (lowerCaseKey) {
+            case 'enter':
                 event.preventDefault();
                 this.finishEditing();
                 break;
-            case 'Escape':
+            case 'escape':
                 event.preventDefault();
                 this.cancelEditing();
                 break;
-            case 'ArrowLeft':
+            case 'arrowleft':
                 event.preventDefault();
                 if (this.cursorStart > 0) {
                     this.cursorStart--;
@@ -946,7 +947,7 @@ class CanvasEditor {
                     this.renderAll();
                 }
                 break;
-            case 'ArrowRight':
+            case 'arrowright':
                 event.preventDefault();
                 if (this.cursorStart < this.editingText.text.length) {
                     this.cursorStart++;
@@ -955,13 +956,13 @@ class CanvasEditor {
                     this.renderAll();
                 }
                 break;
-            case 'Home':
+            case 'home':
                 event.preventDefault();
                 this.cursorEnd = this.cursorStart = 0;
                 this.updateInputSelection();
                 this.renderAll();
                 break;
-            case 'End':
+            case 'end':
                 event.preventDefault();
                 this.cursorEnd = this.cursorStart = this.editingText.text.length;
                 this.updateInputSelection();
@@ -975,7 +976,7 @@ class CanvasEditor {
                     this.renderAll();
                 }
                 break;
-            case 'Delete':
+            case 'delete':
                 break;
         }
     }

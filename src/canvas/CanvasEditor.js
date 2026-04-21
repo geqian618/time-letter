@@ -928,8 +928,8 @@ class CanvasEditor {
      */
     handleKeyDown(event) {
         if (!this.isEditing || !this.editingText || !this.hiddenInput) return;
-        const normalizedKey = event.key.toLowerCase();
-        switch (normalizedKey) {
+        const lowerCaseKey = event.key.toLowerCase();
+        switch (lowerCaseKey) {
             case 'enter':
                 event.preventDefault();
                 this.finishEditing();
@@ -976,7 +976,7 @@ class CanvasEditor {
                     this.renderAll();
                 }
                 break;
-            case 'Delete':
+            case 'delete':
                 break;
         }
     }
