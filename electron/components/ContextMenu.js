@@ -7,21 +7,21 @@ const createContextMenu = (mainWindow) => {
     return Menu.buildFromTemplate([
         {
             label: '移除图片',
-            accelerator: 'ctrl+d',
+            accelerator: 'CommandOrControl+D',
             click: () => {
                 window.webContents.send('watch-contextMenu', {type: 0});
             }
         },
         {
             label: '清空画布',
-            accelerator: 'ctrl+l',
+            accelerator: 'CommandOrControl+L',
             click: () => {
                 window.webContents.send('watch-contextMenu', {type: 4});
             }
         },
         {
             label: '重置画布',
-            accelerator: 'ctrl+r',
+            accelerator: 'CommandOrControl+R',
             click: () => {
                 window.webContents.send('watch-contextMenu', {type: 5});
             }
@@ -41,12 +41,12 @@ const createContextMenu = (mainWindow) => {
         },
         {
             label: '保存为预设',
-            accelerator: 'ctrl+t',
+            accelerator: 'CommandOrControl+T',
             click: saveTemplate
         },
         {
             label: '导出图片',
-            accelerator: 'ctrl+o',
+            accelerator: 'CommandOrControl+O',
             click: saveFiles
         }
     ])

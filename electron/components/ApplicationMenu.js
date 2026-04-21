@@ -25,14 +25,14 @@ const createApplicationMenu = (mainWindow) => {
                     label: '导入图片',
                     // 无传参
                     click: selectFile,
-                    accelerator: 'ctrl+i'
+                    accelerator: 'CommandOrControl+I'
 
                 },
                 {
                     label: '导出图片',
                     // 有传参，如何这样写 saveFile(args)函数会立即执行，而不是作为回调函数
                     click: saveFiles,
-                    accelerator: 'ctrl+o'
+                    accelerator: 'CommandOrControl+O'
                 }
             ]
         },

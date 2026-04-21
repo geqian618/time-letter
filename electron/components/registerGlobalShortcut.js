@@ -2,19 +2,19 @@ const {globalShortcut} = require('electron')
 
 const registerGlobalShortcut = (window) => {
 
-    globalShortcut.register('ctrl+d', () => {
+    globalShortcut.register('CommandOrControl+D', () => {
         window.webContents.send('watch-contextMenu', {type: 0});
     })
 
-    globalShortcut.register('ctrl+l', () => {
+    globalShortcut.register('CommandOrControl+L', () => {
         window.webContents.send('watch-contextMenu', {type: 4});
     })
 
-    globalShortcut.register('ctrl+r', () => {
+    globalShortcut.register('CommandOrControl+R', () => {
         window.webContents.send('watch-contextMenu', {type: 5});
     })
 
-    globalShortcut.register('ctrl+t', () => {
+    globalShortcut.register('CommandOrControl+T', () => {
         window.webContents.send('watch-contextMenu', {type: 2})
     })
 
