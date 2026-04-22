@@ -250,7 +250,7 @@ const setupIpcHandlers = () => {
         }
 
         const zip = new AdmZip();
-        const data = JSON.stringify(templates, null, 2);
+        const data = JSON.stringify({type: 'TEMPLATE', templates}, null, 2);
         const textBuffer = Buffer.from(data, 'utf-8');
         zip.addFile('templates.json', textBuffer);
         zip.addFile("resources/", Buffer.alloc(0));

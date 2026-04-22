@@ -172,57 +172,78 @@ const selectFile = async () => {
 
 
 const importTemplates = async () => {
+
     const {filePaths} = await dialog.showOpenDialog({
         buttonLabel: '导入',
         properties: ['openFile'],
         filters: [{name: '模板配置', extensions: ['zip']}]
     });
-    if (filePaths && filePaths.length) {
-        const data = [];
-        let nextId = Date.now();
-        const filePath = filePaths[0];
-        const zip = new AdmZip(filePath);
-        const entries = zip.getEntries();
-        for (const entry of entries) {
-            if (!entry.isDirectory) {
-                const entryName = entry.entryName;
-                const filename = path.basename(entryName);
-                if (entryName === 'templates.json') {
-                    // 读取文件内容
-                    const buffer = zip.readFile(entry);
-                    // Buffer 转 字符串
-                    const templates = JSON.parse(buffer.toString());
-                    templates.forEach(template => {
-                        template.templateId = nextId++;
-                        const elements = template.settings.foreground.elements;
-                        if (elements && elements.length) {
-                            elements.forEach(element => {
-                                if (element.type === 'image') {
-                                    const {meta: {path: filePath}} = element;
-                                    const newFilePath = path.join(getResourcePath(), path.basename(filePath));
-                                    element.meta.path = newFilePath;
-                                    element.src = localPathToProtocolUrl(newFilePath);
-                                }
-                            })
-                        }
-                        data.push(template);
-                    })
-                }
 
-                if (entryName.startsWith('resources/') || entryName.startsWith('fonts/')) {
-                    const file = path.join(entryName.startsWith('resources/') ? getResourcePath() : getFontPath(), filename);
-                    try {
-                        fs.accessSync(file, fs.constants.F_OK);
-                    } catch (e) {
-                        // 读取文件内容
-                        const buffer = zip.readFile(entry);
-                        fs.writeFileSync(file, buffer);
-                    }
+    if (!filePaths?.length) return;
+
+    const zip = new AdmZip(filePaths[0]);
+    const configEntry = zip.getEntry('templates.json');
+
+    if (!configEntry || configEntry.isDirectory) {
+        return;
+    }
+
+    let config;
+    try {
+        const configData = configEntry.getData().toString('utf8');
+        config = JSON.parse(configData);
+    } catch (err) {
+        return;
+    }
+
+    const {type, templates} = config;
+
+    if (type !== 'TEMPLATE' || !templates?.length) {
+        return;
+    }
+
+    const data = [];
+    let nextId = Date.now();
+    const entries = zip.getEntries();
+
+    // 先处理模板配置中的图片路径
+    for (const template of templates) {
+        const newTemplate = {...template, templateId: nextId++};
+        const elements = newTemplate.settings?.foreground?.elements;
+        if (elements && Array.isArray(elements)) {
+            for (const element of elements) {
+                if (element.type === 'image' && element.meta?.path) {
+                    const originalPath = element.meta.path;
+                    const fileName = path.basename(originalPath);
+                    const newFilePath = path.join(getResourcePath(), fileName);
+                    element.meta.path = newFilePath;
+                    element.src = localPathToProtocolUrl(newFilePath);
                 }
             }
         }
-        window.webContents.send('templates:watch', {type: 2, data})
+        data.push(newTemplate);
     }
+
+    for (const entry of entries) {
+        if (!entry.isDirectory) {
+            const entryName = entry.entryName;
+            if (entryName.startsWith('resources/') || entryName.startsWith('fonts/')) {
+                const filename = path.basename(entryName);
+                const file = path.join(entryName.startsWith('resources/') ? getResourcePath() : getFontPath(), filename);
+                fs.access(file, fs.constants.F_OK, (err) => {
+                    if (err) {
+                        const buffer = zip.readFile(entry);
+                        fs.writeFile(file, buffer, err => {
+                            if (err) {
+                                console.log('文件写入失败：', err);
+                            }
+                        })
+                    }
+                });
+            }
+        }
+    }
+    window.webContents.send('templates:watch', {type: 2, data})
 }
 
 
