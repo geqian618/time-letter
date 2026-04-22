@@ -1,6 +1,7 @@
-const {dialog,app, Menu, shell} = require('electron');
+const {dialog, app, Menu, shell} = require('electron');
 const path = require('path')
 const fs = require('fs')
+const AdmZip = require('adm-zip');
 const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('../utils/path-helper')
 const {registerFont} = require('../utils/font-manager')
 
@@ -173,33 +174,53 @@ const selectFile = async () => {
 const importTemplates = async () => {
     const {filePaths} = await dialog.showOpenDialog({
         buttonLabel: '导入',
-        properties: ['openFile', 'multiSelections'],
-        filters: [{name: '模板配置文件', extensions: ['json']}]
+        properties: ['openFile'],
+        filters: [{name: '模板配置', extensions: ['zip']}]
     });
     if (filePaths && filePaths.length) {
         const data = [];
         let nextId = Date.now();
-        filePaths.forEach(filePath => {
-            // 读取文件内容
-            const buffer = fs.readFileSync(filePath);
-            // Buffer 转 字符串
-            const templates = JSON.parse(buffer.toString());
-            templates.forEach(template => {
-                template.templateId = nextId++;
-                const elements = template.settings.foreground.elements;
-                if (elements && elements.length) {
-                    elements.forEach(element => {
-                        if (element.type === 'image') {
-                            const {meta: {path: filePath}} = element;
-                            const newFilePath = path.join(getResourcePath(), path.basename(filePath));
-                            element.meta.path = newFilePath;
-                            element.src = localPathToProtocolUrl(newFilePath);
+        const filePath = filePaths[0];
+        const zip = new AdmZip(filePath);
+        const entries = zip.getEntries();
+        for (const entry of entries) {
+            if (!entry.isDirectory) {
+                const entryName = entry.entryName;
+                const filename = path.basename(entryName);
+                if (entryName === 'templates.json') {
+                    // 读取文件内容
+                    const buffer = zip.readFile(entry);
+                    // Buffer 转 字符串
+                    const templates = JSON.parse(buffer.toString());
+                    templates.forEach(template => {
+                        template.templateId = nextId++;
+                        const elements = template.settings.foreground.elements;
+                        if (elements && elements.length) {
+                            elements.forEach(element => {
+                                if (element.type === 'image') {
+                                    const {meta: {path: filePath}} = element;
+                                    const newFilePath = path.join(getResourcePath(), path.basename(filePath));
+                                    element.meta.path = newFilePath;
+                                    element.src = localPathToProtocolUrl(newFilePath);
+                                }
+                            })
                         }
+                        data.push(template);
                     })
                 }
-                data.push(template);
-            })
-        })
+
+                if (entryName.startsWith('resources/') || entryName.startsWith('fonts/')) {
+                    const file = path.join(entryName.startsWith('resources/') ? getResourcePath() : getFontPath(), filename);
+                    try {
+                        fs.accessSync(file, fs.constants.F_OK);
+                    } catch (e) {
+                        // 读取文件内容
+                        const buffer = zip.readFile(entry);
+                        fs.writeFileSync(file, buffer);
+                    }
+                }
+            }
+        }
         window.webContents.send('templates:watch', {type: 2, data})
     }
 }

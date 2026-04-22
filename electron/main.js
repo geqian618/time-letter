@@ -8,6 +8,7 @@ const AdmZip = require('adm-zip');
 const imageParser = require('./utils/image-parser')
 const imageExporter = require('./thread/image-exporter')
 const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('./utils/path-helper')
+const {reloadExtendFonts} = require('./utils/font-manager')
 
 // 钩子和组件
 const resourcesLoader = require('./utils/resources-loader')
@@ -231,13 +232,20 @@ const setupIpcHandlers = () => {
     // 导出模板配置
     ipcMain.on('templates:export', (event, {outputPath, templates}) => {
 
-        const fileSet = new Set();
+        const imageSet = new Set();
+        const fontSet = new Set();
+        const extendFonts = reloadExtendFonts();
+        const extendFontFamilies = [...extendFonts.keys()];
 
         for (let template of templates) {
-            console.log(template)
-            const elements = template.settings.foreground.elements.filter(element => element.type === 'image');
+            const elements = template.settings.foreground.elements;
             for (let element of elements) {
-                fileSet.add(element.meta.path);
+                if (element.type === 'image') {
+                    imageSet.add(element.meta.path)
+                }
+                if (element.type === 'text' && extendFontFamilies.includes(element.fontFamily)) {
+                    fontSet.add(extendFonts.get(element.fontFamily).path)
+                }
             }
         }
 
@@ -245,16 +253,22 @@ const setupIpcHandlers = () => {
         const data = JSON.stringify(templates, null, 2);
         const textBuffer = Buffer.from(data, 'utf-8');
         zip.addFile('templates.json', textBuffer);
+        zip.addFile("resources/", Buffer.alloc(0));
+        zip.addFile("fonts/", Buffer.alloc(0));
 
-        fileSet.forEach(item => {
+        imageSet.forEach(item => {
             const stat = fs.statSync(item);
             if (stat.isFile()) {
                 // 如果是文件，直接添加
-                zip.addLocalFile(item);
-            } else if (stat.isDirectory()) {
-                // 如果是文件夹，添加整个文件夹及其内容
-                const folderName = path.basename(item);
-                zip.addLocalFolder(item, folderName);
+                zip.addLocalFile(item, "resources/");
+            }
+        });
+
+        fontSet.forEach(item => {
+            const stat = fs.statSync(item);
+            if (stat.isFile()) {
+                // 如果是文件，直接添加
+                zip.addLocalFile(item, "fonts/");
             }
         });
 

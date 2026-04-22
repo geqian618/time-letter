@@ -26,7 +26,7 @@ const reloadFonts = () => {
 
 const reloadExtendFonts = () => {
     const filenames = fs.readdirSync(fontPath);
-    return filenames.map((filename) => {
+    return new Map(filenames.map((filename) => {
         const fileParsed = path.parse(filename);
         const font = {
             family: fileParsed.name,
@@ -34,7 +34,7 @@ const reloadExtendFonts = () => {
             path: path.join(fontPath, filename),
         };
         return [font.family, font]
-    });
+    }));
 }
 
 const registerFont = (font) => {
