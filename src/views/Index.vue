@@ -2075,8 +2075,8 @@ const synchronizeTemplate = () => {
           const vertical = centerY < height / 2 ? 'top' : 'bottom';
           const item = {...element}
           item.position = [horizontal, vertical]
-          item.centerX = horizontal === 'left' ? centerX * initZoom : (width - centerX) * initZoom
-          item.centerY = vertical === 'top' ? centerY * initZoom : (height - centerY) * initZoom
+          item.offsetX = horizontal === 'left' ? element.x * initZoom : (width - element.x - element.width) * initZoom
+          item.offsetY = vertical === 'top' ? element.y * initZoom : (height - element.y - element.height) * initZoom
           item.centerXRatio = horizontal === 'left' ? centerX / width : (width - centerX) / width
           item.centerYRatio = vertical === 'top' ? centerY / height : (height - centerY) / height
           item.width = element.width * initZoom
@@ -2229,8 +2229,6 @@ const useTemplate = async (settings, path) => {
     const {position, centerXRatio, centerYRatio} = element;
     let width = element.width / idealZoom;
     let height = element.height / idealZoom;
-    const centerX = element.centerX / idealZoom
-    const centerY = element.centerY / idealZoom
     const offsetX = element.offsetX / idealZoom
     const offsetY = element.offsetY / idealZoom
 
