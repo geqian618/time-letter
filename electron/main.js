@@ -272,6 +272,14 @@ const setupIpcHandlers = () => {
             }
         });
 
+        // 遍历所有条目，为每个条目的头部设置 UTF-8 标志位
+        zip.getEntries().forEach(entry => {
+            // 设置创建系统的版本号为Unix (0x314)，以确保兼容性
+            entry.header.made = 0x314;
+            // 设置 bit 11 (0x800)
+            entry.header.flags |= 0x800;
+        });
+
         // 将压缩包写入磁盘
         zip.writeZip(outputPath);
     })
