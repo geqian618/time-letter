@@ -1511,7 +1511,7 @@ const watchTemplates = () => {
   window.electronAPI.watchTemplates(async (event, {type, data}) => {
     if (type === 1) {
       // 获取模版数据
-      window.electronAPI.exportTemplates({outputDirectory: data, templates: StorageManager.getTemplates()});
+      window.electronAPI.exportTemplates({outputPath: data, templates: StorageManager.getTemplates()});
     } else if (type === 2) {
       data.forEach(template => templates.value.push(template))
       // 接收模板数据

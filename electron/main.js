@@ -2,6 +2,7 @@ const {app, ipcMain, protocol, globalShortcut, BrowserWindow, Menu, dialog} = re
 const WinState = require('electron-win-state').default
 const path = require('path');
 const fs = require('fs')
+const AdmZip = require('adm-zip');
 
 // 工具模块
 const imageParser = require('./utils/image-parser')
@@ -228,18 +229,37 @@ const setupIpcHandlers = () => {
 
 
     // 导出模板配置
-    ipcMain.on('templates:export', (event, {outputDirectory, templates}) => {
-        const filePath = path.join(outputDirectory, 'templates.json');
-        const data = JSON.stringify(templates, null, 2);
-        // 写入文件（异步）
-        fs.writeFile(filePath, data, err => {
-            // ① 写入失败：err是一个错误对象； ② 写入失败：err 是一个 null 值
-            if (err) {
-                console.log('文件写入失败');
-            } else {
-                console.log('文件写入成功');
+    ipcMain.on('templates:export', (event, {outputPath, templates}) => {
+
+        const fileSet = new Set();
+
+        for (let template of templates) {
+            console.log(template)
+            const elements = template.settings.foreground.elements.filter(element => element.type === 'image');
+            for (let element of elements) {
+                fileSet.add(element.meta.path);
             }
-        })
+        }
+
+        const zip = new AdmZip();
+        const data = JSON.stringify(templates, null, 2);
+        const textBuffer = Buffer.from(data, 'utf-8');
+        zip.addFile('templates.json', textBuffer);
+
+        fileSet.forEach(item => {
+            const stat = fs.statSync(item);
+            if (stat.isFile()) {
+                // 如果是文件，直接添加
+                zip.addLocalFile(item);
+            } else if (stat.isDirectory()) {
+                // 如果是文件夹，添加整个文件夹及其内容
+                const folderName = path.basename(item);
+                zip.addLocalFolder(item, folderName);
+            }
+        });
+
+        // 将压缩包写入磁盘
+        zip.writeZip(outputPath);
     })
 }
 

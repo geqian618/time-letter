@@ -1381,6 +1381,30 @@ class Text extends Element {
     }
 
 
+    /**
+     * 测量文字宽高
+     *
+     * @param ctx
+     * @returns {{width: (number|*|number), height: (*|number|number)}}
+     */
+    measureText(ctx) {
+        ctx.save();
+        ctx.textBaseline = 'alphabetic';
+        ctx.textAlign = 'left';
+        // 字体设置
+        ctx.font = `${this.fontStyle} ${this.fontWeight} ${this.fontSize}px "${this.fontFamily}", "Microsoft YaHei", sans-serif`;
+        // 字体颜色
+        ctx.fillStyle = this.fontColor;
+        const {height, width} = this.direction === 'vertical'
+            ? this.parseVerticalChars(ctx)
+            : this.parseHorizontalChars(ctx)
+        return {
+            width: width || (this.direction === 'horizontal' ? this.fontSize / 10 : this.fontSize),
+            height: height || (this.direction === 'horizontal' ? this.fontSize : this.fontSize / 10)
+        }
+    }
+
+
     draw(ctx) {
         ctx.save();
         ctx.textBaseline = 'alphabetic';

@@ -1,4 +1,4 @@
-const {dialog, Menu, shell} = require('electron');
+const {dialog,app, Menu, shell} = require('electron');
 const path = require('path')
 const fs = require('fs')
 const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('../utils/path-helper')
@@ -206,13 +206,13 @@ const importTemplates = async () => {
 
 
 const exportTemplates = async () => {
-    const {canceled, filePaths} = await dialog.showOpenDialog({
+    const {canceled, filePath} = await dialog.showSaveDialog({
         buttonLabel: '导出',
-        // defaultPath: app.getPath('desktop'),
+        defaultPath: path.join(app.getPath('desktop'), 'templates.zip'),
         properties: ['multiSelections', 'createDirectory', 'openFile', "openDirectory"]
     })
-    if (!canceled && filePaths) {
-        window.webContents.send('templates:watch', {type: 1, data: filePaths[0]})
+    if (!canceled && filePath) {
+        window.webContents.send('templates:watch', {type: 1, data: filePath})
     }
 }
 
