@@ -1252,7 +1252,7 @@
 
 import {nextTick, onBeforeUnmount, onMounted, shallowRef, ref, toRaw, watch, computed} from "vue";
 
-import {CanvasEditor, Image, LazyImage, Rect} from '@/canvas/CanvasEditor'
+import {CanvasEditor, Text, Image, LazyImage, Rect} from '@/canvas/CanvasEditor'
 
 import {useThrottle} from '@/utils/throttle'
 
@@ -2111,10 +2111,10 @@ const saveTemplates = async () => {
         const vertical = centerY < height / 2 ? 'top' : 'bottom';
         const item = {...element}
         item.position = [horizontal, vertical]
-        item.centerX = horizontal === 'left' ? centerX * initZoom : (width - centerX) * initZoom
-        item.centerY = vertical === 'top' ? centerY * initZoom : (height - centerY) * initZoom
         item.centerXRatio = horizontal === 'left' ? centerX / width : (width - centerX) / width
         item.centerYRatio = vertical === 'top' ? centerY / height : (height - centerY) / height
+        item.offsetX = horizontal === 'left' ? element.x * initZoom : (width - element.x - element.width) * initZoom
+        item.offsetY = vertical === 'top' ? element.y * initZoom : (height - element.y - element.height) * initZoom
         item.width = element.width * initZoom
         item.height = element.height * initZoom
         if (element.type === 'text') {
@@ -2227,14 +2227,34 @@ const useTemplate = async (settings, path) => {
   for (let element of foreground.elements) {
 
     const {position, centerXRatio, centerYRatio} = element;
-    const width = element.width / idealZoom;
-    const height = element.height / idealZoom;
+    let width = element.width / idealZoom;
+    let height = element.height / idealZoom;
     const centerX = element.centerX / idealZoom
     const centerY = element.centerY / idealZoom
+    const offsetX = element.offsetX / idealZoom
+    const offsetY = element.offsetY / idealZoom
+
+    if (element.type === 'text') {
+      element.fontSize = element.fontSize / idealZoom;
+      const oldText = element.text;
+      const newText = getText({path, ...element.meta, content: element.text})
+      if (oldText !== newText) {
+        const text = new Text(newText, {...element});
+        const measureText = text.measureText(canvasEditor.ctx);
+        width = measureText.width;
+        height = measureText.height;
+      }
+      element.text = newText;
+    }
+
+    if (element.type === 'image') {
+      element.width = width;
+      element.height = height
+    }
 
     if (synchronousMode.value === 0) {
-      element.x = position[0] === 'left' ? centerX - width / 2 : newWidth - (centerX + width / 2)
-      element.y = position[1] === 'top' ? centerY - height / 2 : newHeight - (centerY + height / 2)
+      element.x = position[0] === 'left' ? offsetX : newWidth - (offsetX + width)
+      element.y = position[1] === 'top' ? offsetY : newHeight - (offsetY + height)
     }
 
     if (synchronousMode.value === 1) {
@@ -2242,15 +2262,6 @@ const useTemplate = async (settings, path) => {
       element.y = position[1] === 'top' ? centerYRatio * newHeight - height / 2 : newHeight - (centerYRatio * newHeight + height / 2)
     }
 
-    if (element.type === 'text') {
-      element.fontSize = element.fontSize / idealZoom;
-      element.text = getText({path, ...element.meta, content: element.text})
-    }
-
-    if (element.type === 'image') {
-      element.width = width;
-      element.height = height
-    }
   }
 
   canvas.borderOptions = _.cloneDeep(border.meta)

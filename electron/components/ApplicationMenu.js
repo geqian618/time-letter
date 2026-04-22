@@ -185,6 +185,17 @@ const importTemplates = async () => {
             const templates = JSON.parse(buffer.toString());
             templates.forEach(template => {
                 template.templateId = Date.now();
+                const elements = template.settings.foreground.elements;
+                if (elements && elements.length) {
+                    elements.forEach(element => {
+                        if (element.type === 'image') {
+                            const {meta: {path: filePath}} = element;
+                            const newFilePath = path.join(getResourcePath(), path.basename(filePath));
+                            element.meta.path = newFilePath;
+                            element.src = localPathToProtocolUrl(newFilePath);
+                        }
+                    })
+                }
                 data.push(template);
             })
         })
