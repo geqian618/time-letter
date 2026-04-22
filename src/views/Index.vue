@@ -2251,8 +2251,8 @@ const useTemplate = async (settings, path) => {
 
   if (!canvas.completed) {
     // 计算滚动位置，使图形内容居中
-    const scrollLeft = (imageWidth - idealWidth) / 2;
-    const scrollTop = (imageHeight - idealHeight) / 2;
+    const scrollLeft = (imageWidth - containerWidth) / 2;
+    const scrollTop = (imageHeight - containerHeight) / 2;
     canvas.scrollLeft = Math.max(0, scrollLeft);
     canvas.scrollTop = Math.max(0, scrollTop);
     canvas.completed = true;
