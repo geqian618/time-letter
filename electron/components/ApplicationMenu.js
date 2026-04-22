@@ -178,13 +178,14 @@ const importTemplates = async () => {
     });
     if (filePaths && filePaths.length) {
         const data = [];
+        let nextId = Date.now();
         filePaths.forEach(filePath => {
             // 读取文件内容
             const buffer = fs.readFileSync(filePath);
             // Buffer 转 字符串
             const templates = JSON.parse(buffer.toString());
             templates.forEach(template => {
-                template.templateId = Date.now();
+                template.templateId = nextId++;
                 const elements = template.settings.foreground.elements;
                 if (elements && elements.length) {
                     elements.forEach(element => {
