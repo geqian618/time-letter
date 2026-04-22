@@ -1,6 +1,7 @@
 const {app, ipcMain, protocol, globalShortcut, BrowserWindow, Menu, dialog} = require('electron')
 const WinState = require('electron-win-state').default
 const path = require('path');
+const fs = require('fs')
 
 // 工具模块
 const imageParser = require('./utils/image-parser')
@@ -123,7 +124,7 @@ const setupWindowEvents = (window) => {
 
     // 窗口准备就绪
     window.on('ready-to-show', () => {
-        // window.maximize()
+        window.maximize()
         window.show()
     })
 
@@ -223,6 +224,22 @@ const setupIpcHandlers = () => {
     // 创建线程池
     ipcMain.on('create-thread-pool', (event, maxThreads) => {
         imageExporter.createThreadPool(maxThreads)
+    })
+
+
+    // 导出模板配置
+    ipcMain.on('templates:export', (event, {outputDirectory, templates}) => {
+        const filePath = path.join(outputDirectory, 'templates.json');
+        const data = JSON.stringify(templates, null, 2);
+        // 写入文件（异步）
+        fs.writeFile(filePath, data, err => {
+            // ① 写入失败：err是一个错误对象； ② 写入失败：err 是一个 null 值
+            if (err) {
+                console.log('文件写入失败');
+            } else {
+                console.log('文件写入成功');
+            }
+        })
     })
 }
 

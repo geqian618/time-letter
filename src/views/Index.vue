@@ -1506,6 +1506,20 @@ const clearSelectedPreviewList = async () => {
   selectedPreviewList.value.clear()
 }
 
+
+const watchTemplates = () => {
+  window.electronAPI.watchTemplates(async (event, {type, data}) => {
+    if (type === 1) {
+      // 获取模版数据
+      window.electronAPI.exportTemplates({outputDirectory: data, templates: StorageManager.getTemplates()});
+    } else if (type === 2) {
+      data.forEach(template => templates.value.push(template))
+      // 接收模板数据
+      StorageManager.saveTemplates(templates.value)
+    }
+  })
+}
+
 const watchImportFonts = () => {
   window.electronAPI.watchInputFonts(async (event, {type, data}) => {
     if (data) {
@@ -3362,6 +3376,7 @@ onMounted(() => {
   loadTextLabels()
   watchImportImages()
   watchImportFonts()
+  watchTemplates()
   watchContextMenu()
   watchTemplateContextMenu()
   watchAboutDialog()

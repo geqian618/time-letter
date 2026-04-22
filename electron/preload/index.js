@@ -15,5 +15,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     requestImportFiles: (args) => ipcRenderer.send('request-import-files', args),
     downloadProgress: (callback) => ipcRenderer.on('download-progress', callback),
     editorOutputSettings: (callback) => ipcRenderer.on('editor-output-settings', callback),
-    watchAboutDialog: (callback) => ipcRenderer.on('watch-about-dialog', callback)
+    watchAboutDialog: (callback) => ipcRenderer.on('watch-about-dialog', callback),
+    watchTemplates: (callback) => ipcRenderer.on('templates:watch', callback),
+    exportTemplates: (args) => ipcRenderer.send('templates:export', args),
 });

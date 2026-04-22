@@ -94,6 +94,19 @@ const createApplicationMenu = (mainWindow) => {
                             }
                         }
                     ],
+                },
+                {
+                    label: '模板预设',
+                    submenu: [
+                        {
+                            label: '导入',
+                            click: importTemplates
+                        },
+                        {
+                            label: '导出',
+                            click: exportTemplates
+                        }
+                    ],
                 }
             ]
         },
@@ -153,6 +166,41 @@ const selectFile = async () => {
         );
         const data = new Map(files.map(item => [item.path, item]));
         window.webContents.send('watch-input-image', data)
+    }
+}
+
+
+const importTemplates = async () => {
+    const {filePaths} = await dialog.showOpenDialog({
+        buttonLabel: '导入',
+        properties: ['openFile', 'multiSelections'],
+        filters: [{name: '模板配置文件', extensions: ['json']}]
+    });
+    if (filePaths && filePaths.length) {
+        const data = [];
+        filePaths.forEach(filePath => {
+            // 读取文件内容
+            const buffer = fs.readFileSync(filePath);
+            // Buffer 转 字符串
+            const templates = JSON.parse(buffer.toString());
+            templates.forEach(template => {
+                template.templateId = Date.now();
+                data.push(template);
+            })
+        })
+        window.webContents.send('templates:watch', {type: 2, data})
+    }
+}
+
+
+const exportTemplates = async () => {
+    const {canceled, filePaths} = await dialog.showOpenDialog({
+        buttonLabel: '导出',
+        // defaultPath: app.getPath('desktop'),
+        properties: ['multiSelections', 'createDirectory', 'openFile', "openDirectory"]
+    })
+    if (!canceled && filePaths) {
+        window.webContents.send('templates:watch', {type: 1, data: filePaths[0]})
     }
 }
 
