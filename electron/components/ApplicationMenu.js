@@ -149,6 +149,7 @@ const createApplicationMenu = (mainWindow) => {
  */
 const selectFile = async () => {
     const {filePaths} = await dialog.showOpenDialog({
+        title: '导入文件',
         buttonLabel: '导入',
         properties: ['openFile', 'multiSelections'],
         filters: [{name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp']}]
@@ -174,9 +175,10 @@ const selectFile = async () => {
 const importTemplates = async () => {
 
     const {filePaths} = await dialog.showOpenDialog({
+        title: '导入文件',
         buttonLabel: '导入',
         properties: ['openFile'],
-        filters: [{name: '模板配置', extensions: ['zip']}]
+        filters: [{name: '模板配置文件', extensions: ['tile']}]
     });
 
     if (!filePaths?.length) return;
@@ -251,7 +253,7 @@ const exportTemplates = async () => {
     const {canceled, filePath} = await dialog.showSaveDialog({
         title: '保存文件',
         buttonLabel: '保存',
-        defaultPath: path.join(app.getPath('desktop'), 'templates.zip')
+        defaultPath: path.join(app.getPath('desktop'), 'templates.tile')
     })
     if (!canceled && filePath) {
         window.webContents.send('templates:watch', {type: 1, data: filePath})
@@ -261,6 +263,7 @@ const exportTemplates = async () => {
 
 const selectFonts = async () => {
     const {filePaths} = await dialog.showOpenDialog({
+        title: '导入文件',
         buttonLabel: '导入',
         properties: ['openFile', 'multiSelections'],
         filters: [
@@ -292,6 +295,7 @@ const selectFonts = async () => {
 
 const selectImageLabels = async () => {
     const {filePaths} = await dialog.showOpenDialog({
+        title: '导入文件',
         buttonLabel: '导入',
         properties: ['openFile', 'multiSelections'],
         filters: [{name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp']}]
