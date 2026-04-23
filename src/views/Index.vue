@@ -2198,7 +2198,7 @@ const useTemplate = async (settings, path) => {
   borderOptions.borderRadius = borderOptions.borderRadius * zoomRatio
   borderOptions.borderBlur = borderOptions.borderBlur * zoomRatio
 
-  photoOptions.borderRadius = borderOptions.borderRadius * zoomRatio
+  photoOptions.borderRadius = photoOptions.borderRadius * zoomRatio
 
   const borderLeft = borderOptions.borderLeft / initZoom
   const borderRight = borderOptions.borderRight / initZoom
