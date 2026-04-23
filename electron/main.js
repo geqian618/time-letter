@@ -3,6 +3,7 @@ const WinState = require('electron-win-state').default
 const path = require('path');
 const fs = require('fs')
 const AdmZip = require('adm-zip');
+const localshortcut = require('electron-localshortcut')
 
 // 工具模块
 const imageParser = require('./utils/image-parser')
@@ -18,7 +19,7 @@ const createTray = require('./components/Tray')
 const createApplicationMenu = require('./components/ApplicationMenu')
 const createContextMenu = require('./components/ContextMenu')
 const createTemplateContextMenu = require('./components/TemplateContextMenu')
-const registerGlobalShortcut = require('./components/registerGlobalShortcut')
+const registerLocalShortcut = require('./components/registerLocalShortcut')
 
 // 配置常量
 const {APP_NAME, APP_ICON_PATH, APP_VERSION} = require('./constant/ProjectConstants')
@@ -106,7 +107,7 @@ const initializeComponents = (window) => {
 
     tray = createTray(window)
 
-    registerGlobalShortcut(window);
+    registerLocalShortcut(window);
 
     imageWatcher.fileWatcher(window, resourcesPath)
 
@@ -137,9 +138,12 @@ const setupWindowEvents = (window) => {
         window.focus();
     })
 
+
     // 窗口已关闭
     window.on('close', () => {
         if (window) {
+            // 注销快捷键
+            localshortcut.unregisterAll(window)
             window = null
         }
     })

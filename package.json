@@ -22,6 +22,7 @@
     "adm-zip": "^0.5.17",
     "bytenode": "^1.5.7",
     "chokidar": "^4.0.3",
+    "electron-localshortcut": "^3.2.1",
     "electron-win-state": "^1.1.22",
     "element-plus": "^2.10.5",
     "exif": "^0.6.0",
