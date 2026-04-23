@@ -2232,10 +2232,10 @@ const useTemplate = async (settings, path) => {
 
   for (let element of foreground.elements) {
 
-    element.width = Math.round(element.width * zoomRatio) / initZoom;
-    element.height = Math.round(element.height * zoomRatio) / initZoom;
-    element.offsetX = Math.round(element.offsetX * zoomRatio) / initZoom;
-    element.offsetY = Math.round(element.offsetY * zoomRatio) / initZoom;
+    element.width = (element.width * zoomRatio) / initZoom;
+    element.height = (element.height * zoomRatio) / initZoom;
+    element.offsetX = (element.offsetX * zoomRatio) / initZoom;
+    element.offsetY = (element.offsetY * zoomRatio) / initZoom;
 
     const {position, centerXRatio, centerYRatio} = element;
 
