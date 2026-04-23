@@ -2241,9 +2241,8 @@ const useTemplate = async (settings, path) => {
 
     if (element.type === 'text') {
       element.fontSize = Math.round(element.fontSize * zoomRatio) / initZoom;
-      const oldText = element.text;
       const newText = getText({path, ...element.meta, content: element.text})
-      if (oldText !== newText) {
+      if (initZoom !== idealZoom || element.text !== newText) {
         const text = new Text(newText, {...element});
         const measureText = text.measureText(canvasEditor.ctx);
         element.width = measureText.width;

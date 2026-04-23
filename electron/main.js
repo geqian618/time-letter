@@ -126,7 +126,7 @@ const setupWindowEvents = (window) => {
 
     // 窗口准备就绪
     window.on('ready-to-show', () => {
-        window.maximize()
+        // window.maximize()
         window.show()
     })
 
