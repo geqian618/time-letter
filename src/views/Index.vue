@@ -2058,13 +2058,7 @@ const deleteTemplate = () => {
 
 const synchronizeTemplate = () => {
   if (CanvasManager.getSelectedPath()) {
-    const {
-      idealWidth,
-      idealHeight,
-      background,
-      foreground: {width, height, elements},
-      initZoom
-    } = CanvasManager.getCurrentCanvas();
+    const {background, foreground: {width, height, elements}, initZoom} = CanvasManager.getCurrentCanvas();
     selectedPreviewList.value.forEach((image, path) => {
       if (CanvasManager.getSelectedPath() !== path) {
         const items = []
@@ -2086,9 +2080,10 @@ const synchronizeTemplate = () => {
           }
           items.push(item)
         }
+        const {idealWidth, idealHeight} = previewContainer.value;
         useTemplate(_.cloneDeep({
-          idealWidth: idealWidth || previewContainer.value.idealWidth,
-          idealHeight: idealHeight || previewContainer.value.idealHeight,
+          idealWidth,
+          idealHeight,
           background,
           foreground: {width, height, elements: items}
         }), path)
@@ -2189,15 +2184,26 @@ const useTemplate = async (settings, path) => {
   const zoom = initZoom * projectSettings.value.others.defaultCanvasScale;
   const idealZoom = Math.min(idealHeight / imageHeight, idealWidth / imageWidth);
 
+  const zoomRatio = initZoom / idealZoom;
+
   const border = background.elements[0];
   const photo = background.elements[1];
   const borderOptions = border.meta;
   const photoOptions = photo.meta;
 
-  const borderLeft = borderOptions.borderLeft / idealZoom
-  const borderRight = borderOptions.borderRight / idealZoom
-  const borderTop = borderOptions.borderTop / idealZoom
-  const borderBottom = borderOptions.borderBottom / idealZoom
+  borderOptions.borderLeft = Math.round(borderOptions.borderLeft * zoomRatio)
+  borderOptions.borderRight = Math.round(borderOptions.borderRight * zoomRatio)
+  borderOptions.borderTop = Math.round(borderOptions.borderTop * zoomRatio)
+  borderOptions.borderBottom = Math.round(borderOptions.borderBottom * zoomRatio)
+  borderOptions.borderRadius = Math.round(borderOptions.borderRadius * zoomRatio)
+  borderOptions.borderBlur = Math.round(borderOptions.borderBlur * zoomRatio)
+
+  photoOptions.borderRadius = Math.round(borderOptions.borderRadius * zoomRatio)
+
+  const borderLeft = borderOptions.borderLeft / initZoom
+  const borderRight = borderOptions.borderRight / initZoom
+  const borderTop = borderOptions.borderTop / initZoom
+  const borderBottom = borderOptions.borderBottom / initZoom
 
   const newWidth = imageWidth + borderLeft + borderRight
   const newHeight = imageHeight + borderTop + borderBottom
@@ -2205,12 +2211,12 @@ const useTemplate = async (settings, path) => {
   background.width = foreground.width = newWidth
   background.height = foreground.height = newHeight
 
-  border.radius = borderOptions.borderRadius / idealZoom
+  border.radius = borderOptions.borderRadius / initZoom
   border.width = newWidth
   border.height = newHeight
 
   if (border.type === 'image') {
-    border.blur = borderOptions.borderBlur / idealZoom
+    border.blur = borderOptions.borderBlur / initZoom
     border.src = canvas.url
     borderOptions.path = canvas.path
   }
@@ -2220,44 +2226,40 @@ const useTemplate = async (settings, path) => {
   photo.height = imageHeight
   photo.x = borderLeft
   photo.y = borderTop
-  photo.radius = photoOptions.borderRadius / idealZoom
+  photo.radius = photoOptions.borderRadius / initZoom
 
   photoOptions.path = canvas.path
 
   for (let element of foreground.elements) {
 
+    element.width = Math.round(element.width * zoomRatio) / initZoom;
+    element.height = Math.round(element.height * zoomRatio) / initZoom;
+    element.offsetX = Math.round(element.offsetX * zoomRatio) / initZoom;
+    element.offsetY = Math.round(element.offsetY * zoomRatio) / initZoom;
+
     const {position, centerXRatio, centerYRatio} = element;
-    let width = element.width / idealZoom;
-    let height = element.height / idealZoom;
-    const offsetX = element.offsetX / idealZoom
-    const offsetY = element.offsetY / idealZoom
 
     if (element.type === 'text') {
-      element.fontSize = element.fontSize / idealZoom;
+      element.fontSize = Math.round(element.fontSize * zoomRatio) / initZoom;
       const oldText = element.text;
       const newText = getText({path, ...element.meta, content: element.text})
       if (oldText !== newText) {
         const text = new Text(newText, {...element});
         const measureText = text.measureText(canvasEditor.ctx);
-        width = measureText.width;
-        height = measureText.height;
+        element.width = measureText.width;
+        element.height = measureText.height;
+        element.text = newText;
       }
-      element.text = newText;
-    }
-
-    if (element.type === 'image') {
-      element.width = width;
-      element.height = height
     }
 
     if (synchronousMode.value === 0) {
-      element.x = position[0] === 'left' ? offsetX : newWidth - (offsetX + width)
-      element.y = position[1] === 'top' ? offsetY : newHeight - (offsetY + height)
+      element.x = position[0] === 'left' ? element.offsetX : newWidth - (element.offsetX + element.width)
+      element.y = position[1] === 'top' ? element.offsetY : newHeight - (element.offsetY + element.height)
     }
 
     if (synchronousMode.value === 1) {
-      element.x = position[0] === 'left' ? centerXRatio * newWidth - width / 2 : newWidth - (centerXRatio * newWidth + width / 2)
-      element.y = position[1] === 'top' ? centerYRatio * newHeight - height / 2 : newHeight - (centerYRatio * newHeight + height / 2)
+      element.x = position[0] === 'left' ? centerXRatio * newWidth - element.width / 2 : newWidth - (centerXRatio * newWidth + element.width / 2)
+      element.y = position[1] === 'top' ? centerYRatio * newHeight - element.height / 2 : newHeight - (centerYRatio * newHeight + element.height / 2)
     }
 
   }
@@ -2265,12 +2267,10 @@ const useTemplate = async (settings, path) => {
   canvas.borderOptions = _.cloneDeep(border.meta)
   canvas.background = JSON.stringify(background)
   canvas.foreground = JSON.stringify(foreground)
-  canvas.initZoom = idealZoom;
+  canvas.initZoom = initZoom;
   canvas.zoom = canvas.zoom !== 1 ? canvas.zoom : zoom;
   canvas.width = imageWidth;
   canvas.height = imageHeight;
-  canvas.idealWidth = idealWidth;
-  canvas.idealHeight = idealHeight;
 
   if (!canvas.completed) {
     // 计算滚动位置，使图形内容居中
