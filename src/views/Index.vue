@@ -1952,6 +1952,14 @@ const loadProjectSettings = () => {
   }
 }
 
+const loadTemplates = () => {
+  templates.value = StorageManager.getTemplates()
+}
+
+const loadTextLabels = () => {
+  textLabels.value = StorageManager.getTextLabels()
+}
+
 
 watch(textOptions, async (newVal, oldValue) => {
   if (newVal !== oldValue) return
@@ -2306,14 +2314,6 @@ const getText = (meta) => {
   }
 }
 
-
-const loadTemplates = () => {
-  templates.value = StorageManager.getTemplates()
-}
-
-const loadTextLabels = () => {
-  textLabels.value = StorageManager.getTextLabels()
-}
 
 const renderCanvas = async (canvas) => {
   canvasElement.value.classList.remove('scale-animation')

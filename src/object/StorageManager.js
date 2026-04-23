@@ -3,14 +3,14 @@ const saveTemplates = (templates) => {
 }
 
 const getTemplates = () => {
+    const json = window.localStorage.getItem('templates');
+    if (json === null || json === 'undefined') {
+        return [];
+    }
     try {
-        const json = window.localStorage.getItem('templates');
-        if (json === null || json === 'undefined') {
-            return null;
-        }
         return JSON.parse(json);
     } catch (e) {
-        return null;
+        return [];
     }
 }
 
@@ -19,14 +19,14 @@ const saveTextLabels = (textLabels) => {
 }
 
 const getTextLabels = () => {
+    const json = window.localStorage.getItem('textLabels');
+    if (json === null || json === 'undefined') {
+        return [];
+    }
     try {
-        const json = window.localStorage.getItem('textLabels');
-        if (json === null || json === 'undefined') {
-            return null;
-        }
         return JSON.parse(json);
     } catch (e) {
-        return null;
+        return [];
     }
 }
 
@@ -36,11 +36,11 @@ const saveProjectSettings = (settings) => {
 
 
 const getProjectSettings = () => {
+    const json = window.localStorage.getItem('projectSettings');
+    if (json === null || json === 'undefined') {
+        return null;
+    }
     try {
-        const json = window.localStorage.getItem('projectSettings');
-        if (json === null || json === 'undefined') {
-            return null;
-        }
         return JSON.parse(json);
     } catch (e) {
         return null;

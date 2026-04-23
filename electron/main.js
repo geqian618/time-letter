@@ -356,6 +356,18 @@ const setupAppLifecycle = () => {
     }
 }
 
+
+/**
+ * 设置用户数据（必须在 whenReady 方法执行之前调用才生效）
+ */
+const setupUserData = () => {
+    const userDataPath = path.join(process.cwd(), 'data');
+    if (!fs.existsSync(userDataPath)) {
+        fs.mkdirSync(userDataPath, {recursive: true})
+    }
+    app.setPath('userData', userDataPath);
+}
+
 /**
  * 初始化应用
  */
@@ -369,6 +381,9 @@ const initializeApp = () => {
 
     createMainWindow()
 }
+
+// 设置用户数据（必须在 whenReady 方法执行之前调用才生效）
+setupUserData()
 
 // 应用准备就绪后初始化
 app.whenReady().then(initializeApp)
