@@ -2191,14 +2191,14 @@ const useTemplate = async (settings, path) => {
   const borderOptions = border.meta;
   const photoOptions = photo.meta;
 
-  borderOptions.borderLeft = Math.round(borderOptions.borderLeft * zoomRatio)
-  borderOptions.borderRight = Math.round(borderOptions.borderRight * zoomRatio)
-  borderOptions.borderTop = Math.round(borderOptions.borderTop * zoomRatio)
-  borderOptions.borderBottom = Math.round(borderOptions.borderBottom * zoomRatio)
-  borderOptions.borderRadius = Math.round(borderOptions.borderRadius * zoomRatio)
-  borderOptions.borderBlur = Math.round(borderOptions.borderBlur * zoomRatio)
+  borderOptions.borderLeft = borderOptions.borderLeft * zoomRatio
+  borderOptions.borderRight = borderOptions.borderRight * zoomRatio
+  borderOptions.borderTop = borderOptions.borderTop * zoomRatio
+  borderOptions.borderBottom = borderOptions.borderBottom * zoomRatio
+  borderOptions.borderRadius = borderOptions.borderRadius * zoomRatio
+  borderOptions.borderBlur = borderOptions.borderBlur * zoomRatio
 
-  photoOptions.borderRadius = Math.round(borderOptions.borderRadius * zoomRatio)
+  photoOptions.borderRadius = borderOptions.borderRadius * zoomRatio
 
   const borderLeft = borderOptions.borderLeft / initZoom
   const borderRight = borderOptions.borderRight / initZoom
@@ -2240,7 +2240,7 @@ const useTemplate = async (settings, path) => {
     const {position, centerXRatio, centerYRatio} = element;
 
     if (element.type === 'text') {
-      element.fontSize = Math.round(element.fontSize * zoomRatio) / initZoom;
+      element.fontSize = (element.fontSize * zoomRatio) / initZoom;
       const newText = getText({path, ...element.meta, content: element.text})
       if (initZoom !== idealZoom || element.text !== newText) {
         const text = new Text(newText, {...element});
