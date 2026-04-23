@@ -68,8 +68,8 @@ const synchronizeTemplate = (method) => {
 const saveFiles = async () => {
     const {canceled, filePaths} = await dialog.showOpenDialog({
         buttonLabel: '导出',
-        // defaultPath: app.getPath('desktop'),
-        properties: ['multiSelections', 'createDirectory', 'openFile', "openDirectory"]
+        defaultPath: app.getPath('desktop'),
+        properties: ['openDirectory', 'createDirectory']
     })
     if (!canceled && filePaths) {
         window.webContents.send('watch-contextMenu', {type: 1, outputDirectory: filePaths[0]})

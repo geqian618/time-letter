@@ -249,9 +249,9 @@ const importTemplates = async () => {
 
 const exportTemplates = async () => {
     const {canceled, filePath} = await dialog.showSaveDialog({
-        buttonLabel: '导出',
-        defaultPath: path.join(app.getPath('desktop'), 'templates.zip'),
-        properties: ['multiSelections', 'createDirectory', 'openFile', "openDirectory"]
+        title: '保存文件',
+        buttonLabel: '保存',
+        defaultPath: path.join(app.getPath('desktop'), 'templates.zip')
     })
     if (!canceled && filePath) {
         window.webContents.send('templates:watch', {type: 1, data: filePath})
@@ -329,8 +329,8 @@ const customTextLabels = () => {
 const saveFiles = async () => {
     const {canceled, filePaths} = await dialog.showOpenDialog({
         buttonLabel: '导出',
-        // defaultPath: app.getPath('desktop'),
-        properties: ['multiSelections', 'createDirectory', 'openFile', "openDirectory"]
+        defaultPath: app.getPath('desktop'),
+        properties: ['openDirectory', 'createDirectory']
     })
     if (!canceled && filePaths) {
         window.webContents.send('watch-contextMenu', {type: 1, outputDirectory: filePaths[0]})
