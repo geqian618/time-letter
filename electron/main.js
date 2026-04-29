@@ -9,12 +9,12 @@ const localshortcut = require('electron-localshortcut')
 const imageParser = require('./utils/image-parser')
 const imageExporter = require('./thread/image-exporter')
 const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('./utils/path-helper')
-const {reloadExtendFonts} = require('./utils/font-manager')
+const {getSystemFonts, getCustomFonts} = require('./utils/font-manager')
 
 // 钩子和组件
 const resourcesLoader = require('./utils/resources-loader')
-const imageWatcher = require('./components/image-file-watcher')
-const fontWatcher = require('./components/font-file-watcher')
+const imageWatcher = require('./components/image-watcher')
+const fontWatcher = require('./components/font-watcher')
 const createTray = require('./components/Tray')
 const createApplicationMenu = require('./components/ApplicationMenu')
 const createContextMenu = require('./components/ContextMenu')
@@ -109,9 +109,9 @@ const initializeComponents = (window) => {
 
     registerLocalShortcut(window);
 
-    imageWatcher.fileWatcher(window, resourcesPath)
+    imageWatcher.watch(window, resourcesPath)
 
-    fontWatcher.fileWatcher(window, fontPath)
+    fontWatcher.watch(window, fontPath)
 }
 
 /**
@@ -238,15 +238,15 @@ const setupIpcHandlers = () => {
 
         const imageSet = new Set();
         const fontSet = new Set();
-        const extendFonts = reloadExtendFonts();
-        const extendFontFamilies = [...extendFonts.keys()];
+        const systemFonts = getSystemFonts();
+        const customFonts = getCustomFonts();
 
         for (let template of templates) {
             const elements = template.settings.foreground.elements;
             for (let element of elements) {
                 if (element.type === 'image') {
-                    const imagePath = element.meta.path;
-                    if (!fs.existsSync(imagePath)) {
+                    const imagePath = element.meta?.path;
+                    if (!imagePath || !fs.existsSync(imagePath)) {
                         dialog.showMessageBox({
                             type: 'error',
                             title: '导出失败',
@@ -256,13 +256,14 @@ const setupIpcHandlers = () => {
                     }
                     imageSet.add(imagePath)
                 }
-                if (element.type === 'text' && extendFontFamilies.includes(element.fontFamily)) {
-                    const fontPath = extendFonts.get(element.fontFamily).path;
-                    if (!fs.existsSync(fontPath)) {
+
+                if (element.type === 'text' && ![...systemFonts.keys()].includes(element.fontFamily)) {
+                    const fontPath = customFonts.get(element.fontFamily)?.path;
+                    if (!fontPath || !fs.existsSync(fontPath)) {
                         dialog.showMessageBox({
                             type: 'error',
                             title: '导出失败',
-                            message: `预设名称：${template.templateName}\n找不到文件：${fontPath}`
+                            message: `预设名称：${template.templateName}\n找不到字体：${element.fontFamily}`
                         })
                         return;
                     }
@@ -343,8 +344,8 @@ const setupAppLifecycle = () => {
 
     // 所有窗口已关闭，应用即将退出
     app.on('will-quit', () => {
-        imageWatcher.closeWatcher()
-        fontWatcher.closeWatcher();
+        imageWatcher.colse()
+        fontWatcher.close();
         // 注销全局快捷键
         globalShortcut.unregisterAll();
     })

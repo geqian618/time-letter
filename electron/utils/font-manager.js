@@ -3,7 +3,8 @@ const fs = require("fs");
 const path = require("path");
 const {getFontPath, localPathToProtocolUrl} = require("./path-helper");
 const fontPath = getFontPath();
-const loadedFonts = new Map();
+
+const availableFonts = new Map();
 
 const reloadFonts = () => {
     const filenames = fs.readdirSync(fontPath);
@@ -16,42 +17,41 @@ const reloadFonts = () => {
         };
         return [font.family, font]
     });
-
-    loadedFonts.clear()
-    GlobalFonts.families.forEach(font => loadedFonts.set(font.family, font))
-    fonts.forEach(([family, font]) => registerFont(font))
-    return loadedFonts;
+    GlobalFonts.families.forEach(font => {
+        font.isSystem = true;
+        availableFonts.set(font.family, font)
+    })
+    fonts.forEach(([_, font]) => {
+        font.isSystem = false;
+        registerFont(font)
+    })
+    return availableFonts;
 }
 
 
-const reloadExtendFonts = () => {
-    const filenames = fs.readdirSync(fontPath);
-    return new Map(filenames.map((filename) => {
-        const fileParsed = path.parse(filename);
-        const font = {
-            family: fileParsed.name,
-            url: localPathToProtocolUrl(path.join(fontPath, filename)),
-            path: path.join(fontPath, filename),
-        };
-        return [font.family, font]
-    }));
+const getSystemFonts = () => {
+    return new Map([...availableFonts].filter(([_, font]) => font.isSystem));
+}
+
+const getCustomFonts = () => {
+    return new Map([...availableFonts].filter(([_, font]) => !font.isSystem));
 }
 
 const registerFont = (font) => {
     if (!GlobalFonts.has(font.family)) {
         GlobalFonts.registerFromPath(font.path, font.family);
     }
-    loadedFonts.set(font.family, font)
+    availableFonts.set(font.family, font)
 }
 
 const removeFont = (family) => {
-    loadedFonts.delete(family)
+    availableFonts.delete(family)
 }
 
 
 const hasFont = (family) => {
-    return loadedFonts.has(family)
+    return availableFonts.has(family)
 }
 
 
-module.exports = {reloadFonts, reloadExtendFonts, registerFont, removeFont, hasFont}
+module.exports = {reloadFonts, getCustomFonts, getSystemFonts, registerFont, removeFont, hasFont}

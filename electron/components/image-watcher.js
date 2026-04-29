@@ -1,12 +1,10 @@
 const chokidar = require('chokidar')
-const path = require('path');
-const {registerFont, hasFont} = require('../utils/font-manager');
-const {localPathToProtocolUrl} = require('../utils/path-helper');
+const path = require("path");
+const {localPathToProtocolUrl} = require("../utils/path-helper");
 
 let watcher;
 
-
-const fileWatcher = async (window, folderPath) => {
+const watch = async (window, folderPath) => {
     try {
         // 关闭现有监控
         if (watcher) {
@@ -26,17 +24,17 @@ const fileWatcher = async (window, folderPath) => {
 
         // 监听文件变化事件
         watcher.on('add', filePath => {
-            const fileParse = path.parse(filePath);
-            const family = fileParse.name;
-            if (!hasFont(family)) {
-                const font = {family, path: filePath, url: localPathToProtocolUrl(filePath)};
-                registerFont(font)
-                window.webContents.send('watch-input-font', {type: 0, data: new Map([[font.family, font]])})
-            }
+            const pathParsed = path.parse(filePath);
+            const image = {
+                filename: path.basename(filePath),
+                url: localPathToProtocolUrl(filePath),
+                path: filePath,
+                extname: pathParsed.ext
+            };
+            const data = new Map([[image.path, image]])
+            window.webContents.send('watch-label-resources', {type: 0, data, event: 0})
         }).on('unlink', filePath => {
-            const fileParse = path.parse(filePath);
-            const family = fileParse.name;
-            window.webContents.send('watch-input-font', {type: 1, data: {family}})
+            window.webContents.send('watch-label-resources', {type: 0, data: {filePath}, event: 1})
         }).on('error', error => {
             console.error('监控错误:', error);
         });
@@ -47,10 +45,10 @@ const fileWatcher = async (window, folderPath) => {
 }
 
 
-const closeWatcher = () => {
+const close = () => {
     if (watcher) {
         watcher.close();
     }
 }
 
-module.exports = {fileWatcher, closeWatcher}
+module.exports = {watch, close}
