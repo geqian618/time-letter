@@ -41,7 +41,6 @@ export class ImageOptions {
         this.scale = 1;
         this.angle = 0;
         this.alpha = 1;
-        this.borderRadius = 0;
         this.zIndex = 0;
         this.shadow = new ShadowSettings();
     }

@@ -603,18 +603,6 @@
                         </div>
                       </li>
                       <li class="option">
-                        <div class="label">圆角</div>
-                        <div class="value">
-                          <el-slider :min="0"
-                                     :max="50"
-                                     :step="1"
-                                     size="small"
-                                     v-model="imageOptions.borderRadius"
-                                     placement="top"/>
-                          <input type="number" class="number-input" v-model="imageOptions.borderRadius" step="1">
-                        </div>
-                      </li>
-                      <li class="option">
                         <div class="label">旋转角度</div>
                         <div class="value">
                           <el-slider @change=""
@@ -2010,14 +1998,13 @@ watch(() => imageOptions.value, async (newVal, oldValue) => {
   const activeElements = canvasEditor.getActiveElements();
   if (!canvas || !activeElements.length) return
   const initZoom = canvas.initZoom;
-  const {scale, angle, zIndex, alpha, borderRadius, shadow} = newVal;
+  const {scale, angle, zIndex, alpha, shadow} = newVal;
   for (const activeElement of activeElements) {
     if (activeElement.type === 'image') {
       activeElement.scale = scale;
       activeElement.angle = angle;
       activeElement.order = zIndex;
       activeElement.alpha = alpha;
-      activeElement.radius = borderRadius / initZoom;
       activeElement.shadow.offsetX = shadow.offsetX / initZoom
       activeElement.shadow.offsetY = shadow.offsetY / initZoom
       activeElement.shadow.blur = shadow.blur / initZoom
@@ -2529,8 +2516,7 @@ const initCanvasSize = () => {
           })
         }
       } else if (target.type === 'image') {
-        const {order, radius, shadow: {offsetX, offsetY, blur}} = element;
-        element.borderRadius = Number.parseInt(radius * initZoom)
+        const {order, shadow: {offsetX, offsetY, blur}} = element;
         element.shadow.offsetX = Number.parseInt(offsetX * initZoom)
         element.shadow.offsetY = Number.parseInt(offsetY * initZoom)
         element.shadow.blur = Number.parseInt(blur * initZoom)
