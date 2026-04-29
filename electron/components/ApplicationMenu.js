@@ -298,7 +298,7 @@ const selectImageLabels = async () => {
         title: '导入文件',
         buttonLabel: '导入',
         properties: ['openFile', 'multiSelections'],
-        filters: [{name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp']}]
+        filters: [{name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']}]
     });
     if (filePaths && filePaths.length) {
         const files = await Promise.all(
