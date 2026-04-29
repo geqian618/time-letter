@@ -245,10 +245,28 @@ const setupIpcHandlers = () => {
             const elements = template.settings.foreground.elements;
             for (let element of elements) {
                 if (element.type === 'image') {
-                    imageSet.add(element.meta.path)
+                    const imagePath = element.meta.path;
+                    if (!fs.existsSync(imagePath)) {
+                        dialog.showMessageBox({
+                            type: 'error',
+                            title: '导出失败',
+                            message: `预设名称：${template.templateName}\n找不到文件：${imagePath}`
+                        })
+                        return;
+                    }
+                    imageSet.add(imagePath)
                 }
                 if (element.type === 'text' && extendFontFamilies.includes(element.fontFamily)) {
-                    fontSet.add(extendFonts.get(element.fontFamily).path)
+                    const fontPath = extendFonts.get(element.fontFamily).path;
+                    if (!fs.existsSync(fontPath)) {
+                        dialog.showMessageBox({
+                            type: 'error',
+                            title: '导出失败',
+                            message: `预设名称：${template.templateName}\n找不到文件：${fontPath}`
+                        })
+                        return;
+                    }
+                    fontSet.add(fontPath)
                 }
             }
         }
