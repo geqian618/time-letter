@@ -40,8 +40,8 @@ const getCustomFonts = () => {
 const registerFont = (font) => {
     if (!GlobalFonts.has(font.family)) {
         GlobalFonts.registerFromPath(font.path, font.family);
+        availableFonts.set(font.family, font)
     }
-    availableFonts.set(font.family, font)
 }
 
 const removeFont = (family) => {
