@@ -1822,20 +1822,16 @@ class Image extends Element {
 
         // 先绘制阴影（如果存在）
         if (hasShadow) {
+            ctx.save();
             ctx.shadowColor = shadowColor;
             ctx.shadowBlur = shadowBlur * avgScale;
             ctx.shadowOffsetX = shadowOffsetX * avgScale;
             ctx.shadowOffsetY = shadowOffsetY * avgScale;
 
             this._createRoundedRectPath(ctx, this.x, this.y, width, height, radius);
-            ctx.fillStyle = 'rgba(0,0,0,1)';
             ctx.fill();
-
-            // 重要：清除阴影设置，避免影响后续绘制
-            ctx.shadowColor = 'transparent';
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
+            // restore 会恢复阴影设置
+            ctx.restore();
         }
 
         if (this.radius && this.radius > 0) {
@@ -2113,20 +2109,16 @@ class LazyImage extends Element {
 
         // 先绘制阴影（如果存在）
         if (hasShadow) {
+            ctx.save();
             ctx.shadowColor = shadowColor;
             ctx.shadowBlur = shadowBlur * avgScale;
             ctx.shadowOffsetX = shadowOffsetX * avgScale;
             ctx.shadowOffsetY = shadowOffsetY * avgScale;
 
             this._createRoundedRectPath(ctx, this.x, this.y, width, height, radius);
-            ctx.fillStyle = 'rgba(0,0,0,1)';
             ctx.fill();
-
-            // 重要：清除阴影设置，避免影响后续绘制
-            ctx.shadowColor = 'transparent';
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
+            // restore 会恢复阴影设置
+            ctx.restore();
         }
 
         if (this.radius && this.radius > 0) {
