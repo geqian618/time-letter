@@ -95,9 +95,9 @@ const downloadThreadsOptions = [
 ]
 
 const outputSizeOptions = [
-    {label: '原尺寸', value: 0},
-    {label: '宽固定', value: 1},
-    {label: '高固定', value: 2},
+    {label: '最佳尺寸', value: 0},
+    {label: '固定宽度', value: 1},
+    {label: '固定高度', value: 2},
     {label: '自适应', value: 3},
 ]
 
