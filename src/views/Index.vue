@@ -3429,6 +3429,9 @@ onBeforeUnmount(() => {
       flex-shrink: 0;
       position: relative;
       min-width: 100px;
+      outline: 1px solid var(--border-color);
+      outline-offset: -1px;
+      padding: 1px;
 
       .left-resize {
         position: absolute;
@@ -3604,13 +3607,11 @@ onBeforeUnmount(() => {
       width: var(--preview-container-width);
       height: 100%;
       position: relative;
-      border: 1px solid #919191;
       min-width: 300px;
       min-height: 100px;
+      border: 1px solid #919191;
 
       .canvas-wrapper {
-        width: 100vw;
-        height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -3640,6 +3641,9 @@ onBeforeUnmount(() => {
       background: var(--expand-area-background-color);
       position: relative;
       min-width: 100px;
+      outline: 1px solid var(--border-color);
+      outline-offset: -1px;
+      padding: 1px;
 
       .right-resize {
         position: absolute;
@@ -3838,6 +3842,8 @@ onBeforeUnmount(() => {
     border-top: 1px solid var(--border-color);
     position: relative;
     min-height: 100px;
+    outline: 1px solid var(--border-color);
+    outline-offset: -1px;
 
     .bottom-resize {
       position: absolute;
@@ -3859,7 +3865,7 @@ onBeforeUnmount(() => {
       display: flex;
       justify-content: left;
       align-items: center;
-      border-bottom: 1px solid var(--border-color);
+      border-bottom: 2px solid var(--border-color);
       gap: 15px;
       padding-left: 15px;
 
