@@ -3429,9 +3429,8 @@ onBeforeUnmount(() => {
       flex-shrink: 0;
       position: relative;
       min-width: 100px;
-      outline: 1px solid var(--border-color);
-      outline-offset: -1px;
-      padding: 1px;
+      border: 1px solid var(--border-color);
+      border-left: none;
 
       .left-resize {
         position: absolute;
@@ -3641,9 +3640,8 @@ onBeforeUnmount(() => {
       background: var(--expand-area-background-color);
       position: relative;
       min-width: 100px;
-      outline: 1px solid var(--border-color);
-      outline-offset: -1px;
-      padding: 1px;
+      border: 1px solid var(--border-color);
+      border-right: none;
 
       .right-resize {
         position: absolute;
@@ -3842,8 +3840,6 @@ onBeforeUnmount(() => {
     border-top: 1px solid var(--border-color);
     position: relative;
     min-height: 100px;
-    outline: 1px solid var(--border-color);
-    outline-offset: -1px;
 
     .bottom-resize {
       position: absolute;
