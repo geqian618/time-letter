@@ -189,7 +189,7 @@
                                      @input="handleUpdatePhotograph"
                                      :show-tooltip="false"
                                      :min="0"
-                                     :max="50"
+                                     :max="100"
                                      v-model="photographOptions.borderRadius"
                                      placement="top"/>
                           <input type="number"
@@ -351,7 +351,7 @@
                                      size="small"
                                      :show-tooltip="false"
                                      :min="0"
-                                     :max="50"
+                                     :max="100"
                                      v-model="borderOptions.borderRadius"
                                      placement="top"/>
                           <input type="number"
