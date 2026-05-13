@@ -1064,9 +1064,15 @@
               <div class="option">
                 <span class="label">拍摄日期：</span>
                 <el-input spellcheck="false"
-                          class="metadata-input"
+                          class="metadata-input shooting-time"
                           @change="handleUpdateMetadata"
                           v-model="projectSettings.metadata.formats.shootingTime">
+                </el-input>
+                <span class="label shooting-time-label">日期格式：</span>
+                <el-input spellcheck="false"
+                          class="metadata-input shooting-time"
+                          @change="handleUpdateMetadata"
+                          v-model="projectSettings.metadata.other.shootingTimeFormat">
                 </el-input>
               </div>
               <div class="option">
@@ -1287,7 +1293,7 @@ import {predefineColors} from '@/config/color-configuration'
 
 import DraggableElementFactory from "@/object/DraggableElementFactory";
 
-import {getDate, getDateTime} from "@/utils/datetime";
+import {getDate, getDateTime, parseDate, formatDate} from "@/utils/datetime";
 
 import {executeFunctionScript} from "@/utils/script-helper";
 
@@ -1920,9 +1926,13 @@ const handleUpdateMetadata = () => {
     if (canvas && canvas.originalMetadata) {
       const originalMetadata = canvas.originalMetadata;
       const metadata = canvas.metadata;
+      const shootingTimeFormat = projectSettings.value.metadata.other.shootingTimeFormat;
       for (let key in originalMetadata) {
         const format = projectSettings.value.metadata.formats[key];
         let value = originalMetadata[key];
+        if (key === 'shootingTime' && value && !['yyyy-MM-dd HH:mm:ss', 'YYYY-MM-DD HH:mm:ss'].includes(shootingTimeFormat)) {
+          value = formatDate(parseDate(value, 'yyyy-MM-dd HH:mm:ss'), shootingTimeFormat);
+        }
         if (value && format) {
           value = format.replace('${' + key + '}', value);
           CanvasManager.getSelectedPath() === path ? metadataOptions.value[key] = value : metadata[key] = value
@@ -4145,12 +4155,20 @@ onBeforeUnmount(() => {
               text-align: right;
             }
 
+            .shooting-time-label {
+              margin-left: 20px;
+            }
+
             .value {
               width: 150px;
             }
 
             .metadata-input {
               width: calc(100% - 100px);
+            }
+
+            .metadata-input.shooting-time {
+              width: calc(50% - 100px);
             }
 
             .el-select {
