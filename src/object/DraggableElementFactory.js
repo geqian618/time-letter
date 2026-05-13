@@ -1,4 +1,4 @@
-import {getDate, getDateTime} from '@/utils/datetime'
+import {getCurrentDate, getCurrentDateTime} from '@/utils/datetime'
 
 import {executeFunctionScript} from '@/utils/script-helper'
 
@@ -20,9 +20,9 @@ class DraggableElementFactory {
         const {type, content, expression} = this.settings
         switch (type) {
             case 'date':
-                return getDate();
+                return getCurrentDate();
             case 'datetime':
-                return getDateTime();
+                return getCurrentDateTime();
             case 'script':
                 return executeFunctionScript(expression);
             case 'text':

@@ -1293,7 +1293,7 @@ import {predefineColors} from '@/config/color-configuration'
 
 import DraggableElementFactory from "@/object/DraggableElementFactory";
 
-import {getDate, getDateTime, parseDate, formatDate} from "@/utils/datetime";
+import {getCurrentDate, getCurrentDateTime, parseDate, formatDate} from "@/utils/datetime";
 
 import {executeFunctionScript} from "@/utils/script-helper";
 
@@ -1576,6 +1576,7 @@ const removeExpiredFonts = (cacheFonts, availableFonts) => {
 const watchImportImages = () => {
   window.electronAPI.watchInputImage(async (event, data) => {
     if (data) {
+      const shootingTimeFormat = projectSettings.value.metadata.other.shootingTimeFormat;
       for (let [path, picture] of data) {
         if (!CanvasManager.hasCanvas(path)) {
           const settings = new CanvasSettings()
@@ -1589,7 +1590,10 @@ const watchImportImages = () => {
             }
             for (let key in metadata) {
               const format = projectSettings.value.metadata.formats[key];
-              const value = metadata[key];
+              let value = metadata[key];
+              if (key === 'shootingTime' && value && !['yyyy-MM-dd HH:mm:ss', 'YYYY-MM-DD HH:mm:ss'].includes(shootingTimeFormat)) {
+                value = formatDate(parseDate(value, 'yyyy-MM-dd HH:mm:ss'), shootingTimeFormat);
+              }
               if (value && format) {
                 metadata[key] = format.replace('${' + key + '}', value);
               }
@@ -2309,9 +2313,9 @@ const getText = (meta) => {
   const {path, type, content, expression} = meta
   switch (type) {
     case 'date':
-      return getDate();
+      return getCurrentDate();
     case 'datetime':
-      return getDateTime();
+      return getCurrentDateTime();
     case 'script':
       return executeFunctionScript(expression);
     case 'text':
