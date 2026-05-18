@@ -994,7 +994,6 @@
                 <span class="label">图片品质：</span>
                 <div class="slider-demo-block">
                   <el-slider
-                      :format-tooltip="formatSliderTooltip"
                       v-model="projectSettings.outputSettings.quality"
                       class="value"
                       :min="1"
