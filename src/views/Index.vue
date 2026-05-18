@@ -688,48 +688,56 @@
       <div class="page-bottom">
         <div class="bottom-resize" ref="bottomResize"></div>
         <div class="function-tabs">
-          <div class="tab-wrapper">
-            <el-tooltip effect="dark" content="上一张" placement="top">
-              <img src="../assets/images/左箭头-未激活.png" class="inactive" alt="上一张">
-            </el-tooltip>
-            <el-tooltip effect="dark" content="上一张" placement="top">
-              <img src="../assets/images/左箭头-激活.png" class="active" @click="switchBeforePreviewElement"
-                   alt="上一张">
-            </el-tooltip>
-          </div>
+          <div class="left-tabs">
+            <div class="tab-wrapper">
+              <el-tooltip effect="dark" content="上一张" placement="top">
+                <img src="../assets/images/左箭头-未激活.png" class="inactive" alt="上一张">
+              </el-tooltip>
+              <el-tooltip effect="dark" content="上一张" placement="top">
+                <img src="../assets/images/左箭头-激活.png" class="active" @click="switchBeforePreviewElement"
+                     alt="上一张">
+              </el-tooltip>
+            </div>
 
-          <div class="tab-wrapper">
-            <el-tooltip effect="dark" content="下一张" placement="top">
-              <img src="../assets/images/右箭头-未激活.png" class="inactive" alt="下一张">
-            </el-tooltip>
-            <el-tooltip effect="dark" content="下一张" placement="top">
-              <img src="../assets/images/右箭头-激活.png" class="active" @click="switchNextPreviewElement" alt="下一张">
-            </el-tooltip>
-          </div>
+            <div class="tab-wrapper">
+              <el-tooltip effect="dark" content="下一张" placement="top">
+                <img src="../assets/images/右箭头-未激活.png" class="inactive" alt="下一张">
+              </el-tooltip>
+              <el-tooltip effect="dark" content="下一张" placement="top">
+                <img src="../assets/images/右箭头-激活.png" class="active" @click="switchNextPreviewElement"
+                     alt="下一张">
+              </el-tooltip>
+            </div>
 
-          <div class="tab-wrapper">
-            <el-tooltip effect="dark" content="居中" placement="top">
-              <img src="../assets/images/居中显示-未激活.png" class="inactive small-size" alt="居中">
-            </el-tooltip>
-            <el-tooltip effect="dark" content="居中" placement="top">
-              <img src="../assets/images/居中显示-激活.png" class="active small-size"
-                   @click="handleScrollBarMoveToCenter"
-                   alt="居中">
-            </el-tooltip>
-          </div>
-
-          <div class="filter">
-            <div class="filter-label">筛选：</div>
-            <div class="filter-select">
-              <el-select v-model="filterType" size="small" placeholder="Select">
-                <el-option
-                    v-for="item in [{label:'无',value:0},{label:'横图',value:1},{label:'竖图',value:2}]"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"/>
-              </el-select>
+            <div class="tab-wrapper">
+              <el-tooltip effect="dark" content="居中" placement="top">
+                <img src="../assets/images/居中显示-未激活.png" class="inactive small-size" alt="居中">
+              </el-tooltip>
+              <el-tooltip effect="dark" content="居中" placement="top">
+                <img src="../assets/images/居中显示-激活.png" class="active small-size"
+                     @click="handleScrollBarMoveToCenter"
+                     alt="居中">
+              </el-tooltip>
             </div>
           </div>
+
+
+          <div class="right-tabs">
+            <div class="counter">共{{ availableCanvas.size }}张</div>
+            <div class="filter">
+              <div class="filter-label">筛选：</div>
+              <div class="filter-select">
+                <el-select v-model="filterType" size="small" placeholder="Select">
+                  <el-option
+                      v-for="item in [{label:'无',value:0},{label:'横图',value:1},{label:'竖图',value:2}]"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"/>
+                </el-select>
+              </div>
+            </div>
+          </div>
+
         </div>
         <div class="preview-list"
              id="preview-list"
@@ -3879,58 +3887,77 @@ onBeforeUnmount(() => {
       gap: 15px;
       padding-left: 15px;
 
-      .filter {
-        margin-left: auto;
+      .left-tabs {
+        height: 100%;
         display: flex;
         align-items: center;
+        gap: 20px;
 
-        .filter-label {
-          color: #faf8f8;
-          font-size: 14px;
-        }
+        .tab-wrapper {
+          position: relative;
+          height: 70%;
+          display: flex;
+          align-items: center;
 
-        .filter-select {
-          margin-right: 20px;
+          img {
+            height: 100%;
+            width: auto;
+            transition: opacity 0.4s ease;
+          }
 
-          .el-select {
-            width: 100px !important;
+          .small-size {
+            padding: 5%;
+          }
+
+          .inactive {
+            opacity: 1;
+          }
+
+          .active {
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+          }
+
+          .inactive:hover {
+            opacity: 0;
+          }
+
+          .active:hover {
+            opacity: 1;
           }
         }
       }
 
-      .tab-wrapper {
-        position: relative;
-        height: 70%;
+      .right-tabs {
         display: flex;
+        margin-left: auto;
         align-items: center;
+        gap: 15px;
 
-        img {
-          height: 100%;
-          width: auto;
-          transition: opacity 0.4s ease;
+        .counter {
+          color: #faf8f8;
+          font-size: 14px;
+          display: flex;
         }
 
-        .small-size {
-          padding: 5%;
-        }
+        .filter {
+          display: flex;
+          align-items: center;
 
-        .inactive {
-          opacity: 1;
-        }
+          .filter-label {
+            color: #faf8f8;
+            font-size: 14px;
+          }
 
-        .active {
-          position: absolute;
-          top: 0;
-          left: 0;
-          opacity: 0;
-        }
+          .filter-select {
+            margin-right: 20px;
 
-        .inactive:hover {
-          opacity: 0;
-        }
-
-        .active:hover {
-          opacity: 1;
+            .el-select {
+              width: 100px !important;
+            }
+          }
         }
       }
     }
