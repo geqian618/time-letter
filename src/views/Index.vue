@@ -185,13 +185,14 @@
                       <li class="option">
                         <div class="label">圆角</div>
                         <div class="value">
-                          <el-slider size="small"
-                                     @input="handleUpdatePhotograph"
-                                     :show-tooltip="false"
-                                     :min="0"
-                                     :max="100"
-                                     v-model="photographOptions.borderRadius"
-                                     placement="top"/>
+                          <el-slider
+                              @input="handleUpdatePhotograph"
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="photographOptions.borderRadius"
+                              size="small"
+                              :min="0"
+                              :max="100"
+                              placement="top"/>
                           <input type="number"
                                  class="number-input"
                                  @input="handleUpdatePhotograph"
@@ -202,12 +203,14 @@
                       <li class="option">
                         <div class="label">X轴偏移</div>
                         <div class="value">
-                          <el-slider @input="handleUpdatePhotograph"
-                                     size="small"
-                                     :min="-50"
-                                     :max="50"
-                                     v-model="photographOptions.shadow.offsetX"
-                                     placement="top"/>
+                          <el-slider
+                              @input="handleUpdatePhotograph"
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="photographOptions.shadow.offsetX"
+                              size="small"
+                              :min="-50"
+                              :max="50"
+                              placement="top"/>
                           <input type="number"
                                  class="number-input"
                                  @input="handleUpdatePhotograph"
@@ -219,8 +222,9 @@
                         <div class="label">Y轴偏移</div>
                         <div class="value">
                           <el-slider
-                              v-model="photographOptions.shadow.offsetY"
                               @input="handleUpdatePhotograph"
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="photographOptions.shadow.offsetY"
                               :min="-50"
                               :max="50"
                               show-alpha
@@ -237,8 +241,9 @@
                         <div class="label">模糊程度</div>
                         <div class="value">
                           <el-slider
-                              v-model="photographOptions.shadow.blur"
+                              :format-tooltip="formatSliderTooltip"
                               @input="handleUpdatePhotograph"
+                              v-model="photographOptions.shadow.blur"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
@@ -281,13 +286,14 @@
                       <li class="option">
                         <div class="label">上边框</div>
                         <div class="value">
-                          <el-slider @input="handleUpdateBorders"
-                                     size="small"
-                                     :show-tooltip="false"
-                                     :min="sliderRange.min"
-                                     :max="sliderRange.max"
-                                     v-model="borderOptions.borderTop"
-                                     placement="top"/>
+                          <el-slider
+                              @input="handleUpdateBorders"
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="borderOptions.borderTop"
+                              size="small"
+                              :min="sliderRange.min"
+                              :max="sliderRange.max"
+                              placement="top"/>
                           <input type="number" class="number-input"
                                  @input="handleUpdateBorders"
                                  v-model="borderOptions.borderTop"
@@ -297,13 +303,14 @@
                       <li class="option">
                         <div class="label">下边框</div>
                         <div class="value">
-                          <el-slider @input="handleUpdateBorders"
-                                     size="small"
-                                     :show-tooltip="false"
-                                     :min="sliderRange.min"
-                                     :max="sliderRange.max"
-                                     v-model="borderOptions.borderBottom"
-                                     placement="top"/>
+                          <el-slider
+                              @input="handleUpdateBorders"
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="borderOptions.borderBottom"
+                              size="small"
+                              :min="sliderRange.min"
+                              :max="sliderRange.max"
+                              placement="top"/>
                           <input type="number"
                                  class="number-input"
                                  @input="handleUpdateBorders"
@@ -314,13 +321,14 @@
                       <li class="option">
                         <div class="label">左边框</div>
                         <div class="value">
-                          <el-slider @input="handleUpdateBorders"
-                                     :show-tooltip="false"
-                                     size="small"
-                                     :min="sliderRange.min"
-                                     :max="sliderRange.max"
-                                     v-model="borderOptions.borderLeft"
-                                     placement="top"/>
+                          <el-slider
+                              @input="handleUpdateBorders"
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="borderOptions.borderLeft"
+                              size="small"
+                              :min="sliderRange.min"
+                              :max="sliderRange.max"
+                              placement="top"/>
                           <input type="number" class="number-input"
                                  @input="handleUpdateBorders"
                                  v-model="borderOptions.borderLeft"
@@ -330,13 +338,14 @@
                       <li class="option">
                         <div class="label">右边框</div>
                         <div class="value">
-                          <el-slider @input="handleUpdateBorders"
-                                     size="small"
-                                     :show-tooltip="false"
-                                     :min="sliderRange.min"
-                                     :max="sliderRange.max"
-                                     v-model="borderOptions.borderRight"
-                                     placement="top"/>
+                          <el-slider
+                              @input="handleUpdateBorders"
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="borderOptions.borderRight"
+                              size="small"
+                              :min="sliderRange.min"
+                              :max="sliderRange.max"
+                              placement="top"/>
                           <input type="number"
                                  class="number-input"
                                  @input="handleUpdateBorders"
@@ -347,13 +356,14 @@
                       <li class="option">
                         <div class="label">圆角</div>
                         <div class="value">
-                          <el-slider @input="handleUpdateBorders"
-                                     size="small"
-                                     :show-tooltip="false"
-                                     :min="0"
-                                     :max="100"
-                                     v-model="borderOptions.borderRadius"
-                                     placement="top"/>
+                          <el-slider
+                              @input="handleUpdateBorders"
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="borderOptions.borderRadius"
+                              size="small"
+                              :min="0"
+                              :max="100"
+                              placement="top"/>
                           <input type="number"
                                  class="number-input"
                                  @input="handleUpdateBorders"
@@ -364,13 +374,14 @@
                       <li class="option" v-show="borderOptions.borderType === 1">
                         <div class="label">模糊值</div>
                         <div class="value">
-                          <el-slider @input="handleUpdateBorders"
-                                     size="small"
-                                     :show-tooltip="false"
-                                     :min="0"
-                                     :max="50"
-                                     v-model="borderOptions.borderBlur"
-                                     placement="top"/>
+                          <el-slider
+                              @input="handleUpdateBorders"
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="borderOptions.borderBlur"
+                              size="small"
+                              :min="0"
+                              :max="50"
+                              placement="top"/>
                           <input type="number"
                                  class="number-input"
                                  @input="handleUpdateBorders"
@@ -438,6 +449,7 @@
                         <div class="label">字体大小</div>
                         <div class="value">
                           <el-slider
+                              :format-tooltip="formatSliderTooltip"
                               v-model="textOptions.fontSize"
                               :min="1"
                               :max="100"
@@ -451,9 +463,10 @@
                         <div class="label">字体粗细</div>
                         <div class="value">
                           <el-slider
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="textOptions.fontWeight"
                               :min="100"
                               :max="600"
-                              v-model="textOptions.fontWeight"
                               show-alpha
                               :step="100"
                               size="small"
@@ -465,9 +478,10 @@
                         <div class="label">字符间距</div>
                         <div class="value">
                           <el-slider
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="textOptions.spacing"
                               :min="0"
                               :max="100"
-                              v-model="textOptions.spacing"
                               show-alpha
                               :step="1"
                               size="small"
@@ -478,11 +492,13 @@
                       <li class="option">
                         <div class="label">旋转角度</div>
                         <div class="value">
-                          <el-slider size="small"
-                                     :min="-180"
-                                     :max="180"
-                                     v-model="textOptions.angle"
-                                     placement="top"/>
+                          <el-slider
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="textOptions.angle"
+                              size="small"
+                              :min="-180"
+                              :max="180"
+                              placement="top"/>
                           <input type="number" class="number-input" v-model="textOptions.angle" step="1">
                         </div>
                       </li>
@@ -490,11 +506,13 @@
                       <li class="option">
                         <div class="label">层级</div>
                         <div class="value">
-                          <el-slider :min="0"
-                                     :max="100"
-                                     size="small"
-                                     v-model="textOptions.zIndex"
-                                     placement="top"/>
+                          <el-slider
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="textOptions.zIndex"
+                              :min="0"
+                              :max="100"
+                              size="small"
+                              placement="top"/>
                           <input type="number" class="number-input" v-model="textOptions.zIndex" step="1">
                         </div>
                       </li>
@@ -527,11 +545,13 @@
                       <li class="option">
                         <div class="label">X轴偏移</div>
                         <div class="value">
-                          <el-slider size="small"
-                                     :min="-100"
-                                     :max="100"
-                                     v-model="textOptions.shadow.offsetX"
-                                     placement="top"/>
+                          <el-slider
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="textOptions.shadow.offsetX"
+                              size="small"
+                              :min="-100"
+                              :max="100"
+                              placement="top"/>
                           <input type="number" class="number-input" v-model="textOptions.shadow.offsetX" step="1">
                         </div>
                       </li>
@@ -539,6 +559,7 @@
                         <div class="label">Y轴偏移</div>
                         <div class="value">
                           <el-slider
+                              :format-tooltip="formatSliderTooltip"
                               v-model="textOptions.shadow.offsetY"
                               :min="-100"
                               :max="100"
@@ -552,6 +573,7 @@
                         <div class="label">模糊程度</div>
                         <div class="value">
                           <el-slider
+                              :format-tooltip="formatSliderTooltip"
                               v-model="textOptions.shadow.blur"
                               show-alpha
                               size="small"
@@ -581,47 +603,54 @@
                       <li class="option">
                         <div class="label">缩放</div>
                         <div class="value">
-                          <el-slider :min="0.1"
-                                     :max="20"
-                                     :step="0.1"
-                                     size="small"
-                                     v-model="imageOptions.scale"
-                                     placement="top"/>
+                          <el-slider
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="imageOptions.scale"
+                              :min="0.1"
+                              :max="20"
+                              :step="0.1"
+                              size="small"
+                              placement="top"/>
                           <input type="number" class="number-input" v-model="imageOptions.scale" step="0.1">
                         </div>
                       </li>
                       <li class="option">
                         <div class="label">不透明度</div>
                         <div class="value">
-                          <el-slider :min="0.01"
-                                     :max="1"
-                                     :step="0.01"
-                                     size="small"
-                                     v-model="imageOptions.alpha"
-                                     placement="top"/>
+                          <el-slider
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="imageOptions.alpha"
+                              :min="0.01"
+                              :max="1"
+                              :step="0.01"
+                              size="small"
+                              placement="top"/>
                           <input type="number" class="number-input" v-model="imageOptions.alpha" step="0.01">
                         </div>
                       </li>
                       <li class="option">
                         <div class="label">旋转角度</div>
                         <div class="value">
-                          <el-slider @change=""
-                                     size="small"
-                                     :min="-180"
-                                     :max="180"
-                                     v-model="imageOptions.angle"
-                                     placement="top"/>
+                          <el-slider
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="imageOptions.angle"
+                              size="small"
+                              :min="-180"
+                              :max="180"
+                              placement="top"/>
                           <input type="number" class="number-input" v-model="imageOptions.angle" step="1">
                         </div>
                       </li>
                       <li class="option">
                         <div class="label">层级</div>
                         <div class="value">
-                          <el-slider :min="0"
-                                     :max="100"
-                                     size="small"
-                                     v-model="imageOptions.zIndex"
-                                     placement="top"/>
+                          <el-slider
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="imageOptions.zIndex"
+                              :min="0"
+                              :max="100"
+                              size="small"
+                              placement="top"/>
                           <input type="number" class="number-input" v-model="imageOptions.zIndex" step="1">
                         </div>
                       </li>
@@ -632,11 +661,13 @@
                       <li class="option">
                         <div class="label">X轴偏移</div>
                         <div class="value">
-                          <el-slider size="small"
-                                     :min="-100"
-                                     :max="100"
-                                     v-model="imageOptions.shadow.offsetX"
-                                     placement="top"/>
+                          <el-slider
+                              :format-tooltip="formatSliderTooltip"
+                              v-model="imageOptions.shadow.offsetX"
+                              size="small"
+                              :min="-100"
+                              :max="100"
+                              placement="top"/>
                           <input type="number" class="number-input" v-model="imageOptions.shadow.offsetX" step="1">
                         </div>
                       </li>
@@ -644,6 +675,7 @@
                         <div class="label">Y轴偏移</div>
                         <div class="value">
                           <el-slider
+                              :format-tooltip="formatSliderTooltip"
                               v-model="imageOptions.shadow.offsetY"
                               :min="-100"
                               :max="100"
@@ -657,6 +689,7 @@
                         <div class="label">模糊程度</div>
                         <div class="value">
                           <el-slider
+                              :format-tooltip="formatSliderTooltip"
                               v-model="imageOptions.shadow.blur"
                               show-alpha
                               size="small"
@@ -960,12 +993,14 @@
               <div class="option" v-show="[1,3].includes(projectSettings.outputSettings.extname) ">
                 <span class="label">图片品质：</span>
                 <div class="slider-demo-block">
-                  <el-slider v-model="projectSettings.outputSettings.quality"
-                             class="value"
-                             :min="1"
-                             :max="100"
-                             size="small"
-                             show-input/>
+                  <el-slider
+                      :format-tooltip="formatSliderTooltip"
+                      v-model="projectSettings.outputSettings.quality"
+                      class="value"
+                      :min="1"
+                      :max="100"
+                      size="small"
+                      show-input/>
                 </div>
               </div>
               <div class="option">
@@ -1174,25 +1209,27 @@
               <div class="option">
                 <span class="label">移到步长：</span>
                 <div class="slider-demo-block">
-                  <el-slider v-model="projectSettings.others.movingStepSize"
-                             class="value"
-                             :min="1"
-                             :max="100"
-                             size="small"
-                             show-input/>
+                  <el-slider
+                      v-model="projectSettings.others.movingStepSize"
+                      class="value"
+                      :min="1"
+                      :max="100"
+                      size="small"
+                      show-input/>
                 </div>
               </div>
               <div class="option">
                 <span class="label">默认缩放：</span>
                 <div class="slider-demo-block">
-                  <el-slider v-model="projectSettings.others.defaultCanvasScale"
-                             @change="handleCanvasScale"
-                             class="value"
-                             :min="0.05"
-                             :max="1"
-                             :step="0.05"
-                             size="small"
-                             show-input/>
+                  <el-slider
+                      @change="handleCanvasScale"
+                      v-model="projectSettings.others.defaultCanvasScale"
+                      class="value"
+                      :min="0.05"
+                      :max="1"
+                      :step="0.05"
+                      size="small"
+                      show-input/>
                 </div>
               </div>
               <div class="option">
@@ -2524,11 +2561,11 @@ const initCanvasSize = () => {
       const {x, y, ...element} = _.cloneDeep(target);
       if (target.type === 'text') {
         const {fontSize, spacing, order, shadow: {offsetX, offsetY, blur}} = element;
-        element.fontSize = Number.parseInt(fontSize * initZoom)
-        element.spacing = Number.parseInt(spacing * initZoom)
-        element.shadow.offsetX = Number.parseInt(offsetX * initZoom)
-        element.shadow.offsetY = Number.parseInt(offsetY * initZoom)
-        element.shadow.blur = Number.parseInt(blur * initZoom)
+        element.fontSize = fontSize * initZoom
+        element.spacing = spacing * initZoom
+        element.shadow.offsetX = offsetX * initZoom
+        element.shadow.offsetY = offsetY * initZoom
+        element.shadow.blur = blur * initZoom
         element.zIndex = order
         textOptions.value = element
         if (projectSettings.value.others.optionAnchorPoint) {
@@ -2539,9 +2576,9 @@ const initCanvasSize = () => {
         }
       } else if (target.type === 'image') {
         const {order, shadow: {offsetX, offsetY, blur}} = element;
-        element.shadow.offsetX = Number.parseInt(offsetX * initZoom)
-        element.shadow.offsetY = Number.parseInt(offsetY * initZoom)
-        element.shadow.blur = Number.parseInt(blur * initZoom)
+        element.shadow.offsetX = offsetX * initZoom
+        element.shadow.offsetY = offsetY * initZoom
+        element.shadow.blur = blur * initZoom
         element.zIndex = order
         imageOptions.value = element
         if (projectSettings.value.others.optionAnchorPoint) {
@@ -2703,6 +2740,11 @@ const handleSelectMultiplePreviewElements = (event, canvas) => {
 
   }
 }
+
+
+const formatSliderTooltip = (val) => {
+  return Math.floor(val);
+};
 
 
 const handleUpdatePhotograph = async () => {
