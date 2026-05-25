@@ -15,6 +15,7 @@ import {RouterView} from 'vue-router'
   margin: 0;
   box-sizing: border-box;
   user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
 }
 
 :root {
