@@ -39,7 +39,7 @@ module.exports = async (params) => {
     const {borderLeft, borderRight, borderTop, borderBottom} = background.meta;
 
     if (borderLeft === 0 && borderRight === 0 && borderTop === 0 && borderBottom === 0) {
-        if (elements.length === 2 && originalExtname === outputExtname) {
+        if (type === 0 && elements.length === 2 && originalExtname === outputExtname) {
             try {
                 await fs.copyFile(filePath, outputPath);
             } catch (err) {
