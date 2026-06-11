@@ -1206,7 +1206,7 @@
             <span class="border-label">画布</span>
             <div class="options">
               <div class="option">
-                <span class="label">移到步长：</span>
+                <span class="label">移动步长：</span>
                 <div class="slider-demo-block">
                   <el-slider
                       v-model="projectSettings.others.movingStepSize"
