@@ -190,7 +190,7 @@ const importTemplates = async () => {
         title: '导入文件',
         buttonLabel: '导入',
         properties: ['openFile'],
-        filters: [{name: '模板配置', extensions: ['tile']}]
+        filters: [{name: 'TILE', extensions: ['tile']}]
     });
 
     if (!filePaths?.length) return;
@@ -383,7 +383,7 @@ const importSettings = async () => {
         title: '导入文件',
         buttonLabel: '导入',
         properties: ['openFile'],
-        filters: [{name: '配置文件', extensions: ['json']}]
+        filters: [{name: 'JSON', extensions: ['json']}]
     });
 
     if (!filePaths?.length) return;
