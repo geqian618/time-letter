@@ -1114,7 +1114,7 @@
                 <el-input spellcheck="false"
                           class="metadata-input shooting-time"
                           @change="handleUpdateMetadata"
-                          v-model="projectSettings.metadata.other.shootingTimeFormat">
+                          v-model="projectSettings.metadata.others.shootingTimeFormat">
                 </el-input>
               </div>
               <div class="option">
@@ -1135,7 +1135,7 @@
                 <span class="label">等效焦距：</span>
                 <el-switch
                     @change="handleFocalLength(0)"
-                    v-model="projectSettings.metadata.other.enableEquivalentFocalSegment"
+                    v-model="projectSettings.metadata.others.enableEquivalentFocalSegment"
                     class="value"
                     style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
               </div>
@@ -1144,7 +1144,7 @@
                 <el-input class="value"
                           spellcheck="false"
                           @change="handleFocalLength(1)"
-                          v-model="projectSettings.metadata.other.conversionMultiple">
+                          v-model="projectSettings.metadata.others.conversionMultiple">
                 </el-input>
               </div>
             </div>
@@ -1620,7 +1620,7 @@ const removeExpiredFonts = (cacheFonts, availableFonts) => {
 const watchImportImages = () => {
   window.electronAPI.watchInputImage(async (event, data) => {
     if (data) {
-      const shootingTimeFormat = projectSettings.value.metadata.other.shootingTimeFormat;
+      const shootingTimeFormat = projectSettings.value.metadata.others.shootingTimeFormat;
       for (let [path, picture] of data) {
         if (!CanvasManager.hasCanvas(path)) {
           const settings = new CanvasSettings()
@@ -1628,8 +1628,8 @@ const watchImportImages = () => {
           if (metadata) {
             settings.originalMetadata = _.cloneDeep(metadata);
             if (metadata.focalLength) {
-              if (projectSettings.value.metadata.other.enableEquivalentFocalSegment) {
-                metadata.focalLength = Number.parseInt(metadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
+              if (projectSettings.value.metadata.others.enableEquivalentFocalSegment) {
+                metadata.focalLength = Number.parseInt(metadata.focalLength * projectSettings.value.metadata.others.conversionMultiple)
               }
             }
             for (let key in metadata) {
@@ -1798,6 +1798,38 @@ const saveTextLabel = async () => {
   })
 }
 
+
+const watchProjectSettings = () => {
+  window.electronAPI.watchProjectSettings((event, {type, data: {settings, filePath}}) => {
+    if (type === 0) {
+
+      const {
+        others: {enableScrollbar: oldEnableScrollbar},
+        metadata: {others: {enableEquivalentFocalSegment: oldEnableEquivalentFocalSegment}}
+      } = projectSettings.value;
+
+      const {
+        others: {enableScrollbar: newEnableScrollbar},
+        metadata: {others: {enableEquivalentFocalSegment: newEnableEquivalentFocalSegment}}
+      } = settings;
+
+      const newUserSettings = _.merge({}, projectSettings.value, settings);
+      projectSettings.value = newUserSettings
+      StorageManager.saveProjectSettings(newUserSettings)
+      if (oldEnableScrollbar !== newEnableScrollbar) {
+        renderCanvasScrollbar()
+      }
+      if (oldEnableEquivalentFocalSegment !== newEnableEquivalentFocalSegment) {
+        handleFocalLength(newEnableEquivalentFocalSegment ? 1 : 0)
+      }
+    } else if (type === 1) {
+      const userSettings = _.cloneDeep(projectSettings.value);
+      delete userSettings.availableFonts;
+      window.electronAPI.exportSettings({filePath, settings: userSettings});
+    }
+  })
+}
+
 const watchContextMenu = () => {
   window.electronAPI.watchContextMenu(async (event, data) => {
     if (data) {
@@ -1952,11 +1984,11 @@ const handleFocalLength = (type) => {
     let newFocalLength;
     if (originalMetadata && originalMetadata.focalLength) {
       if (type === 0) {
-        newFocalLength = projectSettings.value.metadata.other.enableEquivalentFocalSegment
-            ? Number.parseInt(originalMetadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
+        newFocalLength = projectSettings.value.metadata.others.enableEquivalentFocalSegment
+            ? Number.parseInt(originalMetadata.focalLength * projectSettings.value.metadata.others.conversionMultiple)
             : originalMetadata.focalLength
-      } else if (type === 1 && projectSettings.value.metadata.other.enableEquivalentFocalSegment) {
-        newFocalLength = Number.parseInt(originalMetadata.focalLength * projectSettings.value.metadata.other.conversionMultiple)
+      } else if (type === 1 && projectSettings.value.metadata.others.enableEquivalentFocalSegment) {
+        newFocalLength = Number.parseInt(originalMetadata.focalLength * projectSettings.value.metadata.others.conversionMultiple)
       }
       const format = projectSettings.value.metadata.formats['focalLength'];
       if (format) {
@@ -1974,7 +2006,7 @@ const handleUpdateMetadata = () => {
     if (canvas && canvas.originalMetadata) {
       const originalMetadata = canvas.originalMetadata;
       const metadata = canvas.metadata;
-      const shootingTimeFormat = projectSettings.value.metadata.other.shootingTimeFormat;
+      const shootingTimeFormat = projectSettings.value.metadata.others.shootingTimeFormat;
       for (let key in originalMetadata) {
         const format = projectSettings.value.metadata.formats[key];
         let value = originalMetadata[key];
@@ -3454,6 +3486,7 @@ onMounted(() => {
   watchLabelResources()
   watchDownloadProgress()
   editorOutputSettings()
+  watchProjectSettings()
   loadProjectSettings()
   initAreaResize()
   initCanvasSize()

@@ -306,6 +306,13 @@ const setupIpcHandlers = () => {
         // 将压缩包写入磁盘
         zip.writeZip(outputPath);
     })
+
+
+    // 导出应用配置文件
+    ipcMain.on('settings:export', (event, {filePath, settings}) => {
+        const data = JSON.stringify({type: 'Settings', settings}, null, 2);
+        fs.writeFileSync(filePath, data, 'utf8')
+    })
 }
 
 /**

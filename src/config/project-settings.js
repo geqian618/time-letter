@@ -30,7 +30,7 @@ const projectSettings = ref({
             shootingTime: '${shootingTime}',
             filename: '${filename}'
         },
-        other: {
+        others: {
             shootingTimeFormat: 'yyyy-MM-dd HH:mm:ss',
             enableEquivalentFocalSegment: false,
             conversionMultiple: 1.5
@@ -79,7 +79,7 @@ const originalMetadata = {
         shootingTime: '${shootingTime}',
         filename: '${filename}'
     },
-    other: {
+    others: {
         shootingTimeFormat: 'yyyy-MM-dd HH:mm:ss',
         enableEquivalentFocalSegment: false,
         conversionMultiple: 1.5

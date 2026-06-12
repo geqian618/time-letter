@@ -44,6 +44,32 @@ const createApplicationMenu = (mainWindow) => {
                     click: editorOutputSettings,
                     accelerator: 'CommandOrControl+Alt+S',
                 },
+                {
+                    label: '模板预设',
+                    submenu: [
+                        {
+                            label: '导入',
+                            click: importTemplates
+                        },
+                        {
+                            label: '导出',
+                            click: exportTemplates
+                        }
+                    ],
+                },
+                {
+                    label: '配置文件',
+                    submenu: [
+                        {
+                            label: '导入',
+                            click: importSettings
+                        },
+                        {
+                            label: '导出',
+                            click: exportSettings
+                        }
+                    ],
+                },
             ]
         },
         {
@@ -96,19 +122,6 @@ const createApplicationMenu = (mainWindow) => {
                         }
                     ],
                 },
-                {
-                    label: '模板预设',
-                    submenu: [
-                        {
-                            label: '导入',
-                            click: importTemplates
-                        },
-                        {
-                            label: '导出',
-                            click: exportTemplates
-                        }
-                    ],
-                }
             ]
         },
         // {
@@ -350,5 +363,41 @@ const editorOutputSettings = () => {
 const openAboutDialog = () => {
     window.webContents.send('watch-about-dialog')
 }
+
+
+const exportSettings = async () => {
+    const {canceled, filePath} = await dialog.showSaveDialog({
+        title: '保存文件',
+        buttonLabel: '保存',
+        defaultPath: path.join(app.getPath('desktop'), 'settings.json')
+    })
+    if (!canceled && filePath) {
+        window.webContents.send('settings:watch', {type: 1, data: {filePath}})
+    }
+}
+
+
+const importSettings = async () => {
+
+    const {filePaths} = await dialog.showOpenDialog({
+        title: '导入文件',
+        buttonLabel: '导入',
+        properties: ['openFile'],
+        filters: [{name: '配置文件', extensions: ['json']}]
+    });
+
+    if (!filePaths?.length) return;
+
+    try {
+        const {settings, type} = JSON.parse(fs.readFileSync(filePaths[0], 'utf8'))
+        if (type === 'Settings' && settings && typeof settings === 'object') {
+            window.webContents.send('settings:watch', {type: 0, data: {settings}})
+        }
+    } catch (e) {
+        dialog.showMessageBox({type: 'error', title: '导入失败', message: '无效配置文件'})
+    }
+
+}
+
 
 module.exports = createApplicationMenu

@@ -18,4 +18,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     watchAboutDialog: (callback) => ipcRenderer.on('watch-about-dialog', callback),
     watchTemplates: (callback) => ipcRenderer.on('templates:watch', callback),
     exportTemplates: (args) => ipcRenderer.send('templates:export', args),
+    watchProjectSettings: (callback) => ipcRenderer.on('settings:watch', callback),
+    exportSettings: (args) => ipcRenderer.send('settings:export', args),
 });
