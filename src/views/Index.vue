@@ -1805,27 +1805,28 @@ const watchProjectSettings = () => {
 
       const {
         resize: oldResize,
-        others: {enableScrollbar: oldEnableScrollbar},
-        metadata: {formats: oldFormats, others: oldOthers}
+        others: oldOthers,
+        metadata: {formats: oldFormats, others: oldConversion}
       } = projectSettings.value;
 
       const {
         resize: newResize,
-        others: {enableScrollbar: newEnableScrollbar},
-        metadata: {formats: newFormats, others: newOthers}
+        others: newOthers,
+        metadata: {formats: newFormats, others: newConversion}
       } = settings;
 
       const newUserSettings = _.merge({}, projectSettings.value, settings);
       projectSettings.value = newUserSettings
       StorageManager.saveProjectSettings(newUserSettings)
-      if (oldEnableScrollbar !== newEnableScrollbar) {
+      if (!_.isEqual(oldOthers, newOthers)) {
+        handleCanvasScale()
         renderCanvasScrollbar()
       }
       if (!_.isEqual(oldFormats, newFormats)) {
         handleUpdateMetadata()
       }
-      if (!_.isEqual(oldOthers, newOthers)) {
-        handleFocalLength(newOthers.enableEquivalentFocalSegment ? 1 : 0)
+      if (!_.isEqual(oldConversion, newConversion)) {
+        handleFocalLength(newConversion.enableEquivalentFocalSegment ? 1 : 0)
       }
       if (!_.isEqual(oldResize, newResize)) {
         initAreaResize();
