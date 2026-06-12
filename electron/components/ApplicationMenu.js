@@ -186,12 +186,11 @@ const selectFile = async () => {
 
 
 const importTemplates = async () => {
-
     const {filePaths} = await dialog.showOpenDialog({
         title: '导入文件',
         buttonLabel: '导入',
         properties: ['openFile'],
-        filters: [{name: '模板配置文件', extensions: ['tile']}]
+        filters: [{name: '模板配置', extensions: ['tile']}]
     });
 
     if (!filePaths?.length) return;
@@ -266,7 +265,8 @@ const exportTemplates = async () => {
     const {canceled, filePath} = await dialog.showSaveDialog({
         title: '保存文件',
         buttonLabel: '保存',
-        defaultPath: path.join(app.getPath('desktop'), 'templates.tile')
+        defaultPath: path.join(app.getPath('desktop'), 'templates.tile'),
+        filters: [{name: 'TILE', extensions: ['tile']}]
     })
     if (!canceled && filePath) {
         window.webContents.send('templates:watch', {type: 1, data: filePath})
@@ -369,7 +369,8 @@ const exportSettings = async () => {
     const {canceled, filePath} = await dialog.showSaveDialog({
         title: '保存文件',
         buttonLabel: '保存',
-        defaultPath: path.join(app.getPath('desktop'), 'settings.json')
+        defaultPath: path.join(app.getPath('desktop'), 'settings.json'),
+        filters: [{name: 'JSON', extensions: ['json']}]
     })
     if (!canceled && filePath) {
         window.webContents.send('settings:watch', {type: 1, data: {filePath}})
@@ -378,7 +379,6 @@ const exportSettings = async () => {
 
 
 const importSettings = async () => {
-
     const {filePaths} = await dialog.showOpenDialog({
         title: '导入文件',
         buttonLabel: '导入',
