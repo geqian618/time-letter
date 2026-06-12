@@ -1806,13 +1806,13 @@ const watchProjectSettings = () => {
       const {
         resize: oldResize,
         others: {enableScrollbar: oldEnableScrollbar},
-        metadata: {others: {enableEquivalentFocalSegment: oldEnableEquivalentFocalSegment}}
+        metadata: {formats: oldFormats, others: oldOthers}
       } = projectSettings.value;
 
       const {
         resize: newResize,
         others: {enableScrollbar: newEnableScrollbar},
-        metadata: {others: {enableEquivalentFocalSegment: newEnableEquivalentFocalSegment}}
+        metadata: {formats: newFormats, others: newOthers}
       } = settings;
 
       const newUserSettings = _.merge({}, projectSettings.value, settings);
@@ -1821,11 +1821,15 @@ const watchProjectSettings = () => {
       if (oldEnableScrollbar !== newEnableScrollbar) {
         renderCanvasScrollbar()
       }
-      if (oldEnableEquivalentFocalSegment !== newEnableEquivalentFocalSegment) {
-        handleFocalLength(newEnableEquivalentFocalSegment ? 1 : 0)
+      if (!_.isEqual(oldFormats, newFormats)) {
+        handleUpdateMetadata()
+      }
+      if (!_.isEqual(oldOthers, newOthers)) {
+        handleFocalLength(newOthers.enableEquivalentFocalSegment ? 1 : 0)
       }
       if (!_.isEqual(oldResize, newResize)) {
-        initAreaResize()
+        initAreaResize();
+        handleScrollBarMoveToCenter()
       }
     } else if (type === 1) {
       const userSettings = _.cloneDeep(projectSettings.value);
