@@ -1804,11 +1804,13 @@ const watchProjectSettings = () => {
     if (type === 0) {
 
       const {
+        resize: oldResize,
         others: {enableScrollbar: oldEnableScrollbar},
         metadata: {others: {enableEquivalentFocalSegment: oldEnableEquivalentFocalSegment}}
       } = projectSettings.value;
 
       const {
+        resize: newResize,
         others: {enableScrollbar: newEnableScrollbar},
         metadata: {others: {enableEquivalentFocalSegment: newEnableEquivalentFocalSegment}}
       } = settings;
@@ -1821,6 +1823,9 @@ const watchProjectSettings = () => {
       }
       if (oldEnableEquivalentFocalSegment !== newEnableEquivalentFocalSegment) {
         handleFocalLength(newEnableEquivalentFocalSegment ? 1 : 0)
+      }
+      if (!_.isEqual(oldResize, newResize)) {
+        initAreaResize()
       }
     } else if (type === 1) {
       const userSettings = _.cloneDeep(projectSettings.value);
