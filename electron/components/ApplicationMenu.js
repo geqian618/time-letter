@@ -52,20 +52,20 @@ const createApplicationMenu = (mainWindow) => {
                             click: importTemplates
                         },
                         {
-                            label: '导出文件',
+                            label: '导出为文件',
                             click: exportTemplates
                         }
                     ],
                 },
                 {
-                    label: '应用设置',
+                    label: '全局设置',
                     submenu: [
                         {
                             label: '导入文件',
                             click: importSettings
                         },
                         {
-                            label: '导出文件',
+                            label: '导出为文件',
                             click: exportSettings
                         }
                     ],
@@ -79,11 +79,11 @@ const createApplicationMenu = (mainWindow) => {
                     label: '文本库',
                     submenu: [
                         {
-                            label: '新增',
+                            label: '新增文本',
                             click: customTextLabels
                         },
                         {
-                            label: '管理',
+                            label: '管理文本',
                             click: () => {
                                 window.webContents.send('watch-label-resources', {type: 3})
                             }
@@ -94,7 +94,7 @@ const createApplicationMenu = (mainWindow) => {
                     label: '图片库',
                     submenu: [
                         {
-                            label: '导入',
+                            label: '导入图片',
                             click: selectImageLabels
                         },
                         {
@@ -110,7 +110,7 @@ const createApplicationMenu = (mainWindow) => {
                     label: '字体库',
                     submenu: [
                         {
-                            label: '导入',
+                            label: '导入字体',
                             click: selectFonts
                         },
                         {
