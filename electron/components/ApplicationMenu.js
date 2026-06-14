@@ -58,7 +58,7 @@ const createApplicationMenu = (mainWindow) => {
                     ],
                 },
                 {
-                    label: '配置文件',
+                    label: '应用设置',
                     submenu: [
                         {
                             label: '导入',
