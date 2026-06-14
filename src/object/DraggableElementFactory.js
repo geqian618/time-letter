@@ -6,7 +6,7 @@ import {projectSettings} from "@/config/project-settings";
 
 import CanvasManager from "@/object/CanvasManager";
 
-import {Image, EditableText} from '@/canvas/CanvasEditor'
+import {Image, Text} from '@/canvas/CanvasEditor'
 
 class DraggableElementFactory {
 
@@ -49,9 +49,10 @@ class DraggableElementFactory {
             if (this.settings.tagName === 'div') {
                 const {type, content, expression, fontSize = 14} = this.settings
                 const context = this.#getText();
-                const text = new EditableText(context, {
+                const text = new Text(context, {
                     fontSize: Math.floor(fontSize / zoom),
                     draggable: true,
+                    editable: type === 'text',
                     meta: {
                         type,
                         content,
