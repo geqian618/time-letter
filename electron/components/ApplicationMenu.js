@@ -48,11 +48,11 @@ const createApplicationMenu = (mainWindow) => {
                     label: '模板预设',
                     submenu: [
                         {
-                            label: '导入',
+                            label: '导入文件',
                             click: importTemplates
                         },
                         {
-                            label: '导出',
+                            label: '导出文件',
                             click: exportTemplates
                         }
                     ],
@@ -61,11 +61,11 @@ const createApplicationMenu = (mainWindow) => {
                     label: '应用设置',
                     submenu: [
                         {
-                            label: '导入',
+                            label: '导入文件',
                             click: importSettings
                         },
                         {
-                            label: '导出',
+                            label: '导出文件',
                             click: exportSettings
                         }
                     ],
