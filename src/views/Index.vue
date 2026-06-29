@@ -1887,7 +1887,7 @@ const cancelRemoveSelectedCanvas = () => {
  */
 const permanentlyRemoveSelectedCanvas = () => {
   const selectedPaths = Array.from(selectedPreviewList.value.keys());
-  // window.electronAPI.deleteFile(selectedPaths)
+  window.electronAPI.deleteFile(selectedPaths)
   removeSelectedCanvas();
   if (!projectSettings.value.others.deleteTipVisible) {
     projectSettings.value.others.deleteTipVisible = false;
