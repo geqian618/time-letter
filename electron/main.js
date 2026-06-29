@@ -319,7 +319,7 @@ const setupIpcHandlers = () => {
     ipcMain.on('file:delete', async (event, filePaths) => {
         if (!filePaths) return
         for (let filePath of filePaths) {
-            await shell.trashItem(filePath)
+            shell.trashItem(filePath)
         }
     })
 }
