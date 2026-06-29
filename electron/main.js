@@ -1,4 +1,4 @@
-const {app, ipcMain, protocol, globalShortcut, BrowserWindow, Menu, dialog} = require('electron')
+const {app, ipcMain, protocol, globalShortcut, BrowserWindow, Menu, dialog, shell} = require('electron')
 const WinState = require('electron-win-state').default
 const path = require('path');
 const fs = require('fs')
@@ -319,14 +319,7 @@ const setupIpcHandlers = () => {
     ipcMain.on('file:delete', async (event, filePaths) => {
         if (!filePaths) return
         for (let filePath of filePaths) {
-            // 删除文件
-            fs.rm(filePath, err => {
-                if (err) {
-                    console.log('删除文件失败：' + filePath);
-                } else {
-                    console.log('删除文件成功：' + filePath)
-                }
-            });
+            await shell.trashItem(filePath)
         }
     })
 }
