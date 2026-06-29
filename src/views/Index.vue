@@ -1200,6 +1200,13 @@
                     class="value"
                     style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
               </div>
+              <div class="option">
+                <span class="label">删除提示：</span>
+                <el-switch
+                    v-model="projectSettings.others.deleteTipVisible"
+                    class="value"
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+              </div>
             </div>
           </div>
           <div class="border-box">
@@ -1262,8 +1269,8 @@
     </el-dialog>
 
 
-    <el-dialog v-model="aboutDialogVisible" :close-on-click-modal="false" :close-on-press-escape="false"
-               title="关于" width="700" align-center draggable>
+    <el-dialog v-model="aboutDialogVisible" :close-on-click-modal="false" :close-on-press-escape="false" title="关于"
+               width="700" align-center draggable>
       <div class="about">
         <div class="introduction">
           <span class="title">简介：</span>
@@ -1293,6 +1300,22 @@
           <div class="value">秋风吹落了秋枫</div>
         </div>
       </div>
+    </el-dialog>
+
+
+    <el-dialog v-model="deleteTipsDialogVisible" title="确认" width="350" align-center :close-on-click-modal="false">
+      <span>文件将从磁盘中删除，是否确认删除文件？</span>
+      <template #footer>
+        <div class="delete-tips-dialog-footer">
+          <div class="left-dialog-footer">
+            <el-checkbox v-model="isHideDeleteTips" @change="handleDeleteTipsVisible" label="不再提示"/>
+          </div>
+          <div class="right-dialog-footer">
+            <el-button @click="cancelRemoveSelectedCanvas">取消</el-button>
+            <el-button type="danger" @click="permanentlyRemoveSelectedCanvas">删除</el-button>
+          </div>
+        </div>
+      </template>
     </el-dialog>
 
   </div>
@@ -1426,6 +1449,8 @@ const imageLabels = ref(new Map())
 
 const saveTemplateDialogVisible = ref(false)
 
+const deleteTipsDialogVisible = ref(false)
+
 const renameDialogVisible = ref(false)
 
 const customTextLabelDialogVisible = ref(false)
@@ -1496,6 +1521,15 @@ const textLabelDialogTitle = computed(() => {
 const availableFonts = computed(() => {
   return Array.from(projectSettings.value.availableFonts.values())
 })
+
+
+const isHideDeleteTips = computed(() => {
+  return !projectSettings.value.others.deleteTipVisible
+})
+
+const handleDeleteTipsVisible = () => {
+  projectSettings.value.others.deleteTipVisible = !projectSettings.value.others.deleteTipVisible
+}
 
 
 const handleActivateInput = async (row, column, cell) => {
@@ -1840,22 +1874,56 @@ const watchProjectSettings = () => {
   })
 }
 
+
+const cancelRemoveSelectedCanvas = () => {
+  if (!projectSettings.value.others.deleteTipVisible) {
+    projectSettings.value.others.deleteTipVisible = true;
+  }
+  deleteTipsDialogVisible.value = false;
+}
+
+/**
+ * 移除已选中 Canvas 列表，删除其对应磁盘文件
+ */
+const permanentlyRemoveSelectedCanvas = () => {
+  const selectedPaths = Array.from(selectedPreviewList.value.keys());
+  window.electronAPI.deleteFile(selectedPaths)
+  removeSelectedCanvas();
+  if (!projectSettings.value.others.deleteTipVisible) {
+    projectSettings.value.others.deleteTipVisible = false;
+  }
+  deleteTipsDialogVisible.value = false
+}
+
+
+/**
+ * 移除已选中 Canvas 列表，不删除其对应磁盘文件
+ */
+const removeSelectedCanvas = () => {
+  const selectedPaths = Array.from(selectedPreviewList.value.keys());
+  for (let path of selectedPaths) {
+    CanvasManager.deleteCanvas(path)
+    availableCanvas.value.delete(path)
+    if (path === CanvasManager.getSelectedPath()) {
+      clearCanvas()
+    }
+  }
+  selectedPreviewList.value.clear();
+  availableCanvas.value = CanvasManager.getAvailableCanvases(filterType.value)
+}
+
 const watchContextMenu = () => {
   window.electronAPI.watchContextMenu(async (event, data) => {
     if (data) {
       const {type} = data;
-      if (type === 0) {
-        const selectedPaths = selectedPreviewList.value.keys();
-        for (let path of selectedPaths) {
-          CanvasManager.deleteCanvas(path)
-          availableCanvas.value.delete(path)
-          if (path === CanvasManager.getSelectedPath()) {
-            clearCanvas()
-          }
+      if (type === 1) {
+        removeSelectedCanvas()
+      } else if (type === 2) {
+        deleteTipsDialogVisible.value = projectSettings.value.others.deleteTipVisible;
+        if (!projectSettings.value.others.deleteTipVisible) {
+          permanentlyRemoveSelectedCanvas();
         }
-        selectedPreviewList.value.clear();
-        availableCanvas.value = CanvasManager.getAvailableCanvases(filterType.value)
-      } else if (type === 1) {
+      } else if (type === 3) {
         const paths = Array.from(selectedPreviewList.value.keys());
         const settings = paths.map((path, index) => {
           const canvas = CanvasManager.getCanvas(path);
@@ -1897,16 +1965,16 @@ const watchContextMenu = () => {
           settings
         }))
         downloadProgressVisible.value = true
-      } else if (type === 2) {
+      } else if (type === 4) {
         saveTemplateDialogVisible.value = true
         clearFormValidate(saveTemplateForm)
-      } else if (type === 3) {
+      } else if (type === 5) {
         synchronousMode.value = data.method
         synchronizeTemplate()
-      } else if (type === 4) {
+      } else if (type === 6) {
         const paths = Array.from(selectedPreviewList.value.keys());
         paths.forEach(path => clearCanvasElements(path))
-      } else if (type === 5) {
+      } else if (type === 7) {
         const paths = Array.from(selectedPreviewList.value.keys());
         paths.forEach(path => resetCanvas(path))
       }
@@ -4161,6 +4229,22 @@ onBeforeUnmount(() => {
 
 
 .el-dialog {
+
+  .delete-tips-dialog-footer {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 10px;
+
+    .left-dialog-footer {
+      display: flex;
+      align-items: center;
+    }
+
+    .right-dialog-footer {
+      display: flex;
+      align-items: center;
+    }
+  }
 
   .about {
     width: 100%;
