@@ -350,7 +350,7 @@ const saveFiles = async () => {
         properties: ['openDirectory', 'createDirectory']
     })
     if (!canceled && filePaths) {
-        window.webContents.send('watch-contextMenu', {type: 1, outputDirectory: filePaths[0]})
+        window.webContents.send('watch-contextMenu', {type: 3, outputDirectory: filePaths[0]})
     }
 }
 
