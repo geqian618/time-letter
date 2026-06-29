@@ -43,7 +43,8 @@ const projectSettings = ref({
         optionAnchorPoint: true,
         movingStepSize: 1,
         defaultCanvasScale: 0.75,
-        enableScrollbar: true
+        enableScrollbar: true,
+        deleteTipVisible: true
     },
     availableFonts: new Map(),
     resize: {

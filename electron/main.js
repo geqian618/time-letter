@@ -313,6 +313,22 @@ const setupIpcHandlers = () => {
         const data = JSON.stringify({type: 'Settings', settings}, null, 2);
         fs.writeFileSync(filePath, data, 'utf8')
     })
+
+
+    // 删除文件
+    ipcMain.on('file:delete', async (event, filePaths) => {
+        if (!filePaths) return
+        for (let filePath of filePaths) {
+            // 删除文件
+            fs.rm(filePath, err => {
+                if (err) {
+                    console.log('删除文件失败：' + filePath);
+                } else {
+                    console.log('删除文件成功：' + filePath)
+                }
+            });
+        }
+    })
 }
 
 /**

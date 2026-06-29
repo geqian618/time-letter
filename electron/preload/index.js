@@ -20,4 +20,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
     exportTemplates: (args) => ipcRenderer.send('templates:export', args),
     watchProjectSettings: (callback) => ipcRenderer.on('settings:watch', callback),
     exportSettings: (args) => ipcRenderer.send('settings:export', args),
+    deleteFile: (args) => ipcRenderer.send('file:delete', args),
 });
