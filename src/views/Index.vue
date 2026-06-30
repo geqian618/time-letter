@@ -1303,7 +1303,8 @@
     </el-dialog>
 
 
-    <el-dialog v-model="deleteTipsDialogVisible" title="确认删除" width="350" align-center :close-on-click-modal="false">
+    <el-dialog v-model="deleteTipsDialogVisible" title="确认删除" width="350" align-center
+               :close-on-click-modal="false">
       <div style="margin: 5px 0">文件将从磁盘中删除，是否确认删除文件？</div>
       <template #footer>
         <div class="delete-tips-dialog-footer">
@@ -1919,6 +1920,7 @@ const watchContextMenu = () => {
       if (type === 1) {
         removeSelectedCanvas()
       } else if (type === 2) {
+        if (!selectedPreviewList.value?.size) return
         deleteTipsDialogVisible.value = projectSettings.value.others.deleteTipVisible;
         if (!projectSettings.value.others.deleteTipVisible) {
           permanentlyRemoveSelectedCanvas();
