@@ -7,7 +7,7 @@ const registerLocalShortcut = (window) => {
         window.webContents.send('watch-contextMenu', { type: 1 });
     });
 
-    localshortcut.register(window, 'CommandOrControl+Shift+D', () => {
+    localshortcut.register(window, 'CommandOrControl+Alt+D', () => {
         window.webContents.send('watch-contextMenu', { type: 2 });
     });
 

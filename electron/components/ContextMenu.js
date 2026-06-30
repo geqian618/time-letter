@@ -14,7 +14,7 @@ const createContextMenu = (mainWindow) => {
         },
         {
             label: '删除图片',
-            accelerator: 'CommandOrControl+Shift+D',
+            accelerator: 'CommandOrControl+Alt+D',
             click: () => {
                 window.webContents.send('watch-contextMenu', {type: 2});
             }

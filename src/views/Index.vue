@@ -1303,8 +1303,8 @@
     </el-dialog>
 
 
-    <el-dialog v-model="deleteTipsDialogVisible" title="确认" width="350" align-center :close-on-click-modal="false">
-      <span>文件将从磁盘中删除，是否确认删除文件？</span>
+    <el-dialog v-model="deleteTipsDialogVisible" title="是否删除" width="350" align-center :close-on-click-modal="false">
+      <div style="margin: 5px 0">文件将从磁盘中删除，是否确认删除文件？</div>
       <template #footer>
         <div class="delete-tips-dialog-footer">
           <div class="left-dialog-footer">
@@ -1312,7 +1312,7 @@
           </div>
           <div class="right-dialog-footer">
             <el-button @click="cancelRemoveSelectedCanvas">取消</el-button>
-            <el-button type="danger" @click="permanentlyRemoveSelectedCanvas">删除</el-button>
+            <el-button type="danger" @click="permanentlyRemoveSelectedCanvas">确认</el-button>
           </div>
         </div>
       </template>
