@@ -208,8 +208,8 @@
                               :format-tooltip="formatSliderTooltip"
                               v-model="photographOptions.shadow.offsetX"
                               size="small"
-                              :min="-50"
-                              :max="50"
+                              :min="-200"
+                              :max="200"
                               placement="top"/>
                           <input type="number"
                                  class="number-input"
@@ -225,8 +225,8 @@
                               @input="handleUpdatePhotograph"
                               :format-tooltip="formatSliderTooltip"
                               v-model="photographOptions.shadow.offsetY"
-                              :min="-50"
-                              :max="50"
+                              :min="-200"
+                              :max="200"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
@@ -549,8 +549,8 @@
                               :format-tooltip="formatSliderTooltip"
                               v-model="textOptions.shadow.offsetX"
                               size="small"
-                              :min="-100"
-                              :max="100"
+                              :min="-200"
+                              :max="200"
                               placement="top"/>
                           <input type="number" class="number-input" v-model="textOptions.shadow.offsetX" step="1">
                         </div>
@@ -561,8 +561,8 @@
                           <el-slider
                               :format-tooltip="formatSliderTooltip"
                               v-model="textOptions.shadow.offsetY"
-                              :min="-100"
-                              :max="100"
+                              :min="-200"
+                              :max="200"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
@@ -665,8 +665,8 @@
                               :format-tooltip="formatSliderTooltip"
                               v-model="imageOptions.shadow.offsetX"
                               size="small"
-                              :min="-100"
-                              :max="100"
+                              :min="-200"
+                              :max="200"
                               placement="top"/>
                           <input type="number" class="number-input" v-model="imageOptions.shadow.offsetX" step="1">
                         </div>
@@ -677,8 +677,8 @@
                           <el-slider
                               :format-tooltip="formatSliderTooltip"
                               v-model="imageOptions.shadow.offsetY"
-                              :min="-100"
-                              :max="100"
+                              :min="-200"
+                              :max="200"
                               show-alpha
                               size="small"
                               :predefine="predefineColors"/>
