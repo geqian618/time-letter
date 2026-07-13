@@ -62,6 +62,7 @@ async function parsePhotoMetadata(filePath) {
     try {
         const exifManager = new ExifManager();
         const {
+            FileName = '',
             ImageWidth = '',
             ImageHeight = '',
             Make = '',
@@ -84,6 +85,7 @@ async function parsePhotoMetadata(filePath) {
             shootingTime: DateTimeOriginal ? formatDateTime(DateTimeOriginal) : '',
             width: ImageWidth,
             height: ImageHeight,
+            fullFilename: FileName,
             filename: path.parse(filePath)?.name,
             fileSize: getFileSize(filePath),
             resolution: `${ImageWidth} x ${ImageHeight}`

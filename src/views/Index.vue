@@ -787,7 +787,7 @@
                 trigger="hover">
               <template #default>
                 <div style="font-size: 10px">
-                  <p v-if="canvas.metadata.filename">文件名称：{{ canvas.metadata.filename }}</p>
+                  <p v-if="canvas.metadata.filename">文件名称：{{ canvas.metadata.fullFilename }}</p>
                   <p v-if="canvas.metadata.shootingTime">拍摄时间：{{ canvas.metadata.shootingTime }}</p>
                   <p v-if="canvas.metadata.resolution">分辨率：{{ canvas.metadata.resolution }}</p>
                   <p v-if="canvas.metadata.fileSize">大小：{{ canvas.metadata.fileSize }}</p>
