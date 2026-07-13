@@ -60,7 +60,6 @@ function formatDateTime(DateTimeOriginal) {
 
 async function parsePhotoMetadata(filePath) {
     try {
-        const exifManager = new ExifManager();
         const {
             FileName = '',
             ImageWidth = '',
@@ -73,7 +72,7 @@ async function parsePhotoMetadata(filePath) {
             FocalLength = '',
             LensModel = '',
             DateTimeOriginal = ''
-        } = await exifManager.read(filePath);
+        } = await ExifManager.read(filePath);
         return {
             iso: ISO instanceof Array ? ISO[0] : ISO,
             cameraBrand: Make,

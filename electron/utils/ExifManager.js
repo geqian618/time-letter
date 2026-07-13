@@ -12,7 +12,7 @@ class ExifManager {
      * @param {string} filePath - 图片文件路径
      * @returns {Promise<Object>} 元数据对象
      */
-    async read(filePath) {
+    static async read(filePath) {
         if (!this.isReadable(filePath)) {
             throw new Error(`读取元数据失败，文件[${filePath}]不存在或不可读`);
         }
@@ -35,7 +35,7 @@ class ExifManager {
      * @param overwrite 覆盖原文件
      * @returns {Promise<void>}
      */
-    async write(filePath, metadata, overwrite = true) {
+    static async write(filePath, metadata, overwrite = true) {
         if (!this.isReadable(filePath)) {
             throw new Error(`读取元数据失败，文件[${filePath}]不存在或不可读`);
         }
@@ -53,7 +53,7 @@ class ExifManager {
      * @param filePath
      * @returns {boolean}
      */
-    isReadable(filePath) {
+    static isReadable(filePath) {
         try {
             fs.accessSync(filePath, fs.constants.F_OK);
             return true
@@ -66,7 +66,7 @@ class ExifManager {
      * 关闭 exiftool 进程（程序退出前调用）
      * @returns {Promise<void>}
      */
-    async close() {
+    static async close() {
         await exiftool.end();
     }
 }

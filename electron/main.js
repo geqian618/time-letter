@@ -4,13 +4,13 @@ const path = require('path');
 const fs = require('fs')
 const AdmZip = require('adm-zip');
 const localshortcut = require('electron-localshortcut')
-const {exiftool} = require('exiftool-vendored');
 
 // 工具模块
 const imageParser = require('./utils/image-parser')
 const imageExporter = require('./thread/image-exporter')
 const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('./utils/path-helper')
 const {getSystemFonts, getCustomFonts} = require('./utils/font-manager')
+const ExifManager = require("./utils/ExifManager");
 
 // 钩子和组件
 const resourcesLoader = require('./utils/resources-loader')
@@ -366,7 +366,7 @@ const setupAppLifecycle = () => {
         // 注销全局快捷键
         globalShortcut.unregisterAll();
 
-        exiftool.end();
+        ExifManager.close()
     })
 
     // 所有窗口关闭
