@@ -2,6 +2,7 @@ const Exif = require("exif");
 const path = require("path");
 const createSharp = require("sharp");
 const fs = require('fs');
+const ExifManager = require("./ExifManager");
 
 async function parseMetadata(imagePath) {
     try {
@@ -53,96 +54,44 @@ function getFileSize(filePath) {
 }
 
 function formatDateTime(DateTimeOriginal) {
-    if (!DateTimeOriginal) {
-        return
-    }
-    let parts = DateTimeOriginal.split(' ');
-    let datePart = parts[0].replace(/:/g, '-');
-    let timePart = parts[1];
-    return datePart + ' ' + timePart;
+    const {year, month, day, hour, minute, second} = DateTimeOriginal
+    return `${year}-${month}-${day} ${hour}:${minute}:${second}`
 }
 
 async function parsePhotoMetadata(filePath) {
-    const {width, height} = await createSharp(filePath).metadata();
     try {
-        const metadata = await parseMetadata(filePath);
+        const exifManager = new ExifManager();
         const {
-            image: {Make = '', Model = ''} = {},
-            exif: {
-                ISO = '',
-                ExposureTime = '',
-                FNumber = '',
-                FocalLength = '',
-                LensModel = '',
-                DateTimeOriginal = ''
-            } = {}
-        } = metadata;
+            ImageWidth = '',
+            ImageHeight = '',
+            Make = '',
+            Model = '',
+            ISO = '',
+            ExposureTime = '',
+            FNumber = '',
+            FocalLength = '',
+            LensModel = '',
+            DateTimeOriginal = ''
+        } = await exifManager.read(filePath);
         return {
-            iso: ISO,
+            iso: ISO instanceof Array ? ISO[0] : ISO,
             cameraBrand: Make,
             cameraModel: Model,
             lensModel: LensModel,
-            focalLength: FocalLength ? Math.trunc(FocalLength) : '',
-            shutter: FocalLength ? formatShutterSpeed(ExposureTime) : '',
+            focalLength: FocalLength ? Number.parseInt(FocalLength) : '',
+            shutter: ExposureTime || '',
             aperture: FNumber,
             shootingTime: DateTimeOriginal ? formatDateTime(DateTimeOriginal) : '',
-            width,
-            height,
+            width: ImageWidth,
+            height: ImageHeight,
             filename: path.parse(filePath)?.name,
             fileSize: getFileSize(filePath),
-            resolution: `${width} x ${height}`
+            resolution: `${ImageWidth} x ${ImageHeight}`
         }
     } catch (err) {
+        const {width, height} = await createSharp(filePath).metadata();
         return {width, height}
     }
-}
-
-
-function formatShutterSpeed(seconds) {
-
-    // 处理无效输入
-    if (isNaN(seconds) || seconds <= 0) return '';
-
-    // 大于等于1秒的处理
-    if (seconds >= 1) {
-        // 四舍五入到0.1秒
-        const rounded = Math.round(seconds * 10) / 10;
-        return rounded % 1 === 0 ? `${rounded}s` : `${rounded}s`;
-    }
-
-    // 小于1秒的处理（分数形式）
-    const MAX_DENOMINATOR = 10000;
-    let bestNumerator = 0;
-    let bestDenominator = 1;
-    let minError = Infinity;
-
-    // 遍历分母寻找最佳分数
-    for (let d = 1; d <= MAX_DENOMINATOR; d++) {
-        const n = Math.round(seconds * d);
-        const error = Math.abs(n / d - seconds);
-
-        // 更新最小误差的分数
-        if (error < minError) {
-            minError = error;
-            bestNumerator = n;
-            bestDenominator = d;
-        }
-    }
-
-    // 处理极小的快门速度
-    if (bestNumerator === 0) {
-        bestNumerator = 1;
-        bestDenominator = MAX_DENOMINATOR;
-    }
-
-    // 计算最大公约数（GCD）
-    const gcd = (a, b) => (b === 0 ? a : gcd(b, a % b));
-    const divisor = gcd(bestNumerator, bestDenominator);
-    const numerator = bestNumerator / divisor;
-    const denominator = bestDenominator / divisor;
-
-    // 返回格式化结果
-    return numerator === 1 ? `1/${denominator}` : `${numerator}/${denominator}`;
 }
 
 module.exports = {parsePhotoMetadata};
