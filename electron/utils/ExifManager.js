@@ -40,7 +40,8 @@ class ExifManager {
             throw new Error(`读取元数据失败，文件[${filePath}]不存在或不可读`);
         }
         try {
-            await exiftool.write(filePath, metadata, {overwriteOriginal: overwrite});
+            const options = overwrite ? {writeArgs: ['-overwrite_original']} : {};
+            await exiftool.write(filePath, metadata, options);
         } catch (error) {
             throw new Error(`写入元数据失败 [${filePath}]: ${error.message}`);
         }
