@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs')
 const AdmZip = require('adm-zip');
 const localshortcut = require('electron-localshortcut')
+const {exiftool} = require('exiftool-vendored');
 
 // 工具模块
 const imageParser = require('./utils/image-parser')
@@ -360,10 +361,12 @@ const setupAppLifecycle = () => {
 
     // 所有窗口已关闭，应用即将退出
     app.on('will-quit', () => {
-        imageWatcher.colse()
+        imageWatcher.close()
         fontWatcher.close();
         // 注销全局快捷键
         globalShortcut.unregisterAll();
+
+        exiftool.end();
     })
 
     // 所有窗口关闭
