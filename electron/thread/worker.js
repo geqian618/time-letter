@@ -45,7 +45,7 @@ module.exports = async (params) => {
             } catch (err) {
                 console.error('拷贝失败:', err);
             }
-            return;
+            return null;
         }
         elements.splice(0, 1);
     }
