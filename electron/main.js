@@ -323,6 +323,27 @@ const setupIpcHandlers = () => {
             shell.trashItem(filePath)
         }
     })
+
+
+    ipcMain.on('image:request-import', async () => {
+        const {filePaths} = await dialog.showOpenDialog({
+            title: '导入图片',
+            buttonLabel: '确认',
+            defaultPath: app.getPath('desktop'),
+            properties: ['openFile'],
+            filters: [{name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']}]
+        });
+        if (filePaths && filePaths.length) {
+            const filePath = filePaths[0];
+            const extname = path.extname(filePath).slice(1);
+            mainWindow.webContents.send('image:watch-import', {
+                filename: path.basename(filePath),
+                url: localPathToProtocolUrl(filePath),
+                path: filePath,
+                extname: extname
+            })
+        }
+    })
 }
 
 /**
