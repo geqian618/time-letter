@@ -276,11 +276,17 @@
                         <div class="label">边框类型</div>
                         <div class="value">
                           <el-select
-                              @change="handleUpdateBorders"
+                              @change="handleCreateBorders()"
                               v-model="borderOptions.borderType"
-                              :options="[{value: 0,label: '通用'}, {value: 1,label: '模糊'}]"
+                              :options="[{value: 0,label: '通用'}, {value: 1,label: '模糊'},{value: 2, label:'自定义'}]"
                               size="small"
                               placeholder="Select"/>
+                        </div>
+                      </li>
+                      <li class="option" v-show="borderOptions.borderType === 2">
+                        <div class="label">边框图片</div>
+                        <div class="value">
+                          <el-button @click="requestImportBorderImage" size="small" type="primary">选择</el-button>
                         </div>
                       </li>
                       <li class="option">
@@ -371,7 +377,7 @@
                                  step="1">
                         </div>
                       </li>
-                      <li class="option" v-show="borderOptions.borderType === 1">
+                      <li class="option" v-show="[1,2].includes(borderOptions.borderType)">
                         <div class="label">模糊值</div>
                         <div class="value">
                           <el-slider
@@ -1413,7 +1419,7 @@ const metadataOptions = ref(new Metadata())
 
 const sliderRange = ref({
   min: 0,
-  max: 300
+  max: 1000
 })
 
 const previewContainer = ref(null)
@@ -1961,11 +1967,15 @@ const watchContextMenu = () => {
           }
           return {filePath: path, index, filename, json: JSON.stringify(background)}
         });
+
+        console.log(JSON.parse(settings[0].json))
+
         window.electronAPI.requestExportFiles(_.cloneDeep({
           projectSettings: projectSettings.value,
           outputDirectory: data.outputDirectory,
           settings
         }))
+
         downloadProgressVisible.value = true
       } else if (type === 4) {
         saveTemplateDialogVisible.value = true
@@ -2395,8 +2405,11 @@ const useTemplate = async (settings, path) => {
 
   if (border.type === 'image') {
     border.blur = borderOptions.borderBlur / initZoom
-    border.src = canvas.url
-    borderOptions.path = canvas.path
+    if (borderOptions.borderType === 1) {
+      border.src = canvas.url
+      borderOptions.url = canvas.url;
+      borderOptions.path = canvas.path;
+    }
   }
 
   photo.src = canvas.url
@@ -2495,7 +2508,7 @@ const renderCanvas = async (canvas) => {
     const image = await Image.fromURL(canvas.url, {
       selectable: false,
       cacheable: true,
-      meta: {...new PhotographOptions(), path: canvas.path}
+      meta: {...new PhotographOptions(), path: canvas.path, url: canvas.url}
     });
 
     // 非最终渲染图片，放弃渲染
@@ -2858,6 +2871,18 @@ const formatSliderTooltip = (val) => {
 };
 
 
+const requestImportBorderImage = () => {
+  window.electronAPI.requestImportBackgroundImage();
+}
+
+
+const watchImportBackgroundImage = () => {
+  window.electronAPI.watchImportBackgroundImage(async (event, data) => {
+    handleCreateBorders(data)
+  })
+}
+
+
 const handleUpdatePhotograph = async () => {
   const currentCanvas = CanvasManager.getCurrentCanvas();
   if (!currentCanvas) return
@@ -2875,6 +2900,83 @@ const handleUpdatePhotograph = async () => {
   backgroundCanvasEditor.renderAll();
   currentCanvas.photographOptions = _.cloneDeep(photographOptions.value)
   currentCanvas.background = backgroundCanvasEditor.exportToObject()
+}
+
+
+const handleCreateBorders = async (file) => {
+  const currentCanvas = CanvasManager.getCurrentCanvas();
+  if (!currentCanvas) return
+  const {
+    width,
+    height,
+    initZoom,
+  } = currentCanvas;
+
+  const {
+    borderLeft,
+    borderRight,
+    borderTop,
+    borderBottom,
+    borderColor,
+    borderRadius,
+    borderType,
+    borderBlur
+  } = borderOptions.value;
+
+  const elements = backgroundCanvasEditor.getElements();
+  const background = elements[0];
+  const target = elements[1];
+
+  const newBorderLeft = borderLeft / initZoom
+  const newBorderRight = borderRight / initZoom
+  const newBorderTop = borderTop / initZoom
+  const newBorderBottom = borderBottom / initZoom
+  const newBorderRadius = borderRadius / initZoom
+  const newBorderBlur = borderBlur / initZoom
+  target.x = newBorderLeft
+  target.y = newBorderTop
+  const newWidth = width + newBorderLeft + newBorderRight
+  const newHeight = height + newBorderTop + newBorderBottom
+  backgroundCanvasEditor.resizeCanvas(newWidth, newHeight)
+  canvasEditor.resizeCanvas(newWidth, newHeight)
+
+  scrollBarMoveToCenter(currentCanvas)
+
+  if (borderType === 0 && background.type !== 'rect') {
+    delete background.meta.path
+    delete background.meta.url
+    elements[0] = new Rect({
+      width: newWidth,
+      height: newHeight,
+      radius: newBorderRadius,
+      fill: borderColor,
+      meta: background.meta
+    });
+  } else if (borderType === 1) {
+    elements[0] = new Image(target.image, {
+      width: newWidth,
+      height: newHeight,
+      radius: newBorderRadius,
+      blur: newBorderBlur || 15 / initZoom,
+      meta: Object.assign(background.meta, {path: target.meta.path, url: target.meta.url, borderBlur: borderBlur || 15})
+    })
+  } else if (borderType === 2 && file) {
+    elements[0] = await Image.fromURL(file.url, {
+      width: newWidth,
+      height: newHeight,
+      radius: 0,
+      blur: 0,
+      meta: Object.assign(background.meta, {path: file.path, url: file.url, borderBlur: 0, borderRadius: 0})
+    })
+  }
+
+  canvasElement.value.classList.remove('scale-animation')
+  backgroundElement.value.classList.remove('scale-animation')
+  canvasEditor.renderAll();
+  backgroundCanvasEditor.renderAll();
+
+  currentCanvas.foreground = canvasEditor.exportToObject()
+  currentCanvas.background = backgroundCanvasEditor.exportToObject();
 }
 
 const handleUpdateBorders = () => {
@@ -2917,30 +3019,11 @@ const handleUpdateBorders = () => {
 
   scrollBarMoveToCenter(currentCanvas)
 
-  if (borderType === 0 && background.type !== 'rect') {
-    delete background.meta.path
-    elements[0] = new Rect({
-      width: newWidth,
-      height: newHeight,
-      radius: newBorderRadius,
-      fill: borderColor,
-      meta: background.meta
-    });
-  } else if (borderType === 1 && background.type !== 'image') {
-    elements[0] = new Image(target.image, {
-      width: newWidth,
-      height: newHeight,
-      radius: newBorderRadius,
-      blur: newBorderBlur,
-      meta: Object.assign(background.meta, {path: target.meta.path})
-    })
-  } else {
-    background.width = newWidth;
-    background.height = newHeight;
-    background.fill = borderColor;
-    background.radius = newBorderRadius;
-    background.blur = newBorderBlur;
-  }
+  background.width = newWidth;
+  background.height = newHeight;
+  background.fill = borderColor;
+  background.radius = newBorderRadius;
+  background.blur = newBorderBlur;
 
   if (borderLeft !== lastBorderLeft || borderTop !== lastBorderTop) {
     for (let element of canvasEditor.getElements()) {
@@ -3567,6 +3650,7 @@ onMounted(() => {
   watchDownloadProgress()
   editorOutputSettings()
   watchProjectSettings()
+  watchImportBackgroundImage()
   loadProjectSettings()
   initAreaResize()
   initCanvasSize()
@@ -3960,6 +4044,12 @@ onBeforeUnmount(() => {
 
                       span {
                         color: #4d4c4c;
+                      }
+                    }
+
+                    :deep(.el-button) {
+                      span {
+                        color: white;
                       }
                     }
 

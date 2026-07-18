@@ -21,4 +21,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     watchProjectSettings: (callback) => ipcRenderer.on('settings:watch', callback),
     exportSettings: (args) => ipcRenderer.send('settings:export', args),
     deleteFile: (args) => ipcRenderer.send('file:delete', args),
+    requestImportBackgroundImage: (args) => ipcRenderer.send('image:request-import', args),
+    watchImportBackgroundImage: (callback) => ipcRenderer.on('image:watch-import', callback),
 });
