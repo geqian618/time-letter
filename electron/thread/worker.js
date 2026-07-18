@@ -69,8 +69,8 @@ module.exports = async (params) => {
         settings.zoom = Math.min(maxWidth / originalWidth, maxHeight / originalHeight)
     }
 
-    const canvas = createCanvas(originalWidth, originalHeight);
-    const canvasEditor = new CanvasEditor(canvas, {strictIntegerDimensions: true});
+    let canvas = createCanvas(originalWidth, originalHeight);
+    let canvasEditor = new CanvasEditor(canvas, {strictIntegerDimensions: true});
     await canvasEditor.loadFromJSON(JSON.stringify(settings))
     canvasEditor.renderAll()
 
@@ -84,6 +84,12 @@ module.exports = async (params) => {
     }
 
     await fs.writeFile(outputPath, buffer);
+
+    canvasEditor.destroy();
+
+    canvasEditor = null;
+
+    canvas = null;
 
     return null;
 };

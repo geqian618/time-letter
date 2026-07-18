@@ -1062,12 +1062,18 @@ class CanvasEditor {
      * 销毁编辑器，清理事件监听
      */
     destroy() {
-        // 移除事件监听
-        this.canvas.removeEventListener('mousedown', this.handleMouseDown);
-        // 移除隐藏输入框
-        this.removeHiddenInput();
-        // 清除定时器
-        clearInterval(this.cursorBlinkInterval);
+        if (this.isBrowser) {
+            // 移除事件监听
+            this.canvas.removeEventListener('mousedown', this.handleMouseDown);
+            // 移除隐藏输入框
+            this.removeHiddenInput();
+            // 清除定时器
+            clearInterval(this.cursorBlinkInterval);
+        }
+
+        this.cache = null;
+        this.ctx = null;
+        this.canvas = null;
     }
 
     /**
