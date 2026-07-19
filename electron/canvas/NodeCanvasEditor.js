@@ -1076,11 +1076,13 @@ class CanvasEditor {
             this.removeHiddenInput();
             // 清除定时器
             clearInterval(this.cursorBlinkInterval);
+
+            this.eventCallbacks.clear();
         }
 
-        this.cache = null;
         this.ctx = null;
         this.canvas = null;
+        this.cache.clear();
     }
 
     /**
