@@ -4,6 +4,18 @@ const path = require("path");
 const {copyExifDataToBuffer} = require("../utils/exif-helper");
 const {promises: fs} = require("fs");
 
+
+let cachedCanvasEditor;
+
+const getCachedCanvasEditor = () => {
+    if (!cachedCanvasEditor) {
+        const canvas = createCanvas(0, 0);
+        cachedCanvasEditor = new CanvasEditor(canvas, {strictIntegerDimensions: true});
+    }
+    return cachedCanvasEditor;
+}
+
+
 module.exports = async (params) => {
     const {
         projectSettings: {
@@ -69,10 +81,12 @@ module.exports = async (params) => {
         settings.zoom = Math.min(maxWidth / originalWidth, maxHeight / originalHeight)
     }
 
-    let canvas = createCanvas(originalWidth, originalHeight);
-    let canvasEditor = new CanvasEditor(canvas, {strictIntegerDimensions: true});
+    const canvasEditor = getCachedCanvasEditor();
+    canvasEditor.resizeCanvas(originalWidth, originalHeight)
     await canvasEditor.loadFromJSON(JSON.stringify(settings))
     canvasEditor.renderAll()
+
+    const canvas = canvasEditor.getCanvas();
 
     // 7. 保存图片 (使用 Buffer 写入)
     let buffer = outputExtname === 'png'
@@ -84,12 +98,6 @@ module.exports = async (params) => {
     }
 
     await fs.writeFile(outputPath, buffer);
-
-    canvasEditor.destroy();
-
-    canvasEditor = null;
-
-    canvas = null;
 
     return null;
 };
