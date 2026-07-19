@@ -2950,7 +2950,7 @@ const handleCreateBorders = async (file) => {
       height: newHeight,
       radius: newBorderRadius,
       fill: borderColor,
-      meta: {...background.meta}
+      meta: {...background.meta, borderBlur: 0}
     });
   } else if (borderType === 1) {
     elements[0] = new Image(target.image, {
