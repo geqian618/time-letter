@@ -34,6 +34,9 @@ class CanvasEditor {
 
         this.activeElements = [];
 
+        // 默认不开启图片缓存
+        this.enableCache = options.enableCache || false;
+
         // canvas 宽高是否必须为整数值
         this.strictIntegerDimensions = options.strictIntegerDimensions || false;
 
@@ -261,7 +264,7 @@ class CanvasEditor {
      */
     addElement(element) {
         this.elements.push(element);
-        if (element.type === 'image' && element.cacheable) {
+        if (element.type === 'image' && this.enableCache && element.cacheable) {
             this.cache.set(element.src, element.image)
         }
         const callbacks = this.eventCallbacks.get(ADD_OBJECT);
@@ -1166,10 +1169,10 @@ class CanvasEditor {
                     this.elements.push(new Text(element.text, element))
                 }
                 if (element.type === 'image') {
-                    const image = this.cache.get(element.src);
+                    const image = this.enableCache ? this.cache.get(element.src) : null;
                     const instance = image ? new Image(image, element) : await Image.fromURL(element.src, element);
                     this.elements.push(instance)
-                    if (instance.cacheable && !this.cache.has(element.src)) {
+                    if (this.enableCache && instance.cacheable && !this.cache.has(element.src)) {
                         this.cache.set(instance.src, instance.image);
                     }
                 }
