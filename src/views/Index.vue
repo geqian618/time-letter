@@ -2662,7 +2662,6 @@ const initAreaResize = () => {
 
 const initCanvasSize = () => {
 
-
   setTimeout(() => {
 
     const {previewContainer: previewContainerResize} = projectSettings.value.resize;
@@ -2675,9 +2674,9 @@ const initCanvasSize = () => {
 
     renderCanvasScrollbar()
 
-    canvasEditor = new CanvasEditor(canvasElement.value);
+    canvasEditor = new CanvasEditor(canvasElement.value, {enableCache: true});
 
-    backgroundCanvasEditor = new CanvasEditor(backgroundElement.value);
+    backgroundCanvasEditor = new CanvasEditor(backgroundElement.value, {enableCache: true});
 
     canvasEditor.on('selection:object', (event) => {
       const {initZoom} = CanvasManager.getCurrentCanvas();
