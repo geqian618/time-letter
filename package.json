@@ -18,7 +18,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "@napi-rs/canvas": "^0.1.88",
+    "@napi-rs/canvas": "^1.0.2",
     "adm-zip": "^0.5.17",
     "aeo-image": "^1.2.0",
     "bytenode": "^1.5.7",
@@ -53,7 +53,7 @@
     "@vue/tsconfig": "^0.5.1",
     "concurrently": "^9.2.1",
     "cross-env": "^7.0.3",
-    "electron": "^29.1.0",
+    "electron": "^29.4.6",
     "electron-builder": "^24.13.3",
     "eslint": "^8.49.0",
     "eslint-plugin-vue": "^9.17.0",
