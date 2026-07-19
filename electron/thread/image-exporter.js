@@ -1,5 +1,5 @@
 const path = require('path');
-const {Piscina} = require('piscina');
+const Piscina = require('piscina');
 const {dialog} = require('electron');
 const os = require("os");
 
@@ -45,12 +45,7 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
         }
         const setting = queue.shift();
         try {
-            const params = {
-                projectSettings,
-                outputDirectory,
-                setting
-            };
-            await threadPool.run(params);
+            await threadPool.run({projectSettings, outputDirectory, setting});
         } catch (err) {
             errors++;
             dialog.showErrorBox('文件读取异常', err.message)
