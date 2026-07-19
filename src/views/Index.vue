@@ -2950,7 +2950,7 @@ const handleCreateBorders = async (file) => {
       height: newHeight,
       radius: newBorderRadius,
       fill: borderColor,
-      meta: background.meta
+      meta: {...background.meta}
     });
   } else if (borderType === 1) {
     elements[0] = new Image(target.image, {
@@ -2958,7 +2958,7 @@ const handleCreateBorders = async (file) => {
       height: newHeight,
       radius: newBorderRadius,
       blur: newBorderBlur || 15 / initZoom,
-      meta: Object.assign(background.meta, {path: target.meta.path, url: target.meta.url, borderBlur: borderBlur || 15})
+      meta: {...background.meta, path: target.meta.path, url: target.meta.url, borderBlur: borderBlur || 15}
     })
   } else if (borderType === 2 && file) {
     elements[0] = await Image.fromURL(file.url, {
@@ -2966,7 +2966,7 @@ const handleCreateBorders = async (file) => {
       height: newHeight,
       radius: 0,
       blur: 0,
-      meta: Object.assign(background.meta, {path: file.path, url: file.url, borderBlur: 0, borderRadius: 0})
+      meta: {...background.meta, path: file.path, url: file.url, borderBlur: 0, borderRadius: 0}
     })
   }
 
@@ -2975,6 +2975,8 @@ const handleCreateBorders = async (file) => {
   canvasEditor.renderAll();
   backgroundCanvasEditor.renderAll();
 
+  borderOptions.value = elements[0].meta
+  currentCanvas.borderOptions = _.cloneDeep(elements[0].meta)
   currentCanvas.foreground = canvasEditor.exportToObject()
   currentCanvas.background = backgroundCanvasEditor.exportToObject();
 }
@@ -2996,7 +2998,6 @@ const handleUpdateBorders = () => {
     borderBottom,
     borderColor,
     borderRadius,
-    borderType,
     borderBlur
   } = borderOptions.value;
 
