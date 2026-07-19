@@ -1098,6 +1098,16 @@ class CanvasEditor {
         }
     }
 
+
+    /**
+     * 获取 canvas
+     * @returns {*}
+     */
+    getCanvas() {
+        return this.canvas;
+    }
+
+
     /**
      * 导出所有数据为 JSON
      * @returns {string} JSON 格式的文本数据
