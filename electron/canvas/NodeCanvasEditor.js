@@ -417,16 +417,20 @@ class CanvasEditor {
             : this.activeElements;
     }
 
+
     /**
      * 清理画布
      */
     clearCanvas() {
-        this.isEditing && this.finishEditing();
+        if (this.isBrowser) {
+            this.isEditing && this.finishEditing();
+            this.activeElements = [];
+        }
         this.resetElements([])
-        this.activeElements = [];
         // 清除画布
         this.ctx.clearRect(0, 0, this.width, this.height);
     }
+
 
     /**
      * 切换网格背景显示
