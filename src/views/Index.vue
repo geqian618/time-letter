@@ -806,7 +806,8 @@
                      @click.meta.exact="handleSelectPreviewElement($event,canvas)"
                      @click.ctrl.exact="handleSelectPreviewElement($event, canvas)"
                      @click.shift.exact="handleSelectMultiplePreviewElements($event,canvas)"
-                     @click="switchPreviewImage($event, canvas)">
+                     @click="switchPreviewImage($event, canvas)"
+                     @dblclick="handleDbClickPreviewImage($event,canvas)">
               </template>
             </el-popover>
             <img v-else
@@ -2603,6 +2604,26 @@ const renderCanvas = async (canvas) => {
     }
     if (typeof background === 'string') {
       canvas.background = backgroundCanvasEditor.exportToObject()
+    }
+  }
+}
+
+
+const handleDbClickPreviewImage = (event, canvas) => {
+  if (!event.ctrlKey && !event.shiftKey) {
+    if (selectedPreviewList.value.has(canvas.path)) {
+      if (CanvasManager.getSelectedPath() !== canvas.path) {
+        // 更改新的选择元素
+        CanvasManager.setSelectedObject({path: canvas.path, previewElement: event.target})
+      }
+      // 清空选中元素
+      const selectedElements = selectedPreviewList.value;
+      for (const [path, element] of selectedElements) {
+        if (event.target !== element) {
+          element.classList.remove('active')
+          selectedPreviewList.value.delete(path)
+        }
+      }
     }
   }
 }
