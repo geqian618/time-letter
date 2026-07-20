@@ -914,6 +914,7 @@
                title="导出进度"
                align-center
                @close="handleDownloadProgressClose"
+               @closed="handleDownloadProgressClosed"
                :close-on-click-modal="false"
                width="500">
       <el-progress class="download-progress" :percentage="downloadProgressPercentage"/>
@@ -1165,15 +1166,27 @@
             <div class="options">
               <div class="option">
                 <span class="label">线程数：</span>
-                <el-select class="value"
-                           v-model="projectSettings.performance.downloadThreads"
-                           size="small">
+                <el-select class="value" v-model="projectSettings.performance.downloadThreads" size="small">
                   <el-option
                       v-for="item in downloadThreadsOptions"
                       :key="item.value"
                       :label="item.label"
                       :value="item.value"/>
                 </el-select>
+              </div>
+              <div class="option">
+                <span class="label">图形渲染器：</span>
+                <el-select class="value" v-model="projectSettings.performance.graphicsRenderer" size="small">
+                  <el-option
+                      v-for="item in [{label:'@napi-rs/canvas',value:0},{label:'skia-canvas',value:1}]"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"/>
+                </el-select>
+                <div class="notes">
+                  <img src="../assets/icon/notes.svg">
+                  <span>{{ graphicsRendererAnnotation }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -1534,6 +1547,13 @@ const isHideDeleteTips = computed(() => {
   return !projectSettings.value.others.deleteTipVisible
 })
 
+
+const graphicsRendererAnnotation = computed(() => {
+  return projectSettings.value.performance.graphicsRenderer === 0
+      ? '下载速度可能会更快，大概率有内存泄漏风险（使用完及时关闭应用，释放内存）'
+      : '下载速度可能会更慢，没有内存泄漏风险'
+})
+
 const handleDeleteTipsVisible = () => {
   projectSettings.value.others.deleteTipVisible = !projectSettings.value.others.deleteTipVisible
 }
@@ -1752,10 +1772,12 @@ const handleDownloadProgressClose = () => {
   setTimeout(() => {
     if (downloadProgressPercentage.value !== 100) {
       stopDownloadFiles()
-    } else {
-      downloadProgressPercentage.value = 0
     }
   }, 200)
+}
+
+const handleDownloadProgressClosed = () => {
+  downloadProgressPercentage.value = 0
 }
 
 const watchLabelResources = () => {
@@ -4452,6 +4474,22 @@ onBeforeUnmount(() => {
 
             .value {
               width: 150px;
+            }
+
+            .notes {
+              height: 28px;
+              display: flex;
+              align-items: center;
+              margin-left: 10px;
+              gap: 3px;
+
+              img {
+                height: 70%;
+              }
+
+              span {
+                font-size: 10px;
+              }
             }
 
             .metadata-input {

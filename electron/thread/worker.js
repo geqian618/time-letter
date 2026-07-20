@@ -1,15 +1,28 @@
 const {CanvasEditor} = require("../canvas/NodeCanvasEditor");
-const {createCanvas} = require('@napi-rs/canvas')
 const path = require("path");
 const {copyExifDataToBuffer} = require("../utils/exif-helper");
 const {promises: fs} = require("fs");
-
+const {Image, LazyImage} = require('../canvas/NodeCanvasEditor')
+const {reloadCustomFonts} = require('../utils/font-manager')
 
 let cachedCanvasEditor;
 
-const getCachedCanvasEditor = () => {
+const getCachedCanvasEditor = (graphicsRenderer) => {
     if (!cachedCanvasEditor) {
-        const canvas = createCanvas(0, 0);
+        let canvas;
+        if (graphicsRenderer === 0) {
+            const {createCanvas, loadImage} = require('@napi-rs/canvas')
+            canvas = new createCanvas(0, 0)
+            LazyImage.loadImage = Image.loadImage = loadImage
+        } else {
+            const {Canvas, loadImage} = require('skia-canvas')
+            canvas = new Canvas()
+            // 禁用 GPU 加速，强制使用软件渲染器
+            canvas.gpu = false;
+            LazyImage.loadImage = Image.loadImage = loadImage
+            // 加载自定义字体
+            reloadCustomFonts()
+        }
         cachedCanvasEditor = new CanvasEditor(canvas, {strictIntegerDimensions: true});
     }
     return cachedCanvasEditor;
@@ -25,6 +38,9 @@ module.exports = async (params) => {
                 outputSize: {width, height, maxWidth, maxHeight, type},
                 isSynchronizeMetadata,
                 fileNaming: {basename, prefix, suffix}
+            },
+            performance: {
+                graphicsRenderer
             }
         },
         outputDirectory,
@@ -66,7 +82,7 @@ module.exports = async (params) => {
         if (element.type === 'image') {
             element.src = element.meta.path
         }
-        if (element.shadow) {
+        if (graphicsRenderer === 0 && element.shadow) {
             element.shadow.blur = element.shadow.blur * 0.7;
         }
     }
@@ -81,17 +97,21 @@ module.exports = async (params) => {
         settings.zoom = Math.min(maxWidth / originalWidth, maxHeight / originalHeight)
     }
 
-    const canvasEditor = getCachedCanvasEditor();
+    const canvasEditor = getCachedCanvasEditor(graphicsRenderer);
     canvasEditor.resizeCanvas(originalWidth, originalHeight)
     await canvasEditor.loadFromJSON(JSON.stringify(settings))
     canvasEditor.renderAll()
 
     const canvas = canvasEditor.getCanvas();
 
+    let buffer;
+
     // 7. 保存图片 (使用 Buffer 写入)
-    let buffer = outputExtname === 'png'
-        ? canvas.toBuffer('image/png')
-        : canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 100 : quality);
+    if (graphicsRenderer === 0) {
+        buffer = outputExtname === 'png' ? canvas.toBuffer('image/png') : canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 100 : quality);
+    } else {
+        buffer = outputExtname === 'png' ? await canvas.toBuffer('png') : await canvas.toBuffer(`${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 1 : quality / 100);
+    }
 
     if (['jpeg', 'jpg'].includes(originalExtname) && ['jpeg', 'jpg'].includes(outputExtname) && isSynchronizeMetadata) {
         buffer = await copyExifDataToBuffer(filePath, buffer)

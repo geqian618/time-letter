@@ -93,6 +93,7 @@ class CanvasEditor {
         this.ctx.antialias = 'subpixel'
         this.ctx.imageSmoothingEnabled = true;
         this.ctx.imageSmoothingQuality = 'high'
+        this.ctx.fontHinting = false
 
         this.setupCanvas();
 
@@ -1496,17 +1497,12 @@ class Text extends Element {
         // 获取最大高度和 ascent
         for (let i = 0; i < this.text.length; i++) {
             const char = this.text[i];
-            const {
-                actualBoundingBoxAscent: ascent,
-                actualBoundingBoxDescent: descent
-            } = ctx.measureText(char);
-
+            const {actualBoundingBoxAscent: ascent, actualBoundingBoxDescent: descent} = ctx.measureText(char);
             const charHeight = ascent + descent;
             maxCharHeight = Math.max(maxCharHeight, charHeight);
             maxAscent = Math.max(maxAscent, ascent);
         }
-        // 计算垂直居中的基线位置
-        // 假设 this.y 是文字区域的中心点 y 坐标
+        // 计算垂直居中的基线位置，假设 this.y 是文字区域的中心点 y 坐标
         const baselineY = this.y + maxAscent;
         for (let i = 0; i < this.text.length; i++) {
             const char = this.text[i];
@@ -1683,6 +1679,8 @@ class EditableText extends Text {
 
 class Image extends Element {
 
+    static loadImage;
+
     #centerX = 0;
 
     #centerY = 0;
@@ -1771,8 +1769,8 @@ class Image extends Element {
                 image.src = src;
                 image.crossOrigin = options.crossOrigin;
             } else {
-                const {loadImage} = require('@napi-rs/canvas')
-                loadImage(src).then(image => {
+                if (!Image.loadImage) reject(new Error('Image类未设置图像加载loadImage静态方法'));
+                Image.loadImage(src).then(image => {
                     resolve(new Image(image, options))
                 }).catch(err => {
                     reject(`Failed to load image from URL: ${src}. ${err.message}`)
@@ -1957,6 +1955,8 @@ class Image extends Element {
 
 class LazyImage extends Element {
 
+    static loadImage;
+
     #centerX = 0;
 
     #centerY = 0;
@@ -2038,8 +2038,8 @@ class LazyImage extends Element {
                 image.crossOrigin = this.crossOrigin;
                 this.image = image;
             } else {
-                const {loadImage} = require('@napi-rs/canvas')
-                loadImage(this.src).then(image => {
+                if (!Image.loadImage) reject(new Error('Image类未设置图像加载loadImage静态方法'));
+                Image.loadImage(this.src).then(image => {
                     this.image = image;
                     const {naturalWidth, naturalHeight} = image;
                     // 如果没有设置宽高，使用图片原始尺寸
