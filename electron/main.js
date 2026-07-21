@@ -64,6 +64,7 @@ const createMainWindow = () => {
             allowRunningInsecureContent: false,
             nodeIntegration: false,
             contextIsolation: true,
+            backgroundThrottling: false,
             preload: path.join(__dirname, 'preload', 'index-loader.js'),
         }
     })
