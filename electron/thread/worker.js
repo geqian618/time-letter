@@ -23,9 +23,6 @@ module.exports = async (params) => {
                 outputSize: {width, height, maxWidth, maxHeight, type},
                 isSynchronizeMetadata,
                 fileNaming: {basename, prefix, suffix}
-            },
-            performance: {
-                graphicsRenderer
             }
         },
         outputDirectory,
