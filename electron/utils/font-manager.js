@@ -65,7 +65,7 @@ const removeFont = (family) => {
 
 
 const hasFont = (family) => {
-        return availableFonts.has(family)
+    return availableFonts.has(family)
 }
 
 
