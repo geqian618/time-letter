@@ -1679,8 +1679,6 @@ class EditableText extends Text {
 
 class Image extends Element {
 
-    static loadImage;
-
     #centerX = 0;
 
     #centerY = 0;
@@ -1769,8 +1767,8 @@ class Image extends Element {
                 image.src = src;
                 image.crossOrigin = options.crossOrigin;
             } else {
-                if (!Image.loadImage) reject(new Error('Image类未设置图像加载loadImage静态方法'));
-                Image.loadImage(src).then(image => {
+                const {loadImage} = require('@napi-rs/canvas')
+                loadImage(src).then(image => {
                     resolve(new Image(image, options))
                 }).catch(err => {
                     reject(`Failed to load image from URL: ${src}. ${err.message}`)
@@ -1955,8 +1953,6 @@ class Image extends Element {
 
 class LazyImage extends Element {
 
-    static loadImage;
-
     #centerX = 0;
 
     #centerY = 0;
@@ -2038,8 +2034,8 @@ class LazyImage extends Element {
                 image.crossOrigin = this.crossOrigin;
                 this.image = image;
             } else {
-                if (!Image.loadImage) reject(new Error('Image类未设置图像加载loadImage静态方法'));
-                Image.loadImage(this.src).then(image => {
+                const {loadImage} = require('@napi-rs/canvas')
+                loadImage(this.src).then(image => {
                     this.image = image;
                     const {naturalWidth, naturalHeight} = image;
                     // 如果没有设置宽高，使用图片原始尺寸

@@ -38,7 +38,6 @@ const projectSettings = ref({
     },
     performance: {
         downloadThreads: -1,
-        graphicsRenderer: 0
     },
     others: {
         optionAnchorPoint: true,

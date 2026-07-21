@@ -1175,20 +1175,6 @@
                       :value="item.value"/>
                 </el-select>
               </div>
-              <div class="option">
-                <span class="label">图形渲染器：</span>
-                <el-select class="value" v-model="projectSettings.performance.graphicsRenderer" size="small">
-                  <el-option
-                      v-for="item in [{label:'@napi-rs/canvas',value:0},{label:'skia-canvas',value:1}]"
-                      :key="item.value"
-                      :label="item.label"
-                      :value="item.value"/>
-                </el-select>
-                <div class="notes">
-                  <img src="../assets/icon/notes.svg">
-                  <span>{{ graphicsRendererAnnotation }}</span>
-                </div>
-              </div>
             </div>
           </div>
         </el-tab-pane>
@@ -1640,7 +1626,7 @@ const watchImportFonts = () => {
           removeExpiredFonts(projectSettings.value.availableFonts, data)
         }
         for (let [family, font] of data) {
-          if (font.url) {
+          if (!font.isSystem && font.url) {
             try {
               // 加载字体
               FontManager.loadFont(family, font.url)
@@ -4497,21 +4483,6 @@ onBeforeUnmount(() => {
               width: 150px;
             }
 
-            .notes {
-              height: 28px;
-              display: flex;
-              align-items: center;
-              margin-left: 10px;
-              gap: 3px;
-
-              img {
-                height: 70%;
-              }
-
-              span {
-                font-size: 10px;
-              }
-            }
 
             .metadata-input {
               width: calc(100% - 100px);

@@ -2,27 +2,12 @@ const {CanvasEditor} = require("../canvas/NodeCanvasEditor");
 const path = require("path");
 const {copyExifDataToBuffer} = require("../utils/exif-helper");
 const {promises: fs} = require("fs");
-const {Image, LazyImage} = require('../canvas/NodeCanvasEditor')
-const {reloadCustomFonts} = require('../utils/font-manager')
+const {createCanvas} = require("@napi-rs/canvas");
 
 let cachedCanvasEditor;
-
-const getCachedCanvasEditor = (graphicsRenderer) => {
+const getCachedCanvasEditor = () => {
     if (!cachedCanvasEditor) {
-        let canvas;
-        if (graphicsRenderer === 0) {
-            const {createCanvas, loadImage} = require('@napi-rs/canvas')
-            canvas = new createCanvas(0, 0)
-            LazyImage.loadImage = Image.loadImage = loadImage
-        } else {
-            const {Canvas, loadImage} = require('skia-canvas')
-            canvas = new Canvas()
-            // 禁用 GPU 加速，强制使用软件渲染器
-            canvas.gpu = false;
-            LazyImage.loadImage = Image.loadImage = loadImage
-            // 加载自定义字体
-            reloadCustomFonts()
-        }
+        const canvas = new createCanvas(0, 0)
         cachedCanvasEditor = new CanvasEditor(canvas, {strictIntegerDimensions: true});
     }
     return cachedCanvasEditor;
@@ -97,21 +82,15 @@ module.exports = async (params) => {
         settings.zoom = Math.min(maxWidth / originalWidth, maxHeight / originalHeight)
     }
 
-    const canvasEditor = getCachedCanvasEditor(graphicsRenderer);
+    const canvasEditor = getCachedCanvasEditor();
     canvasEditor.resizeCanvas(originalWidth, originalHeight)
     await canvasEditor.loadFromJSON(JSON.stringify(settings))
     canvasEditor.renderAll()
 
     const canvas = canvasEditor.getCanvas();
 
-    let buffer;
-
     // 7. 保存图片 (使用 Buffer 写入)
-    if (graphicsRenderer === 0) {
-        buffer = outputExtname === 'png' ? canvas.toBuffer('image/png') : canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 100 : quality);
-    } else {
-        buffer = outputExtname === 'png' ? await canvas.toBuffer('png') : await canvas.toBuffer(`${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 1 : quality / 100);
-    }
+    let buffer = outputExtname === 'png' ? canvas.toBuffer('image/png') : canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 100 : quality);
 
     if (['jpeg', 'jpg'].includes(originalExtname) && ['jpeg', 'jpg'].includes(outputExtname) && isSynchronizeMetadata) {
         buffer = await copyExifDataToBuffer(filePath, buffer)
