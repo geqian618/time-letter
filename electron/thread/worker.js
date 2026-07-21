@@ -64,7 +64,7 @@ module.exports = async (params) => {
         if (element.type === 'image') {
             element.src = element.meta.path
         }
-        if (graphicsRenderer === 0 && element.shadow) {
+        if (element.shadow) {
             element.shadow.blur = element.shadow.blur * 0.7;
         }
     }
