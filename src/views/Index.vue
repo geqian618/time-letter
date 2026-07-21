@@ -1738,10 +1738,12 @@ const watchDownloadProgress = () => {
   window.electronAPI.downloadProgress((event, data) => {
     downloadProgressPercentage.value = data.percentage
     if (downloadProgressPercentage.value === 100) {
-      downloadProgressVisible.value = false
+      setTimeout(() => {
+        downloadProgressVisible.value = false
+      }, 500)
       setTimeout(() => {
         downloadProgressPercentage.value = 0;
-      }, 500)
+      }, 1000)
     }
   })
 }
