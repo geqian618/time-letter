@@ -1535,12 +1535,6 @@ const isHideDeleteTips = computed(() => {
 })
 
 
-const graphicsRendererAnnotation = computed(() => {
-  return projectSettings.value.performance.graphicsRenderer === 0
-      ? '下载速度可能会更快，大概率有内存泄漏风险（使用完及时关闭应用，释放内存）'
-      : '下载速度可能会更慢，没有内存泄漏风险'
-})
-
 const handleDeleteTipsVisible = () => {
   projectSettings.value.others.deleteTipVisible = !projectSettings.value.others.deleteTipVisible
 }
@@ -1744,9 +1738,10 @@ const watchDownloadProgress = () => {
   window.electronAPI.downloadProgress((event, data) => {
     downloadProgressPercentage.value = data.percentage
     if (downloadProgressPercentage.value === 100) {
+      downloadProgressVisible.value = false
       setTimeout(() => {
-        downloadProgressVisible.value = false
-      }, 1000)
+        downloadProgressPercentage.value = 0;
+      }, 500)
     }
   })
 }
@@ -1756,11 +1751,9 @@ const stopDownloadFiles = () => {
 }
 
 const handleDownloadProgressClose = () => {
-  setTimeout(() => {
-    if (downloadProgressPercentage.value !== 100) {
-      stopDownloadFiles()
-    }
-  }, 200)
+  if (downloadProgressPercentage.value !== 100) {
+    stopDownloadFiles()
+  }
 }
 
 const handleDownloadProgressClosed = () => {
