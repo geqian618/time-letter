@@ -749,6 +749,18 @@
             </div>
 
             <div class="tab-wrapper">
+              <el-tooltip effect="dark" content="全选" placement="top">
+                <img src="../assets/icon/select-all-inactive.svg" class="inactive" alt="全选">
+              </el-tooltip>
+              <el-tooltip effect="dark" content="全选" placement="top">
+                <img src="../assets/icon/select-all-active.svg"
+                     @click="handleSelectAllPreviewElements"
+                     class="active"
+                     alt="全选">
+              </el-tooltip>
+            </div>
+
+            <div class="tab-wrapper">
               <el-tooltip effect="dark" content="居中" placement="top">
                 <img src="../assets/images/居中显示-未激活.png" class="inactive small-size" alt="居中">
               </el-tooltip>
@@ -762,6 +774,9 @@
 
 
           <div class="right-tabs">
+
+            <div class="counter">已选{{ selectedPreviewList.size }}张</div>
+
             <div class="counter">共{{ availableCanvas.size }}张</div>
             <div class="filter">
               <div class="filter-label">筛选：</div>
@@ -3174,11 +3189,29 @@ const handleMovePreviewList = useThrottle((e) => {
 
 
 const handleSelectAllPreviewElements = (event) => {
-  if (event.ctrlKey && event.key === 'a') {
+
+  const target = event.target;
+
+  // 检查是否在输入框/下拉框内
+  if (target.closest('input, textarea, select')) {
+    return;
+  }
+
+  // 检查是否在富文本编辑器内（利用 isContentEditable 属性）或者用 closest 检查属性，两者皆可
+  if (target.isContentEditable || target.closest('[contenteditable="true"]')) {
+    return;
+  }
+
+  // 检查是否原生可编辑（比如 Firefox 的 designMode 页面）
+  if (target.closest('[designMode="on"]')) {
+    return;
+  }
+
+  if ((event.ctrlKey && event.key === 'a') || event instanceof PointerEvent) {
     event.preventDefault();
-    if (selectedPreviewList.value.size) {
-      const elements = document.querySelectorAll('img.previewItem');
-      elements.forEach(element => {
+    const previewElements = document.querySelectorAll('img.previewItem');
+    if (previewElements.length) {
+      previewElements.forEach(element => {
         element.classList.add('active');
         selectedPreviewList.value.set(element.getAttribute('path'), element)
       })
@@ -3642,8 +3675,6 @@ const bindEventListener = () => {
     useEventListener(element, 'dragstart', handleDragStart)
   });
 
-  useEventListener(previewList.value, 'keydown', handleSelectAllPreviewElements);
-
   useEventListener(previewContainer.value, 'drop', handleDropElement);
   useEventListener(previewContainer.value, 'drop', handleDropFiles);
   useEventListener(previewContainer.value, 'dragover', handleDragover);
@@ -3656,6 +3687,7 @@ const bindEventListener = () => {
   useEventListener(rightResize.value, 'mousedown', handleRightSidebarResize)
   useEventListener(bottomResize.value, 'mousedown', handleBottomSidebarResize)
 
+  useEventListener(document, 'keydown', handleSelectAllPreviewElements);
   useEventListener(document, 'keydown', handleRemoveElement)
   useEventListener(document, 'keydown', handleKeyDownMoveElement)
   useEventListener(document, 'keydown', triggerDragCanvas)
