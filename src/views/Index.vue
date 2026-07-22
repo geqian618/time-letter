@@ -1740,10 +1740,10 @@ const watchDownloadProgress = () => {
     if (downloadProgressPercentage.value === 100) {
       setTimeout(() => {
         downloadProgressVisible.value = false
-      }, 500)
+      }, 1000)
       setTimeout(() => {
         downloadProgressPercentage.value = 0;
-      }, 1000)
+      }, 1500)
     }
   })
 }
