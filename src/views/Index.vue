@@ -81,10 +81,16 @@
           </el-aside>
         </div>
 
-        <div class="preview-container" id="preview-container" ref="previewContainer" @mousedown="triggerContextMenu">
-          <div class="canvas-wrapper" ref="canvasWrapper">
-            <canvas id="background-canvas" ref="backgroundElement"></canvas>
-            <canvas id="foreground-canvas" ref="canvasElement"></canvas>
+        <div class="preview-view">
+          <div class="uploader" ref="uploader" v-show="uploadVisible" @click="requestImportFiles({isDragOver: false})">
+            <img src="../assets/icon/upload.svg" alt="上传">
+            <span>拖拽上传文件</span>
+          </div>
+          <div class="preview-container" id="preview-container" ref="previewContainer" @mousedown="triggerContextMenu">
+            <div class="canvas-wrapper" ref="canvasWrapper">
+              <canvas id="background-canvas" ref="backgroundElement"></canvas>
+              <canvas id="foreground-canvas" ref="canvasElement"></canvas>
+            </div>
           </div>
         </div>
 
@@ -1345,7 +1351,7 @@
 
 <script setup lang="js">
 
-import {nextTick, onBeforeUnmount, onMounted, shallowRef, ref, toRaw, watch, computed} from "vue";
+import {nextTick, onBeforeUnmount, onMounted, shallowRef, ref, toRaw, toRef, watch, computed} from "vue";
 
 import {CanvasEditor, Text, Image, LazyImage, Rect} from '@/canvas/CanvasEditor'
 
@@ -1436,6 +1442,8 @@ const sliderRange = ref({
   min: 0,
   max: 1000
 })
+
+const uploader = ref(null)
 
 const previewContainer = ref(null)
 
@@ -1548,6 +1556,8 @@ const availableFonts = computed(() => {
 const isHideDeleteTips = computed(() => {
   return !projectSettings.value.others.deleteTipVisible
 })
+
+const uploadVisible = computed(() => !CanvasManager.getSelectedObject().path)
 
 
 const handleDeleteTipsVisible = () => {
@@ -1987,14 +1997,11 @@ const watchContextMenu = () => {
           return {filePath: path, index, filename, json: JSON.stringify(background)}
         });
 
-        console.log(JSON.parse(settings[0].json))
-
         window.electronAPI.requestExportFiles(_.cloneDeep({
           projectSettings: projectSettings.value,
           outputDirectory: data.outputDirectory,
           settings
         }))
-
         downloadProgressVisible.value = true
       } else if (type === 4) {
         saveTemplateDialogVisible.value = true
@@ -2920,6 +2927,10 @@ const watchImportBackgroundImage = () => {
   })
 }
 
+const requestImportFiles = (options) => {
+  window.electronAPI.requestImportFiles(options)
+}
+
 
 const handleUpdatePhotograph = async () => {
   const currentCanvas = CanvasManager.getCurrentCanvas();
@@ -3363,11 +3374,17 @@ const handleDropFiles = (event) => {
 
   // 如果有符合条件的文件，发送请求
   if (paths.length > 0) {
-    window.electronAPI.requestImportFiles(paths);
+    requestImportFiles({isDragOver: true, paths})
   }
 
+  uploader.value.style.pointerEvents = 'auto';
 }
 
+
+const handleDragenter = (event) => {
+  event.preventDefault();
+  uploader.value.style.pointerEvents = 'none';
+}
 
 const handleDragover = (event) => {
   // 允许放置
@@ -3677,6 +3694,7 @@ const bindEventListener = () => {
 
   useEventListener(previewContainer.value, 'drop', handleDropElement);
   useEventListener(previewContainer.value, 'drop', handleDropFiles);
+  useEventListener(previewContainer.value, 'dragenter', handleDragenter);
   useEventListener(previewContainer.value, 'dragover', handleDragover);
   useEventListener(previewContainer.value, 'dragleave', handleDragleave);
   useEventListener(previewContainer.value, 'scroll', handleMoveScrollbar);
@@ -3917,36 +3935,64 @@ onBeforeUnmount(() => {
 
     }
 
-    .preview-container {
-      background: var(--preview-background-color);
+    .preview-view {
       width: var(--preview-container-width);
       height: 100%;
       position: relative;
-      min-width: 300px;
-      min-height: 100px;
-      border: 1px solid #919191;
 
-      .canvas-wrapper {
+      .uploader {
+        font-weight: bold;
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        gap: 5px;
         align-items: center;
+        position: absolute;
+        top: 50%; /* 相对于父容器 .preview-container */
+        left: 50%; /* 相对于父容器 .preview-container */
+        transform: translate(-50%, -50%); /* 相对于自身偏移，实现完美居中 */
+        z-index: 999;
 
-        #foreground-canvas {
-          position: absolute;
-          background-color: transparent;
-          z-index: 1;
-          will-change: width, height;
+        img {
+          width: 60px;
         }
 
-        .scale-animation {
-          transition: width 0.1s, height 0.1s;
+        span {
+          font-size: 14px;
+          color: #8A8A8A;
         }
+      }
 
-        #background-canvas {
-          position: absolute;
-          will-change: width, height;
+      .preview-container {
+        background: var(--preview-background-color);
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        min-width: 300px;
+        min-height: 100px;
+        border: 1px solid #919191;
+
+        .canvas-wrapper {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 0;
+
+          #foreground-canvas {
+            position: absolute;
+            background-color: transparent;
+            z-index: 1;
+            will-change: width, height;
+          }
+
+          .scale-animation {
+            transition: width 0.1s, height 0.1s;
+          }
+
+          #background-canvas {
+            position: absolute;
+            will-change: width, height;
+          }
         }
-
       }
     }
 

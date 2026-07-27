@@ -1,11 +1,12 @@
+import {reactive} from 'vue'
 const canvases = new Map()
 
-const selectedObject = {
+const selectedObject = reactive({
     path: '',
     previewElement: null,
     previewElementList: [],
     draggableElement: null
-}
+})
 
 
 const getSelectedObject = () => {
@@ -143,5 +144,5 @@ export default {
     setSelectedObject,
     getSelectedPath,
     getSelectedObject,
-    getSettingsFromCurrentCanvas
+    getSettingsFromCurrentCanvas,
 }

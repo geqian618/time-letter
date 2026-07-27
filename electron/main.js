@@ -206,10 +206,20 @@ const setupIpcHandlers = () => {
     })
 
     // 拖拽导入图片
-    ipcMain.on('request-import-files', async (event, paths) => {
-        if (paths && paths.length) {
+    ipcMain.on('request-import-files', async (event, {isDragOver, paths}) => {
+        let filePaths = paths;
+        if (!isDragOver) {
+            const result = await dialog.showOpenDialog({
+                title: '导入文件',
+                buttonLabel: '导入',
+                properties: ['openFile', 'multiSelections'],
+                filters: [{name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp']}]
+            });
+            filePaths = result.filePaths;
+        }
+        if (filePaths && filePaths.length) {
             const files = await Promise.all(
-                paths.map(async (filePath) => {
+                filePaths.map(async (filePath) => {
                     const extname = path.extname(filePath).slice(1);
                     return {
                         filename: path.basename(filePath),
