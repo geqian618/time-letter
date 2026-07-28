@@ -14,10 +14,9 @@ import 'element-plus/dist/index.css'
 
 import VueLazyload from 'vue3-lazyload'
 
-import inputFocus from '@/directive/input-focus.js';
+import inputFocus from '@/directive/input-focus';
 
-import dragSort from '@/directive/drag-sort.js';
-
+import dragSort from '@/directive/drag-sort';
 
 const app = createApp(App)
 

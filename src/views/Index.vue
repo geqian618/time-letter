@@ -45,17 +45,17 @@
                     <div class="text-marks" ref="textMarks">
                       <el-tooltip class="box-item" effect="dark" content="文本" placement="top">
                         <div class="text-mark" draggable="true" text="文本" type="text">
-                          <img draggable="false" src="../assets/icon/text.svg">
+                          <img draggable="false" src="/src/assets/icon/text.svg">
                         </div>
                       </el-tooltip>
                       <el-tooltip class="box-item" effect="dark" content="日期" placement="top">
                         <div class="text-mark" draggable="true" type="date">
-                          <img draggable="false" src="../assets/icon/date.svg">
+                          <img draggable="false" src="/src/assets/icon/date.svg">
                         </div>
                       </el-tooltip>
                       <el-tooltip class="box-item" effect="dark" content="日期时间" placement="top">
                         <div class="text-mark" draggable="true" type="datetime">
-                          <img draggable="false" src="../assets/icon/datetime.svg">
+                          <img draggable="false" src="/src/assets/icon/datetime.svg">
                         </div>
                       </el-tooltip>
                       <el-tooltip v-for="(textLabel) in textLabels"
@@ -70,7 +70,7 @@
                              :text="textLabel.content"
                              :expression="textLabel.script"
                              :type="textLabel.type ==='text'?'text':'script'">
-                          <img draggable="false" src="../assets/icon/custom.svg">
+                          <img draggable="false" src="/src/assets/icon/custom.svg">
                         </div>
                       </el-tooltip>
                     </div>
@@ -83,7 +83,7 @@
 
         <div class="preview-view">
           <div class="uploader" ref="uploader" v-show="uploadVisible" @click="requestImportFiles({isDragOver: false})">
-            <img src="../assets/icon/upload.svg" alt="上传">
+            <img src="/src/assets/icon/upload.svg" alt="上传">
             <span>拖拽上传文件</span>
           </div>
           <div class="preview-container" id="preview-container" ref="previewContainer" @mousedown="triggerContextMenu">
@@ -736,30 +736,30 @@
           <div class="left-tabs">
             <div class="tab-wrapper">
               <el-tooltip effect="dark" content="上一张" placement="top">
-                <img src="../assets/images/左箭头-未激活.png" class="inactive" alt="上一张">
+                <img src="/src/assets/images/左箭头-未激活.png" class="inactive" alt="上一张">
               </el-tooltip>
               <el-tooltip effect="dark" content="上一张" placement="top">
-                <img src="../assets/images/左箭头-激活.png" class="active" @click="switchBeforePreviewElement"
+                <img src="/src/assets/images/左箭头-激活.png" class="active" @click="switchBeforePreviewElement"
                      alt="上一张">
               </el-tooltip>
             </div>
 
             <div class="tab-wrapper">
               <el-tooltip effect="dark" content="下一张" placement="top">
-                <img src="../assets/images/右箭头-未激活.png" class="inactive" alt="下一张">
+                <img src="/src/assets/images/右箭头-未激活.png" class="inactive" alt="下一张">
               </el-tooltip>
               <el-tooltip effect="dark" content="下一张" placement="top">
-                <img src="../assets/images/右箭头-激活.png" class="active" @click="switchNextPreviewElement"
+                <img src="/src/assets/images/右箭头-激活.png" class="active" @click="switchNextPreviewElement"
                      alt="下一张">
               </el-tooltip>
             </div>
 
             <div class="tab-wrapper">
               <el-tooltip effect="dark" content="全选" placement="top">
-                <img src="../assets/icon/select-all-inactive.svg" class="inactive" alt="全选">
+                <img src="/src/assets/icon/select-all-inactive.svg" class="inactive" alt="全选">
               </el-tooltip>
               <el-tooltip effect="dark" content="全选" placement="top">
-                <img src="../assets/icon/select-all-active.svg"
+                <img src="/src/assets/icon/select-all-active.svg"
                      @click="handleSelectAllPreviewElements"
                      class="active"
                      alt="全选">
@@ -768,10 +768,10 @@
 
             <div class="tab-wrapper">
               <el-tooltip effect="dark" content="居中" placement="top">
-                <img src="../assets/images/居中显示-未激活.png" class="inactive small-size" alt="居中">
+                <img src="/src/assets/images/居中显示-未激活.png" class="inactive small-size" alt="居中">
               </el-tooltip>
               <el-tooltip effect="dark" content="居中" placement="top">
-                <img src="../assets/images/居中显示-激活.png" class="active small-size"
+                <img src="/src/assets/images/居中显示-激活.png" class="active small-size"
                      @click="handleScrollBarMoveToCenter"
                      alt="居中">
               </el-tooltip>
@@ -780,9 +780,7 @@
 
 
           <div class="right-tabs">
-
             <div class="counter">已选{{ selectedPreviewList.size }}张</div>
-
             <div class="counter">共{{ availableCanvas.size }}张</div>
             <div class="filter">
               <div class="filter-label">筛选：</div>
@@ -1314,8 +1312,8 @@
         <div class="contact">
           <span class="title">联系与赞赏：</span>
           <div class="value">
-            <img src="../assets/images/二维码.jpg">
-            <img src="../assets/images/赞赏码.jpg">
+            <img src="/src/assets/images/二维码.jpg">
+            <img src="/src/assets/images/赞赏码.jpg">
           </div>
         </div>
         <div class="version">
@@ -3377,7 +3375,7 @@ const handleDropFiles = (event) => {
     requestImportFiles({isDragOver: true, paths})
   }
 
-  uploader.value.style.pointerEvents = 'auto';
+  uploader.value.style.pointerEvents = '';
 }
 
 
@@ -3393,6 +3391,11 @@ const handleDragover = (event) => {
 
 const handleDragleave = (event) => {
   event.preventDefault();
+}
+
+
+const handleDragend = (event) => {
+  uploader.value.style.pointerEvents = '';
 }
 
 
@@ -3705,6 +3708,7 @@ const bindEventListener = () => {
   useEventListener(rightResize.value, 'mousedown', handleRightSidebarResize)
   useEventListener(bottomResize.value, 'mousedown', handleBottomSidebarResize)
 
+  useEventListener(document, 'dragend', handleDragend);
   useEventListener(document, 'keydown', handleSelectAllPreviewElements);
   useEventListener(document, 'keydown', handleRemoveElement)
   useEventListener(document, 'keydown', handleKeyDownMoveElement)
