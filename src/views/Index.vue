@@ -797,12 +797,7 @@
           </div>
 
         </div>
-        <div class="preview-list"
-             id="preview-list"
-             tabindex="0"
-             ref="previewList"
-             @wheel="handleMovePreviewList"
-             @contextmenu="triggerContextMenu">
+        <div class="preview-list" ref="previewList" @wheel="handleMovePreviewList" @contextmenu="triggerContextMenu">
           <template :key="key" v-for="([key, canvas]) in availableCanvas">
             <el-popover
                 v-if="canvas.metadata.filename || canvas.metadata.shootingTime || canvas.metadata.resolution || canvas.metadata.fileSize"
@@ -3186,7 +3181,7 @@ const handleMovePreviewList = useThrottle((e) => {
   e.preventDefault();
   // 2. 获取滚轮滚动方向（deltaY > 0 向下滚，< 0 向上滚）
   // 3. 转换为水平滚动：向下滚向右移动，向上滚向左移动
-  const scrollAmount = e.deltaY * 5; // 调整滚动速度
+  const scrollAmount = e.deltaY * 2; // 调整滚动速度
   // 4. 应用滚动
   if (previewList.value) {
     previewList.value.scrollBy({
