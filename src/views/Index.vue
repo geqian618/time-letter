@@ -28,12 +28,8 @@
                     <span>图片库</span>
                   </template>
                   <div class="image-marks" ref="imageMarks">
-                    <div class="image-item" v-for="([key, label]) in imageLabels" draggable="false">
-                      <img class="image-mark"
-                           :path="label.path"
-                           :key="label.path"
-                           draggable="true"
-                           :src="label.url">
+                    <div class="image-item" :key="key" v-for="([key, label]) in imageLabels" draggable="false">
+                      <img class="image-mark" :src="label.url" :path="label.path" draggable="true">
                     </div>
                   </div>
                 </el-sub-menu>
@@ -597,7 +593,6 @@
                         <div class="label">阴影颜色</div>
                         <div class="value">
                           <el-color-picker
-                              @change=""
                               v-model="textOptions.shadow.color"
                               show-alpha
                               size="small"
@@ -713,7 +708,6 @@
                         <div class="label">阴影颜色</div>
                         <div class="value">
                           <el-color-picker
-                              @change=""
                               v-model="imageOptions.shadow.color"
                               show-alpha
                               size="small"
@@ -2234,7 +2228,7 @@ const handleCanvasScale = () => {
 }
 
 const renameTemplate = () => {
-  if (!renameTemplateForm) return
+  if (!renameTemplateForm?.value) return
   renameTemplateForm.value.validate(async (valid, fields) => {
     if (valid) {
       if (templates.value && templates.value.length) {
@@ -2300,7 +2294,7 @@ const synchronizeTemplate = () => {
 }
 
 const saveTemplates = async () => {
-  if (!saveTemplateForm) return
+  if (!saveTemplateForm?.value) return
   saveTemplateForm.value.validate(async (valid, fields) => {
     if (valid) {
       const {initZoom, background, foreground} = CanvasManager.getCurrentCanvas();
