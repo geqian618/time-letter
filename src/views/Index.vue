@@ -2294,7 +2294,7 @@ const synchronizeTemplate = () => {
 }
 
 const saveTemplates = async () => {
-  if (!saveTemplateForm.value) return
+  if (!saveTemplateForm?.value) return
   saveTemplateForm.value.validate(async (valid, fields) => {
     if (valid) {
       const {initZoom, background, foreground} = CanvasManager.getCurrentCanvas();
