@@ -1807,7 +1807,7 @@ const watchLabelResources = () => {
 
 const clearFormValidate = (formRef) => {
   nextTick(() => {
-    if (formRef.value) {
+    if (formRef?.value) {
       formRef.value.clearValidate(); // 清除整个表单的校验
       // 如果只需清除特定字段，可传入字段名数组，如：clearValidate(['username', 'email'])
     }
@@ -1833,7 +1833,7 @@ const deleteTextLabel = (row) => {
 }
 
 const saveTextLabel = async () => {
-  if (!textLabelForm) return
+  if (!textLabelForm?.value) return
   await textLabelForm.value.validate(async (valid, fields) => {
     if (valid) {
       textLabel.value.type === 'script' ? textLabel.value.content = '' : textLabel.value.script = ''
@@ -2294,7 +2294,7 @@ const synchronizeTemplate = () => {
 }
 
 const saveTemplates = async () => {
-  if (!saveTemplateForm?.value) return
+  if (!saveTemplateForm.value) return
   saveTemplateForm.value.validate(async (valid, fields) => {
     if (valid) {
       const {initZoom, background, foreground} = CanvasManager.getCurrentCanvas();
