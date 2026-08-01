@@ -170,8 +170,8 @@ class CanvasEditor {
      */
     createHiddenInput() {
         // 创建不显示的输入框
-        this.hiddenInput = document.createElement('input');
-        this.hiddenInput.type = 'text';
+        this.hiddenInput = document.createElement('textarea');
+        this.hiddenInput.wrap = 'off';
         this.hiddenInput.style.position = 'fixed';
         this.hiddenInput.style.opacity = '0';
         this.hiddenInput.style.pointerEvents = 'none';
@@ -186,6 +186,8 @@ class CanvasEditor {
         this.hiddenInput.style.zIndex = '-1000'; // 确保在底层
         this.hiddenInput.style.overflow = 'hidden';
         this.hiddenInput.style.clip = 'rect(0, 0, 0, 0)';
+        this.hiddenInput.style.whiteSpace = 'pre';
+        this.hiddenInput.style.resize = 'none';
 
         // 添加到 body
         document.body.appendChild(this.hiddenInput);
@@ -447,8 +449,23 @@ class CanvasEditor {
      * @returns {TextMetrics} 文本度量
      */
     getTextMetrics(textObj) {
-        const text = textObj.text;
-        return this.getSubTextMetrics(textObj, 0, text.length)
+        const lines = textObj.lines && textObj.lines.length
+            ? textObj.lines
+            : textObj.splitTextLines();
+        let width = 0;
+        let charCount = 0;
+        let textWidth = 0;
+        let spacingWidth = 0;
+
+        for (const line of lines) {
+            const metrics = this.getSubTextMetrics(textObj, line.startIndex, line.endIndex);
+            width = Math.max(width, metrics.width);
+            charCount += metrics.charCount;
+            textWidth += metrics.textWidth;
+            spacingWidth += metrics.spacingWidth;
+        }
+
+        return {width, charCount, spacingWidth, textWidth};
     }
 
     /**
@@ -469,20 +486,27 @@ class CanvasEditor {
 
         let textWidth = 0;
         let charCount = 0;
+        let spacingWidth = 0;
+        let previousCharWasBreak = true;
 
         // 使用与 drawText 相同的逻辑测量每个字符
         for (let i = safeStart; i < safeEnd; i++) {
             const char = text[i];
+            if (char === '\n' || char === '\r') {
+                previousCharWasBreak = true;
+                continue;
+            }
             textWidth += this.ctx.measureText(char).width;
             charCount++;
+            if (!previousCharWasBreak) {
+                spacingWidth += spacing;
+            }
+            previousCharWasBreak = false;
         }
-
-        // 添加间距（字符数 -1 ）* spacing
-        const spacingWidth = charCount > 0 ? (charCount - 1) * spacing : 0;
 
         // 返回一个包含宽度信息的对象
         return {
-            width: textWidth + spacingWidth,
+            width: textWidth + (charCount > 0 ? spacingWidth : 0),
             charCount: charCount,
             spacingWidth,
             textWidth,
@@ -499,7 +523,8 @@ class CanvasEditor {
      */
     getCursorIndexFromText(textObj, clickX, clickY) {
 
-        const {text, chars, x, y, width, fontSize: rawHeight, spacing, height, direction, angle = 0} = textObj;
+        const {text, x, y, width, fontSize: rawHeight, spacing, height, direction, angle = 0} = textObj;
+        const lines = textObj.lines || [];
 
         // 如果有旋转角度，需要对点击坐标进行反向旋转
         let transformedX = clickX;
@@ -526,52 +551,97 @@ class CanvasEditor {
 
         // 使用转换后的坐标进行光标索引计算
         if (direction === 'horizontal') {
-            // 计算文本的实际绘制区域
-            const left = x;
-            const right = x + width;
+            if (!lines.length) return 0;
 
-            // 如果文本是空的，直接返回0
-            if (!chars || chars.length === 0) return 0;
+            const lineHeight = lines[0].height || rawHeight * (textObj.lineHeight || 1.5);
+            if (transformedY <= y) return 0;
+            if (transformedY >= y + height) return text.length;
 
-            const first = chars[0];
-            const last = chars[chars.length - 1];
+            let lineIndex = Math.floor((transformedY - y) / lineHeight);
+            lineIndex = Math.max(0, Math.min(lineIndex, lines.length - 1));
+            const line = lines[lineIndex];
+            const lineChars = line.chars || [];
 
-            // 如果点击在文本左侧，光标在开头
-            if (transformedX < left + first.width / 2) return 0;
-            // 如果点击在文本右侧，光标在末尾
-            if (transformedX > right - last.width / 2) return text.length;
+            if (lineChars.length === 0) return line.startIndex;
 
-            // 遍历查找光标位置
-            for (let i = 0; i < chars.length - 1; i++) {
-                const before = chars[i];
-                const next = chars[i + 1];
+            const first = lineChars[0];
+            const last = lineChars[lineChars.length - 1];
+            if (transformedX < line.x + first.width / 2) return line.startIndex;
+            if (transformedX > line.x + line.width - last.width / 2) return line.endIndex;
+
+            for (let i = 0; i < lineChars.length - 1; i++) {
+                const before = lineChars[i];
+                const next = lineChars[i + 1];
                 if (transformedX >= before.x + before.width / 2 && transformedX <= next.x + next.width / 2) {
-                    return i + 1;
+                    return line.startIndex + i + 1;
                 }
             }
-        } else {
-            // 计算文本的实际绘制区域
-            const top = y;
-            const bottom = top + height;
 
-            // 如果点击在文本上方，光标在开头
-            if (transformedY < top + rawHeight / 2) return 0;
-            // 如果点击在文本下方，光标在末尾
-            if (transformedY > bottom - rawHeight / 2) {
-                return text.length;
-            }
+            return line.endIndex;
+        }
 
-            // 遍历查找光标位置
-            for (let i = 0; i < chars.length - 1; i++) {
-                const before = top + rawHeight * i + (i === 0 ? 0 : spacing);
-                const next = top + (rawHeight + spacing) * (i + 1);
-                if (transformedY >= before + rawHeight / 2 && transformedY <= next + rawHeight / 2) {
-                    return i + 1;
-                }
+        if (!lines.length) return 0;
+
+        const columnWidth = (lines[0].width || rawHeight) + spacing;
+        if (transformedX <= x) return 0;
+        if (transformedX >= x + width) return text.length;
+
+        let lineIndex = Math.floor((transformedX - x) / columnWidth);
+        lineIndex = Math.max(0, Math.min(lineIndex, lines.length - 1));
+        const line = lines[lineIndex];
+        const lineChars = line.chars || [];
+
+        if (lineChars.length === 0) return line.startIndex;
+
+        if (transformedY < line.top + rawHeight / 2) return line.startIndex;
+        if (transformedY > line.top + line.height - rawHeight / 2) return line.endIndex;
+
+        const rowStep = rawHeight + spacing;
+        for (let i = 0; i < lineChars.length - 1; i++) {
+            const before = line.top + rowStep * i + (i === 0 ? 0 : spacing);
+            const next = line.top + rowStep * (i + 1);
+            if (transformedY >= before + rawHeight / 2 && transformedY <= next + rawHeight / 2) {
+                return line.startIndex + i + 1;
             }
         }
-        // 如果没有找到匹配（理论上不应该到这里），返回0
-        return -1;
+
+        return line.endIndex;
+    }
+
+
+    /**
+     * 计算上下键移动后的光标索引
+     */
+    getVerticalMoveCursorIndex(textObj, direction) {
+        const lines = textObj.lines || [];
+        if (textObj.direction !== 'horizontal' || lines.length <= 1) return this.cursorEnd;
+
+        const activeIndex = this.cursorEnd;
+        let currentLineIndex = lines.findIndex(line => activeIndex <= line.endIndex);
+        if (currentLineIndex === -1) currentLineIndex = lines.length - 1;
+
+        const targetLineIndex = currentLineIndex + direction;
+        if (targetLineIndex < 0 || targetLineIndex >= lines.length) return activeIndex;
+
+        const cursorRect = textObj.getCursorPosition(activeIndex);
+        const targetLine = lines[targetLineIndex];
+        const targetChars = targetLine.chars || [];
+        if (targetChars.length === 0) return targetLine.startIndex;
+
+        const targetX = cursorRect.x;
+        if (targetX <= targetChars[0].x) return targetLine.startIndex;
+
+        for (let i = 0; i < targetChars.length; i++) {
+            const char = targetChars[i];
+            const nextChar = targetChars[i + 1];
+            const charEnd = char.x + char.width;
+            const boundary = nextChar ? (charEnd + nextChar.x) / 2 : charEnd + textObj.spacing / 2;
+            if (!nextChar || targetX <= boundary) {
+                return targetLine.startIndex + i + 1;
+            }
+        }
+
+        return targetLine.endIndex;
     }
 
 
@@ -810,47 +880,54 @@ class CanvasEditor {
         let lastMoveX = startX;
         let lastMoveY = startY;
 
+        if (element.type === 'text' && element.status === Element.EDITING) {
+            this.cursorStart = this.cursorEnd = this.getCursorIndexFromText(element, startX, startY);
+            this.updateInputSelection();
+            this.renderAll();
+        }
+
         const handleMousemove = (e) => {
             const interval = Date.now() - startTime;
             const {x: moveX, y: moveY} = this.getCanvasPosition(e);
-            if (interval > 200 && (startX !== moveX || startY !== moveY)) {
-                if (element.type === 'text' && element.status === Element.EDITING) {
-                    this.cursorEnd = this.getCursorIndexFromText(element, moveX, moveY);
-                    if (this.cursorEnd !== this.cursorStart) {
-                        this.updateInputSelection();
-                        this.renderAll();
-                    }
-                }
+            const moved = startX !== moveX || startY !== moveY;
 
-                if (element.draggable && (element.status === Element.NONE || this.hasActiveElement(element))) {
-                    this.canvas.style.cursor = 'move';
-                    // 计算偏移量
-                    const offsetX = moveX - lastMoveX;
-                    const offsetY = moveY - lastMoveY;
-                    // 确定要拖拽的元素列表
-                    const targetElements = element.status === Element.NONE
-                        ? [element]
-                        : Array.from(this.activeElements).filter(el => el.draggable);
-                    // 拖拽所有选中的元素
-                    for (let el of targetElements) {
-                        el.x += offsetX;
-                        el.y += offsetY;
-                        el.centerX += offsetX;
-                        el.centerY += offsetY;
-                        // 触发回调
-                        const callbacks = this.eventCallbacks.get(MOVE_OBJECT);
-                        if (callbacks && callbacks.size) {
-                            callbacks.forEach(callback => callback({x: moveX, y: moveY, target: el}));
-                        }
-                    }
-                    // 更新最后移动位置并重新渲染
-                    lastMoveX = moveX;
-                    lastMoveY = moveY;
-                    if (element.status === Element.NONE) {
-                        this.removeActiveElements(this.activeElements);
-                    }
+            if (moved && element.type === 'text' && element.status === Element.EDITING) {
+                const nextIndex = this.getCursorIndexFromText(element, moveX, moveY);
+                if (nextIndex !== this.cursorEnd) {
+                    this.cursorEnd = nextIndex;
+                    this.updateInputSelection();
                     this.renderAll();
                 }
+            }
+
+            if (interval > 200 && moved && element.draggable && (element.status === Element.NONE || this.hasActiveElement(element))) {
+                this.canvas.style.cursor = 'move';
+                // 计算偏移量
+                const offsetX = moveX - lastMoveX;
+                const offsetY = moveY - lastMoveY;
+                // 确定要拖拽的元素列表
+                const targetElements = element.status === Element.NONE
+                    ? [element]
+                    : Array.from(this.activeElements).filter(el => el.draggable);
+                // 拖拽所有选中的元素
+                for (let el of targetElements) {
+                    el.x += offsetX;
+                    el.y += offsetY;
+                    el.centerX += offsetX;
+                    el.centerY += offsetY;
+                    // 触发回调
+                    const callbacks = this.eventCallbacks.get(MOVE_OBJECT);
+                    if (callbacks && callbacks.size) {
+                        callbacks.forEach(callback => callback({x: moveX, y: moveY, target: el}));
+                    }
+                }
+                // 更新最后移动位置并重新渲染
+                lastMoveX = moveX;
+                lastMoveY = moveY;
+                if (element.status === Element.NONE) {
+                    this.removeActiveElements(this.activeElements);
+                }
+                this.renderAll();
             }
         };
 
@@ -858,6 +935,14 @@ class CanvasEditor {
             // 如果是左键抬起，执行点击逻辑
             if (e.button === 0) {
                 const {x: endX, y: endY} = this.getCanvasPosition(e);
+                if (element.type === 'text' && element.status === Element.EDITING) {
+                    const endIndex = this.getCursorIndexFromText(element, endX, endY);
+                    if (this.cursorEnd !== endIndex) {
+                        this.cursorEnd = endIndex;
+                        this.updateInputSelection();
+                        this.renderAll();
+                    }
+                }
                 if (startX === endX && startY === endY) {
                     if (element.type === 'text' && (element.status === Element.SELECTED || element.status === Element.EDITING)) {
                         this.handleEditText({event: e, element});
@@ -938,7 +1023,25 @@ class CanvasEditor {
         switch (lowerCaseKey) {
             case 'enter':
                 event.preventDefault();
-                this.finishEditing();
+                if (event.ctrlKey || event.metaKey) {
+                    this.finishEditing();
+                } else {
+                    const input = this.hiddenInput;
+                    const start = input.selectionStart ?? input.value.length;
+                    const end = input.selectionEnd ?? start;
+                    const nextValue = input.value.slice(0, start) + '\n' + input.value.slice(end);
+                    const atLineStart = start === end && (
+                        start === 0
+                        || input.value[start - 1] === '\n'
+                        || input.value[start - 1] === '\r'
+                    );
+                    const nextCursor = atLineStart ? start : start + 1;
+                    input.value = nextValue;
+                    input.setSelectionRange(nextCursor, nextCursor);
+                    this.editingText.text = nextValue;
+                    this.cursorEnd = this.cursorStart = nextCursor;
+                    this.renderAll();
+                }
                 break;
             case 'escape':
                 event.preventDefault();
@@ -961,6 +1064,21 @@ class CanvasEditor {
                     this.updateInputSelection();
                     this.renderAll();
                 }
+                break;
+            case 'arrowup':
+            case 'arrowdown':
+                event.preventDefault();
+            {
+                const nextIndex = this.getVerticalMoveCursorIndex(
+                    this.editingText,
+                    lowerCaseKey === 'arrowup' ? -1 : 1
+                );
+                if (nextIndex !== this.cursorStart || nextIndex !== this.cursorEnd) {
+                    this.cursorEnd = this.cursorStart = nextIndex;
+                    this.updateInputSelection();
+                    this.renderAll();
+                }
+            }
                 break;
             case 'home':
                 event.preventDefault();
@@ -1287,6 +1405,8 @@ class Text extends Element {
 
     #chars = []
 
+    #lines = []
+
     constructor(text, options = {}) {
         super(options);
         // 元素类型
@@ -1308,7 +1428,7 @@ class Text extends Element {
         this.fontStyle = options.fontStyle || 'normal';
         this.fontFamily = options.fontFamily || 'Microsoft YaHei';
         this.fontWeight = options.fontWeight || 400;
-        this.lineHeight = options.lineHeight || 1.5;
+        this.lineHeight = options.lineHeight || 1;
 
         // 颜色
         this.fontColor = options.fontColor || 'black';
@@ -1376,6 +1496,133 @@ class Text extends Element {
     // 外部可访问
     set chars(value) {
         this.#chars = value;
+    }
+
+    // 外部可访问的行布局
+    get lines() {
+        return this.#lines;
+    }
+
+    // 外部可访问的行布局
+    set lines(value) {
+        this.#lines = value;
+    }
+
+    splitTextLines(text = this.text) {
+        const lines = [];
+        let start = 0;
+        let index = 0;
+
+        while (index < text.length) {
+            const char = text[index];
+            if (char === '\n' || char === '\r') {
+                const endIndex = index;
+                const breakIndex = char === '\r' && text[index + 1] === '\n' ? index + 2 : index + 1;
+                lines.push({
+                    text: text.slice(start, endIndex),
+                    startIndex: start,
+                    endIndex,
+                    breakIndex
+                });
+                start = breakIndex;
+                index = breakIndex;
+            } else {
+                index++;
+            }
+        }
+
+        lines.push({
+            text: text.slice(start),
+            startIndex: start,
+            endIndex: text.length,
+            breakIndex: null
+        });
+
+        return lines;
+    }
+
+    getCursorPosition(index) {
+        const lines = this.lines || [];
+        const cursorWidth = 0.08 * this.fontSize;
+        if (lines.length === 0) {
+            return this.direction === 'horizontal'
+                ? {
+                    x: this.x,
+                    y: this.y + ((this.height || this.fontSize * (this.lineHeight || 1.5)) - this.fontSize) / 2,
+                    width: cursorWidth,
+                    height: this.fontSize
+                }
+                : {x: this.x, y: this.y, width: this.width || this.fontSize, height: cursorWidth};
+        }
+
+        let line = lines[0];
+        for (let i = 0; i < lines.length; i++) {
+            line = lines[i];
+            if (index <= line.endIndex) break;
+        }
+
+        const lineChars = line.chars || [];
+        const offsetInLine = Math.max(0, Math.min(index - line.startIndex, lineChars.length));
+
+        if (this.direction === 'horizontal') {
+            let x;
+            if (offsetInLine >= lineChars.length) {
+                x = line.x + line.width;
+            } else {
+                const char = lineChars[offsetInLine];
+                x = char.x - (offsetInLine > 0 ? this.spacing / 2 : 0);
+            }
+            const cursorHeight = line.textHeight || this.fontSize;
+            const y = line.textHeight
+                ? (line.textTop !== undefined ? line.textTop : line.top + (line.height - cursorHeight) / 2)
+                : line.top + (line.height - cursorHeight) / 2;
+            return {x, y, width: cursorWidth, height: cursorHeight};
+        }
+
+        const rowStep = this.fontSize + this.spacing;
+        let y;
+        if (offsetInLine >= lineChars.length) {
+            y = line.top + line.height;
+        } else {
+            y = line.top + offsetInLine * rowStep - (offsetInLine > 0 ? this.spacing / 2 : 0);
+        }
+        return {x: line.x + (line.width - cursorWidth) / 2, y, width: line.width, height: cursorWidth};
+    }
+
+    getSelectionRects(start, end) {
+        const normalizedStart = Math.min(start, end);
+        const normalizedEnd = Math.max(start, end);
+        const rects = [];
+        const lines = this.lines || [];
+        const spacing = this.spacing;
+        const rowStep = this.fontSize + spacing;
+
+        for (const line of lines) {
+            const lineEnd = line.breakIndex !== null ? line.breakIndex : line.endIndex;
+            const selectionStart = Math.max(normalizedStart, line.startIndex);
+            const selectionEnd = Math.min(normalizedEnd, lineEnd);
+            if (selectionStart >= selectionEnd) continue;
+
+            const lineChars = line.chars || [];
+            const startOffset = Math.max(0, selectionStart - line.startIndex);
+            const endOffset = Math.min(lineChars.length, selectionEnd - line.startIndex);
+
+            if (this.direction === 'horizontal') {
+                const x0 = startOffset <= 0 ? line.x : startOffset >= lineChars.length ? line.x + line.width : lineChars[startOffset].x - spacing / 2;
+                const x1 = endOffset <= 0 ? line.x : endOffset >= lineChars.length ? line.x + line.width : lineChars[endOffset].x - spacing / 2;
+                if (x1 > x0) {
+                    rects.push({x: x0, y: line.top, width: x1 - x0, height: line.height});
+                }
+            } else {
+                const y0 = startOffset <= 0 ? line.top : startOffset >= lineChars.length ? line.top + line.height : line.top + startOffset * rowStep - spacing / 2;
+                const y1 = endOffset <= 0 ? line.top : endOffset >= lineChars.length ? line.top + line.height : line.top + endOffset * rowStep - spacing / 2;
+                if (y1 > y0) {
+                    rects.push({x: line.x, y: y0, width: line.width, height: y1 - y0});
+                }
+            }
+        }
+
+        return rects;
     }
 
     contains(x, y) {
@@ -1452,9 +1699,10 @@ class Text extends Element {
         // 默认Y偏移
         ctx.shadowOffsetY = this.shadow.offsetY * avgScale;
 
-        let {chars, height, width} = this.direction === 'vertical'
+        let layout = this.direction === 'vertical'
             ? this.parseVerticalChars(ctx)
             : this.parseHorizontalChars(ctx)
+        let {chars, height, width, lines} = layout
 
         if (!this.centerX || !this.centerY || this.angle === 0) {
             // 计算文本中心点
@@ -1467,7 +1715,11 @@ class Text extends Element {
                 // 根据新的宽高和原中心点重新计算位置
                 this.x = this.centerX - width / 2
                 this.y = this.centerY - height / 2
-                chars = this.direction === 'vertical' ? this.parseVerticalChars(ctx).chars : this.parseHorizontalChars(ctx).chars
+                layout = this.direction === 'vertical' ? this.parseVerticalChars(ctx) : this.parseHorizontalChars(ctx)
+                chars = layout.chars
+                lines = layout.lines
+                width = layout.width
+                height = layout.height
             }
             // 平移到文本中心点，旋转，再平移回来
             ctx.translate(this.centerX, this.centerY);
@@ -1478,96 +1730,188 @@ class Text extends Element {
 
         // 绘制每个字符
         for (const char of chars) {
-            ctx.fillText(char.char, char.x, char.y);
+            if (!char.lineBreak) {
+                ctx.fillText(char.char, char.x, char.y);
+            }
         }
 
         this.width = width || (this.direction === 'horizontal' ? this.fontSize / 10 : this.fontSize)
         this.height = height || (this.direction === 'horizontal' ? this.fontSize : this.fontSize / 10)
         this.chars = chars;
+        this.lines = lines;
 
         ctx.restore();
     }
 
 
     parseHorizontalChars(ctx) {
-        let currentX = this.x;
+        const segments = this.splitTextLines();
         const chars = [];
+        const lines = [];
         let maxCharHeight = 0;
         let maxAscent = 0;
-        // 获取最大高度和 ascent
-        for (let i = 0; i < this.text.length; i++) {
-            const char = this.text[i];
-            const {actualBoundingBoxAscent: ascent, actualBoundingBoxDescent: descent} = ctx.measureText(char);
-            const charHeight = ascent + descent;
-            maxCharHeight = Math.max(maxCharHeight, charHeight);
-            maxAscent = Math.max(maxAscent, ascent);
+
+        for (const segment of segments) {
+            for (let i = segment.startIndex; i < segment.endIndex; i++) {
+                const char = this.text[i];
+                const {actualBoundingBoxAscent: ascent, actualBoundingBoxDescent: descent} = ctx.measureText(char);
+                const charHeight = ascent + descent;
+                maxCharHeight = Math.max(maxCharHeight, charHeight);
+                maxAscent = Math.max(maxAscent, ascent);
+            }
         }
-        // 计算垂直居中的基线位置，假设 this.y 是文字区域的中心点 y 坐标
-        const baselineY = this.y + maxAscent;
-        for (let i = 0; i < this.text.length; i++) {
-            const char = this.text[i];
-            const {
-                width: charWidth,
-                actualBoundingBoxAscent: ascent,
-                actualBoundingBoxDescent: descent
-            } = ctx.measureText(char);
-            const charHeight = ascent + descent;
-            // 垂直居中：让每个字符的 ascent 对齐到基准线
-            const charY = baselineY;
-            chars.push({
-                char,
-                x: currentX,
-                y: charY,
-                width: charWidth,
-                height: charHeight
+
+        const lineHeight = Math.max(this.fontSize * this.lineHeight, maxCharHeight);
+        let maxLineWidth = 0;
+
+        for (let lineIndex = 0; lineIndex < segments.length; lineIndex++) {
+            const segment = segments[lineIndex];
+            const top = this.y + lineIndex * lineHeight;
+            const textTop = top + (lineHeight - maxCharHeight) / 2;
+            const baselineY = textTop + maxAscent;
+            const lineChars = [];
+            let currentX = this.x;
+
+            for (let i = segment.startIndex; i < segment.endIndex; i++) {
+                const char = this.text[i];
+                const {
+                    width: charWidth,
+                    actualBoundingBoxAscent: ascent,
+                    actualBoundingBoxDescent: descent
+                } = ctx.measureText(char);
+                const charHeight = ascent + descent;
+                const charInfo = {
+                    char,
+                    x: currentX,
+                    y: baselineY,
+                    width: charWidth,
+                    height: charHeight,
+                    lineIndex,
+                    lineBreak: false
+                };
+                chars.push(charInfo);
+                lineChars.push(charInfo);
+                currentX += charWidth + (i < segment.endIndex - 1 ? this.spacing : 0);
+            }
+
+            const lineWidth = currentX - this.x;
+            maxLineWidth = Math.max(maxLineWidth, lineWidth);
+            lines.push({
+                ...segment,
+                x: this.x,
+                top,
+                textTop,
+                y: baselineY,
+                width: lineWidth,
+                height: lineHeight,
+                textHeight: maxCharHeight,
+                chars: lineChars
             });
-            currentX += charWidth + (i < this.text.length - 1 ? this.spacing : 0);
+
+            if (segment.breakIndex !== null) {
+                chars.push({
+                    char: '\n',
+                    x: this.x + lineWidth,
+                    y: baselineY,
+                    width: 0,
+                    height: lineHeight,
+                    lineIndex,
+                    lineBreak: true
+                });
+            }
         }
+
         return {
-            width: currentX - this.x,
-            height: maxCharHeight,
-            chars
+            width: maxLineWidth,
+            height: segments.length * lineHeight,
+            chars,
+            lines
         };
     }
 
     parseVerticalChars(ctx) {
+        const segments = this.splitTextLines();
         const chars = [];
+        const lines = [];
         let maxCharWidth = 0;
-        let maxCharHeight = 0;
-        // 先测量所有字符的尺寸
-        for (let i = 0; i < this.text.length; i++) {
-            const char = this.text[i];
-            const {
-                width,
-                actualBoundingBoxAscent: ascent,
-                actualBoundingBoxDescent: descent
-            } = ctx.measureText(char);
-            const height = ascent + descent;
-            chars.push({width, char, height, ascent, descent});
-            maxCharWidth = Math.max(maxCharWidth, width);
-            maxCharHeight = Math.max(maxCharHeight, height);
+
+        for (const segment of segments) {
+            for (let i = segment.startIndex; i < segment.endIndex; i++) {
+                const char = this.text[i];
+                const {
+                    width,
+                    actualBoundingBoxAscent: ascent,
+                    actualBoundingBoxDescent: descent
+                } = ctx.measureText(char);
+                maxCharWidth = Math.max(maxCharWidth, width);
+            }
         }
-        // 计算垂直排列的布局
-        const totalHeight = this.text.length * this.fontSize + (this.text.length - 1) * this.spacing;
-        let currentY = this.y;
-        // 计算每个字符的位置，使其在各自的单元格内居中
-        for (let i = 0; i < this.text.length; i++) {
-            const char = chars[i];
-            // 计算当前行的矩形区域
-            const cellTop = currentY;
-            const cellBottom = cellTop + this.fontSize;
-            const cellCenterY = (cellTop + cellBottom) / 2;
-            // 水平居中：在最大宽度内居中
-            char.x = this.x + (maxCharWidth - char.width) / 2;
-            // 垂直居中：在单元格内垂直居中
-            // 使用字符的实际基线来调整位置，使字符在单元格内垂直居中
-            char.y = cellCenterY - char.descent + (char.ascent + char.descent) / 2;
-            currentY += this.fontSize + (i < this.text.length - 1 ? this.spacing : 0);
+
+        const columnWidth = maxCharWidth || this.fontSize;
+        const rowStep = this.fontSize + this.spacing;
+        const maxRows = segments.reduce((max, segment) => Math.max(max, Math.max(1, segment.text.length)), 1);
+        const totalHeight = maxRows * this.fontSize + (maxRows - 1) * this.spacing;
+
+        for (let lineIndex = 0; lineIndex < segments.length; lineIndex++) {
+            const segment = segments[lineIndex];
+            const lineRowCount = Math.max(1, segment.text.length);
+            const lineHeight = lineRowCount * this.fontSize + (lineRowCount - 1) * this.spacing;
+            const columnX = this.x + lineIndex * (columnWidth + this.spacing);
+            const lineChars = [];
+            let currentY = this.y;
+
+            for (let i = segment.startIndex; i < segment.endIndex; i++) {
+                const char = this.text[i];
+                const {
+                    width,
+                    actualBoundingBoxAscent: ascent,
+                    actualBoundingBoxDescent: descent
+                } = ctx.measureText(char);
+                const cellTop = currentY;
+                const cellBottom = cellTop + this.fontSize;
+                const cellCenterY = (cellTop + cellBottom) / 2;
+                const charInfo = {
+                    char,
+                    x: columnX + (columnWidth - width) / 2,
+                    y: cellCenterY - descent + (ascent + descent) / 2,
+                    width,
+                    height: ascent + descent,
+                    lineIndex,
+                    lineBreak: false
+                };
+                chars.push(charInfo);
+                lineChars.push(charInfo);
+                currentY += rowStep;
+            }
+
+            lines.push({
+                ...segment,
+                x: columnX,
+                top: this.y,
+                y: this.y,
+                width: columnWidth,
+                height: lineHeight,
+                chars: lineChars
+            });
+
+            if (segment.breakIndex !== null) {
+                chars.push({
+                    char: '\n',
+                    x: columnX,
+                    y: this.y + lineHeight,
+                    width: 0,
+                    height: lineHeight,
+                    lineIndex,
+                    lineBreak: true
+                });
+            }
         }
+
         return {
-            width: maxCharWidth,
+            width: columnWidth + (segments.length - 1) * (columnWidth + this.spacing),
             height: totalHeight,
-            chars
+            chars,
+            lines
         };
     }
 
@@ -1600,26 +1944,16 @@ class Text extends Element {
      */
     drawCursor(ctx, start, end) {
         if (start !== end) return
-        const {fontColor, fontSize, spacing, chars, text, height, width} = this;
-        const margin = this.direction === 'horizontal' ? 0.2 * height : 0.2 * width;
-        const cursorWidth = 0.08 * fontSize;
-        const char = chars[end];
-        const offset = (end > 0 && end < text.length) ? Math.abs((spacing - cursorWidth) / 2) : margin;
+        const cursorRect = this.getCursorPosition(start);
         ctx.save()
-        ctx.fillStyle = fontColor;
+        ctx.fillStyle = this.fontColor;
         if (this.angle !== 0) {
             // 平移到文本中心点，旋转，再平移回来
             ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
             ctx.translate(-this.centerX, -this.centerY);
         }
-        if (this.direction === 'horizontal') {
-            const startX = !char ? this.x + this.width : char.x - offset;
-            ctx.fillRect(startX, this.y, cursorWidth, this.height);
-        } else {
-            const startY = !char ? this.y + this.height : this.y + (this.fontSize + this.spacing) * end - offset;
-            ctx.fillRect(this.x, startY, this.width, cursorWidth);
-        }
+        ctx.fillRect(cursorRect.x, cursorRect.y, cursorRect.width, cursorRect.height);
         ctx.restore();
     }
 
@@ -1632,7 +1966,12 @@ class Text extends Element {
      * @param end
      */
     drawEditBackground(ctx, start, end) {
-        const {x, y, height, width, highlightColor, fontSize: rawHeight, spacing, text, chars} = this
+        const {x, y, height, width, highlightColor} = this
+        const lines = this.lines || [];
+        const singleLineSize = this.direction === 'horizontal'
+            ? (lines[0]?.textHeight || this.fontSize)
+            : (lines[0]?.width || this.fontSize);
+        const margin = 0.3 * singleLineSize;
         ctx.save()
         // 绘制高亮背景
         ctx.fillStyle = highlightColor;
@@ -1643,26 +1982,23 @@ class Text extends Element {
             ctx.translate(-this.centerX, -this.centerY);
         }
         if (this.direction === 'horizontal') {
-            const margin = 0.3 * height;
-            ctx.fillRect(x - margin, y - margin, width + 2 * margin, height + 2 * margin);
-            if (start !== end) {
-                const startIndex = Math.max(0, Math.min(start, end));
-                const endIndex = Math.min(text.length, Math.max(start, end));
-                const startX = startIndex === 0 ? x : chars[startIndex].x - spacing / 2;
-                const endX = endIndex < text.length ? chars[endIndex].x - spacing / 2 : x + width;
-                ctx.fillStyle = 'rgb(59,103,225,0.5)';
-                ctx.fillRect(startX, y, endX - startX, height);
-            }
+            const rowCount = Math.max(1, lines.length);
+            const rowHeight = lines[0]?.height || Math.max(this.fontSize * (this.lineHeight || 1.5), this.fontSize);
+            ctx.fillRect(x - margin, y - margin, width + 2 * margin, rowHeight * rowCount + 2 * margin);
         } else {
-            const margin = 0.3 * width;
-            ctx.fillRect(x - margin, y - margin, width + 2 * margin, height + 2 * margin);
-            if (start !== end) {
-                const startIndex = Math.max(0, Math.min(start, end));
-                const endIndex = Math.min(text.length, Math.max(start, end));
-                const startY = startIndex === 0 ? y : y + startIndex * (rawHeight + spacing) - spacing / 2;
-                const endY = endIndex === text.length ? y + height : y + endIndex * (rawHeight + spacing) - spacing / 2;
-                ctx.fillStyle = 'rgb(59,103,225,0.5)';
-                ctx.fillRect(x, startY, width, endY - startY);
+            let textLeft = x;
+            let textRight = x + (width || this.fontSize);
+            if (lines.length) {
+                textLeft = lines[0].x;
+                textRight = lines[lines.length - 1].x + lines[lines.length - 1].width;
+            }
+            ctx.fillRect(textLeft - margin, y - margin, textRight - textLeft + 2 * margin, height + 2 * margin);
+        }
+        if (start !== end) {
+            const selectionRects = this.getSelectionRects(start, end);
+            ctx.fillStyle = 'rgb(59,103,225,0.5)';
+            for (const rect of selectionRects) {
+                ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
             }
         }
         ctx.restore();

@@ -483,6 +483,20 @@
                         </div>
                       </li>
                       <li class="option">
+                        <div class="label">行高</div>
+                        <div class="value">
+                          <el-slider
+                              v-model="textOptions.lineHeight"
+                              :min="1"
+                              :max="10"
+                              show-alpha
+                              :step="0.1"
+                              size="small"
+                              :predefine="predefineColors"/>
+                          <input type="number" class="number-input" v-model="textOptions.lineHeight" step="0.1">
+                        </div>
+                      </li>
+                      <li class="option">
                         <div class="label">字符间距</div>
                         <div class="value">
                           <el-slider
@@ -2160,7 +2174,19 @@ watch(textOptions, async (newVal, oldValue) => {
   const activeElements = canvasEditor.getActiveElements();
   if (!canvas || !activeElements.length) return
   const initZoom = canvas.initZoom;
-  const {direction, fontFamily, fontSize, fontStyle, fontWeight, fontColor, angle, shadow, spacing, zIndex} = newVal;
+  const {
+    direction,
+    fontFamily,
+    fontSize,
+    fontStyle,
+    fontWeight,
+    fontColor,
+    angle,
+    shadow,
+    spacing,
+    lineHeight,
+    zIndex
+  } = newVal;
   for (const activeElement of activeElements) {
     if (activeElement.type === 'text') {
       activeElement.direction = direction;
@@ -2170,6 +2196,7 @@ watch(textOptions, async (newVal, oldValue) => {
       activeElement.fontColor = fontColor;
       activeElement.angle = angle;
       activeElement.order = zIndex;
+      activeElement.lineHeight = lineHeight
       activeElement.fontSize = fontSize / initZoom
       activeElement.spacing = spacing / initZoom
       activeElement.shadow.offsetX = shadow.offsetX / initZoom
