@@ -482,7 +482,7 @@
                           <input type="number" class="number-input" v-model="textOptions.fontWeight" step="100">
                         </div>
                       </li>
-                      <li class="option">
+                      <li class="option" v-show="textOptions.direction === 'horizontal'">
                         <div class="label">行高</div>
                         <div class="value">
                           <el-slider
@@ -496,7 +496,7 @@
                           <input type="number" class="number-input" v-model="textOptions.lineHeight" step="0.1">
                         </div>
                       </li>
-                      <li class="option">
+                      <li class="option" v-show="textOptions.direction === 'vertical'">
                         <div class="label">列宽</div>
                         <div class="value">
                           <el-slider
@@ -2219,7 +2219,6 @@ watch(textOptions, async (newVal, oldValue) => {
       activeElement.shadow.offsetY = shadow.offsetY / initZoom
       activeElement.shadow.blur = shadow.blur / initZoom
       activeElement.shadow.color = shadow.color
-      console.log(activeElement)
     }
   }
   canvasEditor.renderAll()
@@ -3722,6 +3721,14 @@ const handleRemoveElement = (event) => {
 }
 
 
+const preventSwitchingElements = (event) => {
+  if (event.key === 'Tab') {
+    // 阻止切换元素
+    event.preventDefault();
+  }
+}
+
+
 const bindEventListener = () => {
 
   document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
@@ -3746,6 +3753,7 @@ const bindEventListener = () => {
   useEventListener(document, 'keydown', handleRemoveElement)
   useEventListener(document, 'keydown', handleKeyDownMoveElement)
   useEventListener(document, 'keydown', triggerDragCanvas)
+  useEventListener(document, 'keydown', preventSwitchingElements)
 }
 
 onMounted(() => {
