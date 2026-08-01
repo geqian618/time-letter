@@ -582,7 +582,7 @@ class CanvasEditor {
 
         if (!lines.length) return 0;
 
-        const columnWidth = (lines[0].width || rawHeight) + spacing;
+        const columnWidth = lines[0].width || rawHeight;
         if (transformedX <= x) return 0;
         if (transformedX >= x + width) return text.length;
 
@@ -1491,7 +1491,7 @@ class Text extends Element {
         // 文字间距
         this.spacing = options.spacing || 0;
         // 垂直文本列宽
-        this.columnWidth = options.columnWidth || 0;
+        this.columnWidth = options.columnWidth || 1.5;
 
         // 旋转角度
         this.angle = options.angle || 0;
@@ -1501,7 +1501,7 @@ class Text extends Element {
         this.fontStyle = options.fontStyle || 'normal';
         this.fontFamily = options.fontFamily || 'Microsoft YaHei';
         this.fontWeight = options.fontWeight || 400;
-        this.lineHeight = options.lineHeight || 1;
+        this.lineHeight = options.lineHeight || 1.5;
 
         // 颜色
         this.fontColor = options.fontColor || 'black';
@@ -1659,7 +1659,9 @@ class Text extends Element {
         } else if (offsetInLine >= lineChars.length) {
             y = line.top + line.height - cursorWidth / 2;
         } else {
-            y = line.top + offsetInLine * rowStep - cursorWidth / 2;
+            const previousCharEnd = line.top + (offsetInLine - 1) * rowStep + this.fontSize;
+            const gapCenter = previousCharEnd + this.spacing / 2;
+            y = gapCenter - cursorWidth / 2;
         }
         const cursorBarWidth = line.textWidth || this.fontSize;
         return {
@@ -1937,7 +1939,7 @@ class Text extends Element {
             const segment = segments[lineIndex];
             const lineRowCount = Math.max(1, segment.text.length);
             const lineHeight = lineRowCount * this.fontSize + (lineRowCount - 1) * this.spacing;
-            const columnX = this.x + lineIndex * (columnWidth + this.spacing);
+            const columnX = this.x + lineIndex * columnWidth;
             const lineChars = [];
             let currentY = this.y;
 
@@ -1990,7 +1992,7 @@ class Text extends Element {
         }
 
         return {
-            width: columnWidth + (segments.length - 1) * (columnWidth + this.spacing),
+            width: columnWidth * segments.length,
             height: totalHeight,
             chars,
             lines

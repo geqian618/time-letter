@@ -1491,7 +1491,7 @@ class Text extends Element {
         // 文字间距
         this.spacing = options.spacing || 0;
         // 垂直文本列宽
-        this.columnWidth = options.columnWidth || 0;
+        this.columnWidth = options.columnWidth || 1.5;
 
         // 旋转角度
         this.angle = options.angle || 0;
