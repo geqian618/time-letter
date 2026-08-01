@@ -497,6 +497,20 @@
                         </div>
                       </li>
                       <li class="option">
+                        <div class="label">列宽</div>
+                        <div class="value">
+                          <el-slider
+                              v-model="textOptions.columnWidth"
+                              :min="1"
+                              :max="10"
+                              show-alpha
+                              :step="0.1"
+                              size="small"
+                              :predefine="predefineColors"/>
+                          <input type="number" class="number-input" v-model="textOptions.columnWidth" step="0.1">
+                        </div>
+                      </li>
+                      <li class="option">
                         <div class="label">字符间距</div>
                         <div class="value">
                           <el-slider
@@ -2185,6 +2199,7 @@ watch(textOptions, async (newVal, oldValue) => {
     shadow,
     spacing,
     lineHeight,
+    columnWidth,
     zIndex
   } = newVal;
   for (const activeElement of activeElements) {
@@ -2197,12 +2212,14 @@ watch(textOptions, async (newVal, oldValue) => {
       activeElement.angle = angle;
       activeElement.order = zIndex;
       activeElement.lineHeight = lineHeight
+      activeElement.columnWidth = columnWidth
       activeElement.fontSize = fontSize / initZoom
       activeElement.spacing = spacing / initZoom
       activeElement.shadow.offsetX = shadow.offsetX / initZoom
       activeElement.shadow.offsetY = shadow.offsetY / initZoom
       activeElement.shadow.blur = shadow.blur / initZoom
       activeElement.shadow.color = shadow.color
+      console.log(activeElement)
     }
   }
   canvasEditor.renderAll()

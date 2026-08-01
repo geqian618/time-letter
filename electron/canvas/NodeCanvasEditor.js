@@ -598,7 +598,7 @@ class CanvasEditor {
 
         const rowStep = rawHeight + spacing;
         for (let i = 0; i < lineChars.length - 1; i++) {
-            const before = line.top + rowStep * i + (i === 0 ? 0 : spacing);
+            const before = line.top + rowStep * i;
             const next = line.top + rowStep * (i + 1);
             if (transformedY >= before + rawHeight / 2 && transformedY <= next + rawHeight / 2) {
                 return line.startIndex + i + 1;
@@ -642,6 +642,59 @@ class CanvasEditor {
         }
 
         return targetLine.endIndex;
+    }
+
+
+    getTextCursorLineInfo(textObj, index) {
+        const lines = textObj.lines || [];
+        let lineIndex = lines.findIndex(line => index <= line.endIndex);
+        if (lineIndex === -1) lineIndex = Math.max(0, lines.length - 1);
+
+        const line = lines[lineIndex];
+        const lineChars = line.chars || [];
+        const offset = Math.max(0, Math.min(index - line.startIndex, lineChars.length));
+        return {lineIndex, offset};
+    }
+
+
+    getVerticalColumnMoveCursorIndex(textObj, direction) {
+        const lines = textObj.lines || [];
+        if (textObj.direction !== 'vertical') return this.cursorEnd;
+        if (!lines.length) return this.cursorEnd;
+
+        const {lineIndex, offset} = this.getTextCursorLineInfo(textObj, this.cursorEnd);
+        const targetLineIndex = lineIndex + direction;
+        if (targetLineIndex < 0 || targetLineIndex >= lines.length) return this.cursorEnd;
+
+        const targetLine = lines[targetLineIndex];
+        const targetOffset = Math.min(offset, (targetLine.chars || []).length);
+        return targetLine.startIndex + targetOffset;
+    }
+
+
+    getVerticalRowMoveCursorIndex(textObj, direction) {
+        const lines = textObj.lines || [];
+        if (textObj.direction !== 'vertical') return this.cursorEnd;
+        if (!lines.length) return this.cursorEnd;
+
+        const {lineIndex, offset} = this.getTextCursorLineInfo(textObj, this.cursorEnd);
+        const line = lines[lineIndex];
+        const lineChars = line.chars || [];
+
+        if (direction < 0) {
+            if (offset > 0) return line.startIndex + offset - 1;
+
+            const targetLineIndex = lineIndex - 1;
+            if (targetLineIndex < 0) return this.cursorEnd;
+            const targetLine = lines[targetLineIndex];
+            return targetLine.startIndex + (targetLine.chars || []).length;
+        }
+
+        if (offset < lineChars.length) return line.startIndex + offset + 1;
+
+        const targetLineIndex = lineIndex + 1;
+        if (targetLineIndex >= lines.length) return this.cursorEnd;
+        return lines[targetLineIndex].startIndex;
     }
 
 
@@ -1049,30 +1102,48 @@ class CanvasEditor {
                 break;
             case 'arrowleft':
                 event.preventDefault();
-                if (this.cursorStart > 0) {
-                    this.cursorStart--;
-                    this.cursorEnd--;
-                    this.updateInputSelection();
-                    this.renderAll();
+                if (this.editingText.direction === 'vertical') {
+                    const nextIndex = this.getVerticalColumnMoveCursorIndex(this.editingText, -1);
+                    if (nextIndex !== this.cursorStart || nextIndex !== this.cursorEnd) {
+                        this.cursorEnd = this.cursorStart = nextIndex;
+                        this.updateInputSelection();
+                        this.renderAll();
+                    }
+                } else {
+                    if (this.cursorStart > 0) {
+                        this.cursorStart--;
+                        this.cursorEnd--;
+                        this.updateInputSelection();
+                        this.renderAll();
+                    }
                 }
                 break;
             case 'arrowright':
                 event.preventDefault();
-                if (this.cursorStart < this.editingText.text.length) {
-                    this.cursorStart++;
-                    this.cursorEnd++;
-                    this.updateInputSelection();
-                    this.renderAll();
+                if (this.editingText.direction === 'vertical') {
+                    const nextIndex = this.getVerticalColumnMoveCursorIndex(this.editingText, 1);
+                    if (nextIndex !== this.cursorStart || nextIndex !== this.cursorEnd) {
+                        this.cursorEnd = this.cursorStart = nextIndex;
+                        this.updateInputSelection();
+                        this.renderAll();
+                    }
+                } else {
+                    if (this.cursorStart < this.editingText.text.length) {
+                        this.cursorStart++;
+                        this.cursorEnd++;
+                        this.updateInputSelection();
+                        this.renderAll();
+                    }
                 }
                 break;
             case 'arrowup':
             case 'arrowdown':
                 event.preventDefault();
             {
-                const nextIndex = this.getVerticalMoveCursorIndex(
-                    this.editingText,
-                    lowerCaseKey === 'arrowup' ? -1 : 1
-                );
+                const direction = lowerCaseKey === 'arrowup' ? -1 : 1;
+                const nextIndex = this.editingText.direction === 'vertical'
+                    ? this.getVerticalRowMoveCursorIndex(this.editingText, direction)
+                    : this.getVerticalMoveCursorIndex(this.editingText, direction);
                 if (nextIndex !== this.cursorStart || nextIndex !== this.cursorEnd) {
                     this.cursorEnd = this.cursorStart = nextIndex;
                     this.updateInputSelection();
@@ -1419,6 +1490,8 @@ class Text extends Element {
         this.editable = options.editable !== undefined ? options.editable : false;
         // 文字间距
         this.spacing = options.spacing || 0;
+        // 垂直文本列宽
+        this.columnWidth = options.columnWidth || 0;
 
         // 旋转角度
         this.angle = options.angle || 0;
@@ -1552,7 +1625,7 @@ class Text extends Element {
                     width: cursorWidth,
                     height: this.fontSize
                 }
-                : {x: this.x, y: this.y, width: this.width || this.fontSize, height: cursorWidth};
+                : {x: this.x, y: this.y, width: this.fontSize, height: cursorWidth};
         }
 
         let line = lines[0];
@@ -1581,12 +1654,20 @@ class Text extends Element {
 
         const rowStep = this.fontSize + this.spacing;
         let y;
-        if (offsetInLine >= lineChars.length) {
-            y = line.top + line.height;
+        if (offsetInLine === 0) {
+            y = line.top;
+        } else if (offsetInLine >= lineChars.length) {
+            y = line.top + line.height - cursorWidth / 2;
         } else {
-            y = line.top + offsetInLine * rowStep - (offsetInLine > 0 ? this.spacing / 2 : 0);
+            y = line.top + offsetInLine * rowStep - cursorWidth / 2;
         }
-        return {x: line.x + (line.width - cursorWidth) / 2, y, width: line.width, height: cursorWidth};
+        const cursorBarWidth = line.textWidth || this.fontSize;
+        return {
+            x: line.x + (line.width - cursorBarWidth) / 2,
+            y,
+            width: cursorBarWidth,
+            height: cursorWidth
+        };
     }
 
     getSelectionRects(start, end) {
@@ -1847,7 +1928,7 @@ class Text extends Element {
             }
         }
 
-        const columnWidth = maxCharWidth || this.fontSize;
+        const columnWidth = Math.max((this.columnWidth || 0) * this.fontSize, maxCharWidth || this.fontSize);
         const rowStep = this.fontSize + this.spacing;
         const maxRows = segments.reduce((max, segment) => Math.max(max, Math.max(1, segment.text.length)), 1);
         const totalHeight = maxRows * this.fontSize + (maxRows - 1) * this.spacing;
@@ -1891,6 +1972,7 @@ class Text extends Element {
                 y: this.y,
                 width: columnWidth,
                 height: lineHeight,
+                textWidth: maxCharWidth,
                 chars: lineChars
             });
 

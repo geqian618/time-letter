@@ -67,6 +67,7 @@ export class TextOptions {
         this.zIndex = 0;
         this.spacing = 0;
         this.lineHeight = 1;
+        this.colmunWidth = 1;
         this.shadow = new ShadowSettings();
     }
 }
