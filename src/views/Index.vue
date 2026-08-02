@@ -3285,7 +3285,7 @@ const handleKeyDownMoveElement = (event) => {
 
   const canvas = CanvasManager.getCurrentCanvas();
 
-  if (!validKeys.includes(event.key) || !canvas || activeElement !== document.body) return;
+  if (!canvas || !validKeys.includes(event.key) || activeElement !== document.body) return;
 
   event.preventDefault();
 
