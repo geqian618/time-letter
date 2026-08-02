@@ -1491,7 +1491,9 @@ class Text extends Element {
         // 文字间距
         this.spacing = options.spacing || 0;
         // 垂直文本列宽
-        this.columnWidth = options.columnWidth || 1.5;
+        this.columnWidth = options.columnWidth || 1;
+
+        this.lineHeight = options.lineHeight || 1;
 
         // 旋转角度
         this.angle = options.angle || 0;
@@ -1501,7 +1503,7 @@ class Text extends Element {
         this.fontStyle = options.fontStyle || 'normal';
         this.fontFamily = options.fontFamily || 'Microsoft YaHei';
         this.fontWeight = options.fontWeight || 400;
-        this.lineHeight = options.lineHeight || 1.5;
+
 
         // 颜色
         this.fontColor = options.fontColor || 'black';
