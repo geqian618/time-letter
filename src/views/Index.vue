@@ -2183,7 +2183,7 @@ const loadTextLabels = () => {
 
 
 watch(textOptions, async (newVal, oldValue) => {
-  if (newVal !== oldValue) return
+  if (!canvasEditor || newVal !== oldValue) return
   const canvas = CanvasManager.getCurrentCanvas();
   const activeElements = canvasEditor.getActiveElements();
   if (!canvas || !activeElements.length) return
