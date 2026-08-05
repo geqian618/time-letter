@@ -27,6 +27,9 @@ class CanvasEditor {
         // 获取 Canvas 元素和上下文
         this.canvas = canvas;
 
+        // 事件触发作用域
+        this.eventScope = options.eventScope || this.canvas;
+
         this.ctx = this.canvas.getContext('2d');
 
         // 元素数据存储
@@ -67,8 +70,7 @@ class CanvasEditor {
         // 动态创建的输入框
         this.hiddenInput = null;
 
-        // 事件触发作用域
-        this.eventScope = options.eventScope || this.canvas;
+
 
         // 事件回调
         this.eventCallbacks = new Map();
@@ -102,7 +104,7 @@ class CanvasEditor {
 
         // 仅浏览器环境生效
         if (this.isBrowser) {
-            this.eventScope.parentNode.addEventListener('mousedown', this.handleMouseDown);
+            this.eventScope.addEventListener('mousedown', this.handleMouseDown);
             this.createHiddenInput();
         }
 
