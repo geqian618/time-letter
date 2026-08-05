@@ -67,6 +67,9 @@ class CanvasEditor {
         // 动态创建的输入框
         this.hiddenInput = null;
 
+        // 事件触发作用域
+        this.eventScope = options.eventScope || this.canvas;
+
         // 事件回调
         this.eventCallbacks = new Map();
 
@@ -99,7 +102,7 @@ class CanvasEditor {
 
         // 仅浏览器环境生效
         if (this.isBrowser) {
-            this.canvas.addEventListener('mousedown', this.handleMouseDown);
+            this.eventScope.parentNode.addEventListener('mousedown', this.handleMouseDown);
             this.createHiddenInput();
         }
 
@@ -941,7 +944,6 @@ class CanvasEditor {
             const interval = Date.now() - startTime;
             const {x: moveX, y: moveY} = this.getCanvasPosition(e);
             const moved = startX !== moveX || startY !== moveY;
-
             if (!element) {
                 const elements = this.getElements();
                 const left = Math.min(startX, moveX)
@@ -1034,11 +1036,11 @@ class CanvasEditor {
                 this.canvas.style.cursor = ''
             }
             this.renderAll();
-            this.canvas.removeEventListener('mousemove', handleMousemove);
+            document.removeEventListener('mousemove', handleMousemove);
             document.removeEventListener('mouseup', handleMouseup);
         };
 
-        this.canvas.addEventListener('mousemove', handleMousemove);
+        document.addEventListener('mousemove', handleMousemove);
         document.addEventListener('mouseup', handleMouseup);
     }
 
@@ -1282,7 +1284,7 @@ class CanvasEditor {
     destroy() {
         if (this.isBrowser) {
             // 移除事件监听
-            this.canvas.removeEventListener('mousedown', this.handleMouseDown);
+            this.eventScope.removeEventListener('mousedown', this.handleMouseDown);
             // 移除隐藏输入框
             this.removeHiddenInput();
             // 清除定时器

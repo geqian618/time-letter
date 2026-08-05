@@ -2750,7 +2750,10 @@ const initCanvasSize = () => {
 
     renderCanvasScrollbar()
 
-    canvasEditor = new CanvasEditor(canvasElement.value, {enableCache: true});
+    canvasEditor = new CanvasEditor(canvasElement.value, {
+      enableCache: true,
+      eventScope: canvasElement.value.parentNode
+    });
 
     backgroundCanvasEditor = new CanvasEditor(backgroundElement.value, {enableCache: true});
 
