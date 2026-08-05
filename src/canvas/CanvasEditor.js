@@ -925,18 +925,16 @@ class CanvasEditor {
         const {x: startX, y: startY} = this.getCanvasPosition(event);
         const element = this.getElementAt(startX, startY, element => element.selectable);
 
-        if (!element) {
-            this.handleCancelActive();
-            return;
-        }
-
         let lastMoveX = startX;
         let lastMoveY = startY;
 
-        if (element.type === 'text' && element.status === Element.EDITING) {
+        if (!element) {
+            this.handleCancelActive();
+        }
+
+        if (element && element.type === 'text' && element.status === Element.EDITING) {
             this.cursorStart = this.cursorEnd = this.getCursorIndexFromText(element, startX, startY);
             this.updateInputSelection();
-            this.renderAll();
         }
 
         const handleMousemove = (e) => {
@@ -944,16 +942,41 @@ class CanvasEditor {
             const {x: moveX, y: moveY} = this.getCanvasPosition(e);
             const moved = startX !== moveX || startY !== moveY;
 
-            if (moved && element.type === 'text' && element.status === Element.EDITING) {
+            if (!element) {
+                const elements = this.getElements();
+                const left = Math.min(startX, moveX)
+                const right = Math.max(startX, moveX)
+                const top = Math.min(startY, moveY)
+                const bottom = Math.max(startY, moveY)
+                for (let el of elements) {
+                    if (el.x >= left && el.y >= top && el.x + el.width <= right && el.y + el.height <= bottom) {
+                        if (el.status === Element.SELECTED) continue
+                        el.status = Element.SELECTED;
+                        this.activeElements.push(el)
+                    } else {
+                        el.status = Element.NONE;
+                        this.removeActiveElement(el)
+                    }
+                }
+                this.renderAll();
+                const rect = new Rect({
+                    x: startX,
+                    y: startY,
+                    width: moveX - startX,
+                    height: moveY - startY,
+                    stroke: '#383737',
+                    strokeWidth: 2,
+                    lineDash: [8, 5]
+                });
+                rect.draw(this.ctx)
+            } else if (moved && element.type === 'text' && element.status === Element.EDITING) {
                 const nextIndex = this.getCursorIndexFromText(element, moveX, moveY);
                 if (nextIndex !== this.cursorEnd) {
                     this.cursorEnd = nextIndex;
                     this.updateInputSelection();
                     this.renderAll();
                 }
-            }
-
-            if (interval > 200 && moved && element.draggable && (element.status === Element.NONE || this.hasActiveElement(element))) {
+            } else if (interval > 200 && moved && element.draggable && (element.status === Element.NONE || this.hasActiveElement(element))) {
                 this.canvas.style.cursor = 'move';
                 // 计算偏移量
                 const offsetX = moveX - lastMoveX;
@@ -986,14 +1009,13 @@ class CanvasEditor {
 
         const handleMouseup = (e) => {
             // 如果是左键抬起，执行点击逻辑
-            if (e.button === 0) {
+            if (element && e.button === 0) {
                 const {x: endX, y: endY} = this.getCanvasPosition(e);
                 if (element.type === 'text' && element.status === Element.EDITING) {
                     const endIndex = this.getCursorIndexFromText(element, endX, endY);
                     if (this.cursorEnd !== endIndex) {
                         this.cursorEnd = endIndex;
                         this.updateInputSelection();
-                        this.renderAll();
                     }
                 }
                 if (startX === endX && startY === endY) {
@@ -1011,6 +1033,7 @@ class CanvasEditor {
             if (!this.isEditing) {
                 this.canvas.style.cursor = ''
             }
+            this.renderAll();
             this.canvas.removeEventListener('mousemove', handleMousemove);
             document.removeEventListener('mouseup', handleMouseup);
         };
@@ -2002,10 +2025,15 @@ class Text extends Element {
     }
 
     selection(ctx) {
+        // 获取当前变换矩阵的缩放比例
+        const currentTransform = ctx.getTransform();
+        const scaleX = currentTransform.a; // 水平缩放
+        const scaleY = currentTransform.d; // 垂直缩放
+        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
         const color = 'red', lineCap = 'butt'
-        const lineWidth = 0.08 * this.fontSize;
+        const lineWidth = 2 / avgScale;
         ctx.save();
-        ctx.setLineDash([0.3 * this.fontSize, 0.2 * this.fontSize]);
+        ctx.setLineDash([8 / avgScale, 5 / avgScale]);
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = color;
         ctx.lineCap = lineCap;
@@ -2323,11 +2351,15 @@ class Image extends Element {
     }
 
     selection(ctx) {
+        // 获取当前变换矩阵的缩放比例
+        const currentTransform = ctx.getTransform();
+        const scaleX = currentTransform.a; // 水平缩放
+        const scaleY = currentTransform.d; // 垂直缩放
+        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
         const color = 'red', lineCap = 'butt'
-        const baseWidth = Math.max(this.width, this.height) * this.scale;
-        const lineWidth = 0.02 * baseWidth
+        const lineWidth = 2 / avgScale
         ctx.save();
-        ctx.setLineDash([0.06 * baseWidth, 0.03 * baseWidth]);
+        ctx.setLineDash([8 / avgScale, 5 / avgScale]);
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = color;
         ctx.lineCap = lineCap;
@@ -2607,11 +2639,15 @@ class LazyImage extends Element {
     }
 
     selection(ctx) {
+        // 获取当前变换矩阵的缩放比例
+        const currentTransform = ctx.getTransform();
+        const scaleX = currentTransform.a; // 水平缩放
+        const scaleY = currentTransform.d; // 垂直缩放
+        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
         const color = 'red', lineCap = 'butt'
-        const baseWidth = Math.max(this.width, this.height) * this.scale;
-        const lineWidth = 0.02 * baseWidth
+        const lineWidth = 2 / avgScale
         ctx.save();
-        ctx.setLineDash([0.06 * baseWidth, 0.03 * baseWidth]);
+        ctx.setLineDash([8 / avgScale, 5 / avgScale]);
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = color;
         ctx.lineCap = lineCap;
@@ -2669,9 +2705,11 @@ class Rect extends Element {
         this.fill = options.fill || 'rgba(255,255,255,0)'
         this.radius = options.radius || 0
         this.stroke = options.stroke || 'rgba(0,0,0,1)'
-        this.strokeWidth = options.strokeWidth || 0
+        this.strokeWidth = options.strokeWidth || 1
         this.angle = options.angle || 0
         this.radius = options.radius || 0
+        this.lineDash = options.lineDash || [1, 1]
+        this.lineCap = options.lineCap || 'butt'
         // 图片阴影 - 需要处理嵌套对象
         this.shadow = {
             color: 'rgba(0,0,0,1)',
@@ -2722,11 +2760,15 @@ class Rect extends Element {
     }
 
     selection(ctx) {
+        // 获取当前变换矩阵的缩放比例
+        const currentTransform = ctx.getTransform();
+        const scaleX = currentTransform.a; // 水平缩放
+        const scaleY = currentTransform.d; // 垂直缩放
+        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
         const color = 'red', lineCap = 'butt'
-        const baseWidth = Math.max(this.width, this.height);
-        const lineWidth = 0.02 * baseWidth
+        const lineWidth = 2 / avgScale
         ctx.save();
-        ctx.setLineDash([0.06 * baseWidth, 0.03 * baseWidth]);
+        ctx.setLineDash([8 / avgScale, 5 / avgScale]);
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = color;
         ctx.lineCap = lineCap;
@@ -2745,11 +2787,17 @@ class Rect extends Element {
     draw(ctx) {
         // 保存当前画布状态
         ctx.save();
+        // 获取当前变换矩阵的缩放比例
+        const currentTransform = ctx.getTransform();
+        const scaleX = currentTransform.a; // 水平缩放
+        const scaleY = currentTransform.d; // 垂直缩放
+        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
         const {color: shadowColor, blur: shadowBlur, offsetX: shadowOffsetX, offsetY: shadowOffsetY} = this.shadow;
-
         ctx.fillStyle = this.fill;
         ctx.strokeStyle = this.stroke;
-        ctx.lineWidth = this.strokeWidth;
+        ctx.lineWidth = this.strokeWidth / avgScale;
+        ctx.lineCap = this.lineCap;
+        ctx.setLineDash([this.lineDash[0] / avgScale, this.lineDash[1] / avgScale]);
 
         // 设置阴影颜色（支持RGBA格式）
         ctx.shadowColor = shadowColor || 'rgba(0, 0, 0, 1)';
