@@ -1087,6 +1087,23 @@
             </div>
           </div>
         </el-tab-pane>
+        <el-tab-pane label="外观">
+          <div class="border-box">
+            <span class="border-label">主题</span>
+            <div class="options">
+              <div class="option">
+                <span class="label">主题模式：</span>
+                <el-radio-group
+                    v-model="projectSettings.appearance.theme"
+                    @change="handleThemeChange">
+                  <el-radio-button value="dark">深色</el-radio-button>
+                  <el-radio-button value="light">浅色</el-radio-button>
+                  <el-radio-button value="system">跟随系统</el-radio-button>
+                </el-radio-group>
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
         <el-tab-pane label="元数据">
           <div class="border-box">
             <span class="border-label">格式化</span>
@@ -1406,6 +1423,8 @@ import DraggableElementFactory from "@/object/DraggableElementFactory";
 import {getCurrentDate, getCurrentDateTime, parseDate, formatDate} from "@/utils/datetime";
 
 import {executeFunctionScript} from "@/utils/script-helper";
+
+const systemTheme = window.matchMedia('(prefers-color-scheme: light)')
 
 const filterType = ref(0)
 
@@ -1917,6 +1936,7 @@ const watchProjectSettings = () => {
         initAreaResize();
         handleScrollBarMoveToCenter()
       }
+      applyTheme(newUserSettings.appearance?.theme || 'system')
     } else if (type === 1) {
       const userSettings = _.cloneDeep(projectSettings.value);
       delete userSettings.availableFonts;
@@ -2170,6 +2190,34 @@ const loadProjectSettings = () => {
     newUserConfig.availableFonts = new Map(newUserConfig.availableFonts)
     projectSettings.value = newUserConfig
     StorageManager.saveProjectSettings(newUserConfig)
+  }
+}
+
+
+const resolveTheme = (theme) => theme === 'system' ? (systemTheme.matches ? 'light' : 'dark') : theme
+
+const applyTheme = (theme) => {
+  const resolvedTheme = resolveTheme(theme)
+  if (resolvedTheme === 'dark') {
+    document.documentElement.setAttribute('dark-theme', '')
+  } else {
+    document.documentElement.removeAttribute('dark-theme')
+  }
+  if (window.electronAPI?.setTheme) {
+    window.electronAPI.setTheme(['light', 'dark', 'system'].includes(theme) ? theme : 'system')
+  }
+}
+
+const handleThemeChange = () => {
+  const theme = ['light', 'dark', 'system'].includes(projectSettings.value.appearance?.theme)
+      ? projectSettings.value.appearance.theme
+      : 'system'
+  applyTheme(theme)
+}
+
+const handleSystemThemeChange = () => {
+  if (projectSettings.value.appearance?.theme === 'system') {
+    applyTheme('system')
   }
 }
 
@@ -2572,7 +2620,7 @@ const renderCanvas = async (canvas) => {
 
     const width = image.width;
     const height = image.height;
-    const background = new Rect({width, height, meta: new BorderOptions()});
+    const background = new Rect({width, height, strokeWidth: 0, meta: new BorderOptions()});
     // 设置画布宽高等于缩放后的图片尺寸
     canvasEditor.resizeCanvas(width, height);
     backgroundCanvasEditor.resizeCanvas(width, height);
@@ -3751,6 +3799,8 @@ const bindEventListener = () => {
   useEventListener(rightResize.value, 'mousedown', handleRightSidebarResize)
   useEventListener(bottomResize.value, 'mousedown', handleBottomSidebarResize)
 
+  useEventListener(systemTheme, 'change', handleSystemThemeChange)
+
   useEventListener(document, 'dragend', handleDragend);
   useEventListener(document, 'keydown', handleSelectAllPreviewElements);
   useEventListener(document, 'keydown', handleRemoveElement)
@@ -3760,6 +3810,7 @@ const bindEventListener = () => {
 }
 
 onMounted(() => {
+  loadProjectSettings()
   loadTemplates()
   loadTextLabels()
   watchImportImages()
@@ -3773,7 +3824,6 @@ onMounted(() => {
   editorOutputSettings()
   watchProjectSettings()
   watchImportBackgroundImage()
-  loadProjectSettings()
   initAreaResize()
   initCanvasSize()
   bindEventListener()
@@ -3781,7 +3831,6 @@ onMounted(() => {
 
 
 onBeforeUnmount(() => {
-
 })
 
 
@@ -3793,8 +3842,6 @@ onBeforeUnmount(() => {
 .page-layout {
   width: 100vw;
   height: 100vh;
-  border: 1px solid var(--border-color);
-  border-top: none;
   overflow: hidden;
 
   .page-main {
@@ -3811,8 +3858,7 @@ onBeforeUnmount(() => {
       flex-shrink: 0;
       position: relative;
       min-width: 100px;
-      border: 1px solid var(--border-color);
-      border-left: none;
+      border-right: 1px solid var(--border-color);
 
       .left-resize {
         position: absolute;
@@ -3839,8 +3885,9 @@ onBeforeUnmount(() => {
           background-color: var(--expand-area-background-color);
 
           .el-menu-item.is-active {
-            background-color: #757575 !important;
-            color: #faf8f8;
+            background-color: var(--app-active-bg) !important;
+            color: var(--app-active-color);
+            box-shadow: inset 3px 0 0 var(--app-accent);
           }
 
           .text-marks-options {
@@ -3870,7 +3917,7 @@ onBeforeUnmount(() => {
 
               .text-mark:hover {
                 box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-                background: #e3f2fd;
+                background: var(--app-text-mark-hover-bg);
               }
             }
           }
@@ -3889,13 +3936,13 @@ onBeforeUnmount(() => {
               background-color: var(--menu-background-color);
 
               span {
-                color: white;
+                color: var(--app-hover-accent);
               }
             }
 
             .el-menu-item:hover {
-              background-color: #545353;
-              color: white !important;
+              background-color: var(--app-hover-bg);
+              color: var(--app-hover-color) !important;
             }
 
           }
@@ -3905,7 +3952,7 @@ onBeforeUnmount(() => {
             width: 100%;
             box-sizing: border-box;
             background-color: var(--menu-background-color);
-            border-bottom: 1px solid #a2a4a6;
+            border-bottom: 1px solid var(--app-menu-border);
 
             .image-marks {
               display: grid;
@@ -3920,7 +3967,7 @@ onBeforeUnmount(() => {
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                background: #ffffff; /* 可选，占位背景 */
+                background: var(--app-placeholder-bg); /* 可选，占位背景 */
                 border-radius: 2px;
                 padding: 5%;
 
@@ -3940,19 +3987,14 @@ onBeforeUnmount(() => {
 
           .templates-options {
             background-color: var(--menu-background-color);
-            border-bottom: 1px solid #a2a4a6;
+            border-bottom: 1px solid var(--app-menu-border);
 
             .templates {
               background-color: var(--expand-area-background-color);
 
               .el-menu-item {
                 color: var(--main-font-color);
-                border-bottom: 1px solid #868686;
                 height: 40px;
-              }
-
-              .el-menu-item:last-child {
-                border-bottom: none;
               }
             }
           }
@@ -4006,18 +4048,17 @@ onBeforeUnmount(() => {
 
         span {
           font-size: 14px;
-          color: #8A8A8A;
+          color: var(--app-secondary-text);
         }
       }
 
       .preview-container {
-        background: var(--preview-background-color);
+        background-color: var(--preview-background-color);
         width: 100%;
         height: 100%;
         position: absolute;
         min-width: 300px;
         min-height: 100px;
-        border: 1px solid #919191;
 
         .canvas-wrapper {
           display: flex;
@@ -4040,6 +4081,13 @@ onBeforeUnmount(() => {
             position: absolute;
             will-change: width, height;
           }
+
+          #background-canvas,
+          #foreground-canvas {
+            border: none;
+            outline: none;
+            box-shadow: none;
+          }
         }
       }
     }
@@ -4050,8 +4098,7 @@ onBeforeUnmount(() => {
       background: var(--expand-area-background-color);
       position: relative;
       min-width: 100px;
-      border: 1px solid var(--border-color);
-      border-right: none;
+      border-left: 1px solid var(--border-color);
 
       .right-resize {
         position: absolute;
@@ -4094,10 +4141,10 @@ onBeforeUnmount(() => {
 
             .el-sub-menu {
               background-color: var(--menu-background-color);
-              border-bottom: 1px solid #a2a4a6;
+              border-bottom: 1px solid var(--app-menu-border);
 
               .control-option {
-                background-color: #919090;
+                background-color: var(--app-control-bg);
                 display: flex;
                 align-items: center;
                 height: 50px;
@@ -4109,11 +4156,12 @@ onBeforeUnmount(() => {
                 width: 100%;
                 height: 30px;
                 font-size: 14px;
+                font-weight: 600;
                 background-color: var(--expand-area-background-color);
                 display: flex;
                 justify-content: center;
                 align-items: end;
-                border-top: 1px solid #818080;
+                border-top: 1px solid var(--app-menu-border);
               }
 
               .group-title:first-child {
@@ -4178,7 +4226,7 @@ onBeforeUnmount(() => {
                       font-size: 10px;
 
                       .el-input__wrapper {
-                        background: #F0F0F0;
+                        background: var(--app-control-bg);
                       }
                     }
 
@@ -4193,7 +4241,7 @@ onBeforeUnmount(() => {
                       width: calc(100% - 38px);
 
                       span {
-                        color: #4d4c4c;
+                        color: var(--app-regular-text);
                       }
                     }
 
@@ -4239,7 +4287,7 @@ onBeforeUnmount(() => {
                 background-color: var(--menu-background-color);
 
                 span {
-                  color: white;
+                  color: var(--app-hover-accent);
                 }
               }
             }
@@ -4253,7 +4301,7 @@ onBeforeUnmount(() => {
   .page-bottom {
     width: 100%;
     height: var(--page-bottom-height);
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--app-toolbar-border);
     position: relative;
     min-height: 100px;
 
@@ -4277,7 +4325,7 @@ onBeforeUnmount(() => {
       display: flex;
       justify-content: left;
       align-items: center;
-      border-bottom: 2px solid var(--border-color);
+      border-bottom: 1px solid var(--app-toolbar-border);
       gap: 15px;
       padding-left: 15px;
 
@@ -4331,7 +4379,7 @@ onBeforeUnmount(() => {
         gap: 15px;
 
         .counter {
-          color: #faf8f8;
+          color: var(--app-regular-text);
           font-size: 14px;
           display: flex;
         }
@@ -4341,7 +4389,7 @@ onBeforeUnmount(() => {
           align-items: center;
 
           .filter-label {
-            color: #faf8f8;
+            color: var(--app-regular-text);
             font-size: 14px;
           }
 
@@ -4370,10 +4418,10 @@ onBeforeUnmount(() => {
 
       img {
         box-sizing: border-box;
-        background: grey;
+        background: var(--app-thumb-bg);
         padding: 15px;
         height: 100%;
-        border-right: 1px solid #a2a4a6;
+        border-right: 1px solid var(--app-thumb-border);
       }
 
       img:last-child {
@@ -4381,7 +4429,8 @@ onBeforeUnmount(() => {
       }
 
       .active {
-        background: #dedcdc;
+        background: var(--app-thumb-active-bg);
+        box-shadow: inset 0 -2px 0 var(--app-thumb-active-line);
       }
 
       image:last-child {
@@ -4403,12 +4452,12 @@ onBeforeUnmount(() => {
     padding-bottom: 0;
     display: flex;
     align-items: center;
-    background-color: #F3F3F3;
+    background-color: var(--app-dialog-header);
 
     i {
       height: 100%;
       width: 100%;
-      color: black;
+      color: var(--app-dialog-icon);
       border-radius: 0 4px 0 0;
     }
 
@@ -4433,7 +4482,7 @@ onBeforeUnmount(() => {
 
   .el-dialog__title {
     font-size: 12px;
-    color: black;
+    color: var(--app-dialog-title);
     margin-left: 10px;
   }
 
@@ -4447,20 +4496,20 @@ onBeforeUnmount(() => {
   }
 
   .el-tabs, .el-select {
-    background: #F0F0F0;
+    background: var(--app-dialog-body-bg);
   }
 
   .el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active {
-    color: black;
+    color: var(--app-hover-accent);
   }
 
   .el-tabs--border-card > .el-tabs__header .el-tabs__item:hover {
-    color: #817e7e;
+    color: var(--app-accent-light);
   }
 
   .el-tabs .el-tabs__nav-scroll {
     height: 25px;
-    background: #e3e3e3;
+    background: var(--app-dialog-header);
 
     .el-tabs__item {
       height: 25px;
@@ -4508,7 +4557,7 @@ onBeforeUnmount(() => {
 
       .value:has(img) {
         padding: 5px;
-        border: 1px solid #efefef;
+        border: 1px solid var(--app-border-strong);
         border-radius: 3px;
 
         img {
@@ -4565,7 +4614,7 @@ onBeforeUnmount(() => {
       /* 基础样式 */
       .border-box {
         position: relative;
-        border: 1px solid #e4e4e5;
+        border: 1px solid var(--app-border-strong);
         border-radius: 2px;
         padding: 15px 10px;
         margin: 20px 0;
@@ -4577,7 +4626,7 @@ onBeforeUnmount(() => {
           background-color: var(--dialog-main-background-color);
           padding: 0 12px;
           font-size: 13px;
-          color: #7c7b7b;
+          color: var(--app-secondary-text);
         }
 
         .options {

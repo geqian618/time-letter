@@ -2709,7 +2709,7 @@ class Rect extends Element {
         this.fill = options.fill || 'rgba(255,255,255,0)'
         this.radius = options.radius || 0
         this.stroke = options.stroke || 'rgba(0,0,0,1)'
-        this.strokeWidth = options.strokeWidth || 1
+        this.strokeWidth = options.strokeWidth || 0
         this.angle = options.angle || 0
         this.radius = options.radius || 0
         this.lineDash = options.lineDash || [1, 1]

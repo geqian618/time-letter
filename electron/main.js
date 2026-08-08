@@ -1,4 +1,4 @@
-const {app, ipcMain, protocol, globalShortcut, BrowserWindow, Menu, dialog, shell} = require('electron')
+const {app, ipcMain, protocol, globalShortcut, BrowserWindow, Menu, dialog, shell, nativeTheme} = require('electron')
 const WinState = require('electron-win-state').default
 const path = require('path');
 const fs = require('fs')
@@ -39,7 +39,6 @@ let contextMenu = null;
 let templateContextMenu = null;
 let applicationMenu = null;
 let tray = null;
-
 
 /**
  * 创建主窗口
@@ -95,6 +94,26 @@ const loadAppContent = (window) => {
         window.loadFile(path.join(__dirname, '../dist/index.html'))
     }
 }
+
+
+/**
+ * 设置主题
+ */
+const setTheme = () => {
+    let theme = 'system';
+    try {
+        const themePath = path.join(app.getPath('userData'), 'theme.json');
+        const buffer = fs.readFileSync(themePath);
+        if (buffer.length > 0) {
+            const themeObject = JSON.parse(String(buffer));
+            if (themeObject.theme) {
+                theme = themeObject.theme;
+            }
+        }
+    } catch (e) { /* empty */
+    }
+    nativeTheme.themeSource = theme;
+};
 
 /**
  * 初始化组件
@@ -194,6 +213,24 @@ const setupIpcHandlers = () => {
             return null
         }
     })
+
+    // 主题切换
+    ipcMain.on('theme:set', (event, theme) => {
+        console.log(theme)
+        const finalTheme = theme || 'system';
+        if (['light', 'dark', 'system'].includes(finalTheme)) {
+            const themePath = path.join(app.getPath('userData'), 'theme.json');
+            nativeTheme.themeSource = finalTheme;
+            // 确保目录存在
+            const dir = path.dirname(themePath);
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+            // 写入主题配置（文件存在会覆盖）
+            fs.writeFileSync(themePath, JSON.stringify({ theme: finalTheme }));
+        }
+    });
+
 
     // 导出文件
     ipcMain.on('request-export-files', (event, data) => {
@@ -442,6 +479,8 @@ const setupUserData = () => {
  * 初始化应用
  */
 const initializeApp = () => {
+
+    setTheme()
 
     registerCustomProtocol()
 

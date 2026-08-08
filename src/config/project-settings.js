@@ -39,6 +39,9 @@ const projectSettings = ref({
     performance: {
         downloadThreads: -1,
     },
+    appearance: {
+        theme: 'system'
+    },
     others: {
         optionAnchorPoint: true,
         movingStepSize: 1,
