@@ -150,7 +150,7 @@ import {RouterView} from 'vue-router'
   --app-thumb-border: #4d4d4d;
   --app-thumb-active-bg: #5a5a5a;
   --app-thumb-active-line: #9a9a9a;
-  --app-dialog-header: #2e2e2e;
+  --app-dialog-header: #282828;
   --app-dialog-icon: #c9c9c9;
   --app-dialog-title: #ececec;
   --app-dialog-body-bg: #2e2e2e;
@@ -194,9 +194,7 @@ import {RouterView} from 'vue-router'
   --el-border-color-extra-light: #373737;
 }
 
-html,
-body,
-#app {
+html, body, #app {
   background-color: var(--app-page-bg);
   color: var(--app-page-text);
 }
@@ -249,7 +247,6 @@ body .el-dialog {
 
 body .el-dialog__header {
   background-color: var(--app-dialog-header);
-  border-bottom: 1px solid var(--app-border);
 }
 
 body .el-dialog__title {
