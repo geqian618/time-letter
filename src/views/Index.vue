@@ -3849,6 +3849,7 @@ onBeforeUnmount(() => {
     height: var(--page-main-height);
     display: flex;
     box-sizing: border-box;
+    border-top: 1px solid var(--app-toolbar-border);
 
     .page-left {
       width: var(--page-left-width);
