@@ -137,8 +137,8 @@ import {RouterView} from 'vue-router'
   --app-active-color: #ffffff;
   --app-hover-bg: #484848;
   --app-hover-color: #f2f2f2;
-  --app-border: #414141;
-  --app-border-strong: #4d4d4d;
+  --app-border: #3f3f3f;
+  --app-border-strong: #484848;
   --app-menu-border: #3d3d3d;
   --app-toolbar-border: #4a4a4a;
   --app-placeholder-bg: #d6d6d6;
@@ -175,23 +175,23 @@ import {RouterView} from 'vue-router'
   --el-bg-color: #2e2e2e;
   --el-bg-color-page: #262626;
   --el-bg-color-overlay: #2e2e2e;
-  --el-fill-color-blank: #3f3f3f;
-  --el-fill-color: #464646;
-  --el-fill-color-light: #4a4a4a;
-  --el-fill-color-lighter: #434343;
-  --el-fill-color-extra-light: #3b3b3b;
-  --el-fill-color-dark: #505050;
-  --el-fill-color-darker: #5a5a5a;
+  --el-fill-color-blank: #313131;
+  --el-fill-color: #353535;
+  --el-fill-color-light: #3b3b3b;
+  --el-fill-color-lighter: #404040;
+  --el-fill-color-extra-light: #454545;
+  --el-fill-color-dark: #282828;
+  --el-fill-color-darker: #242424;
 
-  --el-text-color-primary: #ececec;
-  --el-text-color-regular: #d6d6d6;
-  --el-text-color-secondary: #a3a3a3;
-  --el-text-color-placeholder: #7a7a7a;
+  --el-text-color-primary: #f0f0f0;
+  --el-text-color-regular: #d9d9d9;
+  --el-text-color-secondary: #ababab;
+  --el-text-color-placeholder: #808080;
 
-  --el-border-color: #414141;
-  --el-border-color-light: #4a4a4a;
-  --el-border-color-lighter: #434343;
-  --el-border-color-extra-light: #3b3b3b;
+  --el-border-color: #494949;
+  --el-border-color-light: #454545;
+  --el-border-color-lighter: #3e3e3e;
+  --el-border-color-extra-light: #373737;
 }
 
 html,
@@ -245,30 +245,6 @@ body .el-dialog {
   border: 1px solid var(--app-border-strong);
   border-radius: 6px;
   box-shadow: var(--app-dialog-shadow);
-}
-
-/* 暗色模式下 el-dialog 作用域内变量覆盖：容器以 #3A3A3A 为基准，内部控件略浅、边框减淡，
-   变量仅覆盖在 .el-dialog 作用域内，不影响全局其他区域 */
-:root[dark-theme] body .el-dialog {
-  --app-border-strong: #484848;
-  --app-border: #3f3f3f;
-  --el-bg-color: #2e2e2e;
-  --el-bg-color-overlay: #2e2e2e;
-  --el-fill-color-blank: #343434;
-  --el-fill-color: #383838;
-  --el-fill-color-light: #3e3e3e;
-  --el-fill-color-lighter: #434343;
-  --el-fill-color-extra-light: #484848;
-  --el-fill-color-dark: #2b2b2b;
-  --el-fill-color-darker: #272727;
-  --el-text-color-primary: #f0f0f0;
-  --el-text-color-regular: #d9d9d9;
-  --el-text-color-secondary: #ababab;
-  --el-text-color-placeholder: #808080;
-  --el-border-color: #494949;
-  --el-border-color-light: #454545;
-  --el-border-color-lighter: #3e3e3e;
-  --el-border-color-extra-light: #373737;
 }
 
 body .el-dialog__header {
