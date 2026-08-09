@@ -37,6 +37,11 @@ import {RouterView} from 'vue-router'
 
   color-scheme: light;
 
+  --page-main-height: 75%;
+  --page-bottom-height: 25%;
+  --page-left-width: 18%;
+  --preview-container-width: 60%;
+  --page-right-width: 22%;
   --border-color: #d4d4d4;
   --expand-area-background-color: #fafafa;
   --menu-background-color: #ececec;
@@ -115,11 +120,6 @@ import {RouterView} from 'vue-router'
   color-scheme: drak;
 
   --border-color: #3f3f3f;
-  --page-main-height: 75%;
-  --page-bottom-height: 25%;
-  --page-left-width: 18%;
-  --preview-container-width: 60%;
-  --page-right-width: 22%;
   --expand-area-background-color: #3a3a3a;
   --menu-background-color: #242424;
   --menu-icon-color: #c8c8c8;
