@@ -4499,8 +4499,13 @@ onBeforeUnmount(() => {
     background: var(--app-dialog-body-bg);
   }
 
+  .el-tabs--border-card > .el-tabs__header .el-tabs__item {
+    color: var(--app-secondary-text);
+  }
+
   .el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active {
-    color: var(--app-hover-accent);
+    color: var(--app-dialog-title);
+    background-color: var(--app-tabs-active-bg);
   }
 
   .el-tabs--border-card > .el-tabs__header .el-tabs__item:hover {

@@ -70,12 +70,13 @@ import {RouterView} from 'vue-router'
   --app-text-mark-hover-bg: #e8f1fe;
   --app-thumb-bg: #ececec;
   --app-thumb-border: #e2e2e2;
-  --app-thumb-active-bg: #b0b0b0;
+  --app-thumb-active-bg: #b7b7b7;
   --app-thumb-active-line: #888888;
   --app-dialog-header: #f5f5f5;
   --app-dialog-icon: #555555;
   --app-dialog-title: #2e2e2e;
   --app-dialog-body-bg: #ffffff;
+  --app-tabs-active-bg: #ffffff;
   --app-scrollbar-track: #f0f0f0;
   --app-scrollbar-thumb: #c9c9c9;
   --app-scrollbar-thumb-hover: #a9a9a9;
@@ -117,79 +118,80 @@ import {RouterView} from 'vue-router'
 
 :root[dark-theme] {
 
-  color-scheme: drak;
+  color-scheme: dark;
 
-  --border-color: #3f3f3f;
-  --expand-area-background-color: #3a3a3a;
-  --menu-background-color: #242424;
-  --menu-icon-color: #c8c8c8;
-  --main-font-color: #d9d9d9;
-  --preview-background-color: #323232;
-  --dialog-main-background-color: #2f2f2f;
+  --border-color: #3d3d3d;
+  --expand-area-background-color: #2e2e2e;
+  --menu-background-color: #272727;
+  --menu-icon-color: #c9c9c9;
+  --main-font-color: #d6d6d6;
+  --preview-background-color: #242424;
+  --dialog-main-background-color: #2e2e2e;
 
-  --app-page-bg: #323232;
-  --app-page-text: #f5f5f5;
-  --app-accent: #2f7df6;
-  --app-accent-light: #8ec0f7;
-  --app-hover-accent: #e6e6e6;
-  --app-active-bg: #4a4a4a;
-  --app-active-color: #f2f2f2;
-  --app-hover-bg: #414141;
+  --app-page-bg: #262626;
+  --app-page-text: #ececec;
+  --app-accent: #4d9fff;
+  --app-accent-light: #7fb8ff;
+  --app-hover-accent: #f0f0f0;
+  --app-active-bg: #505050;
+  --app-active-color: #ffffff;
+  --app-hover-bg: #484848;
   --app-hover-color: #f2f2f2;
-  --app-border: #3f3f3f;
-  --app-border-strong: #4a4a4a;
-  --app-menu-border: #3a3a3a;
-  --app-toolbar-border: #5f5f5f;
-  --app-placeholder-bg: #d9d9d9;
-  --app-control-bg: #383838;
-  --app-regular-text: #d5d5d5;
-  --app-secondary-text: #a0a0a0;
-  --app-text-mark-hover-bg: #d9d9d9;
-  --app-thumb-bg: #3a3a3a;
-  --app-thumb-border: #4a4a4a;
-  --app-thumb-active-bg: #6a6a6a;
-  --app-thumb-active-line: #8a8a8a;
-  --app-dialog-header: #323232;
-  --app-dialog-icon: #c8c8c8;
-  --app-dialog-title: #f5f5f5;
-  --app-dialog-body-bg: #2f2f2f;
-  --app-scrollbar-track: #323232;
-  --app-scrollbar-thumb: #5a5a5a;
-  --app-scrollbar-thumb-hover: #6f6f6f;
-  --app-preview-scrollbar-track: #3a3a3a;
-  --app-preview-scrollbar-thumb: #555555;
-  --app-dialog-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
-  --app-overlay: rgba(0, 0, 0, 0.65);
-  --app-popper-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --app-border: #414141;
+  --app-border-strong: #4d4d4d;
+  --app-menu-border: #3d3d3d;
+  --app-toolbar-border: #4a4a4a;
+  --app-placeholder-bg: #d6d6d6;
+  --app-control-bg: #3f3f3f;
+  --app-regular-text: #d6d6d6;
+  --app-secondary-text: #a3a3a3;
+  --app-text-mark-hover-bg: #d6d6d6;
+  --app-thumb-bg: #3d3d3d;
+  --app-thumb-border: #4d4d4d;
+  --app-thumb-active-bg: #5a5a5a;
+  --app-thumb-active-line: #9a9a9a;
+  --app-dialog-header: #2e2e2e;
+  --app-dialog-icon: #c9c9c9;
+  --app-dialog-title: #ececec;
+  --app-dialog-body-bg: #2e2e2e;
+  --app-tabs-active-bg: #3f3f3f;
+  --app-scrollbar-track: #2a2a2a;
+  --app-scrollbar-thumb: #484848;
+  --app-scrollbar-thumb-hover: #5a5a5a;
+  --app-preview-scrollbar-track: #242424;
+  --app-preview-scrollbar-thumb: #3f3f3f;
+  --app-dialog-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+  --app-overlay: rgba(0, 0, 0, 0.6);
+  --app-popper-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 
-  --el-color-primary: #2f7df6;
-  --el-color-primary-light-3: #3677d6;
-  --el-color-primary-light-5: #2e62ae;
-  --el-color-primary-light-7: #333333;
-  --el-color-primary-light-8: #303030;
-  --el-color-primary-light-9: #2d2d2d;
-  --el-color-primary-dark-2: #4d91f8;
+  --el-color-primary: #4d9fff;
+  --el-color-primary-light-3: #3f84e0;
+  --el-color-primary-light-5: #356fb8;
+  --el-color-primary-light-7: #2b5a94;
+  --el-color-primary-light-8: #265083;
+  --el-color-primary-light-9: #224671;
+  --el-color-primary-dark-2: #79bbff;
 
-  --el-bg-color: #2f2f2f;
-  --el-bg-color-page: #323232;
-  --el-bg-color-overlay: #3a3a3a;
-  --el-fill-color-blank: #383838;
-  --el-fill-color: #414141;
-  --el-fill-color-light: #3b3b3b;
-  --el-fill-color-lighter: #363636;
-  --el-fill-color-extra-light: #333333;
-  --el-fill-color-dark: #474747;
-  --el-fill-color-darker: #525252;
+  --el-bg-color: #2e2e2e;
+  --el-bg-color-page: #262626;
+  --el-bg-color-overlay: #2e2e2e;
+  --el-fill-color-blank: #3f3f3f;
+  --el-fill-color: #464646;
+  --el-fill-color-light: #4a4a4a;
+  --el-fill-color-lighter: #434343;
+  --el-fill-color-extra-light: #3b3b3b;
+  --el-fill-color-dark: #505050;
+  --el-fill-color-darker: #5a5a5a;
 
-  --el-text-color-primary: #f5f5f5;
-  --el-text-color-regular: #d5d5d5;
-  --el-text-color-secondary: #a8a8a8;
-  --el-text-color-placeholder: #7c7c7c;
+  --el-text-color-primary: #ececec;
+  --el-text-color-regular: #d6d6d6;
+  --el-text-color-secondary: #a3a3a3;
+  --el-text-color-placeholder: #7a7a7a;
 
-  --el-border-color: #4a4a4a;
-  --el-border-color-light: #414141;
-  --el-border-color-lighter: #383838;
-  --el-border-color-extra-light: #333333;
+  --el-border-color: #414141;
+  --el-border-color-light: #4a4a4a;
+  --el-border-color-lighter: #434343;
+  --el-border-color-extra-light: #3b3b3b;
 }
 
 html,
@@ -243,6 +245,30 @@ body .el-dialog {
   border: 1px solid var(--app-border-strong);
   border-radius: 6px;
   box-shadow: var(--app-dialog-shadow);
+}
+
+/* 暗色模式下 el-dialog 作用域内变量覆盖：容器以 #3A3A3A 为基准，内部控件略浅、边框减淡，
+   变量仅覆盖在 .el-dialog 作用域内，不影响全局其他区域 */
+:root[dark-theme] body .el-dialog {
+  --app-border-strong: #484848;
+  --app-border: #3f3f3f;
+  --el-bg-color: #2e2e2e;
+  --el-bg-color-overlay: #2e2e2e;
+  --el-fill-color-blank: #343434;
+  --el-fill-color: #383838;
+  --el-fill-color-light: #3e3e3e;
+  --el-fill-color-lighter: #434343;
+  --el-fill-color-extra-light: #484848;
+  --el-fill-color-dark: #2b2b2b;
+  --el-fill-color-darker: #272727;
+  --el-text-color-primary: #f0f0f0;
+  --el-text-color-regular: #d9d9d9;
+  --el-text-color-secondary: #ababab;
+  --el-text-color-placeholder: #808080;
+  --el-border-color: #494949;
+  --el-border-color-light: #454545;
+  --el-border-color-lighter: #3e3e3e;
+  --el-border-color-extra-light: #373737;
 }
 
 body .el-dialog__header {
