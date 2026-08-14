@@ -758,20 +758,20 @@
           <div class="left-tabs">
             <div class="tab-wrapper">
               <el-tooltip effect="dark" content="上一张" placement="top">
-                <img src="/src/assets/images/左箭头-未激活.png" class="inactive" alt="上一张">
+                <img src="/src/assets/images/left-arrow-inactive.png" class="inactive" alt="上一张">
               </el-tooltip>
               <el-tooltip effect="dark" content="上一张" placement="top">
-                <img src="/src/assets/images/左箭头-激活.png" class="active" @click="switchBeforePreviewElement"
+                <img src="/src/assets/images/left-arrow-active.png" class="active" @click="switchBeforePreviewElement"
                      alt="上一张">
               </el-tooltip>
             </div>
 
             <div class="tab-wrapper">
               <el-tooltip effect="dark" content="下一张" placement="top">
-                <img src="/src/assets/images/右箭头-未激活.png" class="inactive" alt="下一张">
+                <img src="/src/assets/images/right-arrow-inactive.png" class="inactive" alt="下一张">
               </el-tooltip>
               <el-tooltip effect="dark" content="下一张" placement="top">
-                <img src="/src/assets/images/右箭头-激活.png" class="active" @click="switchNextPreviewElement"
+                <img src="/src/assets/images/right-arrow-active.png" class="active" @click="switchNextPreviewElement"
                      alt="下一张">
               </el-tooltip>
             </div>
@@ -790,10 +790,10 @@
 
             <div class="tab-wrapper">
               <el-tooltip effect="dark" content="居中" placement="top">
-                <img src="/src/assets/images/居中显示-未激活.png" class="inactive small-size" alt="居中">
+                <img src="/src/assets/images/center-display-inactivate.png" class="inactive small-size" alt="居中">
               </el-tooltip>
               <el-tooltip effect="dark" content="居中" placement="top">
-                <img src="/src/assets/images/居中显示-激活.png" class="active small-size"
+                <img src="/src/assets/images/center-display-activate.png" class="active small-size"
                      @click="handleScrollBarMoveToCenter"
                      alt="居中">
               </el-tooltip>
@@ -1346,8 +1346,8 @@
         <div class="contact">
           <span class="title">联系与赞赏：</span>
           <div class="value">
-            <img src="/src/assets/images/二维码.jpg">
-            <img src="/src/assets/images/赞赏码.jpg">
+            <img src="/src/assets/images/qr-code.jpg">
+            <img src="/src/assets/images/reward-code.jpg">
           </div>
         </div>
         <div class="version">

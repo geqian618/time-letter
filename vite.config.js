@@ -21,20 +21,26 @@ export default defineConfig({
             '@': fileURLToPath(new URL('./src', import.meta.url))
         }
     },
+    optimizeDeps: {
+        exclude: ['@napi-rs/canvas'],
+    },
     build: {
         sourcemap: false, // 禁止生成 .map 文件
-        minify: 'terser', // 使用terser进行压缩混淆
+        minify: 'terser', // 使用 terser 进行压缩混淆
         assetsInlineLimit: 1,
         chunkSizeWarningLimit: 2000,
         terserOptions: {
             compress: {
-                drop_console: true, // 移除 console
-                drop_debugger: true // 移除 debugger
+                // 移除 console
+                drop_console: true,
+                // 移除 debugger
+                drop_debugger: true
             },
             format: {
                 comments: false
             },
-            mangle: true, // 混淆变量名（默认开启）
+            // 混淆变量名（默认开启）
+            mangle: true,
         }
     }
 })

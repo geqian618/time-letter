@@ -44,7 +44,7 @@ import {RouterView} from 'vue-router'
   --page-right-width: 22%;
   --border-color: #d4d4d4;
   --expand-area-background-color: #fafafa;
-  --menu-background-color: #ececec;
+  --menu-background-color: #f1f1f1;
   --menu-icon-color: #555555;
   --main-font-color: #333333;
   --preview-background-color: #e8e8e8;
