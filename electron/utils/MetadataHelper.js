@@ -119,7 +119,7 @@ class MetadataHelper {
      */
     static async write(buffer, metadata = {}, options = {}) {
         if (!Buffer.isBuffer(buffer)) {
-            throw new TypeError('MetadataHelper.write 的 buffer 参数必须是 Buffer');
+            throw new TypeError('write 的 buffer 参数必须是 Buffer');
         }
         const format = (options.format || this._sniffFormat(buffer)).toLowerCase();
         // Photoshop 方式：EXIF → XMP 翻译（默认开启；regenerateXmp 时丢弃源 XMP 用干净包）
@@ -138,7 +138,7 @@ class MetadataHelper {
             case 'webp':
                 return this._writeWebp(buffer, metadata, options);
             default:
-                throw new Error(`MetadataHelper 暂不支持目标格式: ${format}（仅支持 png / jpeg / webp）`);
+                throw new Error(`暂不支持目标格式: ${format}（仅支持 png / jpeg / webp）`);
         }
     }
 
@@ -148,7 +148,6 @@ class MetadataHelper {
      * 默认使用 exiftool 写入（Photoshop 同源、Windows 兼容性最好的方式）：将目标
      * Buffer 落临时文件，用 `exiftool -TagsFromFile 源 -All:All` 复制全部元数据
      * （exiftool 会自动按目标格式写 eXIf/iTXt/XMP 块），再读回。
-     * 代价是每张图启动一次 exiftool 进程；传 {useExiftool: false} 可回退到内进程写入。
      *
      * @param {string} filePath - 原图片文件路径
      * @param {Buffer} buffer - 目标图片 Buffer
