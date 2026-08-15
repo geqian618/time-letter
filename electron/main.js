@@ -29,14 +29,11 @@ const isDev = environment === 'development'
 const resourcesPath = getResourcePath()
 const fontPath = getFontPath()
 
-// 打包后渲染进程加载器（解密 renderer.pkg + myclient:// 协议 + asar 完整性校验）
-const {registerPrivilegedSchemes, registerRendererProtocol, verifyAsarIntegrity} = require('./runtime/renderer-loader')
-
 // 禁用安全警告
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
-// 自定义协议权限必须在 app ready 之前注册
-registerPrivilegedSchemes()
+// 打包后渲染进程加载器（解密 renderer.pkg + myclient:// 协议 + asar 完整性校验）
+const {registerPrivilegedSchemes, registerRendererProtocol, verifyAsarIntegrity} = require('./runtime/renderer-loader')
 
 
 // 组件应用
@@ -503,6 +500,10 @@ const initializeApp = () => {
 
     createMainWindow()
 }
+
+
+// 自定义协议权限必须在 app ready 之前注册
+registerPrivilegedSchemes()
 
 // 设置用户数据（必须在 whenReady 方法执行之前调用才生效）
 setupUserData()

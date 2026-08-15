@@ -5,7 +5,7 @@
   "private": true,
   "main": "electron/main-loader.js",
   "scripts": {
-    "electron:serve": "concurrently -n \"VITE,NODE\" -c \"blue,green\" -k \"npm run vite:start\" \"npm run electron:start\"",
+    "electron:serve": "npm run bundle:main && npm run compile && concurrently -n \"VITE,NODE\" -c \"blue,green\" -k \"npm run vite:start\" \"npm run electron:start\"",
     "electron:start": "wait-on http://localhost:5173 && chcp 65001 && cross-env NODE_ENV=development electron .",
     "electron:build": "vite build && npm run bundle:main && npm run compile && electron-builder",
     "compile": "node scripts/compile.js",
@@ -32,7 +32,6 @@
     "lodash": "^4.17.21",
     "normalize.css": "^8.0.1",
     "p-limit": "^6.2.0",
-    "piexifjs": "^1.0.6",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
     "piscina": "^5.0.0",

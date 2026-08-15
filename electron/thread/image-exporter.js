@@ -10,7 +10,7 @@ const interrupt = new Int32Array(sab);
 // 初始值为 0（未中断）
 Atomics.store(interrupt, 0, 0);
 
-const WORKER_PATH = app.isPackaged ? path.join(app.getAppPath(), 'electron', 'thread', 'worker-loader.js') : path.join(__dirname, 'worker.js')
+const WORKER_PATH = path.join(app.getAppPath(), 'electron', 'thread', app.isPackaged ? 'worker-loader.js' : 'worker.js')
 
 const exportFiles = async ({projectSettings, outputDirectory, settings}, progressCallback) => {
 

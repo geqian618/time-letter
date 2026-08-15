@@ -90,6 +90,8 @@ module.exports = async (params) => {
     let buffer = outputExtname === 'png' ? canvas.toBuffer('image/png') : canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 100 : quality);
 
     if (isSynchronizeMetadata) {
+        // useExiftool 为 MetadataHelper 默认写入方式（Photoshop 同源、兼容性最好），
+        // 这里显式传入以保持清晰；exiftool 会按目标格式自动写入规范容器
         buffer = await MetadataHelper.syncToBuffer(filePath, buffer, {format: outputExtname});
     }
 
