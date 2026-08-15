@@ -890,7 +890,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="saveTemplateDialogVisible" title="保存预设模版" align-center width="300" draggable>
+    <el-dialog v-model="saveTemplateDialogVisible" title="保存预设模版" align-center width="350" draggable>
       <el-form :model="newTemplate" class="demo-form-inline" :rules="saveTemplateRules" ref="saveTemplateForm"
                @submit.native.prevent>
         <el-form-item label="模板名称" prop="templateName">
@@ -911,7 +911,7 @@
     </el-dialog>
 
 
-    <el-dialog v-model="renameDialogVisible" title="重命名" align-center width="300" draggable>
+    <el-dialog v-model="renameDialogVisible" title="重命名" align-center width="350" draggable>
       <el-form :model="oldTemplate" class="demo-form-inline" :rules="renameTemplateRules" ref="renameTemplateForm"
                @submit.native.prevent>
         <el-form-item label="预设名称" prop="rename">

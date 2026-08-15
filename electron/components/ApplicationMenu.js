@@ -52,7 +52,7 @@ const createApplicationMenu = (mainWindow) => {
                             click: importTemplates
                         },
                         {
-                            label: '导出为文件',
+                            label: '导出文件',
                             click: exportTemplates
                         }
                     ],
@@ -65,7 +65,7 @@ const createApplicationMenu = (mainWindow) => {
                             click: importSettings
                         },
                         {
-                            label: '导出为文件',
+                            label: '导出文件',
                             click: exportSettings
                         }
                     ],

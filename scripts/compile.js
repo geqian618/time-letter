@@ -1,27 +1,56 @@
 const bytenode = require('bytenode');
-const glob = require('glob'); // 需要先安装: npm install glob
+const glob = require('glob');
 const path = require('path');
+const fs = require('fs');
 
-// 使用 glob 模式匹配所有需要编译的 JS 文件
-const files = glob.sync('./electron/**/*.js'); // 例如，编译 src 目录下所有 JS
+// 主进程已被 scripts/bundle-main.js 整体打包为单个 bundle（输出到
+// node_modules/.cache/electron-bundle/），这里只编译最终需要随包分发的
+// 3 个字节码文件：
+//   node_modules/.cache/electron-bundle/main.bundle.js     -> electron/main.jsc          （主进程整体逻辑）
+//   node_modules/.cache/electron-bundle/worker.bundle.js   -> electron/thread/worker.jsc （导出 worker 整体逻辑）
+//   electron/preload/index.js                              -> electron/preload/index.jsc（渲染进程 preload）
+const TARGETS = [
+    ['node_modules/.cache/electron-bundle/main.bundle.js', 'electron/main.jsc'],
+    ['node_modules/.cache/electron-bundle/worker.bundle.js', 'electron/thread/worker.jsc'],
+    ['electron/preload/index.js', 'electron/preload/index.jsc']
+];
 
-files.forEach(file => {
+(async () => {
+    // 清理旧的逐文件 .jsc 产物，确保 asar 中只保留上面 3 个字节码文件
+    const stale = glob.sync('./electron/**/*.jsc');
+    for (const file of stale) {
+        console.log('Removing stale', file);
+        fs.rmSync(file, { force: true });
+    }
 
-    // 指定输出路径，这里示例将 .jsc 文件输出到 dist 目录
-    const output = path.join(file).replace(/\.js$/, '.jsc');
+    const CONCURRENCY = 2;
+    let index = 0;
+    const errors = [];
 
-    console.log(`Compiling ${file} -> ${output}`);
+    const worker = async () => {
+        while (index < TARGETS.length) {
+            const [input, output] = TARGETS[index++];
+            try {
+                console.log(`Compiling ${input} -> ${output}`);
+                await bytenode.compileFile({
+                    filename: input,
+                    output: output,
+                    electronPath: require('electron'),
+                    electron: true, // 指定为 Electron 环境编译，保证字节码 ABI 一致
+                    compileAsModule: true,
+                });
+                console.log(`Success: ${output}`);
+            } catch (err) {
+                errors.push({ input, err });
+            }
+        }
+    };
 
-    bytenode.compileFile({
-        filename: file,
-        output: output,
-        electronPath: require('electron'),
-        electron: true, // 关键！指定为 Electron 编译
-        compileAsModule: true,
-    }).then(() => {
-        console.log(`Success: ${file}`);
-    }).catch(err => {
-        console.error(`Error compiling ${file}:`, err);
-    });
+    await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 
-});
+    errors.forEach(({ input, err }) => console.error(`Error compiling ${input}:`, err));
+    console.log(`\\nCompiled ${TARGETS.length - errors.length}/${TARGETS.length} bundles.`);
+    if (errors.length > 0) {
+        process.exitCode = 1;
+    }
+})();

@@ -10,7 +10,7 @@ const imageParser = require('./utils/image-parser')
 const imageExporter = require('./thread/image-exporter')
 const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('./utils/path-helper')
 const {getSystemFonts, getCustomFonts} = require('./utils/font-manager')
-const ExifManager = require("./utils/ExifManager");
+const MetadataHelper = require("./utils/MetadataHelper");
 
 // 钩子和组件
 const resourcesLoader = require('./utils/resources-loader')
@@ -29,8 +29,14 @@ const isDev = environment === 'development'
 const resourcesPath = getResourcePath()
 const fontPath = getFontPath()
 
+// 打包后渲染进程加载器（解密 renderer.pkg + myclient:// 协议 + asar 完整性校验）
+const {registerPrivilegedSchemes, registerRendererProtocol, verifyAsarIntegrity} = require('./runtime/renderer-loader')
+
 // 禁用安全警告
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
+
+// 自定义协议权限必须在 app ready 之前注册
+registerPrivilegedSchemes()
 
 
 // 组件应用
@@ -89,9 +95,9 @@ const loadAppContent = (window) => {
         // 开发环境加载 URL
         window.loadURL('http://localhost:5173/')
     } else {
-        // 生产环境加载本地文件系统中的文件
-        // window.loadURL(`file://${path.join(__dirname, '../dist/index.html')}`)
-        window.loadFile(path.join(__dirname, '../dist/index.html'))
+        // 生产环境：渲染进程已被 electron-builder-encryptor 加密为 resources/renderer.pkg，
+        // 打包时注入主进程的辅助模块负责解密，并通过自定义协议 myclient:// 加载
+        window.loadURL('myclient://apps/index.html')
     }
 }
 
@@ -224,10 +230,10 @@ const setupIpcHandlers = () => {
             // 确保目录存在
             const dir = path.dirname(themePath);
             if (!fs.existsSync(dir)) {
-                fs.mkdirSync(dir, { recursive: true });
+                fs.mkdirSync(dir, {recursive: true});
             }
             // 写入主题配置（文件存在会覆盖）
-            fs.writeFileSync(themePath, JSON.stringify({ theme: finalTheme }));
+            fs.writeFileSync(themePath, JSON.stringify({theme: finalTheme}));
         }
     });
 
@@ -435,7 +441,7 @@ const setupAppLifecycle = () => {
         // 注销全局快捷键
         globalShortcut.unregisterAll();
 
-        ExifManager.close()
+        MetadataHelper.close()
     })
 
     // 所有窗口关闭
@@ -479,6 +485,13 @@ const setupUserData = () => {
  * 初始化应用
  */
 const initializeApp = () => {
+
+    if (!isDev) {
+        // 校验 app.asar 是否被篡改（不通过则退出）
+        verifyAsarIntegrity()
+        // 解密 renderer.pkg 并注册 myclient:// 协议，供生产环境加载渲染进程
+        registerRendererProtocol()
+    }
 
     setTheme()
 

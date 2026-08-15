@@ -26,4 +26,38 @@ bilibili：https://space.bilibili.com/492789742
 ## 常见问题
 
 
+
+## 打包与源码保护（electron-builder-encryptor）
+
+打包时（`npm run electron:build`）通过 [electron-builder-encryptor](https://github.com/dusionlike/electron-builder-encryptor) 的 `afterPack` 钩子对产物进行加密保护：
+
+| 内容 | 保护方式 |
+| --- | --- |
+| 主进程（`electron/**/*`） | `scripts/bundle-main.js` 用 esbuild 把全部内部模块打包为**单个** bundle，再由 bytenode 编译为**单个** `main.jsc` 字节码；worker 同理打包为单个 `worker.jsc`，preload 为单个 `index.jsc`。`app.asar` 中应用代码仅 3 个字节码文件 + 3 个引导加载器 |
+| 渲染进程（`dist/`，vite 产物） | AES-256-CBC 加密压缩为单个 `resources/renderer.pkg`，从 `app.asar` 中移除 |
+| `app.asar` 完整性 | 生成 `resources/app.yml`（MD5 校验），运行时检测篡改即退出 |
+
+- 加密配置**唯一来源**为 `encryptor.config.js`（`key`、`protocol`、`renderer.entry/output`）；`scripts/bundle-main.js` 构建时读取该配置，通过 esbuild `define` 注入到 `renderer-loader`，密钥无需在多处维护。
+- bundle 为构建中间产物，输出到 `node_modules/.cache/electron-bundle/`（不进源码目录、不进安装包），只有编译后的 `main.jsc` / `worker.jsc` / `index.jsc` 随包分发。
+- `afterPack` 钩子实现见 `scripts/encryptor-afterpack.js`。
+- 生产环境渲染进程的解密与加载由应用自身完成：`electron/runtime/renderer-loader.js`（随主进程一起打进 `main.jsc`）负责解密 `renderer.pkg`、注册 `myclient://` 协议并校验 `app.asar` 完整性；加载地址见 `electron/main.js` 的 `loadAppContent`（`myclient://apps/index.html`）。打包产物不依赖构建机环境，可任意机器运行。
+
+### 打包命令
+
+```shell
+# 1. 开发：常规启动
+npm run electron:serve
+
+# 2. 打包（自动依次执行 vite build → bytenode 编译 → electron-builder + 加密）
+npm run electron:build
+```
+
+### 注意事项
+
+- 修改主进程源码（`electron/**/*.js`）或加密配置（`encryptor.config.js`）后重新打包，`electron:build` 会自动执行 bundle（含配置注入）→ 编译 → 打包加密，无需手动操作。
+- `electron/main-loader.js`、`electron/preload/index-loader.js`、`electron/thread/worker-loader.js` 是运行时引导加载器，保持明文，不参与字节码编译。
+- 打包后 `app.asar` 内应用代码文件极少（3 个字节码 + 3 个引导加载器 + 图标），其余为 `node_modules` 依赖。
+- 加密密钥位于 `encryptor.config.js`，请妥善保管；泄露密钥即可解密 `renderer.pkg`。
+- `afterPack` 会在打包后把 encryptor 注入主进程的“构建机绝对路径”运行时链（`main-c.jsc`）移除，并恢复 `main-loader.js` 引导加载器，确保安装包可在任意机器运行；同时按最终 `app.asar` 重新生成 `app.yml` 校验文件。
+
 ## 更新日志

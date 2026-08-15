@@ -25,8 +25,10 @@ export default defineConfig({
         exclude: ['@napi-rs/canvas'],
     },
     build: {
-        sourcemap: false, // 禁止生成 .map 文件
-        minify: 'terser', // 使用 terser 进行压缩混淆
+        // 禁止生成 .map 文件
+        sourcemap: false,
+        // 使用 terser 进行压缩混淆
+        minify: 'terser',
         assetsInlineLimit: 1,
         chunkSizeWarningLimit: 2000,
         terserOptions: {

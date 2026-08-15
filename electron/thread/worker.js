@@ -1,6 +1,6 @@
 const {CanvasEditor} = require("../canvas/NodeCanvasEditor");
 const path = require("path");
-const {copyExifDataToBuffer} = require("../utils/exif-helper");
+const MetadataHelper = require("../utils/MetadataHelper");
 const {promises: fs} = require("fs");
 const {createCanvas} = require("@napi-rs/canvas");
 
@@ -49,7 +49,7 @@ module.exports = async (params) => {
     const {borderLeft, borderRight, borderTop, borderBottom} = background.meta;
 
     if (borderLeft === 0 && borderRight === 0 && borderTop === 0 && borderBottom === 0) {
-        if (type === 0 && elements.length === 2 && originalExtname === outputExtname) {
+        if (type === 0 && elements.length === 2 && originalExtname === outputExtname && isSynchronizeMetadata) {
             try {
                 await fs.copyFile(filePath, outputPath);
             } catch (err) {
@@ -89,8 +89,8 @@ module.exports = async (params) => {
     // 7. 保存图片 (使用 Buffer 写入)
     let buffer = outputExtname === 'png' ? canvas.toBuffer('image/png') : canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 100 : quality);
 
-    if (['jpeg', 'jpg'].includes(originalExtname) && ['jpeg', 'jpg'].includes(outputExtname) && isSynchronizeMetadata) {
-        buffer = await copyExifDataToBuffer(filePath, buffer)
+    if (isSynchronizeMetadata) {
+        buffer = await MetadataHelper.syncToBuffer(filePath, buffer, {format: outputExtname});
     }
 
     await fs.writeFile(outputPath, buffer);
