@@ -1,0 +1,40 @@
+{
+  "appId": "com.electron.app",
+  "asar": true,
+  "afterPack": "./scripts/encryptor-afterpack.js",
+  "directories": {
+    "buildResources": "assets",
+    "output": "electron_dist"
+  },
+  "nsis": {
+    "oneClick": false,
+    "language": "2052",
+    "allowToChangeInstallationDirectory": true,
+    "installerIcon": "electron/resources/favicon.ico",
+    "uninstallerIcon": "electron/resources/favicon.ico"
+  },
+  "win": {
+    "icon": "electron/resources/favicon.png",
+    "target": ["nsis", "zip"]
+  },
+  "files": [
+    "dist/**/*",
+    "electron/**/*",
+    "!electron/resources/resources",
+    "!electron/resources/fonts",
+    "!electron/**/*.js",
+    "electron/main-loader.js",
+    "electron/preload/index-loader.js",
+    "electron/thread/worker-loader.js"
+  ],
+  "extraResources": [
+    {
+      "from": "electron/resources/resources",
+      "to": "./resources"
+    },
+    {
+      "from": "electron/resources/fonts",
+      "to": "./fonts"
+    }
+  ]
+}
