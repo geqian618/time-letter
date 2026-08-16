@@ -2,7 +2,7 @@ const sharp = require('sharp');
 const fs = require('fs').promises;
 const path = require('path');
 const os = require('os');
-const {exiftool} = require("exiftool-vendored");
+const {exiftool} = require('exiftool-vendored');
 
 /**
  * 图片元数据同步工具类

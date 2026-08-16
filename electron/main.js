@@ -483,14 +483,27 @@ const setupUserData = () => {
  */
 const initializeApp = () => {
 
+    // 自定义协议权限必须在 app ready 之前注册
+    registerPrivilegedSchemes()
+
+    // 设置用户数据（必须在 whenReady 方法执行之前调用才生效）
+    setupUserData()
+
+    // 设置主题
+    setTheme()
+}
+
+/**
+ * 启动应用
+ */
+const startApp = () => {
+
     if (!isDev) {
         // 校验 app.asar 是否被篡改（不通过则退出）
         verifyAsarIntegrity()
         // 解密 renderer.pkg 并注册 myclient:// 协议，供生产环境加载渲染进程
         registerRendererProtocol()
     }
-
-    setTheme()
 
     registerCustomProtocol()
 
@@ -502,20 +515,26 @@ const initializeApp = () => {
 }
 
 
-// 自定义协议权限必须在 app ready 之前注册
-registerPrivilegedSchemes()
-
-// 设置用户数据（必须在 whenReady 方法执行之前调用才生效）
-setupUserData()
+initializeApp();
 
 // 应用准备就绪后初始化
-app.whenReady().then(initializeApp)
+app.whenReady().then(startApp)
 
 // 处理未捕获的异常
 process.on('uncaughtException', (error) => {
     console.error('未捕获的异常:', error)
+    dialog.showMessageBox({
+        type: 'error',
+        title: '执行错误',
+        message: error
+    })
 })
 
 process.on('unhandledRejection', (reason, promise) => {
     console.error('未处理的Promise拒绝:', reason)
+    dialog.showMessageBox({
+        type: 'error',
+        title: '执行错误',
+        message: reason
+    })
 })
