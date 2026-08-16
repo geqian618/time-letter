@@ -8,7 +8,6 @@
     "electron:serve": "npm run bundle:main && npm run compile && concurrently -n \"VITE,NODE\" -c \"blue,green\" -k \"npm run vite:start\" \"npm run electron:start\"",
     "electron:start": "wait-on http://localhost:5173 && chcp 65001 && cross-env NODE_ENV=development electron .",
     "electron:build": "vite build && npm run bundle:main && npm run compile && electron-builder",
-    "electron:build-icons": "electron-icon-builder --input=./electron/resources/favicon.png --output=./electron/resources --flatten",
     "compile": "node scripts/compile.js",
     "bundle:main": "node scripts/bundle-main.js",
     "vite:start": "vite",
