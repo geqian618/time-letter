@@ -8,12 +8,13 @@ const localshortcut = require('electron-localshortcut')
 // 工具模块
 const imageParser = require('./utils/image-parser')
 const imageExporter = require('./thread/image-exporter')
+const resourcesLoader = require('./utils/resources-loader')
 const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('./utils/path-helper')
 const {getSystemFonts, getCustomFonts} = require('./utils/font-manager')
 const MetadataHelper = require("./utils/MetadataHelper");
 
+
 // 钩子和组件
-const resourcesLoader = require('./utils/resources-loader')
 const imageWatcher = require('./components/image-watcher')
 const fontWatcher = require('./components/font-watcher')
 const createTray = require('./components/Tray')
