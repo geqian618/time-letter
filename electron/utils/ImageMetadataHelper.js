@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * ImageMetadataSync —— 图片元数据同步工具（参考 Photoshop / Lightroom 的导出行为）
+ * ImageMetadataHelper —— 图片元数据同步工具（参考 Photoshop / Lightroom 的导出行为）
  *
  * 解决的问题：
  *   图片绘制到 <canvas> 后再导出（toBlob / toDataURL），浏览器只保留像素数据，
@@ -13,8 +13,7 @@
  *   EXIF : JPEG APP1(Exif)  ↔  PNG eXIf 块  ↔  WebP EXIF 块   （负载均为原始 TIFF，可无损互通）
  *   XMP  : JPEG APP1(xap)   ↔  PNG iTXt(XML:com.adobe.xmp)  ↔  WebP "XMP " 块
  *   ICC  : JPEG APP2(分片)  ↔  PNG iCCP(zlib 压缩)  ↔  WebP ICCP 块
- *   IPTC : JPEG APP13(Photoshop 8BIM)  ↔  PNG tEXt(Raw profile type iptc，ImageMagick 兼容)
- *          ↔  WebP 无标准位置（自动丢弃）
+ *   IPTC : JPEG APP13(Photoshop 8BIM)  ↔  PNG tEXt(Raw profile type iptc，ImageMagick 兼容)  ↔  WebP 无标准位置（自动丢弃）
  *
  * 零第三方依赖，仅使用 Node.js 内置模块（fs / zlib / path）。
  */
@@ -53,8 +52,13 @@ const IFD0_TAG_NAMES = {
 const EXIF_TAG_NAMES = {
     0x829A: 'ExposureTime', 0x829D: 'FNumber', 0x8822: 'ExposureProgram',
     0x8827: 'ISO', 0x9000: 'ExifVersion', 0x9003: 'DateTimeOriginal',
-    0x9004: 'DateTimeDigitized', 0x920A: 'FocalLength', 0xA002: 'ExifImageWidth',
-    0xA003: 'ExifImageHeight', 0xA434: 'LensModel',
+    0x9004: 'DateTimeDigitized', 0x9201: 'ShutterSpeedValue', 0x9202: 'ApertureValue',
+    0x9204: 'ExposureBiasValue', 0x9207: 'MeteringMode', 0x9208: 'LightSource',
+    0x9209: 'Flash', 0x920A: 'FocalLength', 0xA002: 'ExifImageWidth',
+    0xA003: 'ExifImageHeight', 0xA402: 'ExposureMode', 0xA403: 'WhiteBalance',
+    0xA405: 'FocalLengthIn35mmFilm', 0xA408: 'Contrast', 0xA409: 'Saturation',
+    0xA40A: 'Sharpness', 0xA40C: 'SceneCaptureType', 0xA431: 'BodySerialNumber',
+    0xA433: 'LensMake', 0xA434: 'LensModel',
 };
 const GPS_TAG_NAMES = {
     0x0001: 'GPSLatitudeRef', 0x0002: 'GPSLatitude', 0x0003: 'GPSLongitudeRef',
@@ -93,14 +97,13 @@ async function toBuffer(input) {
 
 const EMPTY_PARTS = {exif: null, xmp: null, icc: null, iptc: null};
 
-
 class ImageMetadataHelper {
 
     /**
      * 读取图片元数据
      * @param {string|Buffer|Uint8Array|Blob} input 文件路径或二进制
      * @returns {Promise<{format:string, exif:Buffer|null, xmp:string|null,
-     *                    icc:Buffer|null, iptc:Buffer|null, tags:Object}>}
+     *          icc:Buffer|null, iptc:Buffer|null, tags:Object}>}
      *          exif  —— 原始 TIFF 字节（可直接跨格式搬运）
      *          xmp   —— XMP 文本
      *          icc   —— ICC 色彩配置文件字节
@@ -152,7 +155,6 @@ class ImageMetadataHelper {
         if (format === 'png') return this._writePng(buf, parts, options);
         return this._writeWebp(buf, parts);
     }
-
 
     /**
      * 同步元数据到 Buffer（一步完成：原图读元数据 → 注入 canvas 导出图）
@@ -286,8 +288,7 @@ class ImageMetadataHelper {
                         continue;
                     }
                 }
-                // MakerNote / UserComment 内容不可移植，跳过
-                if (tag === 0x927C || tag === 0x9286) continue;
+                if (tag === 0x927C || tag === 0x9286) continue; // MakerNote / UserComment 内容不可移植，跳过
                 const size = EXIF_TYPE_SIZE[type] || 1;
                 const vo = size * count <= 4 ? e + 8 : u32(e + 8);
                 const val = readValue(type, count, vo);
@@ -295,9 +296,11 @@ class ImageMetadataHelper {
                 tags[names[tag] || `${prefix}0x${tag.toString(16).padStart(4, '0')}`] = val;
             }
         };
+
         walk(u32(4), IFD0_TAG_NAMES, '', 0);
+
+        // GPS 经纬度换算为十进制（便于直接使用）
         try {
-            // GPS 经纬度换算为十进制（便于直接使用）
             if (Array.isArray(tags.GPSLatitude) && tags.GPSLatitude.length === 3) {
                 let d = tags.GPSLatitude[0] + tags.GPSLatitude[1] / 60 + tags.GPSLatitude[2] / 3600;
                 if (tags.GPSLatitudeRef === 'S') d = -d;
@@ -308,9 +311,9 @@ class ImageMetadataHelper {
                 if (tags.GPSLongitudeRef === 'W') d = -d;
                 tags.GPSLongitudeDecimal = Math.round(d * 1e6) / 1e6;
             }
-        } catch {
-            /* 尽力而为 */
+        } catch { /* 尽力而为 */
         }
+
         return tags;
     }
 
@@ -331,12 +334,11 @@ class ImageMetadataHelper {
                 entries.push({tag, type: 2, count: bytes.length + 1, bytes});
             }
         }
-        // 规范要求按 tag 升序
-        entries.sort((a, b) => a.tag - b.tag);
+        entries.sort((a, b) => a.tag - b.tag); // 规范要求按 tag 升序
         const n = entries.length;
         if (!n) throw new Error('buildExifBlob: 没有可写入的字段');
-        // TIFF头 + IFD(计数+条目+下一IFD指针)
-        let dataOff = 8 + 2 + n * 12 + 4;
+
+        let dataOff = 8 + 2 + n * 12 + 4; // TIFF头 + IFD(计数+条目+下一IFD指针)
         const dataBlobs = [];
         const ifd = Buffer.alloc(2 + n * 12 + 4);
         ifd.writeUInt16LE(n, 0);
@@ -357,16 +359,19 @@ class ImageMetadataHelper {
             }
         });
         ifd.writeUInt32LE(0, 2 + n * 12); // 无下一个 IFD
+
         const head = Buffer.alloc(8);
         head.write('II', 0, 'ascii');
         head.writeUInt16LE(0x2A, 2);
         head.writeUInt32LE(8, 4);
+
         return Buffer.concat([head, ifd, ...dataBlobs]);
     }
 
     /**
      * 修补 EXIF 中的 Orientation 值（就地返回新 Buffer）
-     * 用途：canvas 绘制时浏览器已按 EXIF 方向把像素转正，导出后应把 Orientation 改回 1，否则看图软件会二次旋转 —— 与 PS/LR「烘焙旋转」一致
+     * 用途：canvas 绘制时浏览器已按 EXIF 方向把像素转正，
+     *       导出后应把 Orientation 改回 1，否则看图软件会二次旋转 —— 与 PS/LR「烘焙旋转」一致
      */
     static patchExifOrientation(exifBuf, orientation = 1) {
         try {
@@ -394,11 +399,228 @@ class ImageMetadataHelper {
                 }
                 return buf;
             }
-            // 没有 Orientation 条目：本来就等同于 1
-            return buf;
+            return buf; // 没有 Orientation 条目：本来就等同于 1
         } catch {
             return exifBuf;
         }
+    }
+
+    static _xmlEscape(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /** EXIF 日期 "YYYY:MM:DD HH:MM:SS" → ISO "YYYY-MM-DDTHH:MM:SS" */
+    static _exifDateToIso(s) {
+        const m = /^(\d{4}):(\d{2}):(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/.exec(String(s || ''));
+        return m ? `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}` : null;
+    }
+
+    static _gcd(a, b) {
+        return b ? this._gcd(b, a % b) : a;
+    }
+
+    /** 数值 → XMP Rational 字符串（"num/den"，如 0.025 → "1/40"） */
+    static _toXmpRational(v) {
+        const n = Number(v);
+        if (!isFinite(n)) return null;
+        if (Number.isInteger(n)) return `${n}/1`;
+        let bn = n, bd = 1, best = Infinity;
+        for (let d = 1; d <= 100000; d++) {
+            const num = Math.round(n * d);
+            const err = Math.abs(num / d - n);
+            if (err < best - 1e-12) {
+                best = err;
+                bn = num;
+                bd = d;
+                if (err === 0) break;
+            }
+        }
+        const g = this._gcd(bn, bd) || 1;
+        return `${bn / g}/${bd / g}`;
+    }
+
+    /**
+     * 为 Windows 资源管理器补全 XMP 字段（PNG 专用）。
+     * 实测（Win11，Shell COM 探测）：资源管理器对 PNG 不读 eXIf 块，只读 iTXt(XMP) 与
+     * tEXt("Creation Time")，XMP 字段映射为：
+     *   tiff:Make/tiff:Model→相机制造商/型号、exif:DateTimeOriginal→拍摄日期、
+     *   dc:title→标题、dc:creator→作者、dc:subject→标记、dc:rights→版权、
+     *   xmp:Rating→分级、xmp:CreatorTool→程序名，
+     *   以及拍摄参数列：exif:ExposureTime→曝光时间、exif:FNumber→光圈、exif:ISOSpeedRatings→ISO、
+     *   exif:FocalLength/FocalLengthIn35mmFilm→焦距/35mm焦距、exif:MeteringMode→测光模式、
+     *   exif:WhiteBalance→白平衡、exif:ExposureProgram/ExposureMode→曝光程序/程序模式、
+     *   exif:Saturation→饱和度、exif:LightSource→光源、exif:ExifVersion→EXIF版本、
+     *   exifEX:LensMake/LensModel→镜头制造商/型号
+     *   （exif:Flash 闪光灯列经实测整数/结构体两种写法均不被读取，不注入）
+     * 本方法把「EXIF 有而 XMP 缺」的字段合并进 XMP（同 rdf:about 的多个 rdf:Description
+     * 按规范合并）；无 XMP 时合成最小 XMP 包。已是 XMP 首选信息源，注入只补缺、不覆盖。
+     */
+    static _enhanceXmpForWindows(xmp, exifBuf) {
+        let tags = {};
+        try {
+            tags = exifBuf ? this.parseExifTags(exifBuf) : {};
+        } catch {
+            tags = {};
+        }
+        const esc = (v) => this._xmlEscape(v);
+        const iso = this._exifDateToIso(tags.DateTimeOriginal || tags.DateTime);
+        const rat = (v) => this._toXmpRational(v);
+        const additions = [];
+        if (tags.Make) additions.push({ns: 'tiff', name: 'tiff:Make', xml: `<tiff:Make>${esc(tags.Make)}</tiff:Make>`});
+        if (tags.Model) additions.push({
+            ns: 'tiff',
+            name: 'tiff:Model',
+            xml: `<tiff:Model>${esc(tags.Model)}</tiff:Model>`
+        });
+        if (tags.LensMake) additions.push({
+            ns: 'exifEX',
+            name: 'exifEX:LensMake',
+            xml: `<exifEX:LensMake>${esc(tags.LensMake)}</exifEX:LensMake>`
+        });
+        if (tags.LensModel) additions.push({
+            ns: 'exifEX',
+            name: 'exifEX:LensModel',
+            xml: `<exifEX:LensModel>${esc(tags.LensModel)}</exifEX:LensModel>`
+        });
+        if (tags.BodySerialNumber) additions.push({
+            ns: 'exifEX',
+            name: 'exifEX:BodySerialNumber',
+            xml: `<exifEX:BodySerialNumber>${esc(tags.BodySerialNumber)}</exifEX:BodySerialNumber>`
+        });
+        if (iso) additions.push({
+            ns: 'exif',
+            name: 'exif:DateTimeOriginal',
+            xml: `<exif:DateTimeOriginal>${iso}</exif:DateTimeOriginal>`
+        });
+        if (tags.ImageDescription) additions.push({
+            ns: 'dc',
+            name: 'dc:title',
+            xml: `<dc:title><rdf:Alt><rdf:li xml:lang="x-default">${esc(tags.ImageDescription)}</rdf:li></rdf:Alt></dc:title>`
+        });
+        if (tags.Artist) additions.push({
+            ns: 'dc',
+            name: 'dc:creator',
+            xml: `<dc:creator><rdf:Seq><rdf:li>${esc(tags.Artist)}</rdf:li></rdf:Seq></dc:creator>`
+        });
+        if (tags.Copyright) additions.push({
+            ns: 'dc',
+            name: 'dc:rights',
+            xml: `<dc:rights><rdf:Alt><rdf:li xml:lang="x-default">${esc(tags.Copyright)}</rdf:li></rdf:Alt></dc:rights>`
+        });
+        if (tags.Software) additions.push({
+            ns: 'xmp',
+            name: 'xmp:CreatorTool',
+            xml: `<xmp:CreatorTool>${esc(tags.Software)}</xmp:CreatorTool>`
+        });
+        // 拍摄参数（资源管理器「照相机」分组各行）
+        if (tags.ExposureTime != null && rat(tags.ExposureTime)) additions.push({
+            ns: 'exif',
+            name: 'exif:ExposureTime',
+            xml: `<exif:ExposureTime>${rat(tags.ExposureTime)}</exif:ExposureTime>`
+        });
+        if (tags.FNumber != null && rat(tags.FNumber)) additions.push({
+            ns: 'exif',
+            name: 'exif:FNumber',
+            xml: `<exif:FNumber>${rat(tags.FNumber)}</exif:FNumber>`
+        });
+        if (tags.ExposureProgram != null) additions.push({
+            ns: 'exif',
+            name: 'exif:ExposureProgram',
+            xml: `<exif:ExposureProgram>${tags.ExposureProgram}</exif:ExposureProgram>`
+        });
+        if (tags.ISO != null) {
+            additions.push({
+                ns: 'exif',
+                name: 'exif:ISOSpeedRatings',
+                xml: `<exif:ISOSpeedRatings><rdf:Seq><rdf:li>${tags.ISO}</rdf:li></rdf:Seq></exif:ISOSpeedRatings>`
+            });
+            additions.push({ns: 'exif', name: 'exif:ISO', xml: `<exif:ISO>${tags.ISO}</exif:ISO>`});
+        }
+        if (tags.ExifVersion) additions.push({
+            ns: 'exif',
+            name: 'exif:ExifVersion',
+            xml: `<exif:ExifVersion>${esc(tags.ExifVersion)}</exif:ExifVersion>`
+        });
+        if (tags.ExposureBiasValue != null && rat(tags.ExposureBiasValue)) additions.push({
+            ns: 'exif',
+            name: 'exif:ExposureBiasValue',
+            xml: `<exif:ExposureBiasValue>${rat(tags.ExposureBiasValue)}</exif:ExposureBiasValue>`
+        });
+        if (tags.MeteringMode != null) additions.push({
+            ns: 'exif',
+            name: 'exif:MeteringMode',
+            xml: `<exif:MeteringMode>${tags.MeteringMode}</exif:MeteringMode>`
+        });
+        if (tags.LightSource != null) additions.push({
+            ns: 'exif',
+            name: 'exif:LightSource',
+            xml: `<exif:LightSource>${tags.LightSource}</exif:LightSource>`
+        });
+        if (tags.FocalLength != null && rat(tags.FocalLength)) additions.push({
+            ns: 'exif',
+            name: 'exif:FocalLength',
+            xml: `<exif:FocalLength>${rat(tags.FocalLength)}</exif:FocalLength>`
+        });
+        if (tags.FocalLengthIn35mmFilm != null) additions.push({
+            ns: 'exif',
+            name: 'exif:FocalLengthIn35mmFilm',
+            xml: `<exif:FocalLengthIn35mmFilm>${tags.FocalLengthIn35mmFilm}</exif:FocalLengthIn35mmFilm>`
+        });
+        if (tags.ExposureMode != null) additions.push({
+            ns: 'exif',
+            name: 'exif:ExposureMode',
+            xml: `<exif:ExposureMode>${tags.ExposureMode}</exif:ExposureMode>`
+        });
+        if (tags.WhiteBalance != null) additions.push({
+            ns: 'exif',
+            name: 'exif:WhiteBalance',
+            xml: `<exif:WhiteBalance>${tags.WhiteBalance}</exif:WhiteBalance>`
+        });
+        if (tags.Contrast != null) additions.push({
+            ns: 'exif',
+            name: 'exif:Contrast',
+            xml: `<exif:Contrast>${tags.Contrast}</exif:Contrast>`
+        });
+        if (tags.Saturation != null) additions.push({
+            ns: 'exif',
+            name: 'exif:Saturation',
+            xml: `<exif:Saturation>${tags.Saturation}</exif:Saturation>`
+        });
+        if (tags.Sharpness != null) additions.push({
+            ns: 'exif',
+            name: 'exif:Sharpness',
+            xml: `<exif:Sharpness>${tags.Sharpness}</exif:Sharpness>`
+        });
+        if (!additions.length) return xmp;
+
+        const NS_URI = {
+            rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+            dc: 'http://purl.org/dc/elements/1.1/',
+            xmp: 'http://ns.adobe.com/xap/1.0/',
+            exif: 'http://ns.adobe.com/exif/1.0/',
+            tiff: 'http://ns.adobe.com/tiff/1.0/',
+            exifEX: 'http://cipa.jp/exif/1.0/',
+        };
+        const nsDeclOf = (list) => [...new Set(list)]
+            .map((p) => `xmlns:${p}="${NS_URI[p]}"`).join(' ');
+
+        if (!xmp) { // 无 XMP：合成最小 XMP 包
+            return '<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>\n'
+                + '<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="ImageMetadataHelper">\n'
+                + ` <rdf:RDF xmlns:rdf="${NS_URI.rdf}">\n`
+                + `  <rdf:Description rdf:about="" ${nsDeclOf(['rdf', ...additions.map((a) => a.ns)])}>\n`
+                + additions.map((a) => `   ${a.xml}`).join('\n') + '\n'
+                + '  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>';
+        }
+
+        const missing = additions.filter((a) => !xmp.includes(a.name));
+        if (!missing.length) return xmp;
+        const desc = `  <rdf:Description rdf:about="" ${nsDeclOf(['rdf', ...missing.map((a) => a.ns)])}>\n`
+            + missing.map((a) => `   ${a.xml}`).join('\n') + '\n  </rdf:Description>\n';
+        const idx = xmp.lastIndexOf('</rdf:RDF>');
+        if (idx < 0) return xmp;
+        return xmp.slice(0, idx) + desc + xmp.slice(idx);
     }
 
     // --------------------------------------------------------------
@@ -613,8 +835,7 @@ class ImageMetadataHelper {
                     if (z >= 0 && c.data.length > z + 2) {
                         try {
                             icc = zlib.inflateSync(c.data.subarray(z + 2));
-                        } catch {
-                            /* 损坏则忽略 */
+                        } catch { /* 损坏则忽略 */
                         }
                     }
                 }
@@ -647,11 +868,30 @@ class ImageMetadataHelper {
             if (c.type === 'iTXt') return this._pngKeyword(c.data) === 'XML:com.adobe.xmp';
             if (c.type === 'tEXt') {
                 const kw = this._pngKeyword(c.data);
-                return !!kw && /^Raw profile type /.test(kw);
+                return !!kw && (/^Raw profile type /.test(kw) || kw === 'Creation Time');
             }
             return false;
         };
         const kept = chunks.filter((c) => !isMetaChunk(c));
+
+        // Windows 资源管理器对 PNG 不读 eXIf 块，只读 iTXt(XMP) 与 tEXt("Creation Time")：
+        // 默认（windowsFriendly !== false）把 EXIF 中 Windows 需要的字段合并进 XMP，并补写
+        // Creation Time；include.xmp === false 视为用户明确不要 XMP，跳过合并
+        let xmp = parts.xmp;
+        let tags = {};
+        if (parts.exif) {
+            try {
+                tags = this.parseExifTags(parts.exif);
+            } catch {
+                tags = {};
+            }
+        }
+        const winFriendly = options.windowsFriendly !== false
+            && !(options.include && options.include.xmp === false);
+        if (winFriendly && parts.exif) {
+            xmp = this._enhanceXmpForWindows(xmp, parts.exif);
+        }
+
         // 新块插在 IHDR 之后：满足 iCCP(需在 PLTE/IDAT 前) 与 eXIf(需在 IDAT 前) 的顺序约束
         const inserts = [];
         if (parts.exif) inserts.push(this._pngChunk('eXIf', parts.exif));
@@ -660,23 +900,24 @@ class ImageMetadataHelper {
                 Buffer.from('ICC profile\0', 'binary'), Buffer.from([0]), zlib.deflateSync(parts.icc),
             ])));
         }
-        if (parts.xmp) {
+        if (xmp) {
             inserts.push(this._pngChunk('iTXt', Buffer.concat([
                 Buffer.from('XML:com.adobe.xmp\0\0\0\0\0', 'binary'), // keyword\0 + 压缩标志/方法 + 语言\0 + 译名\0
-                Buffer.from(parts.xmp, 'utf8'),
+                Buffer.from(xmp, 'utf8'),
             ])));
         }
-        // ImageMagick 兼容的传统写法
-        if (options.pngRawProfile) {
+        if (winFriendly && (tags.DateTimeOriginal || tags.DateTime)) {
+            inserts.push(this._pngChunk('tEXt',
+                Buffer.from(`Creation Time\0${tags.DateTimeOriginal || tags.DateTime}`, 'latin1')));
+        }
+        if (options.pngRawProfile) { // ImageMagick 兼容的传统写法
             if (parts.exif) inserts.push(this._pngChunk('tEXt', this._rawProfileText('exif', parts.exif)));
             if (parts.iptc) inserts.push(this._pngChunk('tEXt', this._rawProfileText('iptc', parts.iptc)));
         }
 
         return Buffer.concat([
-            // PNG 签名
-            buf.subarray(0, 8),
-            // IHDR 保持第一
-            buf.subarray(chunks[0].start, chunks[0].end),
+            buf.subarray(0, 8),                             // PNG 签名
+            buf.subarray(chunks[0].start, chunks[0].end),   // IHDR 保持第一
             ...inserts,
             ...kept.slice(1).map((c) => buf.subarray(c.start, c.end)),
         ]);
@@ -724,8 +965,7 @@ class ImageMetadataHelper {
 
     static _makeVp8x(flags, w, h) {
         const b = Buffer.alloc(10);
-        // 标志位
-        b[0] = flags & 0xFF;
+        b[0] = flags & 0xFF;             // 标志位
         // b[1..3] 保留 3 字节
         b.writeUIntLE(w - 1, 4, 3);      // 画布宽-1（24bit LE）
         b.writeUIntLE(h - 1, 7, 3);      // 画布高-1（24bit LE）
@@ -733,8 +973,7 @@ class ImageMetadataHelper {
     }
 
     static _assembleRiff(chunks) {
-        // 'WEBP' 四字符
-        let size = 4;
+        let size = 4; // 'WEBP' 四字符
         for (const c of chunks) size += 8 + c.data.length + (c.data.length & 1);
         const out = Buffer.alloc(8 + size);
         out.write('RIFF', 0, 'ascii');
@@ -761,8 +1000,7 @@ class ImageMetadataHelper {
                 if (!icc) icc = Buffer.from(c.data);
             }
         }
-        // WebP 无 IPTC 标准位置
-        return {exif, xmp, icc, iptc: null};
+        return {exif, xmp, icc, iptc: null}; // WebP 无 IPTC 标准位置
     }
 
     static _writeWebp(buf, parts) {
@@ -770,13 +1008,12 @@ class ImageMetadataHelper {
         const hasVp8x = chunks.length > 0 && chunks[0].fourcc === 'VP8X';
         // 简单格式且没有元数据要写：原样返回，避免无意义地升级为扩展格式
         if (!hasVp8x && !parts.exif && !parts.xmp && !parts.icc) return Buffer.from(buf);
+
         const dims = this._webpDims(chunks);
         let flags = hasVp8x ? chunks[0].data[0] : 0;
-        // 清旧标记，避免重复/残留
-        flags &= ~(VP8X_E | VP8X_X | VP8X_I);
+        flags &= ~(VP8X_E | VP8X_X | VP8X_I); // 清旧标记，避免重复/残留
         if (!hasVp8x) {
-            // 简单格式不含动画位
-            flags &= ~(VP8X_A | VP8X_L);
+            flags &= ~(VP8X_A | VP8X_L);        // 简单格式不含动画位
             if (chunks.some((c) => c.fourcc === 'ALPH')) flags |= VP8X_L;
         }
         if (parts.exif) flags |= VP8X_E;
