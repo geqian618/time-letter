@@ -603,8 +603,7 @@ class ImageMetadataHelper {
             tiff: 'http://ns.adobe.com/tiff/1.0/',
             exifEX: 'http://cipa.jp/exif/1.0/',
         };
-        const nsDeclOf = (list) => [...new Set(list)]
-            .map((p) => `xmlns:${p}="${NS_URI[p]}"`).join(' ');
+        const nsDeclOf = (list) => [...new Set(list)].map((p) => `xmlns:${p}="${NS_URI[p]}"`).join(' ');
 
         if (!xmp) { // 无 XMP：合成最小 XMP 包
             return '<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>\n'
