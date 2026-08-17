@@ -592,6 +592,7 @@ class ImageMetadataHelper {
             name: 'exif:Sharpness',
             xml: `<exif:Sharpness>${tags.Sharpness}</exif:Sharpness>`
         });
+
         if (!additions.length) return xmp;
 
         const NS_URI = {
