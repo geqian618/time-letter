@@ -1,6 +1,6 @@
 const {CanvasEditor} = require("../canvas/NodeCanvasEditor");
 const path = require("path");
-const MetadataHelper = require("../utils/MetadataHelper");
+const ImageMetadataHelper = require("../utils/ImageMetadataHelper");
 const {promises: fs} = require("fs");
 const {createCanvas} = require("@napi-rs/canvas");
 
@@ -49,11 +49,18 @@ module.exports = async (params) => {
     const {borderLeft, borderRight, borderTop, borderBottom} = background.meta;
 
     if (borderLeft === 0 && borderRight === 0 && borderTop === 0 && borderBottom === 0) {
-        if (type === 0 && elements.length === 2 && originalExtname === outputExtname && isSynchronizeMetadata) {
+        if (type === 0 && elements.length === 2 && originalExtname === outputExtname) {
             try {
-                await fs.copyFile(filePath, outputPath);
+                if (isSynchronizeMetadata) {
+                    await fs.copyFile(filePath, outputPath);
+                } else {
+                    const sourceBuffer = await fs.readFile(filePath);
+                    const strippedBuffer = await ImageMetadataHelper.stripMetadata(sourceBuffer);
+                    await fs.writeFile(outputPath, strippedBuffer);
+                }
             } catch (err) {
                 console.error('拷贝失败:', err);
+                throw err;
             }
             return null;
         }
@@ -90,7 +97,8 @@ module.exports = async (params) => {
     let buffer = outputExtname === 'png' ? canvas.toBuffer('image/png') : canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 100 : quality);
 
     if (isSynchronizeMetadata) {
-        buffer = await MetadataHelper.syncToBuffer(filePath, buffer, {format: outputExtname});
+        buffer = await ImageMetadataHelper.syncMetadataToBuffer(filePath, buffer, {format: outputExtname});
+        console.log(await ImageMetadataHelper.readMetadata(filePath));
     }
 
     await fs.writeFile(outputPath, buffer);

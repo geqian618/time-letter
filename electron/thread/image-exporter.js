@@ -1,94 +1,94 @@
 const path = require('path');
 const Piscina = require('piscina');
 const {dialog, app} = require('electron');
-const os = require("os");
+const os = require('os');
 
-// 创建一个 SharedArrayBuffer 用于中断信号,  4字节，用于一个32位整数
 const sab = new SharedArrayBuffer(4);
-// 初始值为 0
 const interrupt = new Int32Array(sab);
-// 初始值为 0（未中断）
 Atomics.store(interrupt, 0, 0);
 
-const WORKER_PATH = path.join(app.getAppPath(), 'electron', 'thread', app.isPackaged ? 'worker-loader.js' : 'worker.js')
+const WORKER_PATH = path.join(
+    app.getAppPath(),
+    'electron',
+    'thread',
+    app.isPackaged ? 'worker-loader.js' : 'worker.js'
+);
 
 const exportFiles = async ({projectSettings, outputDirectory, settings}, progressCallback) => {
 
-    // 根据设置创建线程池
-    const maxThreads = projectSettings.performance.downloadThreads === -1 ? os.cpus().length : Math.max(1, projectSettings.performance.downloadThreads);
+    const maxThreads = projectSettings.performance.downloadThreads === -1
+        ? os.cpus().length
+        : Math.max(1, projectSettings.performance.downloadThreads);
 
-    // 创建线程池
-    let threadPool = new Piscina({
+    const reportProgress = typeof progressCallback === 'function'
+        ? progressCallback
+        : (p) => console.log(`进度: ${p.completed}/${p.total} 错误: ${p.errors}`);
+
+    const threadPool = new Piscina({
         filename: WORKER_PATH,
         maxThreads,
         minThreads: 0,
         idleTimeout: 10000,
     });
 
-    // 重置中断标志
     Atomics.store(interrupt, 0, 0);
 
     const total = settings.length;
     let completed = 0;
     let errors = 0;
+    let nextIndex = 0;
+    const errorMessages = [];
 
-    progressCallback = progressCallback || ((progress) => {
-        console.log(`进度: ${progress.completed}/${progress.total} 错误: ${progress.errors}`);
-    });
+    function updateProgress() {
+        reportProgress({
+            total,
+            completed,
+            errors,
+            percentage: Atomics.load(interrupt, 0) === 0
+                ? Math.round((completed / total) * 100)
+                : 0,
+        });
+    }
 
-    // 并发控制 - 限制同时处理的任务数量
-    const concurrency = maxThreads;
-
-    const queue = [...settings];
-
-    async function processNext() {
-        if (Atomics.load(interrupt, 0) === 1 || queue.length === 0) {
-            return;
-        }
-        const setting = queue.shift();
-        try {
-            await threadPool.run({projectSettings, outputDirectory, setting});
-        } catch (err) {
-            errors++;
-            dialog.showErrorBox('文件读取异常', err.message)
-            console.error(`处理图片 ${setting.path} 失败:`, err);
-        } finally {
-            completed++;
-            updateProgress();
-            // 继续处理下一个
-            if (queue.length > 0 && Atomics.load(interrupt, 0) === 0) {
-                await processNext();
+    async function workerLoop() {
+        while (nextIndex < settings.length && Atomics.load(interrupt, 0) === 0) {
+            const setting = settings[nextIndex++];
+            try {
+                await threadPool.run({projectSettings, outputDirectory, setting});
+            } catch (err) {
+                errors++;
+                errorMessages.push({path: setting.path, message: err.message});
+                console.error(`处理图片 ${setting.path} 失败:`, err);
+            } finally {
+                completed++;
+                updateProgress();
             }
         }
     }
 
-    // 启动并发任务
-    const workers = Array(Math.min(concurrency, settings.length))
-        .fill()
-        .map(() => processNext());
+    try {
+        const concurrency = Math.min(maxThreads, settings.length);
+        const workers = Array(concurrency).fill().map(() => workerLoop());
+        await Promise.allSettled(workers);
+    } finally {
+        await threadPool.destroy();
+        console.log('threadPool destroy...');
+    }
 
-    await Promise.allSettled(workers);
-
-    // 导出完成后，销毁线程池
-    await threadPool.destroy();
-
-    threadPool = null;
-
-    console.log('threadPool destroy...')
-
-    function updateProgress() {
-        progressCallback({
-            total,
-            completed,
-            errors,
-            percentage: Atomics.load(interrupt, 0) === 0 ? Math.round((completed / total) * 100) : 0
-        });
+    if (errorMessages.length > 0) {
+        const summary = errorMessages
+            .slice(0, 10)
+            .map((e) => `[${e.path}] ${e.message}`)
+            .join('\n');
+        const extra = errorMessages.length > 10
+            ? `\n...及其他 ${errorMessages.length - 10} 个错误`
+            : '';
+        dialog.showErrorBox('文件读取异常', `${summary}${extra}`);
     }
 };
 
 const stopExportFiles = () => {
-    // 重置中断标志为 0（未中断）
     Atomics.store(interrupt, 0, 1);
-}
+};
 
-module.exports = {exportFiles, stopExportFiles}
+module.exports = {exportFiles, stopExportFiles};
