@@ -408,7 +408,8 @@ class ImageMetadataHelper {
     /**
      * 把 EXIF Flash(0x9209) 16 位位掩码拆解为 XMP exif:Flash 结构体的「属性形式」XML。
      * 位布局（EXIF 2.3 / CIPA）：
-     *   bit0(0x01) Flash Fired      bits1-2(0x06) Return Light（0无检测 2未检测到 3检测到）
+     *   bit0(0x01) Flash Fired
+     *   bits1-2(0x06) Return Light（0无检测 2未检测到 3检测到）
      *   bits3-4(0x18) Mode（0未知 1强制闪光 2强制不闪光 3自动）
      *   bit5(0x20) Function Present bit6(0x40) Red-eye Reduction
      * 输出形如 <exif:Flash exif:Fired="False" exif:Return="0" exif:Mode="2" exif:Function="False" exif:RedEyeMode="False"/>
