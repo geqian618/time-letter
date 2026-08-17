@@ -405,6 +405,25 @@ class ImageMetadataHelper {
         }
     }
 
+    /**
+     * 把 EXIF Flash(0x9209) 16 位位掩码拆解为 XMP exif:Flash 结构体的「属性形式」XML。
+     * 位布局（EXIF 2.3 / CIPA）：
+     *   bit0(0x01) Flash Fired      bits1-2(0x06) Return Light（0无检测 2未检测到 3检测到）
+     *   bits3-4(0x18) Mode（0未知 1强制闪光 2强制不闪光 3自动）
+     *   bit5(0x20) Function Present bit6(0x40) Red-eye Reduction
+     * 输出形如 <exif:Flash exif:Fired="False" exif:Return="0" exif:Mode="2" exif:Function="False" exif:RedEyeMode="False"/>
+     */
+    static _flashToXmpAttrs(flashVal) {
+        const v = Number(flashVal);
+        if (!Number.isFinite(v)) return null;
+        const fired = (v & 0x01) ? 'True' : 'False';
+        const ret = (v >> 1) & 0x03;
+        const mode = (v >> 3) & 0x03;
+        const func = (v & 0x20) ? 'True' : 'False';
+        const redeye = (v & 0x40) ? 'True' : 'False';
+        return `<exif:Flash exif:Fired="${fired}" exif:Return="${ret}" exif:Mode="${mode}" exif:Function="${func}" exif:RedEyeMode="${redeye}"/>`;
+    }
+
     static _xmlEscape(s) {
         return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -452,7 +471,7 @@ class ImageMetadataHelper {
      *   exif:WhiteBalance→白平衡、exif:ExposureProgram/ExposureMode→曝光程序/程序模式、
      *   exif:Saturation→饱和度、exif:LightSource→光源、exif:ExifVersion→EXIF版本、
      *   exifEX:LensMake/LensModel→镜头制造商/型号
-     *   （exif:Flash 闪光灯列经实测整数/结构体两种写法均不被读取，不注入）
+     *   exif:Flash→闪光灯模式（System.Photo.FlashMode）：关键——必须以「属性形式」序列化，即 <exif:Flash exif:Fired="False" exif:Mode="2" .../>（子字段作为 XML 属性）。
      * 本方法把「EXIF 有而 XMP 缺」的字段合并进 XMP（同 rdf:about 的多个 rdf:Description
      * 按规范合并）；无 XMP 时合成最小 XMP 包。已是 XMP 首选信息源，注入只补缺、不覆盖。
      */
@@ -592,6 +611,10 @@ class ImageMetadataHelper {
             name: 'exif:Sharpness',
             xml: `<exif:Sharpness>${tags.Sharpness}</exif:Sharpness>`
         });
+        if (tags.Flash != null) {
+            const flashXml = this._flashToXmpAttrs(tags.Flash);
+            if (flashXml) additions.push({ns: 'exif', name: 'exif:Flash', xml: flashXml});
+        }
 
         if (!additions.length) return xmp;
 
