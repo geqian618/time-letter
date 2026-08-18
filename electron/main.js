@@ -11,7 +11,7 @@ const imageExporter = require('./thread/image-exporter')
 const resourcesLoader = require('./utils/resources-loader')
 const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('./utils/path-helper')
 const {getSystemFonts, getCustomFonts} = require('./utils/font-manager')
-const MetadataHelper = require("./utils/MetadataHelper");
+const ImageMetadataHelper = require("./utils/ImageMetadataHelper");
 
 
 // 钩子和组件
@@ -439,7 +439,7 @@ const setupAppLifecycle = () => {
         // 注销全局快捷键
         globalShortcut.unregisterAll();
 
-        MetadataHelper.close()
+        ImageMetadataHelper.close()
     })
 
     // 所有窗口关闭

@@ -1,7 +1,7 @@
 const path = require("path");
 const createSharp = require("sharp");
 const fs = require('fs');
-const MetadataHelper = require("./MetadataHelper");
+const ImageMetadataHelper = require("./ImageMetadataHelper");
 
 async function parsePhotoMetadata(filePath) {
     try {
@@ -17,7 +17,7 @@ async function parsePhotoMetadata(filePath) {
             FocalLength = '',
             LensModel = '',
             DateTimeOriginal = ''
-        } = await MetadataHelper.readExifFromFile(filePath);
+        } = await ImageMetadataHelper.readMetadata(filePath);
 
         return {
             iso: ISO instanceof Array ? ISO[0] : ISO,
