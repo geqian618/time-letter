@@ -21,18 +21,12 @@ function localPathToProtocolUrl(filePath) {
     }
 
     // 标准化路径分隔符并移除多余斜杠
-    let normalizedPath = filePath
-        // 将 \\ 替换为 /
-        .replace(/\\/g, '/')
-        // 将多个连续斜杠合并为一个
-        .replace(/\/+/g, '/');
+    const normalizedPath = filePath.replace(/\\/g, '/').replace(/\/+/g, '/');
 
     // 对路径进行分段编码，确保中文正确编码而斜杠保持不变
     const pathSegments = normalizedPath.split('/');
 
-    const encodedSegments = pathSegments.map(segment =>
-        segment ? encodeURIComponent(segment) : ''
-    );
+    const encodedSegments = pathSegments.map(segment => segment ? encodeURIComponent(segment) : '');
 
     const encodedPath = encodedSegments.join('/');
 

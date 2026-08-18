@@ -7,7 +7,7 @@ const localshortcut = require('electron-localshortcut')
 
 // 工具模块
 const imageParser = require('./utils/image-parser')
-const imageExporter = require('./thread/image-exporter')
+const imageExportProcessor = require('./thread/imageExportProcessor')
 const resourcesLoader = require('./utils/resources-loader')
 const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('./utils/path-helper')
 const {getSystemFonts, getCustomFonts} = require('./utils/font-manager')
@@ -238,7 +238,7 @@ const setupIpcHandlers = () => {
 
     // 导出文件
     ipcMain.on('request-export-files', (event, data) => {
-        imageExporter.exportFiles(data, (progress) => {
+        imageExportProcessor.exportFiles(data, (progress) => {
             mainWindow?.webContents.send('download-progress', {
                 percentage: progress.percentage,
                 hasError: progress.errors > 0
