@@ -3,127 +3,160 @@
 /**
  * ImageMetadataHelper —— 图片元数据工具
  *
- * 用途：图片绘制到 <canvas> 再导出（toBlob / toDataURL）后，EXIF/XMP/ICC/IPTC
- * 元数据会全部丢失。本工具把「原图元数据」重新注入到 canvas 导出图上，并支持不同格式之间相互迁移。
+ * canvas 导出会丢失 EXIF/XMP/ICC/IPTC 元数据，本工具把原图元数据重新注入
+ * 导出图，并支持跨格式迁移（引擎：exiftool-vendored，默认开启 MWG 同步）。
  *
- * 引擎：exiftool-vendored（单依赖，vendored ExifTool 13.x 二进制）。exiftool 是
- * 业界事实标准，单库即覆盖 read/write/跨格式拷贝/MWG 同步/ICC/XMP/IPTC/MakerNote/
- * RAW/HEIC/AVIF。useMWG 默认开启（EXIF/XMP/IPTC 按 MWG 规则互相同步）。
- *
+ * 输入可为 文件路径 | Buffer | Uint8Array | Blob，输出与输入同类型：
+ * 路径输入原地改写；二进制输入写临时文件、用完即删整目录。
+ * 出错统一抛带 cause 的错误，原始 exiftool 错误在 .cause 中。
  */
 
 const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
 const os = require('os');
+const {randomUUID} = require('crypto');
 const {exiftool} = require('exiftool-vendored');
 
 class ImageMetadataHelper {
 
     // ============================ 常量 ============================
 
-    static #OUTPUT_TYPE = Object.freeze({PATH: 'path', BUFFER: 'Buffer', UINT8_ARRAY: 'Uint8Array', BLOB: 'Blob',});
+    // 输出类型标记，供输入/输出归一化往返使用
+    static #OUTPUT_TYPE = Object.freeze({
+        PATH: 'path',
+        BUFFER: 'Buffer',
+        UINT8_ARRAY: 'Uint8Array',
+        BLOB: 'Blob',
+    });
 
-    /** HEIC / AVIF 的 ISOBMFF ftyp brand（小写） */
+    // 魔字节可识别格式 → {扩展名, MIME}，供格式检测 / 临时文件后缀 / Blob 输出共用
+    static #FORMATS = Object.freeze({
+        jpeg: {ext: '.jpg', mime: 'image/jpeg'},
+        png: {ext: '.png', mime: 'image/png'},
+        webp: {ext: '.webp', mime: 'image/webp'},
+        gif: {ext: '.gif', mime: 'image/gif'},
+        bmp: {ext: '.bmp', mime: 'image/bmp'},
+        // 含 CR2/NEF/ARW/DNG 等 TIFF 系 RAW
+        tiff: {ext: '.tiff', mime: 'image/tiff'},
+        heic: {ext: '.heic', mime: 'image/heic'},
+        avif: {ext: '.avif', mime: 'image/avif'},
+    });
+
+    // HEIC / AVIF 的 ISOBMFF ftyp brand（小写）
     static #HEIC_BRANDS = new Set(['heic', 'heix', 'hevc', 'heim', 'heis', 'hevm', 'hevs', 'mif1']);
 
     static #AVIF_BRANDS = new Set(['avif', 'avis']);
 
-    /**
-     * Blob 构造函数在当前环境是否可用。
-     * 缓存结果，避免每次调用重复 typeof 检测。
-     */
+    // Blob 是否可用（浏览器 / Node 18+），缓存检测结果
     static #HAS_BLOB = (() => typeof Blob !== 'undefined')();
 
-    /** 默认 MIME（无法识别格式时回退，#resolveInput 与 #resolveOutput 共用） */
+    // 无法识别格式时的兜底 MIME
     static #DEFAULT_MIME = 'application/octet-stream';
+
+    // EXIF→XMP 镜像时排除的二进制大标签，避免缩略图撑大文件
+    static #XMP_MIRROR_EXCLUDE = ['-XMP:PreviewImage=', '-XMP:ThumbnailImage='];
+
+    // 路径输入无需清理，复用空实现
+    static #NOOP_CLEANUP = async () => {
+    };
 
     // ============================ 对外 API ============================
 
     /**
-     * 读取图片元数据（不同格式通用）。
+     * 读取图片元数据。
      * @param {string|Buffer|Uint8Array|Blob} source 图片：文件路径或二进制
-     * @param {{ format?: string }} [options] format：内存型 RAW 的格式提示（如 'cr2'）
-     * @returns {Promise<object>} exiftool 的 Tags 对象（字段为原生大小写：
-     *     Make / Model / DateTimeOriginal / Orientation / GPSLatitude / ...）
+     * @param {{format?: string}} [options] format：内存型 RAW 的格式提示（如 'cr2'）
+     * @returns {Promise<object>} exiftool Tags（Make / Model / DateTimeOriginal / ...）
      */
     static async readMetadata(source, options = {}) {
         const ctx = await this.#resolveInput(source, options);
         try {
             return await exiftool.read(ctx.file);
+        } catch (err) {
+            throw this.#rethrow(`读取图片元数据失败: ${ctx.file}`, err);
         } finally {
             await ctx.cleanup();
         }
     }
 
     /**
-     * 写入图片元数据（不同格式通用；返回与 source 同类型）。
+     * 写入元数据，返回与 source 同类型的新图。
      * @param {string|Buffer|Uint8Array|Blob} source 图片：文件路径或二进制
-     * @param {object} tags exiftool 标签引用，如 { Make: 'NIKON', 'IPTC:Keywords': ['a', 'b'] }；
-     *     值为 null 表示删除该标签
-     * @param {{ orientation?: 'reset'|'keep', useMWG?: boolean, windowsCompatible?: boolean, format?: string }} [options]
-     *     orientation 默认 'reset'：canvas 像素已按 EXIF 方向烘焙，把 Orientation 重置为 1；
-     *     传 'keep' 保留原值（当 source 不是 canvas 产物时适用）
+     * @param {object} tags exiftool 标签，如 { Make: 'NIKON' }；值为 null 表示删除
+     * @param {{orientation?: 'reset'|'keep', useMWG?: boolean, windowsCompatible?: boolean, format?: string}} [options]
+     *     orientation 默认 'reset'：canvas 已烘焙旋转，把 Orientation 重置为 1；'keep' 保留原值
      *     useMWG 默认 true：EXIF/XMP/IPTC 按 MWG 互相同步
-     *     windowsCompatible 默认 true：追加 -XMP:all<EXIF:all 把 EXIF 镜像进 XMP，保证 Windows 属性面板可见（PNG 尤其关键，Windows 不读 eXIf 块）
-     * @returns {Promise<string|Buffer|Uint8Array|Blob>} 写入后的图片（target），类型与 source 一致
+     *     windowsCompatible 默认 true：EXIF 镜像进 XMP，Windows 属性面板可读（PNG 尤关键）
+     * @returns {Promise<string|Buffer|Uint8Array|Blob>} 写入后的图片，类型与 source 一致
      */
     static async writeMetadata(source, tags, options = {}) {
+
+        const orientation = this.#extractOrientation(options.orientation);
         const ctx = await this.#resolveInput(source, options);
         try {
-            // 写入用户标签
+            // 用户显式给了 Orientation 就不自动重置
             const writeArgs = ['-overwrite_original'];
-            if (options.orientation !== 'keep' && !this.#hasOrientationKey(tags)) {
+            if (orientation === 'reset' && !this.#hasOrientationKey(tags)) {
                 writeArgs.push('-Orientation#=1');
             }
-            await exiftool.write(ctx.file, tags || {}, {
+            // Orientation 是 exiftool 特殊标签：tag 对象形式写成不带 # 的参数，
+            // 会被当作旋转指令而非字面赋值（标签被丢弃）。剥离后转成带 # 的字面参数。
+            const {tags: writeTags, orientationArg} = this.#resolveOrientationArg(tags);
+
+            if (orientationArg) {
+                writeArgs.push(orientationArg);
+            }
+            await exiftool.write(ctx.file, writeTags, {
                 useMWG: options.useMWG !== false,
-                writeArgs,
+                writeArgs
             });
-            // EXIF → XMP 镜像（Windows 兼容）
             if (options.windowsCompatible !== false) {
-                await exiftool.write(ctx.file, {}, {
-                    useMWG: false,
-                    writeArgs: ['-XMP:all<EXIF:all', '-overwrite_original'],
-                });
+                await this.#copyExifToXmp(ctx.file);
             }
             return await this.#resolveOutput(ctx.file, ctx.outputType, ctx.mime);
+        } catch (err) {
+            throw this.#rethrow(`写入图片元数据失败: ${ctx.file}`, err);
         } finally {
             await ctx.cleanup();
         }
     }
 
     /**
-     * 把 source 的元数据迁移到 target（不同格式通用；返回与 target 同类型）。
-     * 典型用法：原图（任何格式）→ canvas 导出图（jpg/png/webp），元数据回灌。
-     * @param {string|Buffer|Uint8Array|Blob} source 原图（含元数据，可与 target 不同格式）
-     * @param {string|Buffer|Uint8Array|Blob} target 目标图（如 canvas.toBlob 产物，元数据将被注入）
-     * @param {{ orientation?: 'reset'|'keep', windowsCompatible?: boolean, useMWG?: boolean, format?: string }} [options]
-     *     orientation 默认 'reset'（canvas 已烘焙旋转）
-     *     windowsCompatible 默认 true：追加 -XMP:all<EXIF:all 把 EXIF 镜像进 XMP，保证 Windows 属性面板可见（PNG 尤其关键，Windows 不读 eXIf 块）
-     *     useMWG 默认 true
-     * @returns {Promise<string|Buffer|Uint8Array|Blob>} 注入元数据后的图片（target），类型与 target 一致
+     * 把 source 的元数据迁移到 target，返回与 target 同类型的新图。
+     * 典型用法：原图（任何格式）→ canvas 导出图（jpg/png/webp）元数据回灌。
+     * @param {string|Buffer|Uint8Array|Blob} source 原图（可与 target 不同格式）
+     * @param {string|Buffer|Uint8Array|Blob} target 目标图（如 canvas.toBlob 产物）
+     * @param {{orientation?: 'reset'|'keep', windowsCompatible?: boolean, useMWG?: boolean, sourceFormat?: string, targetFormat?: string}} [options]
+     *     format：两个输入通用的内存型 RAW 格式提示（如 'cr2'，与其他 API 一致）
+     *     sourceFormat / targetFormat：分别提示 source / target 的 RAW 格式，优先于 format
+     * @returns {Promise<string|Buffer|Uint8Array|Blob>} 注入元数据后的图片，类型与 target 一致
      */
     static async syncMetadata(source, target, options = {}) {
-        // source / target 同时落盘（并行 IO），再逐一操作
+
+        this.#assertDistinctPaths(source, target);
+
+        // source / target 同时落盘（并行 IO），再逐一操作；各自格式提示优先，未指定时回退到通用的 format（与其他 API 保持一致）
         const [sourceCtx, targetCtx] = await Promise.all([
-            this.#resolveInput(source, options),
-            this.#resolveInput(target, options),
+            this.#resolveInput(source, {...options, format: options.sourceFormat}),
+            this.#resolveInput(target, {...options, format: options.targetFormat}),
         ]);
         try {
-            // 从源文件拷贝全部可写标签
-            const writeArgs = ['-tagsFromFile', sourceCtx.file, '-all:all'];
-            // EXIF → XMP 镜像（Windows 读 XMP）
-            if (options.windowsCompatible !== false) {
-                writeArgs.push('-XMP:all<EXIF:all');
-            }
-            if (options.orientation !== 'keep') {
-                writeArgs.push('-Orientation#=1');
-            }
-            writeArgs.push('-overwrite_original');
-            // tags={} 时库会自动注入无害的 -FileName<FileName 以保持「写模式」，不影响 -tagsFromFile
-            await exiftool.write(targetCtx.file, {}, {useMWG: false, writeArgs});
+            // 拷贝源全部可写标签 + EXIF→XMP 镜像（Windows 读 XMP）+ 方向重置
+            const writeArgs = [
+                '-tagsFromFile', sourceCtx.file, '-all:all',
+                ...(options.windowsCompatible !== false ? ['-XMP:all<EXIF:all', ...this.#XMP_MIRROR_EXCLUDE] : []),
+                ...(this.#extractOrientation(options.orientation) === 'reset' ? ['-Orientation#=1'] : []),
+                '-overwrite_original',
+            ];
+            // tags={} 时库自动注入无害的 -FileName<FileName 保持写模式，不影响 -tagsFromFile
+            await exiftool.write(targetCtx.file, {}, {
+                useMWG: options.useMWG !== false,
+                writeArgs
+            });
             return await this.#resolveOutput(targetCtx.file, targetCtx.outputType, targetCtx.mime);
+        } catch (err) {
+            throw this.#rethrow(`迁移图片元数据失败: ${sourceCtx.file} → ${targetCtx.file}`, err);
         } finally {
             // 两个临时目录并行清理，即使中途抛错
             await Promise.all([sourceCtx.cleanup(), targetCtx.cleanup()]);
@@ -131,18 +164,20 @@ class ImageMetadataHelper {
     }
 
     /**
-     * 剥离全部元数据（不同格式通用；返回与 source 同类型）。
-     * 注意：路径输入会保留一份 `<name>_original` 备份（exiftool 安全默认，非破坏）；
-     * 二进制输入走临时文件、用完即删，不留备份。
+     * 剥离全部元数据，返回与 source 同类型的新图。
      * @param {string|Buffer|Uint8Array|Blob} source 图片：文件路径或二进制
-     * @param {{ retain?: string[], format?: string }} [options] retain：保留指定标签（exiftool 标签引用）
-     * @returns {Promise<string|Buffer|Uint8Array|Blob>} 清除后的图片（target），类型与 source 一致
+     * @param {{retain?: string|string[], format?: string}} [options]
+     *         retain：需要保留的标签（exiftool 标签引用，单个字符串或数组）
+     * @returns {Promise<string|Buffer|Uint8Array|Blob>} 清除后的图片，类型与 source 一致
      */
     static async removeMetadata(source, options = {}) {
         const ctx = await this.#resolveInput(source, options);
         try {
-            await exiftool.deleteAllTags(ctx.file, options.retain ? {retain: options.retain} : undefined);
+            const retain = options.retain ? (Array.isArray(options.retain) ? options.retain : [options.retain]) : undefined;
+            await exiftool.deleteAllTags(ctx.file, retain ? {retain} : undefined);
             return await this.#resolveOutput(ctx.file, ctx.outputType, ctx.mime);
+        } catch (err) {
+            throw this.#rethrow(`剥离图片元数据失败: ${ctx.file}`, err);
         } finally {
             await ctx.cleanup();
         }
@@ -153,7 +188,7 @@ class ImageMetadataHelper {
     /**
      * 魔字节识别图片格式（纯字节，不依赖文件名）。
      * @param {Buffer|Uint8Array} buffer 图片字节（至少 4 字节）
-     * @returns string | null 格式类型，不识别返回 null
+     * @returns {string|null} 小写格式名（jpeg/png/webp/gif/bmp/tiff/heic/avif），不识别返回 null
      */
     static detectFormat(buffer) {
 
@@ -161,8 +196,8 @@ class ImageMetadataHelper {
 
         const bytes = buffer;
 
-        // 大端读取 32 位（不依赖 Buffer 专有的 readUInt32BE）
-        const u32 = (o) => (bytes[o] << 24) | (bytes[o + 1] << 16) | (bytes[o + 2] << 8) | bytes[o + 3];
+        // 大端读取 32 位，>>> 0 归一为无符号，避免高位字节符号扩展的隐患
+        const u32 = (o) => ((bytes[o] << 24) | (bytes[o + 1] << 16) | (bytes[o + 2] << 8) | bytes[o + 3]) >>> 0;
 
         const ascii = (o, len) => String.fromCharCode(...bytes.subarray(o, o + len));
 
@@ -176,9 +211,7 @@ class ImageMetadataHelper {
         if (bytes.length >= 12 && u32(0) === 0x52494646 && u32(8) === 0x57454250) return 'webp';
 
         // GIF87a / GIF89a：版本数字在第 4 字节（0x37='7'、0x39='9'）
-        if (bytes.length >= 6 && bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38) {
-            if (bytes[4] === 0x37 || bytes[4] === 0x39) return 'gif';
-        }
+        if (bytes.length >= 6 && bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38 && (bytes[4] === 0x37 || bytes[4] === 0x39)) return 'gif';
 
         // BMP：42 4D（"BM"）
         if (bytes[0] === 0x42 && bytes[1] === 0x4D) return 'bmp';
@@ -197,37 +230,154 @@ class ImageMetadataHelper {
         return null;
     }
 
-    /** 把 'jpg' 或 '.JPG' 统一成 '.jpg'；空值返回 null。 */
+    /**
+     * 魔字节识别标准 MIME 类型（detectFormat 的 MIME 版）。
+     * @param {Buffer|Uint8Array} buffer 图片字节
+     * @returns {string|null} 如 'image/jpeg'；不识别返回 null
+     */
+    static detectMime(buffer) {
+        const format = this.detectFormat(buffer);
+        return format ? this.#FORMATS[format]?.mime ?? null : null;
+    }
+
+
+    /**
+     * 提取 orientation 取值；undefined 按默认 'reset' 处理
+     * @param orientation
+     * @returns {*|string}
+     */
+    static #extractOrientation(orientation) {
+        if (orientation === undefined) return 'reset';
+        if (orientation === 'reset' || orientation === 'keep') return orientation;
+        throw new TypeError(`orientation 的值只允许是 'reset' 或 'keep'，接收到的值是: ${JSON.stringify(orientation)}`);
+    }
+
+    /**
+     * tags 是否显式含 Orientation（任意分组），决定 write 是否跳过自动重置
+     * @param tags
+     * @returns {boolean}
+     */
+    static #hasOrientationKey(tags) {
+        if (!tags) return false;
+        return Object.keys(tags).some((key) => /(^|:)orientation$/i.test(key));
+    }
+
+    /**
+     * 剥离 tags 中的 Orientation，转成带 # 修饰符的字面参数：
+     * 不带 # 时 exiftool 视为旋转指令而非赋值（标签被丢弃）；null 值转删除参数；
+     * 必须带前导 '-'，否则被当作文件名。
+     * @param tags
+     * @returns {orientationArg: string, tags: Omit<*, never>}
+     */
+    static #resolveOrientationArg(tags) {
+        // 如果 tags 为空，返回空对象和无参数
+        if (!tags) {
+            return {tags: {}, orientationArg: null};
+        }
+        // 查找 orientation 键（可能带有命名空间前缀）
+        const orientationKey = Object.keys(tags).find(key => /(^|:)orientation$/i.test(key));
+        // 如果没有找到，返回原始 tags 和无参数
+        if (!orientationKey) {
+            return {tags, orientationArg: null};
+        }
+        // 提取该键的值，并移除该键
+        const {[orientationKey]: orientationValue, ...remainingTags} = tags;
+        // 构造 exiftool 参数：如果值为 null 或 undefined，删除标签；否则带 # 赋值
+        const orientationArg = orientationValue == null ? `-${orientationKey}=` : `-${orientationKey}#=${orientationValue}`;
+        return {tags: remainingTags, orientationArg};
+    }
+
+    /**
+     *  拒绝 source/target 为同一路径的误用（-tagsFromFile 自身无意义且会破坏文件）
+     * @param source
+     * @param target
+     */
+    static #assertDistinctPaths(source, target) {
+        if (typeof source === 'string' && typeof target === 'string') {
+            const sourcePath = path.resolve(source);
+            const targetPath = path.resolve(target);
+            if (sourcePath === targetPath) {
+                throw new Error(`source 与 target 不能是同一个文件: ${sourcePath}`);
+            }
+        }
+    }
+
+    /**
+     * 统一错误包装：补全上下文，原错误挂到 cause
+     * @param {string} message - 补充的上下文信息
+     * @param {unknown} originalError - 原始错误或任意异常值
+     * @returns {Error} 包装后的错误对象
+     */
+    static #rethrow(message, originalError) {
+        const detail = originalError instanceof Error ? originalError.message : String(originalError);
+        return new Error(`${message}: ${detail}`, {cause: originalError});
+    }
+
+
+    /**
+     * EXIF → XMP 镜像（Windows 读 XMP，PNG 尤关键），排除二进制大标签防膨胀
+     * @param file 文件
+     * @returns {Promise<void>}
+     */
+    static async #copyExifToXmp(file) {
+        await exiftool.write(file, {}, {
+            useMWG: false,
+            writeArgs: ['-XMP:all<EXIF:all', ...this.#XMP_MIRROR_EXCLUDE, '-overwrite_original'],
+        });
+    }
+
+    /**
+     * 'jpg' 或 '.JPG' 统一成 '.jpg'；空值返回 null
+     * @param ext 扩展名
+     * @returns {string|null} 规范的扩展名
+     */
     static #normalizeExt(ext) {
         if (!ext) return null;
-        return (ext.startsWith('.') ? ext : '.' + ext).toLowerCase();
+        return (ext.startsWith('.') ? ext : `.${ext}`).toLowerCase();
     }
+
+    /**
+     * 格式名 → 临时文件扩展名：注册表优先，未知格式（如 'cr2'）按原名
+     * @param format 格式
+     * @returns {*|string|null} 扩展名
+     */
+    static #extForFormat(format) {
+        if (!format) return null;
+        return this.#FORMATS[format]?.ext ?? this.#normalizeExt(format);
+    }
+
 
     // ============================ 输入/输出归一化 ============================
 
     /**
-     * 把任意输入归一化为「磁盘上的文件」+ 回收句柄。
-     *   - 路径：原地操作，cleanup 为空函数，outputType=PATH。
-     *   - 二进制：写临时文件（带正确扩展名，exiftool 据此选 reader），
-     *     cleanup 删整个临时目录，outputType 为原输入类型。
+     * 输入归一化为「磁盘文件 + 回收句柄」。
+     * 路径：校验存在且为文件后原地操作（outputType=PATH，无需清理）；
+     * 二进制：写临时文件（扩展名按格式，供 exiftool 识别），清理为删整个目录。
      * @param {string|Buffer|Uint8Array|Blob} source 图片输入
-     * @param {{ format?: string }} [options] ext：内存型 RAW 的格式提示（如 'cr2'），魔字节无法区分 RAW 子型时用
-     * @returns {Promise<{ file: string, outputType: string, mime: string, cleanup: Function }>}
+     * @param {{format?: string}} [options] format：内存型 RAW 的格式提示（如 'cr2'）
+     * @returns {Promise<{ file: string, outputType: string, mime: string, cleanup: () => Promise<void> }>}
      */
     static async #resolveInput(source, options = {}) {
 
-        // 路径：直接用，不拷贝（exiftool 原地改写最省）
         if (typeof source === 'string') {
+
+            const file = path.resolve(source);
+
+            const stat = await fsp.stat(file).catch(() => {
+                throw new Error(`图片文件不存在或不可访问: ${file}`);
+            });
+
+            if (!stat.isFile()) throw new Error(`无效的文件路径: ${file}`);
+
             return {
-                file: path.resolve(source),
+                file,
                 outputType: this.#OUTPUT_TYPE.PATH,
                 mime: null,
-                cleanup: async () => {
-                },
+                cleanup: this.#NOOP_CLEANUP,
             };
         }
 
-        // 二进制：先取出字节与原类型（Buffer 须先判，因为 Buffer 也是 Uint8Array）
+        // 先取字节与原类型（Buffer 须先判，因为 Buffer 也是 Uint8Array）
         let buffer, outputType;
 
         if (this.#HAS_BLOB && source instanceof Blob) {
@@ -241,28 +391,26 @@ class ImageMetadataHelper {
             buffer = Buffer.from(source.buffer, source.byteOffset, source.byteLength);
             outputType = this.#OUTPUT_TYPE.UINT8_ARRAY;
         } else {
-            throw new Error(
+            throw new TypeError(
                 `不支持的输入类型: ${source?.constructor?.name ?? typeof source}。` +
                 ' source 必须是 string(文件路径) | Buffer | Uint8Array | Blob'
             );
         }
 
-        // 扩展名：options.format > 魔字节 > 默认 .bin
+        // 扩展名：options.format > 魔字节 > 兜底 .unknown
         const detectedFormat = this.detectFormat(buffer);
-        const ext = this.#normalizeExt(options.format || detectedFormat) ?? '.unknown';
+        const ext = this.#extForFormat(options.format || detectedFormat) ?? '.unknown';
 
-        const mime = (this.#HAS_BLOB && source instanceof Blob) ? source.type : this.#DEFAULT_MIME;
+        // Blob 输入的原始 MIME；空则交给 #resolveOutput 用格式检测修正
+        const mime = (this.#HAS_BLOB && source instanceof Blob) ? (source.type || this.#DEFAULT_MIME) : this.#DEFAULT_MIME;
 
-        // 临时文件
-        const dir = await fsp.mkdtemp(path.join(os.tmpdir()));
-        const timestamp = Date.now();
-        const random = Math.random().toString(36).substring(2, 8);
-        const filename = `temp-${timestamp}-${random}${ext}`;
-        const file = path.join(dir, filename);
+        // 独立临时目录 + 整目录回收，避免向系统临时目录泄漏空目录
+        const dir = await fsp.mkdtemp(path.join(os.tmpdir(), 'temp-'));
+        const file = path.join(dir, `${randomUUID()}${ext}`);
         await fsp.writeFile(file, buffer);
         const cleanup = async () => {
             try {
-                await fsp.rm(file, {recursive: false, force: true});
+                await fsp.rm(dir, {recursive: true, force: true});
             } catch { /* 尽力而为，不抛 */
             }
         };
@@ -270,18 +418,21 @@ class ImageMetadataHelper {
     }
 
     /**
-     * 操作完成后按原输入类型回读产出 target。
+     * 按原输入类型回读产出。
+     * 路径输入直接返回路径；Uint8Array 复制一份纯视图；Blob 按魔字节修正 MIME。
      * @param {string} file 磁盘上的（已修改）文件
      * @param {string} outputType 原输入类型（见 #OUTPUT_TYPE）
-     * @param {string|null} mime 输出 MIME（仅 Blob 用）
+     * @param {string|null} mime 输入 Blob 的原始 MIME（仅 Blob 输出用）
      * @returns {Promise<string|Buffer|Uint8Array|Blob>}
      */
     static async #resolveOutput(file, outputType, mime) {
 
-        // 路径输入：文件已原地改写，返回原路径即可，不读回
         if (outputType === this.#OUTPUT_TYPE.PATH) return file;
 
-        const buffer = await fsp.readFile(file);
+        // 读取文件为 Buffer
+        const buffer = await fsp.readFile(file).catch(error => {
+            throw new Error(`无法读取文件: ${file}`, {cause: error});
+        });
 
         switch (outputType) {
             case this.#OUTPUT_TYPE.BUFFER:
@@ -293,22 +444,12 @@ class ImageMetadataHelper {
                 return u8;
             }
             case this.#OUTPUT_TYPE.BLOB:
-                return new Blob([buffer], {type: mime || this.#DEFAULT_MIME});
+                return new Blob([buffer], {type: this.detectMime(buffer) || mime || this.#DEFAULT_MIME});
             default:
                 return buffer;
         }
     }
 
-    /**
-     * tags是否显式包含 Orientation（EXIF/XMP/MWG 任意分组）。
-     * 用于判断 write 是否需要自动补 Orientation 重置——用户已显式给值就不覆盖。
-     * @param {object|null|undefined} tags
-     * @returns {boolean}
-     */
-    static #hasOrientationKey(tags) {
-        if (!tags) return false;
-        return Object.keys(tags).some((key) => /(^|:)orientation$/i.test(key));
-    }
 
     /**
      * 关闭 exiftool 进程池。长驻服务用完调用；脚本退出时库会自管。
