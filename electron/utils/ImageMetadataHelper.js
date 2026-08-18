@@ -43,7 +43,7 @@ class ImageMetadataHelper {
     /**
      * 读取图片元数据（不同格式通用）。
      * @param {string|Buffer|Uint8Array|Blob} source 图片：文件路径或二进制
-     * @param {{ ext?: string }} [options] ext：内存型 RAW 的格式提示（如 'cr2'）
+     * @param {{ format?: string }} [options] format：内存型 RAW 的格式提示（如 'cr2'）
      * @returns {Promise<object>} exiftool 的 Tags 对象（字段为原生大小写：
      *     Make / Model / DateTimeOriginal / Orientation / GPSLatitude / ...）
      */
@@ -61,23 +61,32 @@ class ImageMetadataHelper {
      * @param {string|Buffer|Uint8Array|Blob} source 图片：文件路径或二进制
      * @param {object} tags exiftool 标签引用，如 { Make: 'NIKON', 'IPTC:Keywords': ['a', 'b'] }；
      *     值为 null 表示删除该标签
-     * @param {{ orientation?: 'reset'|'keep', useMWG?: boolean, ext?: string }} [options]
+     * @param {{ orientation?: 'reset'|'keep', useMWG?: boolean, windowsCompatible?: boolean, format?: string }} [options]
      *     orientation 默认 'reset'：canvas 像素已按 EXIF 方向烘焙，把 Orientation 重置为 1；
      *     传 'keep' 保留原值（当 source 不是 canvas 产物时适用）
      *     useMWG 默认 true：EXIF/XMP/IPTC 按 MWG 互相同步
+     *     windowsCompatible 默认 true：追加 -XMP:all<EXIF:all 把 EXIF 镜像进 XMP，保证 Windows 属性面板可见（PNG 尤其关键，Windows 不读 eXIf 块）
      * @returns {Promise<string|Buffer|Uint8Array|Blob>} 写入后的图片（target），类型与 source 一致
      */
     static async writeMetadata(source, tags, options = {}) {
         const ctx = await this.#resolveInput(source, options);
         try {
+            // 写入用户标签
             const writeArgs = ['-overwrite_original'];
-            // 用户未显式给 Orientation 时，默认重置为 1（canvas 烘焙旋转）。
-            // 注意用 `-Orientation#=1`：# 后缀禁用 PrintConv 按数值写 1，
-            // 直接用 `-Orientation=1` 会被 exiftool 当作 PrintConv 字符串解析，反而写成 3。
             if (options.orientation !== 'keep' && !this.#hasOrientationKey(tags)) {
                 writeArgs.push('-Orientation#=1');
             }
-            await exiftool.write(ctx.file, tags || {}, {useMWG: options.useMWG !== false, writeArgs});
+            await exiftool.write(ctx.file, tags || {}, {
+                useMWG: options.useMWG !== false,
+                writeArgs,
+            });
+            // EXIF → XMP 镜像（Windows 兼容）
+            if (options.windowsCompatible !== false) {
+                await exiftool.write(ctx.file, {}, {
+                    useMWG: false,
+                    writeArgs: ['-XMP:all<EXIF:all', '-overwrite_original'],
+                });
+            }
             return await this.#resolveOutput(ctx.file, ctx.outputType, ctx.mime);
         } finally {
             await ctx.cleanup();
@@ -89,7 +98,7 @@ class ImageMetadataHelper {
      * 典型用法：原图（任何格式）→ canvas 导出图（jpg/png/webp），元数据回灌。
      * @param {string|Buffer|Uint8Array|Blob} source 原图（含元数据，可与 target 不同格式）
      * @param {string|Buffer|Uint8Array|Blob} target 目标图（如 canvas.toBlob 产物，元数据将被注入）
-     * @param {{ orientation?: 'reset'|'keep', windowsCompatible?: boolean, useMWG?: boolean, ext?: string }} [options]
+     * @param {{ orientation?: 'reset'|'keep', windowsCompatible?: boolean, useMWG?: boolean, format?: string }} [options]
      *     orientation 默认 'reset'（canvas 已烘焙旋转）
      *     windowsCompatible 默认 true：追加 -XMP:all<EXIF:all 把 EXIF 镜像进 XMP，保证 Windows 属性面板可见（PNG 尤其关键，Windows 不读 eXIf 块）
      *     useMWG 默认 true
@@ -113,7 +122,7 @@ class ImageMetadataHelper {
             }
             writeArgs.push('-overwrite_original');
             // tags={} 时库会自动注入无害的 -FileName<FileName 以保持「写模式」，不影响 -tagsFromFile
-            await exiftool.write(targetCtx.file, {}, {useMWG: options.useMWG !== false, writeArgs});
+            await exiftool.write(targetCtx.file, {}, {useMWG: false, writeArgs});
             return await this.#resolveOutput(targetCtx.file, targetCtx.outputType, targetCtx.mime);
         } finally {
             // 两个临时目录并行清理，即使中途抛错
@@ -126,7 +135,7 @@ class ImageMetadataHelper {
      * 注意：路径输入会保留一份 `<name>_original` 备份（exiftool 安全默认，非破坏）；
      * 二进制输入走临时文件、用完即删，不留备份。
      * @param {string|Buffer|Uint8Array|Blob} source 图片：文件路径或二进制
-     * @param {{ retain?: string[], ext?: string }} [options] retain：保留指定标签（exiftool 标签引用）
+     * @param {{ retain?: string[], format?: string }} [options] retain：保留指定标签（exiftool 标签引用）
      * @returns {Promise<string|Buffer|Uint8Array|Blob>} 清除后的图片（target），类型与 source 一致
      */
     static async removeMetadata(source, options = {}) {
