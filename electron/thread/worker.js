@@ -55,7 +55,7 @@ module.exports = async (params) => {
                     await fs.copyFile(filePath, outputPath);
                 } else {
                     const sourceBuffer = await fs.readFile(filePath);
-                    const strippedBuffer = await ImageMetadataHelper.stripMetadata(sourceBuffer);
+                    const strippedBuffer = await ImageMetadataHelper.removeMetadata(sourceBuffer);
                     await fs.writeFile(outputPath, strippedBuffer);
                 }
             } catch (err) {
@@ -97,8 +97,7 @@ module.exports = async (params) => {
     let buffer = outputExtname === 'png' ? canvas.toBuffer('image/png') : canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 100 : quality);
 
     if (isSynchronizeMetadata) {
-        buffer = await ImageMetadataHelper.syncMetadataToBuffer(filePath, buffer, {format: outputExtname});
-        console.log(await ImageMetadataHelper.readMetadata(filePath));
+        buffer = await ImageMetadataHelper.syncMetadata(filePath, buffer, {format: outputExtname});
     }
 
     await fs.writeFile(outputPath, buffer);
