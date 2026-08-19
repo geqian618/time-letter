@@ -341,7 +341,7 @@ class ImageMetadataHelper {
      * @param format 格式
      * @returns {*|string|null} 扩展名
      */
-    static #extForFormat(format) {
+    static #detectExt(format) {
         if (!format) return null;
         return this.#FORMATS[format]?.ext ?? this.#normalizeExt(format);
     }
@@ -399,7 +399,7 @@ class ImageMetadataHelper {
 
         // 扩展名：options.format > 魔字节 > 兜底 .unknown
         const detectedFormat = this.detectFormat(buffer);
-        const ext = this.#extForFormat(options.format || detectedFormat) ?? '.unknown';
+        const ext = this.#detectExt(options.format || detectedFormat) ?? '.unknown';
 
         // Blob 输入的原始 MIME；空则交给 #resolveOutput 用格式检测修正
         const mime = (this.#HAS_BLOB && source instanceof Blob) ? (source.type || this.#DEFAULT_MIME) : this.#DEFAULT_MIME;
