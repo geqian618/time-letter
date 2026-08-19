@@ -327,16 +327,6 @@ class ImageMetadataHelper {
     }
 
     /**
-     * 'jpg' 或 '.JPG' 统一成 '.jpg'；空值返回 null
-     * @param ext 扩展名
-     * @returns {string|null} 规范的扩展名
-     */
-    static #normalizeExt(ext) {
-        if (!ext) return null;
-        return (ext.startsWith('.') ? ext : `.${ext}`).toLowerCase();
-    }
-
-    /**
      * 格式名 → 临时文件扩展名：注册表优先，未知格式（如 'cr2'）按原名
      * @param format 格式
      * @returns {*|string|null} 扩展名
@@ -344,6 +334,16 @@ class ImageMetadataHelper {
     static #detectExt(format) {
         if (!format) return null;
         return this.#FORMATS[format]?.ext ?? this.#normalizeExt(format);
+    }
+
+    /**
+     * 'jpg' 或 '.JPG' 统一成 '.jpg'；空值返回 null
+     * @param ext 格式名或扩展名
+     * @returns {string|null} 规范的扩展名
+     */
+    static #normalizeExt(ext) {
+        if (!ext) return null;
+        return (ext.startsWith('.') ? ext : `.${ext}`).toLowerCase();
     }
 
 
