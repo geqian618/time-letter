@@ -19,7 +19,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "@napi-rs/canvas": "^1.0.2",
+    "@napi-rs/canvas": "^1.0.7",
     "adm-zip": "^0.5.17",
     "bytenode": "^1.5.7",
     "chokidar": "^4.0.3",

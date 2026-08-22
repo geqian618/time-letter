@@ -4562,8 +4562,6 @@ onBeforeUnmount(() => {
       }
 
       .value:has(img) {
-        padding: 5px;
-        border: 1px solid var(--app-border-strong);
         border-radius: 3px;
 
         img {
