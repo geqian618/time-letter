@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!--    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; 'unsafe-inline'">-->
     <title>时光信笺</title>
-    <!-- 1. 关键脚本：必须在任何 CSS 之前 -->
+    <!-- 必须在任何 CSS 之前 -->
     <script>
         (function () {
             if (window?.localStorage) {
@@ -23,6 +23,8 @@
             }
         })();
     </script>
+    <!-- 主题关键样式 -->
+    <link rel="stylesheet" href="./src/assets/theme.css">
 </head>
 <body>
 <div id="app"></div>

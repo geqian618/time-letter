@@ -4,13 +4,13 @@ const path = require('path');
 const fs = require('fs')
 const AdmZip = require('adm-zip');
 const localshortcut = require('electron-localshortcut')
+const sharp = require("sharp");
 
 // 工具模块
 const imageParser = require('./utils/image-parser')
 const imageExportProcessor = require('./thread/imageExportProcessor')
 const resourcesLoader = require('./utils/resources-loader')
 const {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl} = require('./utils/path-helper')
-const ImageConverter = require('./utils/ImageConverter');
 const {getSystemFonts, getCustomFonts} = require('./utils/font-manager')
 const ImageMetadataHelper = require("./utils/ImageMetadataHelper");
 
@@ -36,7 +36,6 @@ process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
 // 打包后渲染进程加载器（解密 renderer.pkg + myclient:// 协议 + asar 完整性校验）
 const {registerPrivilegedSchemes, registerRendererProtocol, verifyAsarIntegrity} = require('./runtime/renderer-loader')
-const sharp = require("sharp");
 
 
 // 组件应用
@@ -63,6 +62,7 @@ const createMainWindow = () => {
         ...winState.winOptions,
         icon: APP_ICON_PATH,
         show: false,
+        backgroundColor: nativeTheme.shouldUseDarkColors ? '#262626' : '#f5f5f5',
         webPreferences: {
             sandbox: false,
             webSecurity: true,
@@ -520,14 +520,15 @@ const setupUserData = () => {
  */
 const initializeApp = () => {
 
-    // 自定义协议权限必须在 app ready 之前注册
-    registerPrivilegedSchemes()
-
     // 设置用户数据（必须在 whenReady 方法执行之前调用才生效）
     setupUserData()
 
     // 设置主题
     setTheme()
+
+    // 自定义协议权限必须在 app ready 之前注册
+    registerPrivilegedSchemes()
+
 }
 
 /**
