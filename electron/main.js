@@ -284,7 +284,7 @@ const setupIpcHandlers = () => {
 
     // 创建线程池
     ipcMain.on('create-thread-pool', (event, maxThreads) => {
-        
+
     })
 
 
@@ -430,7 +430,8 @@ const registerThumbnailProtocol = () => {
     protocol.handle('thumb', async (request) => {
         try {
             const filePath = decodeURIComponent(request.url.replace('thumb:///', ''));
-            const thumbnail = await getThumbnailBuffer(filePath);
+            const buffer = await fs.promises.readFile(filePath);
+            const thumbnail = await getThumbnailBuffer(buffer);
             if (thumbnail) {
                 return new Response(thumbnail, {
                     headers: {
@@ -440,8 +441,6 @@ const registerThumbnailProtocol = () => {
                     }
                 })
             }
-            // 生成失败（损坏文件等）回退返回原图字节，类型由 <img> 解码器嗅探
-            const buffer = await fs.promises.readFile(filePath);
             return new Response(buffer)
         } catch (error) {
             console.error('缩略图协议处理失败:', error)
@@ -454,14 +453,14 @@ const registerThumbnailProtocol = () => {
 /**
  * 获取缩略图 Buffer:用 sharp 生成高 256px 的 WebP;失败返回 null,由调用方回退原图
  */
-const getThumbnailBuffer = async (filePath) => {
+const getThumbnailBuffer = async (buffer) => {
     try {
-        return await ImageConverter.toWebPBuffer(filePath, {
+        return await ImageConverter.toWebPBuffer(buffer, {
             resize: {height: 256, fit: 'inside', withoutEnlargement: true},
             formatOptions: {quality: 75}
         });
     } catch (error) {
-        console.error(`生成缩略图失败: ${filePath}:`, error.message)
+        console.error(`生成缩略图失败: `, error.message)
         return null;
     }
 }
@@ -575,7 +574,7 @@ process.on('uncaughtException', (error) => {
     dialog.showMessageBox({
         type: 'error',
         title: '执行错误',
-        message: error
+        message: error?.message ?? String(error)
     })
 })
 
@@ -584,6 +583,6 @@ process.on('unhandledRejection', (reason, promise) => {
     dialog.showMessageBox({
         type: 'error',
         title: '执行错误',
-        message: reason
+        message: reason?.message ?? String(reason)
     })
 })
