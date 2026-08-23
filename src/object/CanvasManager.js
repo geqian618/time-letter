@@ -1,5 +1,6 @@
 import {reactive} from 'vue'
-const canvases = new Map()
+
+const canvases = reactive(new Map())
 
 const selectedObject = reactive({
     path: '',
@@ -46,14 +47,8 @@ const deleteCanvas = (key) => {
     return canvases.delete(key);
 }
 
-const getAvailableCanvases = (filterType) => {
-    if (filterType === 0) {
-        return new Map(canvases)
-    } else if (filterType === 1) {
-        return new Map(Array.from(canvases).filter(([path, {metadata}]) => metadata.width >= metadata.height))
-    } else {
-        return new Map(Array.from(canvases).filter(([path, {metadata}]) => metadata.width < metadata.height))
-    }
+const getAllCanvases = () => {
+    return canvases;
 }
 
 const getSettingsFromCurrentCanvas = (element) => {
@@ -129,7 +124,7 @@ export default {
     getCanvas,
     getCurrentCanvas,
     getCanvases,
-    getAvailableCanvases,
+    getAllCanvases,
     getTexts,
     getImages,
     getSettings,

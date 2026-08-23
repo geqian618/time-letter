@@ -5,23 +5,13 @@ export class CanvasSettings {
         this.scrollLeft = 0;
         this.scrollTop = 0;
         this.zoom = 1;
-        this.imageElement = null;
         this.path = '';
         this.url = '';
         this.filename = '';
         this.extname = '';
     }
 
-    getImageElement() {
-        if (!this.imageElement) {
-            this.imageElement = document.getElementById(this.path);
-        }
-        return this.imageElement;
-    }
-
-    getPreviewElement(previewList) {
-        const escapedPath = this.path.replace(/\\/g, '\\\\');
-        return previewList.querySelector(`[path="${escapedPath}"]`);
+    getPreviewElement() {
     }
 }
 

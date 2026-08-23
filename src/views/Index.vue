@@ -803,7 +803,7 @@
 
           <div class="right-tabs">
             <div class="counter">已选{{ selectedPreviewList.size }}张</div>
-            <div class="counter">共{{ availableCanvas.size }}张</div>
+            <div class="counter">共{{ availableCanvases.size }}张</div>
             <div class="filter">
               <div class="filter-label">筛选：</div>
               <div class="filter-select">
@@ -820,9 +820,8 @@
 
         </div>
         <div class="preview-list" ref="previewList" @wheel="handleMovePreviewList" @contextmenu="triggerContextMenu">
-          <template :key="key" v-for="([key, canvas]) in availableCanvas">
+          <template :key="key" v-for="([key, canvas]) in CanvasManager.getCanvases()">
             <el-popover
-                v-if="canvas.metadata.filename || canvas.metadata.shootingTime || canvas.metadata.resolution || canvas.metadata.fileSize"
                 width="fit-content"
                 :show-after="2000"
                 :hide-after="0"
@@ -837,6 +836,8 @@
               </template>
               <template #reference>
                 <img class="previewItem"
+                     :ref="(el) => { if (el) canvas.getPreviewElement = () => el }"
+                     v-show="isVisible(canvas)"
                      :path="canvas.path"
                      v-lazy="canvas.url"
                      @click.meta.exact="handleSelectPreviewElement($event,canvas)"
@@ -846,14 +847,6 @@
                      @dblclick="handleDbClickPreviewImage($event,canvas)">
               </template>
             </el-popover>
-            <img v-else
-                 class="previewItem"
-                 :path="canvas.path"
-                 v-lazy="canvas.url"
-                 @click.meta.exact="handleSelectPreviewElement($event,canvas)"
-                 @click.ctrl.exact="handleSelectPreviewElement($event, canvas)"
-                 @click.shift.exact="handleSelectMultiplePreviewElements($event,canvas)"
-                 @click="switchPreviewImage($event, canvas)">
           </template>
         </div>
       </div>
@@ -1383,7 +1376,7 @@
 
 <script setup lang="js">
 
-import {nextTick, onBeforeUnmount, onMounted, shallowRef, ref, toRaw, toRef, watch, computed} from "vue";
+import {nextTick, onBeforeUnmount, onMounted, ref, toRaw, toRef, watch, computed} from "vue";
 
 import {CanvasEditor, Text, Image, LazyImage, Rect} from '@/canvas/CanvasEditor'
 
@@ -1431,8 +1424,6 @@ const filterType = ref(0)
 const matchFonts = ref([])
 
 const templateSettings = ref({})
-
-const availableCanvas = shallowRef(new Map())
 
 const zoomOptions = {
   minZoom: 0.1,
@@ -1593,6 +1584,22 @@ const isHideDeleteTips = computed(() => {
 
 const uploadVisible = computed(() => !CanvasManager.getSelectedObject().path)
 
+const availableCanvases = computed(() => {
+  const filter = filterType.value
+  const result = new Map()
+  for (const [path, canvas] of CanvasManager.getCanvases()) {
+    if (filter === 0) {
+      result.set(path, canvas)
+      continue
+    }
+    const {width, height} = canvas.metadata || {}
+    const visible = filter === 1 ? Number(width) >= Number(height) : Number(width) < Number(height)
+    if (visible) result.set(path, canvas)
+  }
+  return result
+})
+
+const isVisible = (canvas) => availableCanvases.value.has(canvas.path)
 
 const handleDeleteTipsVisible = () => {
   projectSettings.value.others.deleteTipVisible = !projectSettings.value.others.deleteTipVisible
@@ -1620,7 +1627,6 @@ const handleFilterFonts = (search) => {
 
 watch(filterType, async () => {
   await clearSelectedPreviewList()
-  availableCanvas.value = CanvasManager.getAvailableCanvases(filterType.value)
   await nextTick()
   setDefaultSelectedElement()
 })
@@ -1628,17 +1634,17 @@ watch(filterType, async () => {
 
 const setDefaultSelectedElement = async () => {
   const selectedPath = CanvasManager.getSelectedPath();
-  const paths = Array.from(availableCanvas.value.keys());
+  const paths = Array.from(availableCanvases.value.keys());
   if (!paths.length || !selectedPath) return
   const selectedCanvas = CanvasManager.getCanvas(selectedPath);
   let nextSelectCanvas, previewElement
   if (paths.includes(selectedPath)) {
-    nextSelectCanvas = availableCanvas.value.get(selectedPath);
-    previewElement = nextSelectCanvas.getPreviewElement(previewList.value);
+    nextSelectCanvas = availableCanvases.value.get(selectedPath);
+    previewElement = nextSelectCanvas.getPreviewElement();
     await renderCanvas(selectedCanvas)
   } else {
-    nextSelectCanvas = availableCanvas.value.get(paths[0]);
-    previewElement = nextSelectCanvas.getPreviewElement(previewList.value);
+    nextSelectCanvas = availableCanvases.value.get(paths[0]);
+    previewElement = nextSelectCanvas.getPreviewElement();
     await renderCanvas(nextSelectCanvas)
   }
   previewElement.classList.add('active')
@@ -1746,8 +1752,6 @@ const watchImportImages = () => {
             settings.metadata = metadata
           }
           CanvasManager.setCanvas(path, Object.assign(settings, picture))
-          // 检测到图片导入立即触发渲染
-          availableCanvas.value = CanvasManager.getAvailableCanvases(filterType.value)
         }
       }
     }
@@ -1974,13 +1978,11 @@ const removeSelectedCanvas = () => {
   const selectedPaths = Array.from(selectedPreviewList.value.keys());
   for (let path of selectedPaths) {
     CanvasManager.deleteCanvas(path)
-    availableCanvas.value.delete(path)
     if (path === CanvasManager.getSelectedPath()) {
       clearCanvas()
     }
   }
   selectedPreviewList.value.clear();
-  availableCanvas.value = CanvasManager.getAvailableCanvases(filterType.value)
 }
 
 const watchContextMenu = () => {
@@ -3177,14 +3179,14 @@ const handleUpdateBorders = () => {
 const switchBeforePreviewElement = useThrottle(async () => {
   const {path: currentPath, previewElement: currentElement} = CanvasManager.getSelectedObject();
   if (!currentPath) return
-  const currentCanvas = availableCanvas.value.get(currentPath);
-  const beforeCanvas = MapHelper.getBeforeValue(availableCanvas.value, currentPath);
+  const currentCanvas = availableCanvases.value.get(currentPath);
+  const beforeCanvas = MapHelper.getBeforeValue(availableCanvases.value, currentPath);
   if (currentCanvas && beforeCanvas) {
     currentElement.setAttribute('selected', 'false')
     currentElement.classList.remove('active')
     selectedPreviewList.value.delete(currentPath)
 
-    const beforeElement = currentElement.previousElementSibling || currentElement.parentNode.lastElementChild;
+    const beforeElement = beforeCanvas.getPreviewElement();
     beforeElement.classList.add('active')
     beforeElement.setAttribute('selected', 'true')
 
@@ -3201,15 +3203,15 @@ const switchBeforePreviewElement = useThrottle(async () => {
 const switchNextPreviewElement = useThrottle(async () => {
   const {path: currentPath, previewElement: currentElement} = CanvasManager.getSelectedObject();
   if (!currentPath) return
-  const currentCanvas = availableCanvas.value.get(currentPath);
-  const nextCanvas = MapHelper.getNextValue(availableCanvas.value, currentPath);
+  const currentCanvas = availableCanvases.value.get(currentPath);
+  const nextCanvas = MapHelper.getNextValue(availableCanvases.value, currentPath);
 
   if (currentCanvas && nextCanvas) {
     currentElement.setAttribute('selected', 'false')
     currentElement.classList.remove('active')
     selectedPreviewList.value.delete(currentPath)
 
-    const nextElement = currentElement.nextElementSibling || currentElement.parentNode.firstElementChild;
+    const nextElement = nextCanvas.getPreviewElement();
     nextElement.classList.add('active')
     nextElement.setAttribute('selected', 'true')
     CanvasManager.setSelectedObject({path: nextCanvas.path, previewElement: nextElement})
@@ -3304,6 +3306,8 @@ const handleSelectAllPreviewElements = (event) => {
     const previewElements = document.querySelectorAll('img.previewItem');
     if (previewElements.length) {
       previewElements.forEach(element => {
+        // 跳过被筛选隐藏的图片（v-show 隐藏）
+        if (element.style.display === 'none') return
         element.classList.add('active');
         selectedPreviewList.value.set(element.getAttribute('path'), element)
       })
