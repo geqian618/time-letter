@@ -62,7 +62,7 @@ const createMainWindow = () => {
         ...winState.winOptions,
         icon: APP_ICON_PATH,
         show: false,
-        backgroundColor: nativeTheme.shouldUseDarkColors ? '#262626' : '#f5f5f5',
+        backgroundColor: nativeTheme.themeSource === 'dark' ? '#262626' : '#f5f5f5',
         webPreferences: {
             sandbox: false,
             webSecurity: true,
