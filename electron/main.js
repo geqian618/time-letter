@@ -50,6 +50,8 @@ let tray = null;
  */
 const createMainWindow = () => {
 
+    const isDarkTheme = nativeTheme.themeSource === 'dark' || (nativeTheme.themeSource === 'system' && nativeTheme.shouldUseDarkColors)
+
     const winState = new WinState({
         defaultWidth: 1000,
         defaultHeight: 600,
@@ -57,8 +59,6 @@ const createMainWindow = () => {
             name: 'main-window-state'
         }
     })
-
-    const isDarkTheme = nativeTheme.themeSource === 'dark' || (nativeTheme.themeSource === 'system' && nativeTheme.shouldUseDarkColors)
 
     mainWindow = new BrowserWindow({
         ...winState.winOptions,
