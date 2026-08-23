@@ -147,7 +147,7 @@ const setupWindowEvents = (window) => {
 
     // 窗口加载完成
     window.webContents.on('did-finish-load', () => {
-        resourcesLoader.loadImageLabels(window)
+        resourcesLoader.loadResources(window)
         resourcesLoader.loadFonts(window)
     })
 

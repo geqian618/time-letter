@@ -1,18 +1,19 @@
-const {getResourcePath, localPathToUrl} = require('./path-helper')
+const {getResourcePath, localPathToUrl, localPathToThumbUrl} = require('./path-helper')
 const {reloadFonts} = require('./font-manager')
 const path = require('path');
 const fs = require('fs');
 
 const resourcesPath = getResourcePath()
 
-const loadImageLabels = (window) => {
+const loadResources = (window) => {
     fs.readdir(resourcesPath, (err, filenames) => {
         const files = filenames.map((filename) => {
             const extname = path.extname(filename).slice(1);
             return {
                 filename: filename,
-                url: localPathToUrl(path.join(resourcesPath, filename)),
                 path: path.join(resourcesPath, filename),
+                url: localPathToUrl(path.join(resourcesPath, filename)),
+                thumbUrl: localPathToThumbUrl(path.join(resourcesPath, filename)),
                 extname: extname
             };
         })
@@ -27,4 +28,4 @@ const loadFonts = (window) => {
 }
 
 
-module.exports = {loadImageLabels, loadFonts}
+module.exports = {loadResources, loadFonts}

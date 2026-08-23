@@ -28,8 +28,8 @@
                     <span>图片库</span>
                   </template>
                   <div class="image-marks" ref="imageMarks">
-                    <div class="image-item" :key="key" v-for="([key, label]) in imageLabels" draggable="false">
-                      <img class="image-mark" :src="label.url" :path="label.path" draggable="true">
+                    <div class="image-item" :key="key" v-for="([key, image]) in imageLabels" draggable="false">
+                      <img class="image-mark" :src="image.thumbUrl || image.url" :path="image.path" draggable="true">
                     </div>
                   </div>
                 </el-sub-menu>
@@ -54,19 +54,19 @@
                           <img draggable="false" src="/src/assets/icon/datetime.svg">
                         </div>
                       </el-tooltip>
-                      <el-tooltip v-for="(textLabel) in textLabels"
-                                  :key="textLabel.id"
+                      <el-tooltip v-for="(text) in textLabels"
+                                  :key="text.id"
                                   class="box-item"
                                   effect="dark"
-                                  :content="textLabel.tips"
+                                  :content="text.tips"
                                   placement="top">
                         <div class="text-mark"
-                             :id="textLabel.id"
+                             :id="text.id"
                              draggable="true"
-                             :text="textLabel.content"
-                             :expression="textLabel.script"
-                             :type="textLabel.type ==='text'?'text':'script'">
-                          <img draggable="false" src="/src/assets/icon/custom.svg">
+                             :text="text.content"
+                             :expression="text.script"
+                             :type="text.type ==='text'?'text':'script'">
+                          <img draggable="false" src="/src/assets/icon/custom.svg" alt="">
                         </div>
                       </el-tooltip>
                     </div>
