@@ -2,7 +2,7 @@ const {dialog, app, Menu, shell} = require('electron');
 const path = require('path')
 const fs = require('fs')
 const AdmZip = require('adm-zip');
-const {getResourcePath, getFontPath, localPathToProtocolUrl, localPathToThumbUrl} = require('../utils/path-helper')
+const {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl} = require('../utils/path-helper')
 const {registerFont} = require('../utils/font-manager')
 
 const resourcesPath = getResourcePath()
@@ -173,7 +173,7 @@ const selectFile = async () => {
                 const extname = path.extname(filePath).slice(1);
                 return {
                     filename: path.basename(filePath),
-                    url: localPathToProtocolUrl(filePath),
+                    url: localPathToUrl(filePath),
                     thumbUrl: localPathToThumbUrl(filePath),
                     path: filePath,
                     extname: extname
@@ -232,7 +232,7 @@ const importTemplates = async () => {
                     const fileName = path.basename(originalPath);
                     const newFilePath = path.join(getResourcePath(), fileName);
                     element.meta.path = newFilePath;
-                    element.src = localPathToProtocolUrl(newFilePath);
+                    element.src = localPathToUrl(newFilePath);
                 }
             }
         }
@@ -295,7 +295,7 @@ const selectFonts = async () => {
                 const fileParsed = path.parse(filePath);
                 const font = {
                     family: fileParsed.name,
-                    url: localPathToProtocolUrl(filePath),
+                    url: localPathToUrl(filePath),
                     path: filePath,
                 };
                 return [font.family, font]
@@ -325,7 +325,7 @@ const selectImageLabels = async () => {
                 filePath = path.join(resourcesPath, path.basename(filePath));
                 return {
                     filename: path.basename(filePath),
-                    url: localPathToProtocolUrl(filePath),
+                    url: localPathToUrl(filePath),
                     path: filePath,
                     extname: extname
                 };

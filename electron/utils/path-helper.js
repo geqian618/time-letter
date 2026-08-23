@@ -28,7 +28,7 @@ function encodeLocalPath(filePath) {
     return encodedSegments.join('/');
 }
 
-function localPathToProtocolUrl(filePath) {
+function localPathToUrl(filePath) {
     return `app:///${encodeLocalPath(filePath)}`;
 }
 
@@ -39,4 +39,4 @@ function localPathToThumbUrl(filePath) {
     return `thumb:///${encodeLocalPath(filePath)}`;
 }
 
-module.exports = {getResourcePath, getFontPath, localPathToProtocolUrl, localPathToThumbUrl}
+module.exports = {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl}

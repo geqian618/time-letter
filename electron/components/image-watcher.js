@@ -1,6 +1,6 @@
 const chokidar = require('chokidar')
 const path = require("path");
-const {localPathToProtocolUrl} = require("../utils/path-helper");
+const {localPathToUrl} = require("../utils/path-helper");
 
 let watcher;
 
@@ -27,7 +27,7 @@ const watch = async (window, folderPath) => {
             const pathParsed = path.parse(filePath);
             const image = {
                 filename: path.basename(filePath),
-                url: localPathToProtocolUrl(filePath),
+                url: localPathToUrl(filePath),
                 path: filePath,
                 extname: pathParsed.ext
             };

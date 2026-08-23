@@ -9,7 +9,7 @@ const localshortcut = require('electron-localshortcut')
 const imageParser = require('./utils/image-parser')
 const imageExportProcessor = require('./thread/imageExportProcessor')
 const resourcesLoader = require('./utils/resources-loader')
-const {getResourcePath, getFontPath, localPathToProtocolUrl, localPathToThumbUrl} = require('./utils/path-helper')
+const {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl} = require('./utils/path-helper')
 const ImageConverter = require('./utils/ImageConverter');
 const {getSystemFonts, getCustomFonts} = require('./utils/font-manager')
 const ImageMetadataHelper = require("./utils/ImageMetadataHelper");
@@ -265,7 +265,7 @@ const setupIpcHandlers = () => {
                     const extname = path.extname(filePath).slice(1);
                     return {
                         filename: path.basename(filePath),
-                        url: localPathToProtocolUrl(filePath),
+                        url: localPathToUrl(filePath),
                         thumbUrl: localPathToThumbUrl(filePath),
                         path: filePath,
                         extname: extname
@@ -284,7 +284,7 @@ const setupIpcHandlers = () => {
 
     // 创建线程池
     ipcMain.on('create-thread-pool', (event, maxThreads) => {
-
+        
     })
 
 
@@ -392,7 +392,7 @@ const setupIpcHandlers = () => {
             const extname = path.extname(filePath).slice(1);
             mainWindow.webContents.send('image:watch-import', {
                 filename: path.basename(filePath),
-                url: localPathToProtocolUrl(filePath),
+                url: localPathToUrl(filePath),
                 path: filePath,
                 extname: extname
             })
