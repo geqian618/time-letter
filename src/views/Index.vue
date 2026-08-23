@@ -839,7 +839,7 @@
                      :ref="(el) => { if (el) canvas.getPreviewElement = () => el }"
                      v-show="isVisible(canvas)"
                      :path="canvas.path"
-                     v-lazy="canvas.url"
+                     v-lazy="canvas.thumbUrl || canvas.url"
                      @click.meta.exact="handleSelectPreviewElement($event,canvas)"
                      @click.ctrl.exact="handleSelectPreviewElement($event, canvas)"
                      @click.shift.exact="handleSelectMultiplePreviewElements($event,canvas)"

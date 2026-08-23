@@ -9,7 +9,8 @@ const localshortcut = require('electron-localshortcut')
 const imageParser = require('./utils/image-parser')
 const imageExportProcessor = require('./thread/imageExportProcessor')
 const resourcesLoader = require('./utils/resources-loader')
-const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('./utils/path-helper')
+const {getResourcePath, getFontPath, localPathToProtocolUrl, localPathToThumbUrl} = require('./utils/path-helper')
+const ImageConverter = require('./utils/ImageConverter');
 const {getSystemFonts, getCustomFonts} = require('./utils/font-manager')
 const ImageMetadataHelper = require("./utils/ImageMetadataHelper");
 
@@ -265,6 +266,7 @@ const setupIpcHandlers = () => {
                     return {
                         filename: path.basename(filePath),
                         url: localPathToProtocolUrl(filePath),
+                        thumbUrl: localPathToThumbUrl(filePath),
                         path: filePath,
                         extname: extname
                     };
@@ -421,6 +423,50 @@ const registerCustomProtocol = () => {
 }
 
 /**
+ * 注册缩略图协议：预览列表通过 thumb:// 加载主进程生成的小图，
+ * 避免缩略图直接读取并解码原图导致大量图片时加载缓慢
+ */
+const registerThumbnailProtocol = () => {
+    protocol.handle('thumb', async (request) => {
+        try {
+            const filePath = decodeURIComponent(request.url.replace('thumb:///', ''));
+            const thumbnail = await getThumbnailBuffer(filePath);
+            if (thumbnail) {
+                return new Response(thumbnail, {
+                    headers: {
+                        'Content-Type': 'image/webp',
+                        // 每次请求都按当前源文件重新生成,无需缓存协商
+                        'Cache-Control': 'no-cache'
+                    }
+                })
+            }
+            // 生成失败（损坏文件等）回退返回原图字节，类型由 <img> 解码器嗅探
+            const buffer = await fs.promises.readFile(filePath);
+            return new Response(buffer)
+        } catch (error) {
+            console.error('缩略图协议处理失败:', error)
+            return new Response(null, {status: 404, statusText: 'Not Found'})
+        }
+    })
+}
+
+
+/**
+ * 获取缩略图 Buffer:用 sharp 生成高 256px 的 WebP;失败返回 null,由调用方回退原图
+ */
+const getThumbnailBuffer = async (filePath) => {
+    try {
+        return await ImageConverter.toWebPBuffer(filePath, {
+            resize: {height: 256, fit: 'inside', withoutEnlargement: true},
+            formatOptions: {quality: 75}
+        });
+    } catch (error) {
+        console.error(`生成缩略图失败: ${filePath}:`, error.message)
+        return null;
+    }
+}
+
+/**
  * 设置应用生命周期事件
  */
 const setupAppLifecycle = () => {
@@ -507,6 +553,8 @@ const startApp = () => {
     }
 
     registerCustomProtocol()
+
+    registerThumbnailProtocol()
 
     setupIpcHandlers()
 

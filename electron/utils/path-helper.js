@@ -14,23 +14,29 @@ const getFontPath = () => {
 }
 
 
-function localPathToProtocolUrl(filePath) {
-
+/**
+ * 路径分段编码：标准化分隔符后逐段 encodeURIComponent，确保中文正确编码而斜杠保持不变
+ */
+function encodeLocalPath(filePath) {
     if (!filePath || typeof filePath !== 'string') {
         throw new Error('Invalid file path');
     }
-
     // 标准化路径分隔符并移除多余斜杠
     const normalizedPath = filePath.replace(/\\/g, '/').replace(/\/+/g, '/');
-
-    // 对路径进行分段编码，确保中文正确编码而斜杠保持不变
     const pathSegments = normalizedPath.split('/');
-
     const encodedSegments = pathSegments.map(segment => segment ? encodeURIComponent(segment) : '');
-
-    const encodedPath = encodedSegments.join('/');
-
-    return `app:///${encodedPath}`;
+    return encodedSegments.join('/');
 }
 
-module.exports = {getResourcePath, getFontPath, localPathToProtocolUrl}
+function localPathToProtocolUrl(filePath) {
+    return `app:///${encodeLocalPath(filePath)}`;
+}
+
+/**
+ * 缩略图协议 URL：由主进程按需生成小图，供预览列表加载，避免直接解码原图
+ */
+function localPathToThumbUrl(filePath) {
+    return `thumb:///${encodeLocalPath(filePath)}`;
+}
+
+module.exports = {getResourcePath, getFontPath, localPathToProtocolUrl, localPathToThumbUrl}

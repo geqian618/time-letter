@@ -2,7 +2,7 @@ const {dialog, app, Menu, shell} = require('electron');
 const path = require('path')
 const fs = require('fs')
 const AdmZip = require('adm-zip');
-const {getResourcePath, getFontPath, localPathToProtocolUrl} = require('../utils/path-helper')
+const {getResourcePath, getFontPath, localPathToProtocolUrl, localPathToThumbUrl} = require('../utils/path-helper')
 const {registerFont} = require('../utils/font-manager')
 
 const resourcesPath = getResourcePath()
@@ -174,6 +174,7 @@ const selectFile = async () => {
                 return {
                     filename: path.basename(filePath),
                     url: localPathToProtocolUrl(filePath),
+                    thumbUrl: localPathToThumbUrl(filePath),
                     path: filePath,
                     extname: extname
                 };
