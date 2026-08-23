@@ -279,12 +279,12 @@ const setupIpcHandlers = () => {
 
     // 停止导出
     ipcMain.on('stop-export-files', () => {
-        imageExporter.stopExportFiles()
+        imageExportProcessor.stopExportFiles()
     })
 
     // 创建线程池
     ipcMain.on('create-thread-pool', (event, maxThreads) => {
-        imageExporter.createThreadPool(maxThreads)
+
     })
 
 
@@ -403,7 +403,7 @@ const setupIpcHandlers = () => {
 /**
  * 注册自定义协议
  */
-const registerCustomProtocol = () => {
+const registerUncompressedImageProtocol = () => {
     protocol.registerFileProtocol('app', (request, callback) => {
         try {
             const url = request.url.replace('app://', '')
@@ -552,7 +552,7 @@ const startApp = () => {
         registerRendererProtocol()
     }
 
-    registerCustomProtocol()
+    registerUncompressedImageProtocol()
 
     registerThumbnailProtocol()
 
