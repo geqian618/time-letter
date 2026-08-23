@@ -36,6 +36,7 @@ process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
 // 打包后渲染进程加载器（解密 renderer.pkg + myclient:// 协议 + asar 完整性校验）
 const {registerPrivilegedSchemes, registerRendererProtocol, verifyAsarIntegrity} = require('./runtime/renderer-loader')
+const sharp = require("sharp");
 
 
 // 组件应用
@@ -431,7 +432,12 @@ const registerThumbnailProtocol = () => {
         try {
             const filePath = decodeURIComponent(request.url.replace('thumb:///', ''));
             const buffer = await fs.promises.readFile(filePath);
-            const thumbnail = await getThumbnailBuffer(buffer);
+            // 使用 sharp 读取图片，并生成缩略图
+            // resize 的参数为 { height: 256 } 表示高度固定为 256px，宽度自适应
+            const thumbnail = await sharp(filePath)
+                .resize({height: 256}) // 高度固定，宽度自适应
+                .webp({quality: 80})   // 转换为 WebP 格式，质量 80
+                .toBuffer();
             if (thumbnail) {
                 return new Response(thumbnail, {
                     headers: {
@@ -449,21 +455,6 @@ const registerThumbnailProtocol = () => {
     })
 }
 
-
-/**
- * 获取缩略图 Buffer:用 sharp 生成高 256px 的 WebP;失败返回 null,由调用方回退原图
- */
-const getThumbnailBuffer = async (buffer) => {
-    try {
-        return await ImageConverter.toWebPBuffer(buffer, {
-            resize: {height: 256, fit: 'inside', withoutEnlargement: true},
-            formatOptions: {quality: 75}
-        });
-    } catch (error) {
-        console.error(`生成缩略图失败: `, error.message)
-        return null;
-    }
-}
 
 /**
  * 设置应用生命周期事件
