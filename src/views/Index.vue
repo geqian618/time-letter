@@ -837,7 +837,7 @@
               <template #reference>
                 <img class="previewItem"
                      :ref="(el) => { if (el) canvas.getPreviewElement = () => el }"
-                     v-show="isVisible(canvas)"
+                     v-show="thumbnailVisible(canvas)"
                      :path="canvas.path"
                      v-lazy="canvas.thumbUrl || canvas.url"
                      @click.meta.exact="handleSelectPreviewElement($event,canvas)"
@@ -1599,7 +1599,7 @@ const availableCanvases = computed(() => {
   return result
 })
 
-const isVisible = (canvas) => availableCanvases.value.has(canvas.path)
+const thumbnailVisible = (canvas) => availableCanvases.value.has(canvas.path)
 
 const handleDeleteTipsVisible = () => {
   projectSettings.value.others.deleteTipVisible = !projectSettings.value.others.deleteTipVisible
