@@ -756,6 +756,18 @@
         <div class="bottom-resize" ref="bottomResize"></div>
         <div class="function-tabs">
           <div class="left-tabs">
+
+            <div class="tab-wrapper">
+              <el-tooltip effect="dark" content="第一张" placement="top">
+                <img src="/src/assets/icon/first-inactive.svg" class="inactive small-size" alt="第一张">
+              </el-tooltip>
+              <el-tooltip effect="dark" content="第一张" placement="top">
+                <img src="/src/assets/icon/first-active.svg" class="active small-size"
+                     @click="switchFirstPreviewElement"
+                     alt="第一张">
+              </el-tooltip>
+            </div>
+
             <div class="tab-wrapper">
               <el-tooltip effect="dark" content="上一张" placement="top">
                 <img src="/src/assets/images/left-arrow-inactive.png" class="inactive" alt="上一张">
@@ -776,24 +788,37 @@
               </el-tooltip>
             </div>
 
+
             <div class="tab-wrapper">
-              <el-tooltip effect="dark" content="全选" placement="top">
-                <img src="/src/assets/icon/select-all-inactive.svg" class="inactive" alt="全选">
+              <el-tooltip effect="dark" content="最后一张" placement="top">
+                <img src="/src/assets/icon/last-inactive.svg" class="inactive small-size" alt="居中">
               </el-tooltip>
-              <el-tooltip effect="dark" content="全选" placement="top">
-                <img src="/src/assets/icon/select-all-active.svg"
-                     @click="handleSelectAllPreviewElements"
-                     class="active"
-                     alt="全选">
+              <el-tooltip effect="dark" content="最后一张" placement="top">
+                <img src="/src/assets/icon/last-active.svg" class="active small-size"
+                     @click="switchLastPreviewElement"
+                     alt="最后一张">
               </el-tooltip>
             </div>
 
             <div class="tab-wrapper">
+              <el-tooltip effect="dark" content="全选" placement="top">
+                <img src="/src/assets/icon/select-all-inactive.svg" class="inactive medium-size" alt="全选">
+              </el-tooltip>
+              <el-tooltip effect="dark" content="全选" placement="top">
+                <img src="/src/assets/icon/select-all-active.svg"
+                     @click="handleSelectAllPreviewElements"
+                     class="active medium-size"
+                     alt="全选">
+              </el-tooltip>
+            </div>
+
+
+            <div class="tab-wrapper">
               <el-tooltip effect="dark" content="居中" placement="top">
-                <img src="/src/assets/images/center-display-inactivate.png" class="inactive small-size" alt="居中">
+                <img src="/src/assets/images/center-display-inactivate.png" class="inactive medium-size" alt="居中">
               </el-tooltip>
               <el-tooltip effect="dark" content="居中" placement="top">
-                <img src="/src/assets/images/center-display-activate.png" class="active small-size"
+                <img src="/src/assets/images/center-display-activate.png" class="active medium-size"
                      @click="handleScrollBarMoveToCenter"
                      alt="居中">
               </el-tooltip>
@@ -836,7 +861,7 @@
               </template>
               <template #reference>
                 <img class="previewItem"
-                     :ref="(el) => { if (el) canvas.getPreviewElement = () => el }"
+                     :ref="setPreviewElementRef"
                      v-show="thumbnailVisible(canvas)"
                      :path="canvas.path"
                      v-lazy="canvas.thumbUrl || canvas.url"
@@ -1376,7 +1401,7 @@
 
 <script setup lang="js">
 
-import {nextTick, onBeforeUnmount, onMounted, ref, toRaw, toRef, watch, computed} from "vue";
+import {nextTick, onBeforeUnmount, onMounted, ref, watch, computed} from "vue";
 
 import {CanvasEditor, Text, Image, LazyImage, Rect} from '@/canvas/CanvasEditor'
 
@@ -1385,8 +1410,6 @@ import {useThrottle} from '@/utils/throttle'
 import FontManager from '@/utils/FontManager'
 
 import _ from 'lodash';
-
-import MapHelper from "@/utils/map-helper";
 
 import Notification from '@/utils/Notification'
 
@@ -1416,6 +1439,8 @@ import DraggableElementFactory from "@/object/DraggableElementFactory";
 import {getCurrentDate, getCurrentDateTime, parseDate, formatDate} from "@/utils/datetime";
 
 import {executeFunctionScript} from "@/utils/script-helper";
+
+import {LinkedMap} from "@/utils/LinkedMap";
 
 const systemTheme = window.matchMedia('(prefers-color-scheme: light)')
 
@@ -1584,26 +1609,32 @@ const isHideDeleteTips = computed(() => {
 
 const uploadVisible = computed(() => !CanvasManager.getSelectedObject().path)
 
-const availableCanvases = computed(() => {
-  const filter = filterType.value
-  const result = new Map()
-  for (const [path, canvas] of CanvasManager.getCanvases()) {
-    if (filter === 0) {
-      result.set(path, canvas)
-      continue
-    }
-    const {width, height} = canvas.metadata || {}
-    const visible = filter === 1 ? Number(width) >= Number(height) : Number(width) < Number(height)
-    if (visible) result.set(path, canvas)
-  }
-  return result
-})
-
-const thumbnailVisible = (canvas) => availableCanvases.value.has(canvas.path)
-
 const handleDeleteTipsVisible = () => {
   projectSettings.value.others.deleteTipVisible = !projectSettings.value.others.deleteTipVisible
 }
+
+
+const availableCanvases = computed(() => {
+  const filter = filterType.value;
+  const result = new LinkedMap();
+  for (const [path, canvas] of CanvasManager.getCanvases()) {
+    if (filterCanvas(canvas, filter)) {
+      result.set(path, canvas);
+    }
+  }
+  return result;
+});
+
+// 过滤函数
+const filterCanvas = (canvas, filter) => {
+  if (filter === 0) return true;
+  const {width, height} = canvas.metadata || {};
+  const w = Number(width), h = Number(height);
+  return filter === 1 ? w >= h : w < h;
+};
+
+
+const thumbnailVisible = (canvas) => availableCanvases.value.has(canvas.path)
 
 
 const handleActivateInput = async (row, column, cell) => {
@@ -1625,8 +1656,17 @@ const handleFilterFonts = (search) => {
 }
 
 
+const setPreviewElementRef = (el) => {
+  if (!el) return
+  const path = el.getAttribute('path')
+  const canvas = CanvasManager.getCanvas(path)
+  if (canvas && canvas.getPreviewElement?.() !== el) {
+    canvas.getPreviewElement = () => el
+  }
+}
+
 watch(filterType, async () => {
-  await clearSelectedPreviewList()
+  clearSelectedPreviewList()
   await nextTick()
   setDefaultSelectedElement()
 })
@@ -1655,7 +1695,7 @@ const setDefaultSelectedElement = async () => {
 }
 
 
-const clearSelectedPreviewList = async () => {
+const clearSelectedPreviewList = () => {
   selectedPreviewList.value.forEach((element, path) => {
     element.classList.remove('active')
     element.setAttribute('selected', 'false')
@@ -3175,16 +3215,25 @@ const handleUpdateBorders = () => {
   currentCanvas.background = backgroundCanvasEditor.exportToObject();
 }
 
-
 const switchBeforePreviewElement = useThrottle(async () => {
-  const {path: currentPath, previewElement: currentElement} = CanvasManager.getSelectedObject();
-  if (!currentPath) return
-  const currentCanvas = availableCanvases.value.get(currentPath);
-  const beforeCanvas = MapHelper.getBeforeValue(availableCanvases.value, currentPath);
+
+  const {path: selectedPath, previewElement: currentElement} = CanvasManager.getSelectedObject();
+
+  if (!selectedPath) return
+
+  const currentCanvas = availableCanvases.value.get(selectedPath);
+
+  const currentNode = availableCanvases.value.getNode(selectedPath);
+
+  const prevNode = currentNode.prev ? currentNode.prev : availableCanvases.value.getLastNode();
+
+  const beforeCanvas = prevNode.value;
+
   if (currentCanvas && beforeCanvas) {
+
     currentElement.setAttribute('selected', 'false')
     currentElement.classList.remove('active')
-    selectedPreviewList.value.delete(currentPath)
+    selectedPreviewList.value.delete(selectedPath)
 
     const beforeElement = beforeCanvas.getPreviewElement();
     beforeElement.classList.add('active')
@@ -3200,16 +3249,25 @@ const switchBeforePreviewElement = useThrottle(async () => {
   }
 }, 200)
 
+
 const switchNextPreviewElement = useThrottle(async () => {
-  const {path: currentPath, previewElement: currentElement} = CanvasManager.getSelectedObject();
-  if (!currentPath) return
-  const currentCanvas = availableCanvases.value.get(currentPath);
-  const nextCanvas = MapHelper.getNextValue(availableCanvases.value, currentPath);
+
+  const {path: selectedPath, previewElement: currentElement} = CanvasManager.getSelectedObject();
+
+  if (!selectedPath) return
+
+  const currentCanvas = availableCanvases.value.get(selectedPath);
+
+  const currentNode = availableCanvases.value.getNode(selectedPath);
+
+  const prevNode = currentNode.next ? currentNode.next : availableCanvases.value.getFirstNode();
+
+  const nextCanvas = prevNode.value;
 
   if (currentCanvas && nextCanvas) {
     currentElement.setAttribute('selected', 'false')
     currentElement.classList.remove('active')
-    selectedPreviewList.value.delete(currentPath)
+    selectedPreviewList.value.delete(selectedPath)
 
     const nextElement = nextCanvas.getPreviewElement();
     nextElement.classList.add('active')
@@ -3223,6 +3281,36 @@ const switchNextPreviewElement = useThrottle(async () => {
     scrollBarMoveToHorizontalCenter(previewList.value, nextElement)
   }
 }, 200)
+
+
+const switchFirstPreviewElement = () => {
+
+  const firstNode = availableCanvases.value.getFirstNode();
+
+  if (!firstNode) return
+
+  const firstCanvas = firstNode.value;
+
+  const firstElement = firstCanvas.getPreviewElement();
+
+  // 方式二，过渡比较流畅
+  scrollBarMoveToHorizontalCenter(previewList.value, firstElement)
+}
+
+
+const switchLastPreviewElement = () => {
+
+  const lastNode = availableCanvases.value.getLastNode();
+
+  if (!lastNode) return
+
+  const lastCanvas = lastNode.value;
+
+  const lastElement = lastCanvas.getPreviewElement();
+
+  // 方式二，过渡比较流畅
+  scrollBarMoveToHorizontalCenter(previewList.value, lastElement)
+}
 
 
 function scrollBarMoveToHorizontalCenter(container, element) {
@@ -4345,6 +4433,7 @@ onBeforeUnmount(() => {
           height: 70%;
           display: flex;
           align-items: center;
+          justify-content: center;
 
           img {
             height: 100%;
@@ -4353,7 +4442,11 @@ onBeforeUnmount(() => {
           }
 
           .small-size {
-            padding: 5%;
+            padding: 20%;
+          }
+
+          .medium-size {
+            padding: 8%;
           }
 
           .inactive {
