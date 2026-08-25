@@ -327,7 +327,7 @@ const selectFonts = async () => {
     }
 
     if (errors.length > 0) {
-        throw new Error(`${errors.length} 个字体导入失败：${String(errors)}`);
+        throw new Error(`${errors.length} 个字体导入失败：请检查文件是否已存在或者文件/文件夹无读写权限`);
     }
 };
 
