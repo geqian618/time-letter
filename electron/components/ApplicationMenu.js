@@ -284,27 +284,52 @@ const selectFonts = async () => {
             {name: 'Fonts', extensions: ['ttf', 'otf', 'woff', 'woff2']}
         ]
     });
-    if (filePaths && filePaths.length) {
-        const fonts = await Promise.all(
-            filePaths.map(async (filePath) => {
-                // 读取文件
-                const buffer = fs.readFileSync(filePath);
-                // 写入文件
-                fs.writeFileSync(path.join(fontPath, path.basename(filePath)), buffer);
-                filePath = path.join(fontPath, path.basename(filePath));
-                const fileParsed = path.parse(filePath);
-                const font = {
-                    family: fileParsed.name,
-                    url: localPathToUrl(filePath),
-                    path: filePath,
-                };
-                return [font.family, font]
-            })
-        );
-        fonts.forEach(([family, font]) => registerFont(font))
-        window.webContents.send('watch-input-font', {type: 0, data: new Map(fonts)})
+
+    if (!filePaths || filePaths.length === 0) return;
+
+    // 确保目标目录存在
+    await fs.promises.mkdir(fontPath, {recursive: true});
+
+    const fontMap = new Map();
+    const errors = [];
+
+    // 使用 Promise.allSettled 允许部分成功
+    const results = await Promise.allSettled(
+        filePaths.map(async (filePath) => {
+            const destPath = path.join(fontPath, path.basename(filePath));
+            // 文件拷贝
+            await fs.promises.copyFile(filePath, destPath);
+
+            const fileParsed = path.parse(destPath);
+            const font = {
+                family: fileParsed.name,
+                url: localPathToUrl(destPath),
+                path: destPath,
+            };
+            // 注册字体
+            registerFont(font);
+            return {family: font.family, font};
+        })
+    );
+
+    // 处理每个结果
+    for (const result of results) {
+        if (result.status === 'fulfilled') {
+            const {family, font} = result.value;
+            fontMap.set(family, font);
+        } else {
+            errors.push(result.reason.message);
+        }
     }
-}
+
+    if (fontMap.size && window) {
+        window.webContents.send('watch-input-font', {type: 0, data: fontMap});
+    }
+
+    if (errors.length > 0) {
+        throw new Error(`${errors.length} 个字体导入失败：${String(errors)}`);
+    }
+};
 
 
 const selectImageLabels = async () => {
