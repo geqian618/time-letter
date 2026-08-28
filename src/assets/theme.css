@@ -32,7 +32,7 @@
   --app-control-bg: #ffffff;
   --app-regular-text: #333333;
   --app-secondary-text: #6f6f6f;
-  --app-text-mark-hover-bg: #e8f1fe;
+  --app-text-resource-hover-bg: #e8f1fe;
   --app-thumb-bg: #ececec;
   --app-thumb-border: #e2e2e2;
   --app-thumb-active-bg: #b7b7b7;
@@ -110,7 +110,7 @@
   --app-control-bg: #3f3f3f;
   --app-regular-text: #d6d6d6;
   --app-secondary-text: #a3a3a3;
-  --app-text-mark-hover-bg: #d6d6d6;
+  --app-text-resource-hover-bg: #d6d6d6;
   --app-thumb-bg: #3d3d3d;
   --app-thumb-border: #4d4d4d;
   --app-thumb-active-bg: #5a5a5a;

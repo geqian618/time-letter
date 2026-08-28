@@ -1,9 +1,9 @@
 <template>
   <div>
     <div class="page-layout" ref="page">
-      <div class="page-main" ref="pageMain">
+      <div class="page-main" ref="pageMainRef">
         <div class="page-left">
-          <div class="left-resize" ref="leftResize"></div>
+          <div class="left-resize" ref="leftResizeRef"></div>
           <el-aside>
             <el-scrollbar>
               <el-menu :default-openeds="['1']">
@@ -23,44 +23,44 @@
                     </el-menu-item>
                   </div>
                 </el-sub-menu>
-                <el-sub-menu index="2" class="image-mark-options">
+                <el-sub-menu index="2" class="image-options">
                   <template #title>
                     <span>图片库</span>
                   </template>
-                  <div class="image-marks" ref="imageMarks">
-                    <div class="image-item" :key="key" v-for="([key, image]) in imageLabels" draggable="false">
-                      <img class="image-mark" :src="image.thumbUrl || image.url" :path="image.path" draggable="true">
+                  <div class="image-resources" ref="imageResourceRef">
+                    <div class="image-resource" :key="key" v-for="([key, image]) in imageResources" draggable="false">
+                      <img class="image-resource"
+                           :src="image.thumbUrl || image.url"
+                           :path="image.path"
+                           draggable="true"
+                           alt="">
                     </div>
                   </div>
                 </el-sub-menu>
-                <el-sub-menu index="3" class="text-marks-options">
+                <el-sub-menu index="3" class="text-options">
                   <template #title>
                     <span>文本库</span>
                   </template>
                   <el-scrollbar class="scrollBar">
-                    <div class="text-marks" ref="textMarks">
-                      <el-tooltip class="box-item" effect="dark" content="文本" placement="top">
-                        <div class="text-mark" draggable="true" text="文本" type="text">
-                          <img draggable="false" src="/src/assets/icon/text.svg">
+                    <div class="text-resources" ref="textResourceRef">
+                      <el-tooltip class="text-resource" effect="dark" content="文本" placement="top">
+                        <div class="text-resource" draggable="true" text="文本" type="text">
+                          <img draggable="false" src="/src/assets/icon/text.svg" alt="文本">
                         </div>
                       </el-tooltip>
-                      <el-tooltip class="box-item" effect="dark" content="日期" placement="top">
-                        <div class="text-mark" draggable="true" type="date">
-                          <img draggable="false" src="/src/assets/icon/date.svg">
+                      <el-tooltip class="text-resource" effect="dark" content="日期" placement="top">
+                        <div class="text-resource" draggable="true" type="date">
+                          <img draggable="false" src="/src/assets/icon/date.svg" alt="日期">
                         </div>
                       </el-tooltip>
-                      <el-tooltip class="box-item" effect="dark" content="日期时间" placement="top">
-                        <div class="text-mark" draggable="true" type="datetime">
-                          <img draggable="false" src="/src/assets/icon/datetime.svg">
+                      <el-tooltip class="text-resource" effect="dark" content="日期时间" placement="top">
+                        <div class="text-resource" draggable="true" type="datetime">
+                          <img draggable="false" src="/src/assets/icon/datetime.svg" alt="日期时间">
                         </div>
                       </el-tooltip>
-                      <el-tooltip v-for="(text) in textLabels"
-                                  :key="text.id"
-                                  class="box-item"
-                                  effect="dark"
-                                  :content="text.tips"
-                                  placement="top">
-                        <div class="text-mark"
+                      <el-tooltip v-for="(text) in textResources" :key="text.id" class="text-resource" effect="dark"
+                                  :content="text.tips" placement="top">
+                        <div class="text-resource"
                              :id="text.id"
                              draggable="true"
                              :text="text.content"
@@ -77,12 +77,13 @@
           </el-aside>
         </div>
 
-        <div class="preview-view">
-          <div class="uploader" ref="uploader" v-show="uploadVisible" @click="requestImportFiles({isDragOver: false})">
+        <div class="canvas-viewport">
+          <div class="uploader" ref="uploaderRef" v-show="uploadVisible"
+               @click="requestImportFiles({isDragOver: false})">
             <img src="/src/assets/icon/upload.svg" alt="上传">
             <span>拖拽上传文件</span>
           </div>
-          <div class="preview-container" id="preview-container" ref="previewContainer" @mousedown="triggerContextMenu">
+          <div class="canvas-workspace" id="canvas-workspace" ref="canvasWorkspaceRef" @mousedown="triggerContextMenu">
             <div class="canvas-wrapper" ref="canvasWrapper">
               <canvas id="background-canvas" ref="backgroundElement"></canvas>
               <canvas id="foreground-canvas" ref="canvasElement"></canvas>
@@ -91,7 +92,7 @@
         </div>
 
         <div class="page-right">
-          <div class="right-resize" ref="rightResize"></div>
+          <div class="right-resize" ref="rightResizeRef"></div>
           <div class="settings-details">
             <el-aside>
               <el-scrollbar>
@@ -103,7 +104,7 @@
                     <ul class="options metadata">
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" expression="cameraBrand">相机品牌
+                          <div class="text-resource" draggable="true" type="metadata" expression="cameraBrand">相机品牌
                           </div>
                         </div>
                         <div class="value">
@@ -112,7 +113,7 @@
                       </li>
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" expression="cameraModel">相机型号
+                          <div class="text-resource" draggable="true" type="metadata" expression="cameraModel">相机型号
                           </div>
                         </div>
                         <div class="value">
@@ -121,7 +122,8 @@
                       </li>
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" expression="lensModel">镜头型号</div>
+                          <div class="text-resource" draggable="true" type="metadata" expression="lensModel">镜头型号
+                          </div>
                         </div>
                         <div class="value">
                           <el-input spellcheck="false" v-model="metadataOptions.lensModel" size="small"/>
@@ -129,7 +131,8 @@
                       </li>
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" expression="focalLength">焦段</div>
+                          <div class="text-resource" draggable="true" type="metadata" expression="focalLength">焦段
+                          </div>
                         </div>
                         <div class="value">
                           <el-input spellcheck="false" v-model="metadataOptions.focalLength" size="small"/>
@@ -137,7 +140,7 @@
                       </li>
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" expression="iso">IOS</div>
+                          <div class="text-resource" draggable="true" type="metadata" expression="iso">IOS</div>
                         </div>
                         <div class="value">
                           <el-input spellcheck="false" v-model="metadataOptions.iso" size="small"/>
@@ -145,7 +148,7 @@
                       </li>
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" expression="shutter">快门</div>
+                          <div class="text-resource" draggable="true" type="metadata" expression="shutter">快门</div>
                         </div>
                         <div class="value">
                           <el-input spellcheck="false" v-model="metadataOptions.shutter" size="small"/>
@@ -153,7 +156,7 @@
                       </li>
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" expression="aperture">光圈</div>
+                          <div class="text-resource" draggable="true" type="metadata" expression="aperture">光圈</div>
                         </div>
                         <div class="value">
                           <el-input spellcheck="false" v-model="metadataOptions.aperture" size="small"/>
@@ -161,7 +164,7 @@
                       </li>
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" expression="shootingTime">拍摄日期
+                          <div class="text-resource" draggable="true" type="metadata" expression="shootingTime">拍摄日期
                           </div>
                         </div>
                         <div class="value">
@@ -170,7 +173,7 @@
                       </li>
                       <li class="option">
                         <div class="label">
-                          <div class="text-mark" draggable="true" type="metadata" expression="filename">文件名称
+                          <div class="text-resource" draggable="true" type="metadata" expression="filename">文件名称
                           </div>
                         </div>
                         <div class="value">
@@ -563,18 +566,6 @@
                               :predefine="predefineColors"/>
                         </div>
                       </li>
-
-                      <!--                    <li class="option">-->
-                      <!--                      <div class="label">背景颜色</div>-->
-                      <!--                      <div class="value">-->
-                      <!--                        <el-color-picker-->
-                      <!--                            @change=""-->
-                      <!--                            v-model="textOptions.tagBackground"-->
-                      <!--                            show-alpha-->
-                      <!--                            size="small"-->
-                      <!--                            :predefine="predefineColors"/>-->
-                      <!--                      </div>-->
-                      <!--                    </li>-->
                     </ul>
                     <div class="group-title">文本阴影</div>
                     <ul class="options">
@@ -753,10 +744,9 @@
 
 
       <div class="page-bottom">
-        <div class="bottom-resize" ref="bottomResize"></div>
-        <div class="function-tabs">
-          <div class="left-tabs">
-
+        <div class="bottom-resize" ref="bottomResizeRef"></div>
+        <div class="preview-bar">
+          <div class="left-preview-bar">
             <div class="tab-wrapper">
               <el-tooltip effect="dark" content="第一张" placement="top">
                 <img src="/src/assets/icon/first-inactive.svg" class="inactive small-size" alt="第一张">
@@ -826,7 +816,7 @@
           </div>
 
 
-          <div class="right-tabs">
+          <div class="right-preview-bar">
             <div class="counter">已选{{ selectedPreviewList.size }}张</div>
             <div class="counter">共{{ availableCanvases.size }}张</div>
             <div class="filter">
@@ -878,11 +868,12 @@
 
     </div>
 
-    <el-dialog align-center v-model="customTextLabelDialogVisible" :title="textLabelDialogTitle" width="500" draggable>
-      <el-form :model="textLabel" class="text-label-form" ref="textLabelForm" :rules="textLabelRules" label-width="auto"
+    <el-dialog align-center v-model="textResourceDialogVisible" :title="textResourceDialogTitle" width="500" draggable>
+      <el-form :model="textResource" class="text-label-form" ref="textResourceForm" :rules="textResourceRules"
+               label-width="auto"
                @submit.native.prevent>
         <el-form-item label="文本类型" prop="type">
-          <el-select v-model="textLabel.type" placeholder="文本类型">
+          <el-select v-model="textResource.type" placeholder="文本类型">
             <el-option
                 v-for="(item,index) in [{label:'普通文本', value:'text'}, {label:'JavaScript脚本', value:'script'}]"
                 :key="index"
@@ -891,19 +882,19 @@
           </el-select>
         </el-form-item>
         <el-form-item label="提示" prop="tips">
-          <el-input v-model="textLabel.tips" ref="textLabelRef" v-focus="customTextLabelDialogVisible"/>
+          <el-input v-model="textResource.tips" v-focus="textResourceDialogVisible"/>
         </el-form-item>
-        <el-form-item label="文本" prop="content" v-if="textLabel.type === 'text'">
-          <el-input v-model="textLabel.content" :rows="4" type="textarea"/>
+        <el-form-item label="文本" prop="content" v-if="textResource.type === 'text'">
+          <el-input v-model="textResource.content" :rows="4" type="textarea"/>
         </el-form-item>
-        <el-form-item label="脚本" prop="script" v-if="textLabel.type === 'script'">
-          <el-input v-model="textLabel.script" :rows="4" type="textarea"/>
+        <el-form-item label="脚本" prop="script" v-if="textResource.type === 'script'">
+          <el-input v-model="textResource.script" :rows="4" type="textarea"/>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="customTextLabelDialogVisible = false">取消</el-button>
-          <el-button type="info" @click="saveTextLabel">确认</el-button>
+          <el-button @click="textResourceDialogVisible = false">取消</el-button>
+          <el-button type="info" @click="saveTextResource">确认</el-button>
         </div>
       </template>
     </el-dialog>
@@ -929,25 +920,25 @@
     </el-dialog>
 
 
-    <el-dialog v-model="renameDialogVisible" title="重命名" align-center width="350" draggable>
+    <el-dialog v-model="renameTemplateDialogVisible" title="重命名" align-center width="350" draggable>
       <el-form :model="oldTemplate" class="demo-form-inline" :rules="renameTemplateRules" ref="renameTemplateForm"
                @submit.native.prevent>
         <el-form-item label="预设名称" prop="rename">
-          <el-input v-focus="renameDialogVisible" v-model="oldTemplate.templateName" clearable
+          <el-input v-focus="renameTemplateDialogVisible" v-model="oldTemplate.templateName" clearable
                     @keyup.enter.native="renameTemplate"/>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="renameDialogVisible = false">取消</el-button>
+          <el-button @click="renameTemplateDialogVisible = false">取消</el-button>
           <el-button type="info" @click="renameTemplate">确认</el-button>
         </div>
       </template>
     </el-dialog>
 
 
-    <el-dialog v-model="editorTextLabelDialogVisible" title="编辑文本" width="60%" draggable>
-      <el-table size="small" max-height="400" :data="textLabels" border>
+    <el-dialog v-model="textResourceManagerDialogVisible" title="编辑文本" width="60%" draggable>
+      <el-table size="small" max-height="400" :data="textResources" border>
         <el-table-column prop="type" label="标签类型" show-overflow-tooltip/>
         <el-table-column prop="tips" label="提示信息" show-overflow-tooltip/>
         <el-table-column label="文本内容" min-width="150" show-overflow-tooltip>
@@ -957,8 +948,9 @@
         </el-table-column>
         <el-table-column fixed="right" label="操作" min-width="100">
           <template #default="scope">
-            <el-button link type="primary" size="small" @click="openTextLabelEditorDialog(scope.row)">编辑</el-button>
-            <el-button link type="primary" size="small" @click="deleteTextLabel(scope.row)">删除</el-button>
+            <el-button link type="primary" size="small" @click="openTextResourceEditorDialog(scope.row)">编辑
+            </el-button>
+            <el-button link type="primary" size="small" @click="deleteTextResource(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -1118,6 +1110,19 @@
                   <el-radio-button value="light">浅色</el-radio-button>
                   <el-radio-button value="system">跟随系统</el-radio-button>
                 </el-radio-group>
+              </div>
+            </div>
+          </div>
+          <div class="border-box">
+            <span class="border-label">画布视口</span>
+            <div class="options">
+              <div class="option">
+                <span class="label">滚动条：</span>
+                <el-switch
+                    @change="renderCanvasScrollbar"
+                    v-model="projectSettings.appearance.enableScrollbar"
+                    class="value"
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
               </div>
             </div>
           </div>
@@ -1315,14 +1320,6 @@
                       show-input/>
                 </div>
               </div>
-              <div class="option">
-                <span class="label">显示滚动条：</span>
-                <el-switch
-                    @change="renderCanvasScrollbar"
-                    v-model="projectSettings.others.enableScrollbar"
-                    class="value"
-                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
-              </div>
             </div>
           </div>
         </el-tab-pane>
@@ -1418,7 +1415,7 @@ import useEventListener from '@/composables/useEventListener'
 import {projectSettings, outputSizeOptions, originalMetadata, downloadThreadsOptions} from '@/config/project-settings'
 
 import {
-  TextLabel,
+  TextResource,
   Metadata,
   TextOptions,
   ImageOptions,
@@ -1493,9 +1490,9 @@ const sliderRange = ref({
   max: 1000
 })
 
-const uploader = ref(null)
+const uploaderRef = ref(null)
 
-const previewContainer = ref(null)
+const canvasWorkspaceRef = ref(null)
 
 const canvasElement = ref(null)
 
@@ -1505,13 +1502,13 @@ const backgroundElement = ref(null)
 
 const previewList = ref(null);
 
-const leftResize = ref(null);
+const leftResizeRef = ref(null);
 
-const rightResize = ref(null);
+const rightResizeRef = ref(null);
 
-const bottomResize = ref(null);
+const bottomResizeRef = ref(null);
 
-const pageMain = ref(null);
+const pageMainRef = ref(null);
 
 const page = ref(null);
 
@@ -1519,25 +1516,23 @@ const menuRef = ref(null)
 
 const templateRef = ref(null)
 
-const textLabelRef = ref(null)
+const textResourceRef = ref(null)
 
-const textMarks = ref(null)
+const textResources = ref([])
 
-const imageMarks = ref(null)
-
-const imageLabels = ref(new Map())
+const imageResources = ref(new Map())
 
 const saveTemplateDialogVisible = ref(false)
 
 const deleteTipsDialogVisible = ref(false)
 
-const renameDialogVisible = ref(false)
+const renameTemplateDialogVisible = ref(false)
 
-const customTextLabelDialogVisible = ref(false)
+const textResourceDialogVisible = ref(false)
 
 const editorImageLabelDialogVisible = ref(false)
 
-const editorTextLabelDialogVisible = ref(false)
+const textResourceManagerDialogVisible = ref(false)
 
 const downloadProgressVisible = ref(false)
 
@@ -1547,22 +1542,20 @@ const aboutDialogVisible = ref(false)
 
 const outputSettingsVisible = ref(false)
 
-const handleTextLabelType = ref(0)
+const handleTextResourceType = ref(0)
 
 const downloadProgressPercentage = ref(0)
 
 const synchronousMode = ref(0);
 
-const textLabel = ref(new TextLabel())
+const textResource = ref(new TextResource())
 
 // 维护已展开子菜单索引的数组
 const openedMenus = ref([])
 
-const textLabels = ref([])
-
 const saveTemplateForm = ref({});
 
-const textLabelForm = ref({});
+const textResourceForm = ref({});
 
 const renameTemplateForm = ref(null)
 
@@ -1572,7 +1565,7 @@ const saveTemplateRules = {
   ]
 }
 
-const textLabelRules = {
+const textResourceRules = {
   type: [
     {required: true, message: '文本类型不能为空', trigger: 'blur'},
   ],
@@ -1593,8 +1586,8 @@ const renameTemplateRules = {
   ]
 }
 
-const textLabelDialogTitle = computed(() => {
-  return handleTextLabelType.value === 0 ? '新增文本' : '编辑文本'
+const textResourceDialogTitle = computed(() => {
+  return handleTextResourceType.value === 0 ? '新增文本' : '编辑文本'
 })
 
 
@@ -1819,7 +1812,7 @@ const watchTemplateContextMenu = () => {
     if (type === 0) {
       deleteTemplate()
     } else if (type === 1) {
-      renameDialogVisible.value = true
+      renameTemplateDialogVisible.value = true
     }
   })
 }
@@ -1865,32 +1858,32 @@ const handleDownloadProgressClosed = () => {
   downloadProgressPercentage.value = 0
 }
 
-const watchLabelResources = () => {
-  window.electronAPI.watchLabelResources(async (event, result) => {
+const watchResources = () => {
+  window.electronAPI.watchResources(async (event, result) => {
     const {data, type} = result
     if (type === 0) {
       if (result.event === 0) {
-        if (!imageLabels.value.size) {
-          imageLabels.value = data;
+        if (!imageResources.value.size) {
+          imageResources.value = data;
         } else {
           for (let [key, item] of data) {
-            if (!imageLabels.value.has(key)) {
-              imageLabels.value.set(key, item)
+            if (!imageResources.value.has(key)) {
+              imageResources.value.set(key, item)
             }
           }
         }
       } else if (result.event === 1) {
-        imageLabels.value.delete(data.filePath)
+        imageResources.value.delete(data.filePath)
       }
     } else if (type === 1) {
-      textLabel.value = new TextLabel()
-      handleTextLabelType.value = 0
-      customTextLabelDialogVisible.value = true
-      clearFormValidate(textLabelForm)
+      textResource.value = new TextResource()
+      handleTextResourceType.value = 0
+      textResourceDialogVisible.value = true
+      clearFormValidate(textResourceForm)
     } else if (type === 2) {
       editorImageLabelDialogVisible.value = true
     } else if (type === 3) {
-      editorTextLabelDialogVisible.value = true
+      textResourceManagerDialogVisible.value = true
     }
   })
 }
@@ -1906,42 +1899,42 @@ const clearFormValidate = (formRef) => {
 }
 
 
-const openTextLabelEditorDialog = (row) => {
-  textLabel.value = _.cloneDeep(row)
-  handleTextLabelType.value = 1
-  customTextLabelDialogVisible.value = true
-  clearFormValidate(textLabelForm)
+const openTextResourceEditorDialog = (row) => {
+  textResource.value = _.cloneDeep(row)
+  handleTextResourceType.value = 1
+  textResourceDialogVisible.value = true
+  clearFormValidate(textResourceForm)
 }
 
-const deleteTextLabel = (row) => {
-  for (let i = 0; i < textLabels.value.length; i++) {
-    if (textLabels.value[i].id === row.id) {
-      textLabels.value.splice(i, 1)
-      StorageManager.saveTextLabels(textLabels.value)
+const deleteTextResource = (row) => {
+  for (let i = 0; i < textResources.value.length; i++) {
+    if (textResources.value[i].id === row.id) {
+      textResources.value.splice(i, 1)
+      StorageManager.saveTextResources(textResources.value)
       return
     }
   }
 }
 
-const saveTextLabel = async () => {
-  if (!textLabelForm?.value) return
-  await textLabelForm.value.validate(async (valid, fields) => {
+const saveTextResource = async () => {
+  if (!textResourceForm?.value) return
+  await textResourceForm.value.validate(async (valid, fields) => {
     if (valid) {
-      textLabel.value.type === 'script' ? textLabel.value.content = '' : textLabel.value.script = ''
-      if (!textLabel.value.id) {
-        textLabel.value.id = Date.now() + ''
-        textLabels.value.push(_.cloneDeep(textLabel.value))
+      textResource.value.type === 'script' ? textResource.value.content = '' : textResource.value.script = ''
+      if (!textResource.value.id) {
+        textResource.value.id = Date.now() + ''
+        textResources.value.push(_.cloneDeep(textResource.value))
       } else {
-        for (let i = 0; i < textLabels.value.length; i++) {
-          if (textLabels.value[i].id === textLabel.value.id) {
-            textLabels.value[i] = _.cloneDeep(textLabel.value)
+        for (let i = 0; i < textResources.value.length; i++) {
+          if (textResources.value[i].id === textResource.value.id) {
+            textResources.value[i] = _.cloneDeep(textResource.value)
             break
           }
         }
       }
-      StorageManager.saveTextLabels(textLabels.value)
-      textLabel.value = new TextLabel()
-      customTextLabelDialogVisible.value = false;
+      StorageManager.saveTextResources(textResources.value)
+      textResource.value = new TextResource()
+      textResourceDialogVisible.value = false;
     }
   })
 }
@@ -2143,7 +2136,7 @@ const clearCanvasElements = (path) => {
     foreground = JSON.parse(foreground);
   }
 
-  foreground.elements = [];
+  foreground.elements.length = 0;
 
   canvas.foreground = JSON.stringify(foreground);
 
@@ -2267,8 +2260,8 @@ const loadTemplates = () => {
   templates.value = StorageManager.getTemplates()
 }
 
-const loadTextLabels = () => {
-  textLabels.value = StorageManager.getTextLabels()
+const loadTextResources = () => {
+  textResources.value = StorageManager.getTextResources()
 }
 
 
@@ -2369,7 +2362,7 @@ const renameTemplate = () => {
           if (templates.value[i].templateId === oldTemplate.value.templateId) {
             templates.value[i].templateName = oldTemplate.value.templateName
             StorageManager.saveTemplates(templates.value)
-            renameDialogVisible.value = false
+            renameTemplateDialogVisible.value = false
             return
           }
         }
@@ -2414,7 +2407,7 @@ const synchronizeTemplate = () => {
           }
           items.push(item)
         }
-        const {idealWidth, idealHeight} = previewContainer.value;
+        const {idealWidth, idealHeight} = canvasWorkspaceRef.value;
         useTemplate(_.cloneDeep({
           idealWidth,
           idealHeight,
@@ -2451,7 +2444,7 @@ const saveTemplates = async () => {
         }
         items.push(item)
       }
-      const {idealWidth, idealHeight} = previewContainer.value;
+      const {idealWidth, idealHeight} = canvasWorkspaceRef.value;
       const newTemplates = [...templates.value, {
         templateId: Date.now(),
         templateName: newTemplate.value.templateName,
@@ -2513,7 +2506,7 @@ const useTemplate = async (settings, path) => {
   const {idealWidth, idealHeight, background, foreground} = settings;
   const {height: imageHeight, width: imageWidth} = canvas.metadata;
 
-  const {idealWidth: containerWidth, idealHeight: containerHeight} = previewContainer.value;
+  const {idealWidth: containerWidth, idealHeight: containerHeight} = canvasWorkspaceRef.value;
   const initZoom = Math.min(containerHeight / imageHeight, containerWidth / imageWidth);
   const zoom = initZoom * projectSettings.value.others.defaultCanvasScale;
   const idealZoom = Math.min(idealHeight / imageHeight, idealWidth / imageWidth);
@@ -2666,7 +2659,7 @@ const renderCanvas = async (canvas) => {
     // 设置画布宽高等于缩放后的图片尺寸
     canvasEditor.resizeCanvas(width, height);
     backgroundCanvasEditor.resizeCanvas(width, height);
-    const {idealWidth, idealHeight} = previewContainer.value;
+    const {idealWidth, idealHeight} = canvasWorkspaceRef.value;
     const initZoom = Math.min(idealHeight / height, idealWidth / width);
     const scale = initZoom * projectSettings.value.others.defaultCanvasScale;
     canvasEditor.setZoom(scale)
@@ -2705,7 +2698,7 @@ const renderCanvas = async (canvas) => {
     // 非最终渲染图片，放弃渲染
     if (currentVersion !== renderVersion) return;
 
-    const {idealWidth, idealHeight} = previewContainer.value;
+    const {idealWidth, idealHeight} = canvasWorkspaceRef.value;
     // 设置缩放
     canvasEditor.setZoom(zoom);
     backgroundCanvasEditor.setZoom(zoom);
@@ -2787,8 +2780,8 @@ async function switchPreviewImage(event, canvas) {
 
 const updateScrollBar = (canvas) => {
   // 设置滚动位置
-  previewContainer.value.scrollLeft = canvas.scrollLeft;
-  previewContainer.value.scrollTop = canvas.scrollTop;
+  canvasWorkspaceRef.value.scrollLeft = canvas.scrollLeft;
+  canvasWorkspaceRef.value.scrollTop = canvas.scrollTop;
 }
 
 
@@ -2796,7 +2789,7 @@ const initAreaResize = () => {
 
   const {
     leftSidebar: leftSidebarResize,
-    previewContainer: previewContainerResize,
+    canvasWorkspace: canvasWorkspaceResize,
     rightSidebar: rightSidebarResize,
     bottomSidebar: bottomSidebarResize
   } = projectSettings.value.resize;
@@ -2812,13 +2805,13 @@ const initAreaResize = () => {
     rootStyle.setProperty('--page-right-width', rightSidebarResize.width)
   }
 
-  if (previewContainerResize.width) {
-    rootStyle.setProperty('--preview-container-width', previewContainerResize.width)
+  if (canvasWorkspaceResize.width) {
+    rootStyle.setProperty('--canvas-workspace-width', canvasWorkspaceResize.width)
   }
 
 
-  if (previewContainerResize.height) {
-    rootStyle.setProperty('--page-main-height', previewContainerResize.height)
+  if (canvasWorkspaceResize.height) {
+    rootStyle.setProperty('--page-main-height', canvasWorkspaceResize.height)
   }
 
   if (bottomSidebarResize.height) {
@@ -2830,13 +2823,13 @@ const initCanvasSize = () => {
 
   setTimeout(() => {
 
-    const {previewContainer: previewContainerResize} = projectSettings.value.resize;
+    const {canvasWorkspace: canvasWorkspaceResize} = projectSettings.value.resize;
 
     const {clientWidth, clientHeight} = page.value;
 
-    previewContainer.value.idealWidth = Number.parseFloat(previewContainerResize.width || 0) / 100 * clientWidth || previewContainer.value.clientWidth
+    canvasWorkspaceRef.value.idealWidth = Number.parseFloat(canvasWorkspaceResize.width || 0) / 100 * clientWidth || canvasWorkspaceRef.value.clientWidth
 
-    previewContainer.value.idealHeight = Number.parseFloat(previewContainerResize.height || 0) / 100 * clientHeight || previewContainer.value.clientHeight
+    canvasWorkspaceRef.value.idealHeight = Number.parseFloat(canvasWorkspaceResize.height || 0) / 100 * clientHeight || canvasWorkspaceRef.value.clientHeight
 
     renderCanvasScrollbar()
 
@@ -2900,35 +2893,7 @@ const initCanvasSize = () => {
 }
 
 const renderCanvasScrollbar = () => {
-  previewContainer.value.style.overflow = projectSettings.value.others.enableScrollbar ? 'auto' : 'hidden'
-}
-
-
-// 设置缩放比例
-function setZoom(canvas, zoom) {
-
-  if (!canvas || !zoom) return
-
-  const computedStyle = window.getComputedStyle(canvasElement.value);
-
-  const canvasWidth = Number.parseFloat(computedStyle.width);
-
-  const canvasHeight = Number.parseFloat(computedStyle.height);
-
-  const {minZoom, maxZoom} = zoomOptions;
-
-  const centerX = canvasWidth / 2
-  const centerY = canvasHeight / 2
-
-  // 限制缩放范围
-  const newZoom = Math.min(Math.max(minZoom, zoom), maxZoom);
-
-  // 应用缩放变换
-  canvasElement.value.style.transform = `scale(${newZoom})`;
-  // 设置变换原点为中心点
-  canvasElement.value.style.transformOrigin = `${centerX}px ${centerY}px`;
-
-  canvas.zoom = newZoom
+  canvasWorkspaceRef.value.style.overflow = projectSettings.value.appearance.enableScrollbar ? 'auto' : 'hidden'
 }
 
 
@@ -2944,13 +2909,13 @@ const handleScrollBarMoveToCenter = () => {
 function scrollBarMoveToCenter(canvas) {
   if (!canvas) return
   const {offsetWidth: canvasWrapperWidth, offsetHeight: canvasWrapperHeight} = canvasWrapper.value
-  const {offsetWidth: previewContainerWidth, offsetHeight: previewContainerHeight} = previewContainer.value
+  const {offsetWidth: canvasWorkspaceWidth, offsetHeight: canvasWorkspaceHeight} = canvasWorkspaceRef.value
   // 计算滚动位置，使图形内容居中
-  const scrollLeft = (canvasWrapperWidth - previewContainerWidth) / 2;
-  const scrollTop = (canvasWrapperHeight - previewContainerHeight) / 2;
+  const scrollLeft = (canvasWrapperWidth - canvasWorkspaceWidth) / 2;
+  const scrollTop = (canvasWrapperHeight - canvasWorkspaceHeight) / 2;
   // 设置滚动位置
-  previewContainer.value.scrollLeft = Math.max(0, scrollLeft);
-  previewContainer.value.scrollTop = Math.max(0, scrollTop);
+  canvasWorkspaceRef.value.scrollLeft = Math.max(0, scrollLeft);
+  canvasWorkspaceRef.value.scrollTop = Math.max(0, scrollTop);
   canvas.scrollLeft = Math.max(0, scrollLeft);
   canvas.scrollTop = Math.max(0, scrollTop);
 }
@@ -3550,13 +3515,13 @@ const handleDropFiles = (event) => {
     requestImportFiles({isDragOver: true, paths})
   }
 
-  uploader.value.style.pointerEvents = '';
+  uploaderRef.value.style.pointerEvents = '';
 }
 
 
 const handleDragenter = (event) => {
   event.preventDefault();
-  uploader.value.style.pointerEvents = 'none';
+  uploaderRef.value.style.pointerEvents = 'none';
 }
 
 const handleDragover = (event) => {
@@ -3570,7 +3535,7 @@ const handleDragleave = (event) => {
 
 
 const handleDragend = (event) => {
-  uploader.value.style.pointerEvents = '';
+  uploaderRef.value.style.pointerEvents = '';
 }
 
 
@@ -3598,8 +3563,8 @@ const handleDragMoveCanvas = (event) => {
   const canvas = CanvasManager.getCurrentCanvas();
   if (canvas && isCanvasDraggingMode) {
     // 拖拽开始时设置光标为正在抓取的状态
-    previewContainer.value.style.cursor = 'grabbing';
-    const {scrollWidth, scrollHeight, clientWidth, clientHeight} = previewContainer.value
+    canvasWorkspaceRef.value.style.cursor = 'grabbing';
+    const {scrollWidth, scrollHeight, clientWidth, clientHeight} = canvasWorkspaceRef.value
     // 记录初始滚动位置和鼠标位置
     const initialScrollLeft = canvas.scrollLeft;
     const initialScrollTop = canvas.scrollTop;
@@ -3617,8 +3582,8 @@ const handleDragMoveCanvas = (event) => {
       const scrollLeft = Math.max(0, Math.min(initialScrollLeft - offsetX, maxScrollLeft));
       const scrollTop = Math.max(0, Math.min(initialScrollTop - offsetY, maxScrollTop));
       // 设置滚动位置
-      previewContainer.value.scrollLeft = scrollLeft;
-      previewContainer.value.scrollTop = scrollTop;
+      canvasWorkspaceRef.value.scrollLeft = scrollLeft;
+      canvasWorkspaceRef.value.scrollTop = scrollTop;
       // 应用鼠标移动的距离到滚动位置
       canvas.scrollLeft = scrollLeft;
       canvas.scrollTop = scrollTop;
@@ -3626,11 +3591,11 @@ const handleDragMoveCanvas = (event) => {
 
     const handleMouseup = function (event) {
       // 拖拽结束，恢复光标为抓手的准备状态（空格键仍按住）
-      previewContainer.value.style.cursor = '';
-      previewContainer.value.removeEventListener('mousemove', handleMousemove)
+      canvasWorkspaceRef.value.style.cursor = '';
+      canvasWorkspaceRef.value.removeEventListener('mousemove', handleMousemove)
       document.removeEventListener('mouseup', handleMouseup)
     };
-    previewContainer.value.addEventListener('mousemove', handleMousemove)
+    canvasWorkspaceRef.value.addEventListener('mousemove', handleMousemove)
     document.addEventListener('mouseup', handleMouseup)
   }
 };
@@ -3640,12 +3605,12 @@ const handleLeftSidebarResize = (e) => {
 
   let lastMoveX = e.clientX;
   const {clientWidth, clientHeight} = page.value;
-  const leftSidebar = leftResize.value.parentNode;
+  const leftSidebar = leftResizeRef.value.parentNode;
 
   // 获取当前百分比值
   const rootStyle = getComputedStyle(document.documentElement);
   let sidebarPercent = parseFloat(rootStyle.getPropertyValue('--page-left-width'))
-  let previewPercent = parseFloat(rootStyle.getPropertyValue('--preview-container-width'));
+  let previewPercent = parseFloat(rootStyle.getPropertyValue('--canvas-workspace-width'));
 
   const handleMove = (event) => {
 
@@ -3659,7 +3624,7 @@ const handleLeftSidebarResize = (e) => {
     const newSidebarPercent = sidebarPercent + offsetPercent;
     const newPreviewPercent = previewPercent - offsetPercent;
 
-    const {minWidth: previewMinWidth = 0} = window.getComputedStyle(previewContainer.value);
+    const {minWidth: previewMinWidth = 0} = window.getComputedStyle(canvasWorkspaceRef.value);
     const {minWidth: sidebarMinWidth = 0} = window.getComputedStyle(leftSidebar);
 
     const previewMinWidthPercent = (parseFloat(previewMinWidth) / clientWidth) * 100;
@@ -3673,13 +3638,13 @@ const handleLeftSidebarResize = (e) => {
 
       const rootStyle = document.documentElement.style;
       rootStyle.setProperty('--page-left-width', `${sidebarPercent}%`);
-      rootStyle.setProperty('--preview-container-width', `${previewPercent}%`);
+      rootStyle.setProperty('--canvas-workspace-width', `${previewPercent}%`);
 
-      previewContainer.value.idealWidth = newPreviewPercent / 100 * clientWidth;
+      canvasWorkspaceRef.value.idealWidth = newPreviewPercent / 100 * clientWidth;
 
       // 存储到项目设置
       projectSettings.value.resize.leftSidebar.width = `${sidebarPercent}%`;
-      projectSettings.value.resize.previewContainer.width = `${previewPercent}%`;
+      projectSettings.value.resize.canvasWorkspace.width = `${previewPercent}%`;
       StorageManager.saveProjectSettings(projectSettings.value);
     }
   };
@@ -3698,12 +3663,12 @@ const handleRightSidebarResize = (e) => {
 
   let lastMoveX = e.clientX;
   const {clientWidth, clientHeight} = page.value;
-  const rightSidebar = rightResize.value.parentNode;
+  const rightSidebar = rightResizeRef.value.parentNode;
 
   // 获取当前百分比值
   const rootStyle = getComputedStyle(document.documentElement);
   let sidebarPercent = parseFloat(rootStyle.getPropertyValue('--page-right-width'));
-  let previewPercent = parseFloat(rootStyle.getPropertyValue('--preview-container-width'));
+  let previewPercent = parseFloat(rootStyle.getPropertyValue('--canvas-workspace-width'));
 
   const handleMove = (event) => {
 
@@ -3717,7 +3682,7 @@ const handleRightSidebarResize = (e) => {
     const newSidebarPercent = sidebarPercent - offsetPercent;
     const newPreviewPercent = previewPercent + offsetPercent;
 
-    const {minWidth: previewMinWidth = 0} = window.getComputedStyle(previewContainer.value);
+    const {minWidth: previewMinWidth = 0} = window.getComputedStyle(canvasWorkspaceRef.value);
     const {minWidth: sidebarMinWidth = 0} = window.getComputedStyle(rightSidebar);
 
     const previewMinWidthPercent = (parseFloat(previewMinWidth) / clientWidth) * 100;
@@ -3732,13 +3697,13 @@ const handleRightSidebarResize = (e) => {
 
       const rootStyle = document.documentElement.style;
       rootStyle.setProperty('--page-right-width', `${sidebarPercent}%`);
-      rootStyle.setProperty('--preview-container-width', `${previewPercent}%`);
+      rootStyle.setProperty('--canvas-workspace-width', `${previewPercent}%`);
 
-      previewContainer.value.idealWidth = newPreviewPercent / 100 * clientWidth;
+      canvasWorkspaceRef.value.idealWidth = newPreviewPercent / 100 * clientWidth;
 
       // 存储到项目设置
       projectSettings.value.resize.rightSidebar.width = `${sidebarPercent}%`;
-      projectSettings.value.resize.previewContainer.width = `${previewPercent}%`;
+      projectSettings.value.resize.canvasWorkspace.width = `${previewPercent}%`;
       StorageManager.saveProjectSettings(projectSettings.value);
     }
   };
@@ -3757,7 +3722,7 @@ const handleBottomSidebarResize = (e) => {
 
   let lastMoveY = e.clientY;
   const {clientWidth, clientHeight} = page.value;
-  const bottomSidebar = bottomResize.value.parentNode;
+  const bottomSidebar = bottomResizeRef.value.parentNode;
 
   // 获取当前百分比值
   const rootStyle = getComputedStyle(document.documentElement);
@@ -3776,7 +3741,7 @@ const handleBottomSidebarResize = (e) => {
     const newSidebarPercent = sidebarPercent - offsetPercent;
     const newPreviewPercent = previewPercent + offsetPercent;
 
-    const {minHeight: previewMinHeight = 0} = window.getComputedStyle(previewContainer.value);
+    const {minHeight: previewMinHeight = 0} = window.getComputedStyle(canvasWorkspaceRef.value);
     const {minHeight: sidebarMinHeight = 0} = window.getComputedStyle(bottomSidebar);
 
     const previewMinHeightPercent = (parseFloat(previewMinHeight) / clientHeight) * 100;
@@ -3792,11 +3757,11 @@ const handleBottomSidebarResize = (e) => {
       rootStyle.setProperty('--page-bottom-height', `${sidebarPercent}%`);
       rootStyle.setProperty('--page-main-height', `${previewPercent}%`);
 
-      previewContainer.value.idealHeight = newPreviewPercent / 100 * clientHeight;
+      canvasWorkspaceRef.value.idealHeight = newPreviewPercent / 100 * clientHeight;
 
       // 存储到项目设置
       projectSettings.value.resize.bottomSidebar.height = `${sidebarPercent}%`;
-      projectSettings.value.resize.previewContainer.height = `${previewPercent}%`;
+      projectSettings.value.resize.canvasWorkspace.height = `${previewPercent}%`;
       projectSettings.value.resize.leftSidebar.height = `${previewPercent}`;
       projectSettings.value.resize.rightSidebar.height = `${previewPercent}%`;
       StorageManager.saveProjectSettings(projectSettings.value);
@@ -3819,11 +3784,11 @@ const triggerDragCanvas = (event) => {
     event.preventDefault();
     isCanvasDraggingMode = true;
     // 设置全局样式提示用户
-    previewContainer.value.style.cursor = 'grab';
+    canvasWorkspaceRef.value.style.cursor = 'grab';
     const handleKeyup = function (event) {
       if (event.code === 'Space') {
         isCanvasDraggingMode = false;
-        previewContainer.value.style.cursor = '';
+        canvasWorkspaceRef.value.style.cursor = '';
         document.removeEventListener('keyup', handleKeyup)
       }
     }
@@ -3874,22 +3839,22 @@ const preventSwitchingElements = (event) => {
 
 const bindEventListener = () => {
 
-  document.querySelectorAll('.image-marks, .text-marks, .metadata').forEach(element => {
+  document.querySelectorAll('.image-resources, .text-resources, .metadata').forEach(element => {
     useEventListener(element, 'dragstart', handleDragStart)
   });
 
-  useEventListener(previewContainer.value, 'drop', handleDropElement);
-  useEventListener(previewContainer.value, 'drop', handleDropFiles);
-  useEventListener(previewContainer.value, 'dragenter', handleDragenter);
-  useEventListener(previewContainer.value, 'dragover', handleDragover);
-  useEventListener(previewContainer.value, 'dragleave', handleDragleave);
-  useEventListener(previewContainer.value, 'scroll', handleMoveScrollbar);
-  useEventListener(previewContainer.value, 'mousedown', handleDragMoveCanvas);
-  useEventListener(previewContainer.value, 'wheel', handleCanvasResize, {passive: false});
+  useEventListener(canvasWorkspaceRef.value, 'drop', handleDropElement);
+  useEventListener(canvasWorkspaceRef.value, 'drop', handleDropFiles);
+  useEventListener(canvasWorkspaceRef.value, 'dragenter', handleDragenter);
+  useEventListener(canvasWorkspaceRef.value, 'dragover', handleDragover);
+  useEventListener(canvasWorkspaceRef.value, 'dragleave', handleDragleave);
+  useEventListener(canvasWorkspaceRef.value, 'scroll', handleMoveScrollbar);
+  useEventListener(canvasWorkspaceRef.value, 'mousedown', handleDragMoveCanvas);
+  useEventListener(canvasWorkspaceRef.value, 'wheel', handleCanvasResize, {passive: false});
 
-  useEventListener(leftResize.value, 'mousedown', handleLeftSidebarResize)
-  useEventListener(rightResize.value, 'mousedown', handleRightSidebarResize)
-  useEventListener(bottomResize.value, 'mousedown', handleBottomSidebarResize)
+  useEventListener(leftResizeRef.value, 'mousedown', handleLeftSidebarResize)
+  useEventListener(rightResizeRef.value, 'mousedown', handleRightSidebarResize)
+  useEventListener(bottomResizeRef.value, 'mousedown', handleBottomSidebarResize)
 
   useEventListener(systemTheme, 'change', handleSystemThemeChange)
 
@@ -3904,14 +3869,14 @@ const bindEventListener = () => {
 onMounted(() => {
   loadProjectSettings()
   loadTemplates()
-  loadTextLabels()
+  loadTextResources()
   watchImportImages()
   watchImportFonts()
   watchTemplates()
   watchContextMenu()
   watchTemplateContextMenu()
   watchAboutDialog()
-  watchLabelResources()
+  watchResources()
   watchDownloadProgress()
   editorOutputSettings()
   watchProjectSettings()
@@ -3983,13 +3948,13 @@ onBeforeUnmount(() => {
             box-shadow: inset 3px 0 0 var(--app-accent);
           }
 
-          .text-marks-options {
+          .text-options {
             height: 50%;
             width: 100%;
             box-sizing: border-box;
             background-color: var(--menu-background-color);
 
-            .text-marks {
+            .text-resources {
               padding: 20px 10px;
               display: grid;
               gap: 20px;
@@ -3997,7 +3962,7 @@ onBeforeUnmount(() => {
               font-size: 12px;
               background-color: var(--expand-area-background-color);
 
-              .text-mark {
+              .text-resource {
                 width: fit-content;
                 height: fit-content;
                 cursor: move;
@@ -4008,9 +3973,9 @@ onBeforeUnmount(() => {
                 }
               }
 
-              .text-mark:hover {
+              .text-resource:hover {
                 box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-                background: var(--app-text-mark-hover-bg);
+                background: var(--app-text-resource-hover-bg);
               }
             }
           }
@@ -4040,21 +4005,21 @@ onBeforeUnmount(() => {
 
           }
 
-          .image-mark-options {
+          .image-options {
             height: 50%;
             width: 100%;
             box-sizing: border-box;
             background-color: var(--menu-background-color);
             border-bottom: 1px solid var(--app-menu-border);
 
-            .image-marks {
+            .image-resources {
               display: grid;
               grid-template-columns: repeat(3, 1fr); /* 三等分列宽 */
               gap: 10px;
               padding: 10px;
               background-color: var(--expand-area-background-color);
 
-              .image-item {
+              .image-resource {
                 /* 不需要设置高度，用 aspect-ratio 设置宽高比例 */
                 aspect-ratio: 5 / 4; /* 或根据需求设为 4/3、16/9 等 */
                 display: flex;
@@ -4064,7 +4029,7 @@ onBeforeUnmount(() => {
                 border-radius: 2px;
                 padding: 5%;
 
-                .image-mark {
+                .image-resource {
                   max-width: 100%;
                   max-height: 100%;
                   width: auto; /* 由图片实际宽度决定 */
@@ -4118,8 +4083,8 @@ onBeforeUnmount(() => {
 
     }
 
-    .preview-view {
-      width: var(--preview-container-width);
+    .canvas-viewport {
+      width: var(--canvas-workspace-width);
       height: 100%;
       position: relative;
 
@@ -4130,8 +4095,8 @@ onBeforeUnmount(() => {
         gap: 5px;
         align-items: center;
         position: absolute;
-        top: 50%; /* 相对于父容器 .preview-container */
-        left: 50%; /* 相对于父容器 .preview-container */
+        top: 50%;
+        left: 50%;
         transform: translate(-50%, -50%); /* 相对于自身偏移，实现完美居中 */
         z-index: 999;
 
@@ -4145,7 +4110,7 @@ onBeforeUnmount(() => {
         }
       }
 
-      .preview-container {
+      .canvas-workspace {
         background-color: var(--preview-background-color);
         width: 100%;
         height: 100%;
@@ -4284,7 +4249,7 @@ onBeforeUnmount(() => {
                     font-size: 12px;
                     color: var(--main-font-color);
 
-                    .text-mark {
+                    .text-resource {
                       background-color: var(--expand-area-background-color);
                       width: fit-content;
                       height: fit-content;
@@ -4411,7 +4376,7 @@ onBeforeUnmount(() => {
       cursor: ns-resize; /* 左右箭头 */
     }
 
-    .function-tabs {
+    .preview-bar {
       width: 100%;
       height: 40px;
       background: var(--expand-area-background-color);
@@ -4422,7 +4387,7 @@ onBeforeUnmount(() => {
       gap: 15px;
       padding-left: 15px;
 
-      .left-tabs {
+      .left-preview-bar {
         height: 100%;
         display: flex;
         align-items: center;
@@ -4470,7 +4435,7 @@ onBeforeUnmount(() => {
         }
       }
 
-      .right-tabs {
+      .right-preview-bar {
         display: flex;
         margin-left: auto;
         align-items: center;

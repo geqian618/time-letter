@@ -51,23 +51,23 @@ import {RouterView} from 'vue-router'
   background-color: var(--app-scrollbar-thumb-hover);
 }
 
-#preview-container::-webkit-scrollbar-track {
+#canvas-workspace::-webkit-scrollbar-track {
   background-color: var(--app-preview-scrollbar-track);
 }
 
-#preview-container::-webkit-scrollbar {
+#canvas-workspace::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-#preview-container::-webkit-scrollbar-thumb {
+#canvas-workspace::-webkit-scrollbar-thumb {
   background-color: var(--app-preview-scrollbar-thumb);
   border: 1px solid var(--app-preview-scrollbar-track);
   border-radius: 2px;
 }
 
 #app ::-webkit-scrollbar-corner,
-#preview-container::-webkit-scrollbar-corner {
+#canvas-workspace::-webkit-scrollbar-corner {
   background-color: var(--app-preview-scrollbar-track);
 }
 

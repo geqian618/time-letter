@@ -14,12 +14,12 @@ const getTemplates = () => {
     }
 }
 
-const saveTextLabels = (textLabels) => {
-    window.localStorage.setItem('textLabels', JSON.stringify(textLabels))
+const saveTextResources = (textResources) => {
+    window.localStorage.setItem('textResources', JSON.stringify(textResources))
 }
 
-const getTextLabels = () => {
-    const json = window.localStorage.getItem('textLabels');
+const getTextResources = () => {
+    const json = window.localStorage.getItem('textResources');
     if (json === null || json === 'undefined') {
         return [];
     }
@@ -51,8 +51,8 @@ const getProjectSettings = () => {
 export default {
     saveTemplates,
     getTemplates,
-    saveTextLabels,
-    getTextLabels,
+    saveTextResources,
+    getTextResources,
     saveProjectSettings,
     getProjectSettings
 }

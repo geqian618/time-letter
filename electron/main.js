@@ -441,7 +441,7 @@ const registerThumbnailProtocol = () => {
                 .webp({quality: 80})   // 转换为 WebP 格式，质量 80
                 .toBuffer();
             if (thumbnail) {
-                return new Response(thumbnail, {
+                    return new Response(thumbnail, {
                     headers: {
                         'Content-Type': 'image/webp',
                         // 每次请求都按当前源文件重新生成,无需缓存协商

@@ -104,7 +104,7 @@ export class FontSettings {
 }
 
 
-export class TextLabel {
+export class TextResource {
     constructor() {
         this.id = '';
         this.tips = '';
@@ -116,17 +116,6 @@ export class TextLabel {
     }
 }
 
-
-// 主设置类
-export class Configuration {
-    constructor() {
-        this.outputDirectory = '';
-        this.files = [];
-        this.metadata = new Metadata();
-        this.image = new ImageSettings();
-        this.text = new TextSettings();
-    }
-}
 
 
 

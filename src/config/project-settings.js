@@ -40,13 +40,13 @@ const projectSettings = ref({
         downloadThreads: -1,
     },
     appearance: {
-        theme: 'system'
+        theme: 'system',
+        enableScrollbar: true
     },
     others: {
         optionAnchorPoint: true,
         movingStepSize: 1,
         defaultCanvasScale: 0.75,
-        enableScrollbar: true,
         deleteTipVisible: true
     },
     availableFonts: new Map(),
@@ -55,7 +55,7 @@ const projectSettings = ref({
             width: '18%',
             height: '75%'
         },
-        previewContainer: {
+        canvasWorkspace: {
             width: '60%',
             height: '75%'
         },

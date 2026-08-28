@@ -4,7 +4,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     parsePhotoMetadata: (args) => ipcRenderer.invoke('parse-photo-metadata', args),
     watchInputImage: (callback) => ipcRenderer.on('watch-input-image', callback),
     watchInputFonts: (callback) => ipcRenderer.on('watch-input-font', callback),
-    watchLabelResources: (callback) => ipcRenderer.on('watch-label-resources', callback),
+    watchResources: (callback) => ipcRenderer.on('watch-resources', callback),
     openContextMenu: (args) => ipcRenderer.send('open-contextMenu', args),
     openTemplateContextMenu: () => ipcRenderer.send('open-template-contextMenu'),
     watchContextMenu: (callback) => ipcRenderer.on('watch-contextMenu', callback),

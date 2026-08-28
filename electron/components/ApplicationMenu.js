@@ -85,7 +85,7 @@ const createApplicationMenu = (mainWindow) => {
                         {
                             label: '管理文本',
                             click: () => {
-                                window.webContents.send('watch-label-resources', {type: 3})
+                                window.webContents.send('watch-resources', {type: 3})
                             }
                         }
                     ],
@@ -95,7 +95,7 @@ const createApplicationMenu = (mainWindow) => {
                     submenu: [
                         {
                             label: '导入图片',
-                            click: selectImageLabels
+                            click: selectImageResources
                         },
                         {
                             label: '打开资源管理器',
@@ -332,7 +332,7 @@ const selectFonts = async () => {
 };
 
 
-const selectImageLabels = async () => {
+const selectImageResources = async () => {
     const {filePaths} = await dialog.showOpenDialog({
         title: '导入文件',
         buttonLabel: '导入',
@@ -357,13 +357,13 @@ const selectImageLabels = async () => {
             })
         );
         const data = new Map(files.map(item => [item.path, item]));
-        window.webContents.send('watch-label-resources', {type: 0, data, event: 0})
+        window.webContents.send('watch-resources', {type: 0, data, event: 0})
     }
 }
 
 
 const customTextLabels = () => {
-    window.webContents.send('watch-label-resources', {type: 1})
+    window.webContents.send('watch-resources', {type: 1})
 }
 
 /**
