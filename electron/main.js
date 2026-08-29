@@ -417,7 +417,7 @@ const setupIpcHandlers = () => {
     ipcMain.on('image-manager:move', async (event, filePaths) => {
         if (!filePaths?.length) return
         const {canceled, filePaths: dirs} = await dialog.showOpenDialog({
-            title: '移动到指定文件夹',
+            title: '移动到',
             buttonLabel: '移动',
             defaultPath: app.getPath('desktop'),
             properties: ['openDirectory', 'createDirectory']
