@@ -71,8 +71,7 @@
 
 
     <div class="right-preview-bar">
-      <div class="counter">已选{{ canvasesStore.selectedPreviewList.size }}张</div>
-      <div class="counter">共{{ canvasesStore.availableCanvases.size }}张</div>
+      <div class="counter">已选 {{ canvasesStore.selectedPreviewList.size }} / 共{{ canvasesStore.availableCanvases.size }}张</div>
       <div class="filter">
         <div class="filter-label">筛选：</div>
         <div class="filter-select">

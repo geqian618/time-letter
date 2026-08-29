@@ -8,6 +8,11 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: Home
+    },
+    {
+      path: '/image-manager',
+      name: 'image-manager',
+      component: () => import('../views/extensions/ImageManager.vue')
     }
   ]
 })

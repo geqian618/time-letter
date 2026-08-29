@@ -23,6 +23,7 @@ const createApplicationMenu = require('./components/ApplicationMenu')
 const createContextMenu = require('./components/ContextMenu')
 const createTemplateContextMenu = require('./components/TemplateContextMenu')
 const registerLocalShortcut = require('./components/registerLocalShortcut')
+const {closeImageManagerWindow, getImageManagerWindow} = require('./components/ImageManagerWindow')
 
 // 配置常量
 const {APP_NAME, APP_ICON_PATH, APP_VERSION} = require('./constant/ProjectConstants')
@@ -173,6 +174,8 @@ const setupWindowEvents = (window) => {
         if (window) {
             // 注销快捷键
             localshortcut.unregisterAll(window)
+            // 联动关闭图片管理器窗口
+            closeImageManagerWindow()
             window = null
         }
     })
@@ -236,6 +239,8 @@ const setupIpcHandlers = () => {
             }
             // 写入主题配置（文件存在会覆盖）
             fs.writeFileSync(themePath, JSON.stringify({theme: finalTheme}));
+            // 同步主题到所有窗口（图片管理器等副窗口跟随）
+            BrowserWindow.getAllWindows().forEach(w => w.webContents.send('theme:changed', finalTheme));
         }
     });
 
@@ -373,12 +378,91 @@ const setupIpcHandlers = () => {
     })
 
 
-    // 删除文件
+    // 删除文件（移入回收站）
     ipcMain.on('images:delete', async (event, filePaths) => {
         if (!filePaths) return
         for (let filePath of filePaths) {
-            shell.trashItem(filePath)
+            await shell.trashItem(filePath)
         }
+    })
+
+
+    // ---------- 图片管理器（独立窗口，经主进程中转同步画布数据） ----------
+
+    // 管理器请求快照 → 转发主窗口收集
+    ipcMain.on('image-manager:request-data', () => {
+        mainWindow?.webContents.send('image-manager:collect')
+    })
+
+    // 主窗口推送的画布快照 → 转发管理器
+    ipcMain.on('image-manager:sync', (event, data) => {
+        getImageManagerWindow()?.webContents.send('image-manager:data', data)
+    })
+
+    // 管理器移除图片 → 转发主窗口执行
+    ipcMain.on('image-manager:remove', (event, filePaths) => {
+        mainWindow?.webContents.send('image-manager:apply-remove', filePaths)
+    })
+
+    // 管理器删除图片：移入回收站后按移除流程处理
+    ipcMain.on('image-manager:delete', async (event, filePaths) => {
+        if (!filePaths?.length) return
+        for (let filePath of filePaths) {
+            await shell.trashItem(filePath)
+        }
+        mainWindow?.webContents.send('image-manager:apply-remove', filePaths)
+    })
+
+    // 管理器移动图片：选择目标目录 → 移动文件 → 通知主窗口重新登记画布
+    ipcMain.on('image-manager:move', async (event, filePaths) => {
+        if (!filePaths?.length) return
+        const {canceled, filePaths: dirs} = await dialog.showOpenDialog({
+            title: '移动到指定文件夹',
+            buttonLabel: '移动',
+            defaultPath: app.getPath('desktop'),
+            properties: ['openDirectory', 'createDirectory']
+        })
+        if (canceled || !dirs?.length) return
+
+        const targetDir = dirs[0]
+        const moved = []
+        let skippedCount = 0
+        let failedCount = 0
+
+        for (const filePath of filePaths) {
+            const newPath = path.join(targetDir, path.basename(filePath))
+            // 同目录移动或目标已存在同名文件时跳过
+            if (newPath === filePath || fs.existsSync(newPath)) {
+                skippedCount++
+                continue
+            }
+            try {
+                try {
+                    await fs.promises.rename(filePath, newPath)
+                } catch (e) {
+                    // 跨盘移动 rename 失败，降级为复制 + 删除源文件
+                    await fs.promises.copyFile(filePath, newPath)
+                    await fs.promises.unlink(filePath)
+                }
+                moved.push({
+                    oldPath: filePath,
+                    newPath: newPath,
+                    url: localPathToUrl(newPath),
+                    thumbUrl: localPathToThumbUrl(newPath)
+                })
+            } catch (e) {
+                failedCount++
+            }
+        }
+
+        if (moved.length) {
+            mainWindow?.webContents.send('image-manager:moved', moved)
+        }
+        getImageManagerWindow()?.webContents.send('image-manager:move-result', {
+            movedCount: moved.length,
+            skippedCount,
+            failedCount
+        })
     })
 
 

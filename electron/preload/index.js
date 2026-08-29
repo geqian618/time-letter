@@ -24,4 +24,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     deleteImages: (args) => ipcRenderer.send('images:delete', args),
     requestImportBackgroundImage: (args) => ipcRenderer.send('image:request-import', args),
     watchImportBackgroundImage: (callback) => ipcRenderer.on('image:watch-import', callback),
+    // 图片管理器（独立窗口，画布数据经主进程中转）
+    imageManagerRequestData: () => ipcRenderer.send('image-manager:request-data'),
+    imageManagerWatchData: (callback) => ipcRenderer.on('image-manager:data', callback),
+    imageManagerSync: (args) => ipcRenderer.send('image-manager:sync', args),
+    watchImageManagerCollect: (callback) => ipcRenderer.on('image-manager:collect', callback),
+    watchImageManagerRemoveApply: (callback) => ipcRenderer.on('image-manager:apply-remove', callback),
+    watchImageManagerMoved: (callback) => ipcRenderer.on('image-manager:moved', callback),
+    imageManagerRemove: (args) => ipcRenderer.send('image-manager:remove', args),
+    imageManagerDelete: (args) => ipcRenderer.send('image-manager:delete', args),
+    imageManagerMove: (args) => ipcRenderer.send('image-manager:move', args),
+    watchImageManagerMoveResult: (callback) => ipcRenderer.on('image-manager:move-result', callback),
+    watchThemeChanged: (callback) => ipcRenderer.on('theme:changed', callback),
 });

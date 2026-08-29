@@ -4,6 +4,7 @@ const fs = require('fs')
 const AdmZip = require('adm-zip');
 const {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl} = require('../utils/path-helper')
 const {registerFont} = require('../utils/font-manager')
+const {openImageManagerWindow} = require('./ImageManagerWindow')
 
 const resourcesPath = getResourcePath()
 const fontPath = getFontPath()
@@ -124,15 +125,15 @@ const createApplicationMenu = (mainWindow) => {
                 },
             ]
         },
-        // {
-        //     label: '工具',
-        //     submenu: [
-        //         {
-        //             label: '图片搬运',
-        //             role: ''
-        //         },
-        //     ]
-        // },
+        {
+            label: '工具',
+            submenu: [
+                {
+                    label: '图片管理器',
+                    click: openImageManagerWindow
+                },
+            ]
+        },
         {
             label: '帮助',
             submenu: [

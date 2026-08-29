@@ -37,11 +37,15 @@
 
 <script setup lang="js">
 
-import {ref, onMounted} from "vue";
+import {ref, watch, onMounted} from "vue";
 
 import StorageManager from "@/object/StorageManager";
 
 import {TextResource} from "@/object/Configuration";
+
+import CanvasManager from "@/object/CanvasManager";
+
+import {canvasActions} from "@/object/CanvasActions";
 
 import LeftPanel from '@/components/index/LeftPanel.vue'
 import WorkspacePanel from '@/components/index/WorkspacePanel.vue'
@@ -351,6 +355,56 @@ const watchDownloadProgress = () => {
 }
 
 
+// ---------- 图片管理器（独立窗口）数据同步 ----------
+
+// 推送画布快照（仅包含管理器展示所需字段）
+const pushImageManagerSnapshot = () => {
+  const snapshot = [...CanvasManager.getCanvases()].map(([path, canvas]) => ({
+    path,
+    filename: canvas.filename || canvas.metadata?.filename,
+    extname: canvas.extname,
+    thumbUrl: canvas.thumbUrl
+  }))
+  window.electronAPI.imageManagerSync(snapshot)
+}
+
+// 画布增删 / 换 key 时自动同步快照
+watch(() => [...CanvasManager.getCanvases()].map(([key]) => key).join('\n'), pushImageManagerSnapshot)
+
+// 图片管理器打开时推送初始快照
+const watchImageManagerCollect = () => {
+  window.electronAPI.watchImageManagerCollect(pushImageManagerSnapshot)
+}
+
+// 图片管理器移除画布，命中当前选中时清空编辑区
+const watchImageManagerRemoveApply = () => {
+  window.electronAPI.watchImageManagerRemoveApply((event, paths) => {
+    for (let path of paths) {
+      CanvasManager.deleteCanvas(path)
+      if (path === CanvasManager.getSelectedPath()) {
+        canvasActions.clearCanvas()
+      }
+    }
+  })
+}
+
+// 图片管理器移动文件后以新路径重新登记画布
+const watchImageManagerMoved = () => {
+  window.electronAPI.watchImageManagerMoved((event, movedList) => {
+    for (let {oldPath, newPath, url, thumbUrl} of movedList) {
+      const canvas = CanvasManager.getCanvas(oldPath)
+      if (!canvas) continue
+      CanvasManager.deleteCanvas(oldPath)
+      Object.assign(canvas, {path: newPath, url, thumbUrl})
+      CanvasManager.setCanvas(newPath, canvas)
+      if (oldPath === CanvasManager.getSelectedPath()) {
+        CanvasManager.setSelectedObject({path: newPath})
+      }
+    }
+  })
+}
+
+
 onMounted(() => {
   // 注册页面根元素引用，供画布初始化与布局计算使用
   canvasesStore.registerCanvasRefs({page: page.value})
@@ -364,6 +418,11 @@ onMounted(() => {
   watchTemplateContextMenu()
   watchResources()
   watchDownloadProgress()
+
+  // 注册图片管理器联动
+  watchImageManagerCollect()
+  watchImageManagerRemoveApply()
+  watchImageManagerMoved()
 })
 
 </script>
