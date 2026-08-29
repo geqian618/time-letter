@@ -209,7 +209,8 @@ onBeforeUnmount(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 14px;
+    // 与网格容器（grid-wrapper）左右内边距一致，使全选框与网格左缘对齐
+    padding: 10px 12px;
     border-bottom: 1px solid var(--app-border);
     flex-shrink: 0;
 
