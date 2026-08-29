@@ -41,7 +41,7 @@ const createApplicationMenu = (mainWindow) => {
             submenu: [
                 {
                     label: '偏好设置',
-                    click: editorOutputSettings,
+                    click: openSettingsDialog,
                     accelerator: 'CommandOrControl+Alt+S',
                 },
                 {
@@ -85,7 +85,7 @@ const createApplicationMenu = (mainWindow) => {
                         {
                             label: '管理文本',
                             click: () => {
-                                window.webContents.send('watch-resources', {type: 3})
+                                window.webContents.send('resources:watch-change', {type: 3})
                             }
                         }
                     ],
@@ -181,7 +181,7 @@ const selectFile = async () => {
             })
         );
         const data = new Map(files.map(item => [item.path, item]));
-        window.webContents.send('watch-input-image', data)
+        window.webContents.send('images:watch-import', data)
     }
 }
 
@@ -323,7 +323,7 @@ const selectFonts = async () => {
     }
 
     if (fontMap.size && window) {
-        window.webContents.send('watch-input-font', {type: 0, data: fontMap});
+        window.webContents.send('fonts:watch-import', {type: 0, data: fontMap});
     }
 
     if (errors.length > 0) {
@@ -357,13 +357,13 @@ const selectImageResources = async () => {
             })
         );
         const data = new Map(files.map(item => [item.path, item]));
-        window.webContents.send('watch-resources', {type: 0, data, event: 0})
+        window.webContents.send('resources:watch-change', {type: 0, data, event: 0})
     }
 }
 
 
 const customTextLabels = () => {
-    window.webContents.send('watch-resources', {type: 1})
+    window.webContents.send('resources:watch-change', {type: 1})
 }
 
 /**
@@ -376,18 +376,18 @@ const saveFiles = async () => {
         properties: ['openDirectory', 'createDirectory']
     })
     if (!canceled && filePaths) {
-        window.webContents.send('watch-contextMenu', {type: 3, outputDirectory: filePaths[0]})
+        window.webContents.send('contextMenu:watch', {type: 3, outputDirectory: filePaths[0]})
     }
 }
 
 
-const editorOutputSettings = () => {
-    window.webContents.send('editor-output-settings')
+const openSettingsDialog = () => {
+    window.webContents.send('settings-dialog:open')
 }
 
 
 const openAboutDialog = () => {
-    window.webContents.send('watch-about-dialog')
+    window.webContents.send('about-dialog:open')
 }
 
 

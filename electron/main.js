@@ -189,7 +189,7 @@ const setupWindowEvents = (window) => {
 const setupIpcHandlers = () => {
 
     // 解析图片元数据
-    ipcMain.handle('parse-photo-metadata', async (event, filePath) => {
+    ipcMain.handle('photo:parse-metadata', async (event, filePath) => {
         try {
             return await imageParser.parsePhotoMetadata(filePath)
         } catch (error) {
@@ -199,12 +199,12 @@ const setupIpcHandlers = () => {
     })
 
     // 打开右键菜单
-    ipcMain.on('open-contextMenu', () => {
+    ipcMain.on('contextMenu:open', () => {
         contextMenu?.popup()
     })
 
     // 打开模板右键菜单
-    ipcMain.on('open-template-contextMenu', () => {
+    ipcMain.on('template-contextMenu:open', () => {
         templateContextMenu?.popup()
     })
 
@@ -241,9 +241,9 @@ const setupIpcHandlers = () => {
 
 
     // 导出文件
-    ipcMain.on('request-export-files', (event, data) => {
+    ipcMain.on('files:request-export', (event, data) => {
         imageExportProcessor.exportFiles(data, (progress) => {
-            mainWindow?.webContents.send('download-progress', {
+            mainWindow?.webContents.send('download-progress:watch', {
                 percentage: progress.percentage,
                 hasError: progress.errors > 0
             })
@@ -251,7 +251,7 @@ const setupIpcHandlers = () => {
     })
 
     // 拖拽导入图片
-    ipcMain.on('request-import-files', async (event, {isDragOver, paths}) => {
+    ipcMain.on('files:request-import', async (event, {isDragOver, paths}) => {
         let filePaths = paths;
         if (!isDragOver) {
             const result = await dialog.showOpenDialog({
@@ -276,17 +276,17 @@ const setupIpcHandlers = () => {
                 })
             );
             const data = new Map(files.map(item => [item.path, item]));
-            mainWindow.webContents.send('watch-input-image', data)
+            mainWindow.webContents.send('images:watch-import', data)
         }
     })
 
     // 停止导出
-    ipcMain.on('stop-export-files', () => {
+    ipcMain.on('files:stop-export', () => {
         imageExportProcessor.stopExportFiles()
     })
 
     // 创建线程池
-    ipcMain.on('create-thread-pool', (event, maxThreads) => {
+    ipcMain.on('thread-pool:create', (event, maxThreads) => {
 
     })
 
@@ -374,7 +374,7 @@ const setupIpcHandlers = () => {
 
 
     // 删除文件
-    ipcMain.on('file:delete', async (event, filePaths) => {
+    ipcMain.on('images:delete', async (event, filePaths) => {
         if (!filePaths) return
         for (let filePath of filePaths) {
             shell.trashItem(filePath)

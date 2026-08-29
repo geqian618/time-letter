@@ -28,7 +28,7 @@
                     <span>图片库</span>
                   </template>
                   <div class="image-resources" ref="imageResourceRef">
-                    <div class="image-resource" :key="key" v-for="([key, image]) in imageResources" draggable="false">
+                    <div class="image-wrapper" :key="key" v-for="([key, image]) in imageResources" draggable="false">
                       <img class="image-resource"
                            :src="image.thumbUrl || image.url"
                            :path="image.path"
@@ -43,23 +43,23 @@
                   </template>
                   <el-scrollbar class="scrollBar">
                     <div class="text-resources" ref="textResourceRef">
-                      <el-tooltip class="text-resource" effect="dark" content="文本" placement="top">
+                      <el-tooltip effect="dark" content="文本" placement="top">
                         <div class="text-resource" draggable="true" text="文本" type="text">
                           <img draggable="false" src="/src/assets/icon/text.svg" alt="文本">
                         </div>
                       </el-tooltip>
-                      <el-tooltip class="text-resource" effect="dark" content="日期" placement="top">
+                      <el-tooltip effect="dark" content="日期" placement="top">
                         <div class="text-resource" draggable="true" type="date">
                           <img draggable="false" src="/src/assets/icon/date.svg" alt="日期">
                         </div>
                       </el-tooltip>
-                      <el-tooltip class="text-resource" effect="dark" content="日期时间" placement="top">
+                      <el-tooltip effect="dark" content="日期时间" placement="top">
                         <div class="text-resource" draggable="true" type="datetime">
                           <img draggable="false" src="/src/assets/icon/datetime.svg" alt="日期时间">
                         </div>
                       </el-tooltip>
-                      <el-tooltip v-for="(text) in textResources" :key="text.id" class="text-resource" effect="dark"
-                                  :content="text.tips" placement="top">
+                      <el-tooltip v-for="(text) in textResources" :key="text.id" effect="dark" :content="text.tips"
+                                  placement="top">
                         <div class="text-resource"
                              :id="text.id"
                              draggable="true"
@@ -972,7 +972,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="outputSettingsVisible"
+    <el-dialog v-model="settingsDialogVisible"
                title="偏好设置"
                top="10vh"
                width="750">
@@ -1540,7 +1540,7 @@ const enableTemplateDialogVisible = ref(false)
 
 const aboutDialogVisible = ref(false)
 
-const outputSettingsVisible = ref(false)
+const settingsDialogVisible = ref(false)
 
 const handleTextResourceType = ref(0)
 
@@ -1711,7 +1711,7 @@ const watchTemplates = () => {
 }
 
 const watchImportFonts = () => {
-  window.electronAPI.watchInputFonts(async (event, {type, data}) => {
+  window.electronAPI.watchImportFonts(async (event, {type, data}) => {
     if (data) {
       if (type === 0 || type === -1) {
         if (type === -1) {
@@ -1757,8 +1757,8 @@ const removeExpiredFonts = (cacheFonts, availableFonts) => {
   });
 }
 
-const watchImportImages = () => {
-  window.electronAPI.watchInputImage(async (event, data) => {
+const watchImportImagess = () => {
+  window.electronAPI.watchImportImages(async (event, data) => {
     if (data) {
       const shootingTimeFormat = projectSettings.value.metadata.others.shootingTimeFormat;
       for (let [path, picture] of data) {
@@ -1818,20 +1818,20 @@ const watchTemplateContextMenu = () => {
 }
 
 
-const watchAboutDialog = () => {
-  window.electronAPI.watchAboutDialog((event) => {
+const openAboutDialog = () => {
+  window.electronAPI.openAboutDialog((event) => {
     aboutDialogVisible.value = true;
   })
 }
 
-const editorOutputSettings = () => {
-  window.electronAPI.editorOutputSettings((event) => {
-    outputSettingsVisible.value = true
+const openSettingsDialog = () => {
+  window.electronAPI.openSettingsDialog((event) => {
+    settingsDialogVisible.value = true
   })
 }
 
 const watchDownloadProgress = () => {
-  window.electronAPI.downloadProgress((event, data) => {
+  window.electronAPI.watchDownloadProgress((event, data) => {
     downloadProgressPercentage.value = data.percentage
     if (downloadProgressPercentage.value === 100) {
       setTimeout(() => {
@@ -1995,7 +1995,7 @@ const cancelRemoveSelectedCanvas = () => {
  */
 const permanentlyRemoveSelectedCanvas = () => {
   const selectedPaths = Array.from(selectedPreviewList.value.keys());
-  window.electronAPI.deleteFile(selectedPaths)
+  window.electronAPI.deleteImages(selectedPaths)
   removeSelectedCanvas();
   if (!projectSettings.value.others.deleteTipVisible) {
     projectSettings.value.others.deleteTipVisible = false;
@@ -3870,15 +3870,15 @@ onMounted(() => {
   loadProjectSettings()
   loadTemplates()
   loadTextResources()
-  watchImportImages()
+  watchImportImagess()
   watchImportFonts()
   watchTemplates()
   watchContextMenu()
   watchTemplateContextMenu()
-  watchAboutDialog()
+  openAboutDialog()
   watchResources()
   watchDownloadProgress()
-  editorOutputSettings()
+  openSettingsDialog()
   watchProjectSettings()
   watchImportBackgroundImage()
   initAreaResize()
@@ -4019,7 +4019,7 @@ onBeforeUnmount(() => {
               padding: 10px;
               background-color: var(--expand-area-background-color);
 
-              .image-resource {
+              .image-wrapper {
                 /* 不需要设置高度，用 aspect-ratio 设置宽高比例 */
                 aspect-ratio: 5 / 4; /* 或根据需求设为 4/3、16/9 等 */
                 display: flex;

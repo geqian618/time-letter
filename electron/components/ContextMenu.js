@@ -9,28 +9,28 @@ const createContextMenu = (mainWindow) => {
             label: '移除图片',
             accelerator: 'CommandOrControl+D',
             click: () => {
-                window.webContents.send('watch-contextMenu', {type: 1});
+                window.webContents.send('contextMenu:watch', {type: 1});
             }
         },
         {
             label: '删除图片',
             accelerator: 'CommandOrControl+Alt+D',
             click: () => {
-                window.webContents.send('watch-contextMenu', {type: 2});
+                window.webContents.send('contextMenu:watch', {type: 2});
             }
         },
         {
             label: '清空画布',
             accelerator: 'CommandOrControl+L',
             click: () => {
-                window.webContents.send('watch-contextMenu', {type: 6});
+                window.webContents.send('contextMenu:watch', {type: 6});
             }
         },
         {
             label: '重置画布',
             accelerator: 'CommandOrControl+R',
             click: () => {
-                window.webContents.send('watch-contextMenu', {type: 7});
+                window.webContents.send('contextMenu:watch', {type: 7});
             }
         },
         {
@@ -61,11 +61,11 @@ const createContextMenu = (mainWindow) => {
 
 
 const saveTemplate = () => {
-    window.webContents.send('watch-contextMenu', {type: 4})
+    window.webContents.send('contextMenu:watch', {type: 4})
 }
 
 const synchronizeTemplate = (method) => {
-    window.webContents.send('watch-contextMenu', {type: 5, method})
+    window.webContents.send('contextMenu:watch', {type: 5, method})
 }
 
 
@@ -79,7 +79,7 @@ const saveFiles = async () => {
         properties: ['openDirectory', 'createDirectory']
     })
     if (!canceled && filePaths) {
-        window.webContents.send('watch-contextMenu', {type: 3, outputDirectory: filePaths[0]})
+        window.webContents.send('contextMenu:watch', {type: 3, outputDirectory: filePaths[0]})
     }
 }
 

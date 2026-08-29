@@ -18,13 +18,13 @@ const loadResources = (window) => {
             };
         })
         const data = new Map(files.map(item => [item.path, item]));
-        window.webContents.send('watch-resources', {type: 0, data, event: 0})
+        window.webContents.send('resources:watch-change', {type: 0, data, event: 0})
     });
 }
 
 const loadFonts = (window) => {
     const fonts = reloadFonts();
-    window.webContents.send('watch-input-font', {type: -1, data: fonts})
+    window.webContents.send('fonts:watch-import', {type: -1, data: fonts})
 }
 
 

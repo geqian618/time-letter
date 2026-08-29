@@ -31,13 +31,13 @@ const watch = async (window, folderPath) => {
             if (!hasFont(family)) {
                 const font = {family, path: filePath, url: localPathToUrl(filePath), isSystem: false};
                 registerFont(font)
-                window.webContents.send('watch-input-font', {type: 0, data: new Map([[font.family, font]])})
+                window.webContents.send('fonts:watch-import', {type: 0, data: new Map([[font.family, font]])})
             }
         }).on('unlink', filePath => {
             const fileParse = path.parse(filePath);
             const family = fileParse.name;
             removeFont(family)
-            window.webContents.send('watch-input-font', {type: 1, data: {family}})
+            window.webContents.send('fonts:watch-import', {type: 1, data: {family}})
         }).on('error', error => {
             console.error('监控错误:', error);
         });
