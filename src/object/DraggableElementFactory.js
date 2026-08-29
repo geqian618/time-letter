@@ -2,7 +2,7 @@ import {getCurrentDate, getCurrentDateTime} from '@/utils/datetime'
 
 import {executeFunctionScript} from '@/utils/script-helper'
 
-import {projectSettings} from "@/config/project-settings";
+import {useProjectSettingsStore} from '@/stores/projectSettings'
 
 import CanvasManager from "@/object/CanvasManager";
 
@@ -34,7 +34,7 @@ class DraggableElementFactory {
 
     // 设置元数据内容
     #getMetadataContent(attribute) {
-        if (!this.metadataOptions || !projectSettings.value) {
+        if (!this.metadataOptions || !useProjectSettingsStore().settings) {
             console.warn('Metadata dependencies not set');
             return '';
         }

@@ -8,6 +8,9 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AboutDialog: typeof import('./src/components/index/dialogs/AboutDialog.vue')['default']
+    DeleteConfirmDialog: typeof import('./src/components/index/dialogs/DeleteConfirmDialog.vue')['default']
+    DownloadProgressDialog: typeof import('./src/components/index/dialogs/DownloadProgressDialog.vue')['default']
     ElAside: typeof import('element-plus/es')['ElAside']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCheckbox: typeof import('element-plus/es')['ElCheckbox']
@@ -34,7 +37,17 @@ declare module 'vue' {
     ElTabPane: typeof import('element-plus/es')['ElTabPane']
     ElTabs: typeof import('element-plus/es')['ElTabs']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
+    EnableTemplateDialog: typeof import('./src/components/index/dialogs/EnableTemplateDialog.vue')['default']
+    LeftPanel: typeof import('./src/components/index/LeftPanel.vue')['default']
+    PreviewPanel: typeof import('./src/components/index/PreviewPanel.vue')['default']
+    RenameTemplateDialog: typeof import('./src/components/index/dialogs/RenameTemplateDialog.vue')['default']
+    RightPanel: typeof import('./src/components/index/RightPanel.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SaveTemplateDialog: typeof import('./src/components/index/dialogs/SaveTemplateDialog.vue')['default']
+    SettingsDialog: typeof import('./src/components/index/dialogs/SettingsDialog.vue')['default']
+    TextResourceDialog: typeof import('./src/components/index/dialogs/TextResourceDialog.vue')['default']
+    TextResourceManagerDialog: typeof import('./src/components/index/dialogs/TextResourceManagerDialog.vue')['default']
+    WorkspacePanel: typeof import('./src/components/index/WorkspacePanel.vue')['default']
   }
 }
