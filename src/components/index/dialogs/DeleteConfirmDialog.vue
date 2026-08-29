@@ -29,8 +29,8 @@ const settingsStore = useProjectSettingsStore()
 
 // 取消删除：恢复删除提示开关并关闭弹窗
 const cancelRemoveSelectedCanvas = () => {
-  if (!settingsStore.settings.others.deleteTipVisible) {
-    settingsStore.settings.others.deleteTipVisible = true;
+  if (!settingsStore.projectSettings.others.deleteTipVisible) {
+    settingsStore.projectSettings.others.deleteTipVisible = true;
   }
   canvasesStore.deleteTipsDialogVisible = false;
 }

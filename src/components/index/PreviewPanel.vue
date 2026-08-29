@@ -160,7 +160,7 @@ const triggerContextMenu = (e) => {
 const watchImportImagess = () => {
   window.electronAPI.watchImportImages(async (event, data) => {
     if (data) {
-      const shootingTimeFormat = settingsStore.settings.metadata.others.shootingTimeFormat;
+      const shootingTimeFormat = settingsStore.projectSettings.metadata.others.shootingTimeFormat;
       for (let [path, picture] of data) {
         if (!CanvasManager.hasCanvas(path)) {
           const settings = new CanvasSettings()
@@ -168,12 +168,12 @@ const watchImportImagess = () => {
           if (metadata) {
             settings.originalMetadata = _.cloneDeep(metadata);
             if (metadata.focalLength) {
-              if (settingsStore.settings.metadata.others.enableEquivalentFocalSegment) {
-                metadata.focalLength = Number.parseInt(metadata.focalLength * settingsStore.settings.metadata.others.conversionMultiple)
+              if (settingsStore.projectSettings.metadata.others.enableEquivalentFocalSegment) {
+                metadata.focalLength = Number.parseInt(metadata.focalLength * settingsStore.projectSettings.metadata.others.conversionMultiple)
               }
             }
             for (let key in metadata) {
-              const format = settingsStore.settings.metadata.formats[key];
+              const format = settingsStore.projectSettings.metadata.formats[key];
               let value = metadata[key];
               if (key === 'shootingTime' && value && !['yyyy-MM-dd HH:mm:ss', 'YYYY-MM-DD HH:mm:ss'].includes(shootingTimeFormat)) {
                 value = formatDate(parseDate(value, 'yyyy-MM-dd HH:mm:ss'), shootingTimeFormat);

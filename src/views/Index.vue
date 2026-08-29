@@ -127,9 +127,9 @@ const handleLeftSidebarResize = (e) => {
       workspace.idealWidth = newPreviewPercent / 100 * clientWidth;
 
       // 存储到项目设置
-      settingsStore.settings.resize.leftSidebar.width = `${sidebarPercent}%`;
-      settingsStore.settings.resize.canvasWorkspace.width = `${previewPercent}%`;
-      StorageManager.saveProjectSettings(settingsStore.settings);
+      settingsStore.projectSettings.resize.leftSidebar.width = `${sidebarPercent}%`;
+      settingsStore.projectSettings.resize.canvasWorkspace.width = `${previewPercent}%`;
+      StorageManager.saveProjectSettings(settingsStore.projectSettings);
     }
   };
 
@@ -187,9 +187,9 @@ const handleRightSidebarResize = (e) => {
       workspace.idealWidth = newPreviewPercent / 100 * clientWidth;
 
       // 存储到项目设置
-      settingsStore.settings.resize.rightSidebar.width = `${sidebarPercent}%`;
-      settingsStore.settings.resize.canvasWorkspace.width = `${previewPercent}%`;
-      StorageManager.saveProjectSettings(settingsStore.settings);
+      settingsStore.projectSettings.resize.rightSidebar.width = `${sidebarPercent}%`;
+      settingsStore.projectSettings.resize.canvasWorkspace.width = `${previewPercent}%`;
+      StorageManager.saveProjectSettings(settingsStore.projectSettings);
     }
   };
 
@@ -245,11 +245,11 @@ const handleBottomSidebarResize = (e) => {
       workspace.idealHeight = newPreviewPercent / 100 * clientHeight;
 
       // 存储到项目设置
-      settingsStore.settings.resize.bottomSidebar.height = `${sidebarPercent}%`;
-      settingsStore.settings.resize.canvasWorkspace.height = `${previewPercent}%`;
-      settingsStore.settings.resize.leftSidebar.height = `${previewPercent}`;
-      settingsStore.settings.resize.rightSidebar.height = `${previewPercent}%`;
-      StorageManager.saveProjectSettings(settingsStore.settings);
+      settingsStore.projectSettings.resize.bottomSidebar.height = `${sidebarPercent}%`;
+      settingsStore.projectSettings.resize.canvasWorkspace.height = `${previewPercent}%`;
+      settingsStore.projectSettings.resize.leftSidebar.height = `${previewPercent}`;
+      settingsStore.projectSettings.resize.rightSidebar.height = `${previewPercent}%`;
+      StorageManager.saveProjectSettings(settingsStore.projectSettings);
     }
   };
 

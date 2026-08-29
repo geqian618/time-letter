@@ -106,8 +106,8 @@ const watchContextMenu = () => {
         removeSelectedCanvas()
       } else if (type === 2) {
         if (!canvasesStore.selectedPreviewList?.size) return
-        canvasesStore.deleteTipsDialogVisible = settingsStore.settings.others.deleteTipVisible;
-        if (!settingsStore.settings.others.deleteTipVisible) {
+        canvasesStore.deleteTipsDialogVisible = settingsStore.projectSettings.others.deleteTipVisible;
+        if (!settingsStore.projectSettings.others.deleteTipVisible) {
           permanentlyRemoveSelectedCanvas();
         }
       } else if (type === 3) {
@@ -148,7 +148,7 @@ const watchContextMenu = () => {
         });
 
         window.electronAPI.requestExportFiles(_.cloneDeep({
-          projectSettings: settingsStore.settings,
+          projectSettings: settingsStore.projectSettings,
           outputDirectory: data.outputDirectory,
           settings
         }))
@@ -179,7 +179,7 @@ const initCanvasSize = () => {
 
   setTimeout(() => {
 
-    const {canvasWorkspace: canvasWorkspaceResize} = settingsStore.settings.resize;
+    const {canvasWorkspace: canvasWorkspaceResize} = settingsStore.projectSettings.resize;
 
     const {clientWidth, clientHeight} = canvasesStore.getDomRefs().page;
 
@@ -241,7 +241,7 @@ const initCanvasSize = () => {
 }
 
 const renderCanvasScrollbar = () => {
-  canvasWorkspaceRef.value.style.overflow = settingsStore.settings.appearance.enableScrollbar ? 'auto' : 'hidden'
+  canvasWorkspaceRef.value.style.overflow = settingsStore.projectSettings.appearance.enableScrollbar ? 'auto' : 'hidden'
 }
 
 
@@ -297,7 +297,7 @@ const renderCanvas = async (canvas) => {
     backgroundCanvasEditor.resizeCanvas(width, height);
     const {idealWidth, idealHeight} = canvasWorkspaceRef.value;
     const initZoom = Math.min(idealHeight / height, idealWidth / width);
-    const scale = initZoom * settingsStore.settings.others.defaultCanvasScale;
+    const scale = initZoom * settingsStore.projectSettings.others.defaultCanvasScale;
     canvasEditor.setZoom(scale)
     backgroundCanvasEditor.setZoom(scale)
     backgroundCanvasEditor.addElement(background);
@@ -371,8 +371,8 @@ const permanentlyRemoveSelectedCanvas = () => {
   const selectedPaths = Array.from(canvasesStore.selectedPreviewList.keys());
   window.electronAPI.deleteImages(selectedPaths)
   removeSelectedCanvas();
-  if (!settingsStore.settings.others.deleteTipVisible) {
-    settingsStore.settings.others.deleteTipVisible = false;
+  if (!settingsStore.projectSettings.others.deleteTipVisible) {
+    settingsStore.projectSettings.others.deleteTipVisible = false;
   }
   canvasesStore.deleteTipsDialogVisible = false
 }
@@ -525,7 +525,7 @@ const useTemplate = async (settings, path) => {
 
   const {idealWidth: containerWidth, idealHeight: containerHeight} = canvasWorkspaceRef.value;
   const initZoom = Math.min(containerHeight / imageHeight, containerWidth / imageWidth);
-  const zoom = initZoom * settingsStore.settings.others.defaultCanvasScale;
+  const zoom = initZoom * settingsStore.projectSettings.others.defaultCanvasScale;
   const idealZoom = Math.min(idealHeight / imageHeight, idealWidth / imageWidth);
 
   const zoomRatio = initZoom / idealZoom;
@@ -829,7 +829,7 @@ const handleKeyDownMoveElement = (event) => {
 
   event.preventDefault();
 
-  const step = settingsStore.settings.others.movingStepSize / canvas.initZoom;
+  const step = settingsStore.projectSettings.others.movingStepSize / canvas.initZoom;
 
   const activeElements = canvasEditor.getActiveElements();
 

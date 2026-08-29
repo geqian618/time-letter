@@ -727,7 +727,7 @@ const requestImportBorderImage = () => {
 
 // 选中画布元素时（选项对象被整体替换）自动展开对应的属性子菜单
 watch(textOptions, (newVal, oldValue) => {
-  if (newVal === oldValue || !settingsStore.settings.others.optionAnchorPoint) return
+  if (newVal === oldValue || !settingsStore.projectSettings.others.optionAnchorPoint) return
   openSubMenu('3')
   nextTick(() => {
     document.getElementById('text-options').scrollIntoView({behavior: 'smooth'});
@@ -735,7 +735,7 @@ watch(textOptions, (newVal, oldValue) => {
 })
 
 watch(imageOptions, (newVal, oldValue) => {
-  if (newVal === oldValue || !settingsStore.settings.others.optionAnchorPoint) return
+  if (newVal === oldValue || !settingsStore.projectSettings.others.optionAnchorPoint) return
   openSubMenu('4')
   nextTick(() => {
     document.getElementById('image-options').scrollIntoView({behavior: 'smooth'});
