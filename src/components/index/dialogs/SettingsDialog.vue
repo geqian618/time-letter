@@ -1,9 +1,6 @@
 <template>
   <div class="dialog-wrapper">
-    <el-dialog v-model="settingsDialogVisible"
-               title="偏好设置"
-               top="10vh"
-               width="750">
+    <el-dialog v-model="settingsDialogVisible" title="偏好设置" top="10vh" width="750">
       <el-tabs type="border-card" class="demo-tabs">
         <el-tab-pane label="导出">
           <div class="border-box">
