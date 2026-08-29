@@ -58,9 +58,9 @@ import EnableTemplateDialog from '@/components/index/dialogs/EnableTemplateDialo
 import AboutDialog from '@/components/index/dialogs/AboutDialog.vue'
 import DeleteConfirmDialog from '@/components/index/dialogs/DeleteConfirmDialog.vue'
 
-import {useProjectSettingsStore} from '@/stores/projectSettings'
+import {useProjectSettingsStore} from '@/stores/project-settings'
 import {useTemplatesStore} from '@/stores/templates'
-import {useTextResourcesStore} from '@/stores/textResources'
+import {useTextResourcesStore} from '@/stores/text-resources'
 import {useCanvasesStore} from '@/stores/canvases'
 
 const settingsStore = useProjectSettingsStore()

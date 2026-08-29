@@ -41,7 +41,7 @@ import {TextResource} from '@/object/Configuration'
 
 import StorageManager from '@/object/StorageManager'
 
-import {useTextResourcesStore} from '@/stores/textResources'
+import {useTextResourcesStore} from '@/stores/text-resources'
 
 const textResourcesStore = useTextResourcesStore()
 

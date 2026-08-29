@@ -37,7 +37,7 @@ import {canvasActions} from '@/object/CanvasActions'
 import {BorderOptions, PhotographOptions} from '@/object/Configuration'
 
 import {useCanvasesStore} from '@/stores/canvases'
-import {useProjectSettingsStore} from '@/stores/projectSettings'
+import {useProjectSettingsStore} from '@/stores/project-settings'
 import {useTemplatesStore} from '@/stores/templates'
 
 const canvasesStore = useCanvasesStore()

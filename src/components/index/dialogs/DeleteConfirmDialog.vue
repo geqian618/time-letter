@@ -21,7 +21,7 @@
 import {canvasActions} from '@/object/CanvasActions'
 
 import {useCanvasesStore} from '@/stores/canvases'
-import {useProjectSettingsStore} from '@/stores/projectSettings'
+import {useProjectSettingsStore} from '@/stores/project-settings'
 
 const canvasesStore = useCanvasesStore()
 

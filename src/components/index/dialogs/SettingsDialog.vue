@@ -377,9 +377,9 @@ import {FontSettings} from '@/object/Configuration'
 
 import StorageManager from '@/object/StorageManager'
 
-import {useProjectSettingsStore} from '@/stores/projectSettings'
+import {useProjectSettingsStore} from '@/stores/project-settings'
 import {useCanvasesStore} from '@/stores/canvases'
-import {outputSizeOptions, downloadThreadsOptions, defaultSettings} from '@/config/default-project-settings'
+import {outputSizeOptions, downloadThreadsOptions, defaultProjectSettings} from '@/config/default-project-settings'
 
 const settingsStore = useProjectSettingsStore()
 
@@ -565,7 +565,7 @@ const removeExpiredFonts = (cacheFonts, availableFonts) => {
 
 // 设置导入（type0）：合并设置并按差异联动画布 / 主题 / 布局；设置导出（type1）
 const watchProjectSettings = () => {
-  window.electronAPI.watchProjectSettings((event, {type, data: {settings: importedSettings, filePath}}) => {
+  window.electronAPI.watchProjectSettings((event, {type, data: {settings: userSettings, filePath}}) => {
     if (type === 0) {
 
       const {
@@ -578,9 +578,10 @@ const watchProjectSettings = () => {
         resize: newResize,
         others: newOthers,
         metadata: {formats: newFormats, others: newConversion}
-      } = importedSettings;
+      } = userSettings;
 
-      const newUserSettings = settingsStore.mergeProjectSettings(importedSettings)
+      const newUserSettings = settingsStore.mergeProjectSettings(userSettings)
+
       if (!_.isEqual(oldOthers, newOthers)) {
         handleCanvasScale()
         renderCanvasScrollbar()
@@ -623,7 +624,7 @@ const handleThemeChange = () => {
 
 // 重置元数据格式并重新格式化画布元数据
 const resetMetadataSettings = () => {
-  settingsStore.settings.metadata = _.cloneDeep(defaultSettings.metadata)
+  settingsStore.settings.metadata = _.cloneDeep(defaultProjectSettings.metadata)
   handleUpdateMetadata()
 }
 

@@ -663,7 +663,7 @@ import {Rect, Image} from '@/canvas/CanvasEditor'
 import CanvasManager from '@/object/CanvasManager'
 
 import {useCanvasesStore} from '@/stores/canvases'
-import {useProjectSettingsStore} from '@/stores/projectSettings'
+import {useProjectSettingsStore} from '@/stores/project-settings'
 
 const canvasesStore = useCanvasesStore()
 

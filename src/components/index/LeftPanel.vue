@@ -84,7 +84,7 @@ import StorageManager from '@/object/StorageManager'
 
 import {useCanvasesStore} from '@/stores/canvases'
 import {useTemplatesStore} from '@/stores/templates'
-import {useTextResourcesStore} from '@/stores/textResources'
+import {useTextResourcesStore} from '@/stores/text-resources'
 
 const canvasesStore = useCanvasesStore()
 
