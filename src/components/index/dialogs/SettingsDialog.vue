@@ -1,359 +1,362 @@
 <template>
-  <el-dialog v-model="settingsDialogVisible"
-             title="偏好设置"
-             top="10vh"
-             width="750">
-    <el-tabs type="border-card" class="demo-tabs">
-      <el-tab-pane label="导出">
-        <div class="border-box">
-          <span class="border-label">图片尺寸</span>
-          <div class="options">
-            <div class="option">
-              <span class="label">调整方式：</span>
-              <el-select v-model="settingsStore.projectSettings.outputSettings.outputSize.type"
-                         placeholder="Select"
-                         class="value"
-                         size="small">
-                <el-option
-                    v-for="item in outputSizeOptions"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"/>
-              </el-select>
-            </div>
-            <div class="option" v-show="settingsStore.projectSettings.outputSettings.outputSize.type===1">
-              <span class="label">宽度：</span>
-              <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.width"
-                        size="small"
-                        class="value"
-                        placeholder="宽尺寸"/>
-              <span>&nbsp;px</span>
-            </div>
-            <div class="option" v-show="settingsStore.projectSettings.outputSettings.outputSize.type ===2">
-              <span class="label">高度：</span>
-              <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.height"
-                        size="small"
-                        class="value"
-                        placeholder="高尺寸"/>
-              <span>&nbsp;px</span>
-            </div>
-
-            <div class="option" v-show="settingsStore.projectSettings.outputSettings.outputSize.type===3">
-              <span class="label">最大宽度：</span>
-              <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.maxWidth"
-                        size="small"
-                        class="value"
-                        placeholder="最大宽度"/>
-              <span>&nbsp;px</span>
-            </div>
-
-            <div class="option" v-show="settingsStore.projectSettings.outputSettings.outputSize.type===3">
-              <span class="label">最大高度：</span>
-              <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.maxHeight"
-                        size="small"
-                        class="value"
-                        placeholder="最大高度"/>
-              <span>&nbsp;px</span>
-            </div>
-
-          </div>
-        </div>
-        <div class="border-box">
-          <span class="border-label">图片设置</span>
-          <div class="options">
-            <div class="option">
-              <span class="label">输出格式：</span>
-              <el-select class="value" v-model="settingsStore.projectSettings.outputSettings.extname" size="small">
-                <el-option
-                    v-for="item in [{label:'原格式', value: 0}, {label:'JPEG', value:1}, {label:'PNG', value: 2}, {label:'WEBP', value: 3}]"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"/>
-              </el-select>
-            </div>
-            <div class="option" v-show="[1,3].includes(settingsStore.projectSettings.outputSettings.extname) ">
-              <span class="label">图片品质：</span>
-              <div class="slider-demo-block">
-                <el-slider
-                    v-model="settingsStore.projectSettings.outputSettings.quality"
-                    class="value"
-                    :min="1"
-                    :max="100"
-                    size="small"
-                    show-input/>
+  <div class="dialog-wrapper">
+    <el-dialog v-model="settingsDialogVisible"
+               title="偏好设置"
+               top="10vh"
+               width="750">
+      <el-tabs type="border-card" class="demo-tabs">
+        <el-tab-pane label="导出">
+          <div class="border-box">
+            <span class="border-label">图片尺寸</span>
+            <div class="options">
+              <div class="option">
+                <span class="label">调整方式：</span>
+                <el-select v-model="settingsStore.projectSettings.outputSettings.outputSize.type"
+                           placeholder="Select"
+                           class="value"
+                           size="small">
+                  <el-option
+                      v-for="item in outputSizeOptions"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"/>
+                </el-select>
               </div>
-            </div>
-            <div class="option">
-              <span class="label">同步元数据：</span>
-              <el-switch
-                  v-model="settingsStore.projectSettings.outputSettings.isSynchronizeMetadata"
-                  class="value"
-                  style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
-            </div>
-          </div>
-        </div>
-        <div class="border-box">
-          <span class="border-label">文件命名</span>
-          <div class="options">
-            <div class="option">
-              <span class="label">命名方式：</span>
-              <el-select class="value" v-model="settingsStore.projectSettings.outputSettings.fileNaming.basename"
-                         size="small">
-                <el-option
-                    v-for="item in [{label:'原名称', value: 0}, {label:'序号', value: 1}, {label:'随机名称', value: 2}]"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"/>
-              </el-select>
-            </div>
-            <div class="option">
-              <span class="label">前缀：</span>
-              <el-input class="value"
-                        spellcheck="false"
-                        v-model="settingsStore.projectSettings.outputSettings.fileNaming.prefix"
-                        size="small">
-              </el-input>
-            </div>
-            <div class="option">
-              <span class="label">后缀：</span>
-              <el-input class="value"
-                        spellcheck="false"
-                        v-model="settingsStore.projectSettings.outputSettings.fileNaming.suffix"
-                        size="small">
-              </el-input>
-            </div>
-          </div>
-        </div>
-      </el-tab-pane>
-      <el-tab-pane label="外观">
-        <div class="border-box">
-          <span class="border-label">主题</span>
-          <div class="options">
-            <div class="option">
-              <span class="label">主题模式：</span>
-              <el-radio-group
-                  v-model="settingsStore.projectSettings.appearance.theme"
-                  @change="handleThemeChange">
-                <el-radio-button value="dark">深色</el-radio-button>
-                <el-radio-button value="light">浅色</el-radio-button>
-                <el-radio-button value="system">跟随系统</el-radio-button>
-              </el-radio-group>
-            </div>
-          </div>
-        </div>
-        <div class="border-box">
-          <span class="border-label">画布视口</span>
-          <div class="options">
-            <div class="option">
-              <span class="label">滚动条：</span>
-              <el-switch
-                  @change="renderCanvasScrollbar"
-                  v-model="settingsStore.projectSettings.appearance.enableScrollbar"
-                  class="value"
-                  style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
-            </div>
-          </div>
-        </div>
-      </el-tab-pane>
-      <el-tab-pane label="元数据">
-        <div class="border-box">
-          <span class="border-label">格式化</span>
-          <div class="options">
-            <div class="option">
-              <span class="label">相机品牌：</span>
-              <el-input spellcheck="false"
-                        class="metadata-input"
-                        @change="handleUpdateMetadata"
-                        v-model="settingsStore.projectSettings.metadata.formats.cameraBrand">
-              </el-input>
-            </div>
-            <div class="option">
-              <span class="label">相机型号：</span>
-              <el-input spellcheck="false"
-                        class="metadata-input"
-                        @change="handleUpdateMetadata"
-                        v-model="settingsStore.projectSettings.metadata.formats.cameraModel">
-              </el-input>
-            </div>
-            <div class="option">
-              <span class="label">镜头型号：</span>
-              <el-input spellcheck="false"
-                        class="metadata-input"
-                        @change="handleUpdateMetadata"
-                        v-model="settingsStore.projectSettings.metadata.formats.lensModel">
-              </el-input>
-            </div>
-            <div class="option">
-              <span class="label">焦段：</span>
-              <el-input spellcheck="false"
-                        class="metadata-input"
-                        @change="handleUpdateMetadata"
-                        v-model="settingsStore.projectSettings.metadata.formats.focalLength">
-              </el-input>
-            </div>
-            <div class="option">
-              <span class="label">ISO：</span>
-              <el-input spellcheck="false"
-                        class="metadata-input"
-                        @change="handleUpdateMetadata"
-                        v-model="settingsStore.projectSettings.metadata.formats.iso">
-              </el-input>
-            </div>
-            <div class="option">
-              <span class="label">快门：</span>
-              <el-input spellcheck="false"
-                        class="metadata-input"
-                        @change="handleUpdateMetadata"
-                        v-model="settingsStore.projectSettings.metadata.formats.shutter">
-              </el-input>
-            </div>
-            <div class="option">
-              <span class="label">光圈：</span>
-              <el-input spellcheck="false"
-                        class="metadata-input"
-                        @change="handleUpdateMetadata"
-                        v-model="settingsStore.projectSettings.metadata.formats.aperture">
-              </el-input>
-            </div>
-            <div class="option">
-              <span class="label">拍摄日期：</span>
-              <el-input spellcheck="false"
-                        class="metadata-input shooting-time"
-                        @change="handleUpdateMetadata"
-                        v-model="settingsStore.projectSettings.metadata.formats.shootingTime">
-              </el-input>
-              <span class="label shooting-time-label">日期格式：</span>
-              <el-input spellcheck="false"
-                        class="metadata-input shooting-time"
-                        @change="handleUpdateMetadata"
-                        v-model="settingsStore.projectSettings.metadata.others.shootingTimeFormat">
-              </el-input>
-            </div>
-            <div class="option">
-              <span class="label">文件名称：</span>
-              <el-input spellcheck="false"
-                        class="metadata-input"
-                        @change="handleUpdateMetadata"
-                        v-model="settingsStore.projectSettings.metadata.formats.filename">
-              </el-input>
-            </div>
-          </div>
-        </div>
-
-        <div class="border-box">
-          <span class="border-label">焦距转换</span>
-          <div class="options">
-            <div class="option">
-              <span class="label">等效焦距：</span>
-              <el-switch
-                  @change="handleFocalLength(0)"
-                  v-model="settingsStore.projectSettings.metadata.others.enableEquivalentFocalSegment"
-                  class="value"
-                  style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
-            </div>
-            <div class="option">
-              <span class="label">转换倍数：</span>
-              <el-input class="value"
-                        spellcheck="false"
-                        @change="handleFocalLength(1)"
-                        v-model="settingsStore.projectSettings.metadata.others.conversionMultiple">
-              </el-input>
-            </div>
-          </div>
-        </div>
-        <div class="operation">
-          <el-button type="info" @click="resetMetadataSettings">重置</el-button>
-        </div>
-      </el-tab-pane>
-      <el-tab-pane label="性能">
-        <div class="border-box">
-          <span class="border-label">下载</span>
-          <div class="options">
-            <div class="option">
-              <span class="label">线程数：</span>
-              <el-select class="value" v-model="settingsStore.projectSettings.performance.downloadThreads" size="small">
-                <el-option
-                    v-for="item in downloadThreadsOptions"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"/>
-              </el-select>
-            </div>
-          </div>
-        </div>
-      </el-tab-pane>
-      <el-tab-pane label="字体">
-        <el-table size="small" height="400" highlight-current-row :data="settingsStore.availableFonts" border
-                  @cell-dblclick="handleActivateInput">
-          <el-table-column fixed prop="family" label="字体家族" show-overflow-tooltip/>
-          <el-table-column prop="familyAlias" label="字体别名" show-overflow-tooltip>
-            <template #default="scope">
-              <input type="text"
-                     spellcheck="false"
-                     @focusout="handleStopActivateInput(scope.row)"
-                     v-show="scope.row.editable"
-                     style="height: 100%;user-select: none;width: fit-content;background-color: transparent;outline: none;border: none"
-                     v-model="scope.row.familyAlias">
-              <div v-show="!scope.row.editable">{{ scope.row.familyAlias }}</div>
-            </template>
-          </el-table-column>
-        </el-table>
-      </el-tab-pane>
-      <el-tab-pane label="其他">
-        <div class="border-box">
-          <span class="border-label">个性化</span>
-          <div class="options">
-            <div class="option">
-              <span class="label">属性锚点：</span>
-              <el-switch
-                  v-model="settingsStore.projectSettings.others.optionAnchorPoint"
-                  class="value"
-                  style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
-            </div>
-            <div class="option">
-              <span class="label">删除提示：</span>
-              <el-switch
-                  v-model="settingsStore.projectSettings.others.deleteTipVisible"
-                  class="value"
-                  style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
-            </div>
-          </div>
-        </div>
-        <div class="border-box">
-          <span class="border-label">画布</span>
-          <div class="options">
-            <div class="option">
-              <span class="label">移动步长：</span>
-              <div class="slider-demo-block">
-                <el-slider
-                    v-model="settingsStore.projectSettings.others.movingStepSize"
-                    class="value"
-                    :min="1"
-                    :max="100"
-                    size="small"
-                    show-input/>
+              <div class="option" v-show="settingsStore.projectSettings.outputSettings.outputSize.type===1">
+                <span class="label">宽度：</span>
+                <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.width"
+                          size="small"
+                          class="value"
+                          placeholder="宽尺寸"/>
+                <span>&nbsp;px</span>
               </div>
+              <div class="option" v-show="settingsStore.projectSettings.outputSettings.outputSize.type ===2">
+                <span class="label">高度：</span>
+                <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.height"
+                          size="small"
+                          class="value"
+                          placeholder="高尺寸"/>
+                <span>&nbsp;px</span>
+              </div>
+
+              <div class="option" v-show="settingsStore.projectSettings.outputSettings.outputSize.type===3">
+                <span class="label">最大宽度：</span>
+                <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.maxWidth"
+                          size="small"
+                          class="value"
+                          placeholder="最大宽度"/>
+                <span>&nbsp;px</span>
+              </div>
+
+              <div class="option" v-show="settingsStore.projectSettings.outputSettings.outputSize.type===3">
+                <span class="label">最大高度：</span>
+                <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.maxHeight"
+                          size="small"
+                          class="value"
+                          placeholder="最大高度"/>
+                <span>&nbsp;px</span>
+              </div>
+
             </div>
-            <div class="option">
-              <span class="label">默认缩放：</span>
-              <div class="slider-demo-block">
-                <el-slider
-                    @change="handleCanvasScale"
-                    v-model="settingsStore.projectSettings.others.defaultCanvasScale"
+          </div>
+          <div class="border-box">
+            <span class="border-label">图片设置</span>
+            <div class="options">
+              <div class="option">
+                <span class="label">输出格式：</span>
+                <el-select class="value" v-model="settingsStore.projectSettings.outputSettings.extname" size="small">
+                  <el-option
+                      v-for="item in [{label:'原格式', value: 0}, {label:'JPEG', value:1}, {label:'PNG', value: 2}, {label:'WEBP', value: 3}]"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"/>
+                </el-select>
+              </div>
+              <div class="option" v-show="[1,3].includes(settingsStore.projectSettings.outputSettings.extname) ">
+                <span class="label">图片品质：</span>
+                <div class="slider-demo-block">
+                  <el-slider
+                      v-model="settingsStore.projectSettings.outputSettings.quality"
+                      class="value"
+                      :min="1"
+                      :max="100"
+                      size="small"
+                      show-input/>
+                </div>
+              </div>
+              <div class="option">
+                <span class="label">同步元数据：</span>
+                <el-switch
+                    v-model="settingsStore.projectSettings.outputSettings.isSynchronizeMetadata"
                     class="value"
-                    :min="0.05"
-                    :max="1"
-                    :step="0.05"
-                    size="small"
-                    show-input/>
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
               </div>
             </div>
           </div>
-        </div>
-      </el-tab-pane>
-      <!--        <el-tab-pane label="图片"></el-tab-pane>-->
-    </el-tabs>
-  </el-dialog>
+          <div class="border-box">
+            <span class="border-label">文件命名</span>
+            <div class="options">
+              <div class="option">
+                <span class="label">命名方式：</span>
+                <el-select class="value" v-model="settingsStore.projectSettings.outputSettings.fileNaming.basename"
+                           size="small">
+                  <el-option
+                      v-for="item in [{label:'原名称', value: 0}, {label:'序号', value: 1}, {label:'随机名称', value: 2}]"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"/>
+                </el-select>
+              </div>
+              <div class="option">
+                <span class="label">前缀：</span>
+                <el-input class="value"
+                          spellcheck="false"
+                          v-model="settingsStore.projectSettings.outputSettings.fileNaming.prefix"
+                          size="small">
+                </el-input>
+              </div>
+              <div class="option">
+                <span class="label">后缀：</span>
+                <el-input class="value"
+                          spellcheck="false"
+                          v-model="settingsStore.projectSettings.outputSettings.fileNaming.suffix"
+                          size="small">
+                </el-input>
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane label="外观">
+          <div class="border-box">
+            <span class="border-label">主题</span>
+            <div class="options">
+              <div class="option">
+                <span class="label">主题模式：</span>
+                <el-radio-group
+                    v-model="settingsStore.projectSettings.appearance.theme"
+                    @change="handleThemeChange">
+                  <el-radio-button value="dark">深色</el-radio-button>
+                  <el-radio-button value="light">浅色</el-radio-button>
+                  <el-radio-button value="system">跟随系统</el-radio-button>
+                </el-radio-group>
+              </div>
+            </div>
+          </div>
+          <div class="border-box">
+            <span class="border-label">画布视口</span>
+            <div class="options">
+              <div class="option">
+                <span class="label">滚动条：</span>
+                <el-switch
+                    @change="renderCanvasScrollbar"
+                    v-model="settingsStore.projectSettings.appearance.enableScrollbar"
+                    class="value"
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane label="元数据">
+          <div class="border-box">
+            <span class="border-label">格式化</span>
+            <div class="options">
+              <div class="option">
+                <span class="label">相机品牌：</span>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          @change="handleUpdateMetadata"
+                          v-model="settingsStore.projectSettings.metadata.formats.cameraBrand">
+                </el-input>
+              </div>
+              <div class="option">
+                <span class="label">相机型号：</span>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          @change="handleUpdateMetadata"
+                          v-model="settingsStore.projectSettings.metadata.formats.cameraModel">
+                </el-input>
+              </div>
+              <div class="option">
+                <span class="label">镜头型号：</span>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          @change="handleUpdateMetadata"
+                          v-model="settingsStore.projectSettings.metadata.formats.lensModel">
+                </el-input>
+              </div>
+              <div class="option">
+                <span class="label">焦段：</span>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          @change="handleUpdateMetadata"
+                          v-model="settingsStore.projectSettings.metadata.formats.focalLength">
+                </el-input>
+              </div>
+              <div class="option">
+                <span class="label">ISO：</span>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          @change="handleUpdateMetadata"
+                          v-model="settingsStore.projectSettings.metadata.formats.iso">
+                </el-input>
+              </div>
+              <div class="option">
+                <span class="label">快门：</span>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          @change="handleUpdateMetadata"
+                          v-model="settingsStore.projectSettings.metadata.formats.shutter">
+                </el-input>
+              </div>
+              <div class="option">
+                <span class="label">光圈：</span>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          @change="handleUpdateMetadata"
+                          v-model="settingsStore.projectSettings.metadata.formats.aperture">
+                </el-input>
+              </div>
+              <div class="option">
+                <span class="label">拍摄日期：</span>
+                <el-input spellcheck="false"
+                          class="metadata-input shooting-time"
+                          @change="handleUpdateMetadata"
+                          v-model="settingsStore.projectSettings.metadata.formats.shootingTime">
+                </el-input>
+                <span class="label shooting-time-label">日期格式：</span>
+                <el-input spellcheck="false"
+                          class="metadata-input shooting-time"
+                          @change="handleUpdateMetadata"
+                          v-model="settingsStore.projectSettings.metadata.others.shootingTimeFormat">
+                </el-input>
+              </div>
+              <div class="option">
+                <span class="label">文件名称：</span>
+                <el-input spellcheck="false"
+                          class="metadata-input"
+                          @change="handleUpdateMetadata"
+                          v-model="settingsStore.projectSettings.metadata.formats.filename">
+                </el-input>
+              </div>
+            </div>
+          </div>
+
+          <div class="border-box">
+            <span class="border-label">焦距转换</span>
+            <div class="options">
+              <div class="option">
+                <span class="label">等效焦距：</span>
+                <el-switch
+                    @change="handleFocalLength(0)"
+                    v-model="settingsStore.projectSettings.metadata.others.enableEquivalentFocalSegment"
+                    class="value"
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+              </div>
+              <div class="option">
+                <span class="label">转换倍数：</span>
+                <el-input class="value"
+                          spellcheck="false"
+                          @change="handleFocalLength(1)"
+                          v-model="settingsStore.projectSettings.metadata.others.conversionMultiple">
+                </el-input>
+              </div>
+            </div>
+          </div>
+          <div class="operation">
+            <el-button type="info" @click="resetMetadataSettings">重置</el-button>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane label="性能">
+          <div class="border-box">
+            <span class="border-label">下载</span>
+            <div class="options">
+              <div class="option">
+                <span class="label">线程数：</span>
+                <el-select class="value" v-model="settingsStore.projectSettings.performance.downloadThreads"
+                           size="small">
+                  <el-option
+                      v-for="item in downloadThreadsOptions"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"/>
+                </el-select>
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane label="字体">
+          <el-table size="small" height="400" highlight-current-row :data="settingsStore.availableFonts" border
+                    @cell-dblclick="handleActivateInput">
+            <el-table-column fixed prop="family" label="字体家族" show-overflow-tooltip/>
+            <el-table-column prop="familyAlias" label="字体别名" show-overflow-tooltip>
+              <template #default="scope">
+                <input type="text"
+                       spellcheck="false"
+                       @focusout="handleStopActivateInput(scope.row)"
+                       v-show="scope.row.editable"
+                       style="height: 100%;user-select: none;width: fit-content;background-color: transparent;outline: none;border: none"
+                       v-model="scope.row.familyAlias">
+                <div v-show="!scope.row.editable">{{ scope.row.familyAlias }}</div>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+        <el-tab-pane label="其他">
+          <div class="border-box">
+            <span class="border-label">个性化</span>
+            <div class="options">
+              <div class="option">
+                <span class="label">属性锚点：</span>
+                <el-switch
+                    v-model="settingsStore.projectSettings.others.optionAnchorPoint"
+                    class="value"
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+              </div>
+              <div class="option">
+                <span class="label">删除提示：</span>
+                <el-switch
+                    v-model="settingsStore.projectSettings.others.deleteTipVisible"
+                    class="value"
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+              </div>
+            </div>
+          </div>
+          <div class="border-box">
+            <span class="border-label">画布</span>
+            <div class="options">
+              <div class="option">
+                <span class="label">移动步长：</span>
+                <div class="slider-demo-block">
+                  <el-slider
+                      v-model="settingsStore.projectSettings.others.movingStepSize"
+                      class="value"
+                      :min="1"
+                      :max="100"
+                      size="small"
+                      show-input/>
+                </div>
+              </div>
+              <div class="option">
+                <span class="label">默认缩放：</span>
+                <div class="slider-demo-block">
+                  <el-slider
+                      @change="handleCanvasScale"
+                      v-model="settingsStore.projectSettings.others.defaultCanvasScale"
+                      class="value"
+                      :min="0.05"
+                      :max="1"
+                      :step="0.05"
+                      size="small"
+                      show-input/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
+        <!--        <el-tab-pane label="图片"></el-tab-pane>-->
+      </el-tabs>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup lang="js">
@@ -649,6 +652,17 @@ const handleStopActivateInput = (row, column) => {
 <style scoped lang="scss">
 @use '@/assets/styles/dialog';
 
+:deep(.el-tabs) {
+  .el-tabs__nav-scroll {
+    height: 35px;
+    background: var(--app-dialog-header);
+
+    .el-tabs__item {
+      font-size: 11px;
+    }
+  }
+}
+
 .el-tabs {
   width: 100%;
   max-height: 70vh;
@@ -670,7 +684,7 @@ const handleStopActivateInput = (row, column) => {
       border: 1px solid var(--app-border-strong);
       border-radius: 2px;
       padding: 15px 10px;
-      margin: 20px 0;
+      margin: 25px 0;
 
       .border-label {
         position: absolute;
@@ -741,6 +755,10 @@ const handleStopActivateInput = (row, column) => {
         }
       }
 
+    }
+
+    .border-box:first-child {
+      margin-top: 10px;
     }
 
     .border-box:last-child {

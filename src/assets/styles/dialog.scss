@@ -1,4 +1,8 @@
 // 各弹窗组件共用的 Element Plus 弹窗覆盖样式（由弹窗组件在 scoped 样式中 @use 引入）
+// 注意：scoped 样式中的 :deep(.el-dialog) 编译为 "[data-v-x] .el-dialog"，要求 .el-dialog 的
+// 祖先节点上存在组件的 data-v 属性。因此每个弹窗组件的模板必须用一层普通元素
+// （<div class="dialog-wrapper">）包裹 <el-dialog>，不能让 <el-dialog> 直接作为模板根节点，
+// 否则 Element Plus 内部的 Teleport/Transition 结构会导致 data-v 属性无处落点，覆盖样式不生效。
 
 :deep(.el-dialog) {
   background-color: var(--dialog-main-background-color);
@@ -49,37 +53,6 @@
     button:last-child {
       margin-right: 10px;
     }
-
   }
 
-  .el-tabs, .el-select {
-    background: var(--app-dialog-body-bg);
-  }
-
-  .el-tabs--border-card > .el-tabs__header .el-tabs__item {
-    color: var(--app-secondary-text);
-  }
-
-  .el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active {
-    color: var(--app-dialog-title);
-    background-color: var(--app-tabs-active-bg);
-  }
-
-  .el-tabs--border-card > .el-tabs__header .el-tabs__item:hover {
-    color: var(--app-accent-light);
-  }
-
-  .el-tabs .el-tabs__nav-scroll {
-    height: 25px;
-    background: var(--app-dialog-header);
-
-    .el-tabs__item {
-      height: 25px;
-      font-size: 11px;
-    }
-  }
-
-  .el-form {
-    padding: 10px 20px 0 20px;
-  }
 }

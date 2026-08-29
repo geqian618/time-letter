@@ -1,18 +1,20 @@
 <template>
-  <el-dialog v-model="canvasesStore.downloadProgressVisible"
-             title="导出进度"
-             align-center
-             @close="handleDownloadProgressClose"
-             @closed="handleDownloadProgressClosed"
-             :close-on-click-modal="false"
-             width="500">
-    <el-progress class="download-progress" :percentage="canvasesStore.downloadProgressPercentage"/>
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button type="info" @click="canvasesStore.downloadProgressVisible = false">取消</el-button>
-      </div>
-    </template>
-  </el-dialog>
+  <div class="dialog-wrapper">
+    <el-dialog v-model="canvasesStore.downloadProgressVisible"
+               title="导出进度"
+               align-center
+               @close="handleDownloadProgressClose"
+               @closed="handleDownloadProgressClosed"
+               :close-on-click-modal="false"
+               width="500">
+      <el-progress class="download-progress" :percentage="canvasesStore.downloadProgressPercentage"/>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="info" @click="canvasesStore.downloadProgressVisible = false">取消</el-button>
+        </div>
+      </template>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup lang="js">

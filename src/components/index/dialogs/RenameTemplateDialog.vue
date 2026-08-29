@@ -1,19 +1,21 @@
 <template>
-  <el-dialog v-model="templatesStore.renameTemplateDialogVisible" title="重命名" align-center width="350" draggable>
-    <el-form :model="templatesStore.oldTemplate" class="demo-form-inline" :rules="renameTemplateRules" ref="renameTemplateForm"
-             @submit.native.prevent>
-      <el-form-item label="预设名称" prop="rename">
-        <el-input v-focus="templatesStore.renameTemplateDialogVisible" v-model="templatesStore.oldTemplate.templateName" clearable
-                  @keyup.enter.native="renameTemplate"/>
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="templatesStore.renameTemplateDialogVisible = false">取消</el-button>
-        <el-button type="info" @click="renameTemplate">确认</el-button>
-      </div>
-    </template>
-  </el-dialog>
+  <div class="dialog-wrapper">
+    <el-dialog v-model="templatesStore.renameTemplateDialogVisible" title="重命名" align-center width="350" draggable>
+      <el-form :model="templatesStore.oldTemplate" class="demo-form-inline" :rules="renameTemplateRules" ref="renameTemplateForm"
+               @submit.native.prevent>
+        <el-form-item label="预设名称" prop="rename">
+          <el-input v-focus="templatesStore.renameTemplateDialogVisible" v-model="templatesStore.oldTemplate.templateName" clearable
+                    @keyup.enter.native="renameTemplate"/>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="templatesStore.renameTemplateDialogVisible = false">取消</el-button>
+          <el-button type="info" @click="renameTemplate">确认</el-button>
+        </div>
+      </template>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup lang="js">

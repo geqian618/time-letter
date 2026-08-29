@@ -1,23 +1,25 @@
 <template>
-  <el-dialog v-model="templatesStore.saveTemplateDialogVisible" title="保存预设模版" align-center width="350" draggable>
-    <el-form :model="templatesStore.newTemplate" class="demo-form-inline" :rules="saveTemplateRules" ref="saveTemplateForm"
-             @submit.native.prevent>
-      <el-form-item label="模板名称" prop="templateName">
-        <el-input v-model="templatesStore.newTemplate.templateName"
-                  ref="templateRef"
-                  v-focus="templatesStore.saveTemplateDialogVisible"
-                  placeholder="请输入模版名称"
-                  clearable
-                  @keyup.enter.native="saveTemplates"/>
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="templatesStore.saveTemplateDialogVisible = false">取消</el-button>
-        <el-button type="info" @click="saveTemplates">确认</el-button>
-      </div>
-    </template>
-  </el-dialog>
+  <div class="dialog-wrapper">
+    <el-dialog v-model="templatesStore.saveTemplateDialogVisible" title="保存预设模版" align-center width="350" draggable>
+      <el-form :model="templatesStore.newTemplate" class="demo-form-inline" :rules="saveTemplateRules" ref="saveTemplateForm"
+               @submit.native.prevent>
+        <el-form-item label="模板名称" prop="templateName">
+          <el-input v-model="templatesStore.newTemplate.templateName"
+                    ref="templateRef"
+                    v-focus="templatesStore.saveTemplateDialogVisible"
+                    placeholder="请输入模版名称"
+                    clearable
+                    @keyup.enter.native="saveTemplates"/>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="templatesStore.saveTemplateDialogVisible = false">取消</el-button>
+          <el-button type="info" @click="saveTemplates">确认</el-button>
+        </div>
+      </template>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup lang="js">

@@ -1,34 +1,36 @@
 <template>
-  <el-dialog align-center v-model="textResourcesStore.textResourceDialogVisible" :title="textResourcesStore.textResourceDialogTitle" width="500" draggable>
-    <el-form :model="textResourcesStore.textResource" class="text-label-form" ref="textResourceForm" :rules="textResourceRules"
-             label-width="auto"
-             @submit.native.prevent>
-      <el-form-item label="文本类型" prop="type">
-        <el-select v-model="textResourcesStore.textResource.type" placeholder="文本类型">
-          <el-option
-              v-for="(item,index) in [{label:'普通文本', value:'text'}, {label:'JavaScript脚本', value:'script'}]"
-              :key="index"
-              :label="item.label"
-              :value="item.value"/>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="提示" prop="tips">
-        <el-input v-model="textResourcesStore.textResource.tips" v-focus="textResourcesStore.textResourceDialogVisible"/>
-      </el-form-item>
-      <el-form-item label="文本" prop="content" v-if="textResourcesStore.textResource.type === 'text'">
-        <el-input v-model="textResourcesStore.textResource.content" :rows="4" type="textarea"/>
-      </el-form-item>
-      <el-form-item label="脚本" prop="script" v-if="textResourcesStore.textResource.type === 'script'">
-        <el-input v-model="textResourcesStore.textResource.script" :rows="4" type="textarea"/>
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="textResourcesStore.textResourceDialogVisible = false">取消</el-button>
-        <el-button type="info" @click="saveTextResource">确认</el-button>
-      </div>
-    </template>
-  </el-dialog>
+  <div class="dialog-wrapper">
+    <el-dialog align-center v-model="textResourcesStore.textResourceDialogVisible" :title="textResourcesStore.textResourceDialogTitle" width="500" draggable>
+      <el-form :model="textResourcesStore.textResource" class="text-label-form" ref="textResourceForm" :rules="textResourceRules"
+               label-width="auto"
+               @submit.native.prevent>
+        <el-form-item label="文本类型" prop="type">
+          <el-select v-model="textResourcesStore.textResource.type" placeholder="文本类型">
+            <el-option
+                v-for="(item,index) in [{label:'普通文本', value:'text'}, {label:'JavaScript脚本', value:'script'}]"
+                :key="index"
+                :label="item.label"
+                :value="item.value"/>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="提示" prop="tips">
+          <el-input v-model="textResourcesStore.textResource.tips" v-focus="textResourcesStore.textResourceDialogVisible"/>
+        </el-form-item>
+        <el-form-item label="文本" prop="content" v-if="textResourcesStore.textResource.type === 'text'">
+          <el-input v-model="textResourcesStore.textResource.content" :rows="4" type="textarea"/>
+        </el-form-item>
+        <el-form-item label="脚本" prop="script" v-if="textResourcesStore.textResource.type === 'script'">
+          <el-input v-model="textResourcesStore.textResource.script" :rows="4" type="textarea"/>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="textResourcesStore.textResourceDialogVisible = false">取消</el-button>
+          <el-button type="info" @click="saveTextResource">确认</el-button>
+        </div>
+      </template>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup lang="js">
