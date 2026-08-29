@@ -34,7 +34,7 @@ class DraggableElementFactory {
 
     // 设置元数据内容
     #getMetadataContent(attribute) {
-        if (!this.metadataOptions || !useProjectSettingsStore().settings) {
+        if (!this.metadataOptions) {
             console.warn('Metadata dependencies not set');
             return '';
         }
