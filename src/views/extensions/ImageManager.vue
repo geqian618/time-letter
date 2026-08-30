@@ -32,14 +32,16 @@
     </div>
 
     <div class="grid-wrapper" ref="gridWrapper" :class="{empty: !filteredImages.length}">
-      <div v-if="filteredImages.length" class="image-grid" :style="{gridTemplateColumns: gridColumns}">
+      <div v-if="filteredImages.length" class="image-grid"
+           :class="{'single-column': isSingleColumn}" :style="{gridTemplateColumns: gridColumns}">
         <div v-for="image in filteredImages" :key="image.path" class="image-cell"
-             :class="{selected: selectedPaths.has(image.path)}" @click="handleCellClick($event, image)">
+             :class="{selected: selectedPaths.has(image.path)}" :style="cellStyle"
+             @click="handleCellClick($event, image)">
           <div class="check-row">
             <span class="check" :class="{checked: selectedPaths.has(image.path)}"></span>
           </div>
           <div class="thumb" v-loading="!loadedPaths.has(image.path)"
-               element-loading-background="var(--app-thumb-bg)" :style="thumbStyle">
+               element-loading-background="var(--app-thumb-bg)">
             <img :src="thumbSrc(image)" loading="lazy" :alt="image.filename"
                  @load="loadedPaths.add(image.path)" @error="loadedPaths.add(image.path)">
           </div>
@@ -101,10 +103,12 @@ const measureWrapper = () => {
   wrapperHeight.value = gridWrapper.value?.clientHeight || 0
 }
 
-// 扣除网格容器内边距(24) + 单元格顶部内边距(5) + 文件名(约24) 后的缩略图高度
-const thumbStyle = computed(() => {
-  if (parseInt(columnCount.value) !== 1 || !wrapperHeight.value) return null
-  return {height: `${wrapperHeight.value - 53}px`, aspectRatio: 'auto'}
+// 一列模式：单元格占满网格可视区高度（扣除容器上下内边距 24），缩略图以 flex 填充剩余空间
+const isSingleColumn = computed(() => parseInt(columnCount.value) === 1)
+
+const cellStyle = computed(() => {
+  if (!isSingleColumn.value || !wrapperHeight.value) return null
+  return {height: `${wrapperHeight.value - 24}px`}
 })
 
 // 已完成加载的图片；缩略图尺寸变化后全部重新进入加载态，加载完成前显示动画遮罩
@@ -356,6 +360,13 @@ onBeforeUnmount(() => {
   .image-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+
+    // 一列模式：单元格固定高度，缩略图 flex 填充剩余空间，自适应复选框行与文件名高度
+    &.single-column .image-cell .thumb {
+      flex: 1;
+      min-height: 0;
+      aspect-ratio: auto;
+    }
   }
 
   // 未选中时单元格为白色（暗色主题用对应深色），相邻单元格以网格线分隔
@@ -365,7 +376,7 @@ onBeforeUnmount(() => {
     background: var(--el-bg-color);
     border-right: 1px solid var(--app-border);
     border-bottom: 1px solid var(--app-border);
-    padding: 5px 10px 0 5px;
+    padding: 5px 5px 0;
     cursor: pointer;
     display: flex;
     flex-direction: column;
