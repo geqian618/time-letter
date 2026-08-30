@@ -10,6 +10,16 @@
                      size="small" placeholder="按扩展名筛选">
             <el-option v-for="item in extnameOptions" :key="item" :label="item" :value="item"/>
           </el-select>
+          <el-input v-model="nameFilter" class="name-filter" size="small" clearable
+                    prefix-icon="Search" placeholder="输入名称匹配"/>
+        </div>
+        <div class="filter">
+          <span class="filter-label">列数：</span>
+          <el-select v-model="columnCount" class="column-select" size="small" placeholder="自动"
+                     clearable allow-create filterable>
+            <el-option label="自动" :value="0"/>
+            <el-option v-for="n in [1, 2, 3, 4, 5, 6, 8]" :key="n" :label="String(n)" :value="n"/>
+          </el-select>
         </div>
         <el-button size="small" :disabled="!selectedPaths.size" @click="clearSelected">清除选中</el-button>
         <span class="counter">已选 {{ selectedPaths.size }} / 共 {{ filteredImages.length }} 张</span>
@@ -21,13 +31,15 @@
       </div>
     </div>
 
-    <div class="grid-wrapper">
-      <div v-if="filteredImages.length" class="image-grid">
+    <div class="grid-wrapper" ref="gridWrapper">
+      <div v-if="filteredImages.length" class="image-grid" :style="{gridTemplateColumns: gridColumns}">
         <div v-for="image in filteredImages" :key="image.path" class="image-cell"
              :class="{selected: selectedPaths.has(image.path)}" @click="handleCellClick($event, image)">
           <span class="check" :class="{checked: selectedPaths.has(image.path)}"></span>
-          <div class="thumb">
-            <img :src="image.thumbUrl" :alt="image.filename">
+          <div class="thumb" v-loading="!loadedPaths.has(image.path)"
+               element-loading-background="var(--app-thumb-bg)" :style="thumbStyle">
+            <img :src="thumbSrc(image)" loading="lazy" :alt="image.filename"
+                 @load="loadedPaths.add(image.path)" @error="loadedPaths.add(image.path)">
           </div>
           <el-tooltip effect="light" :content="image.filename" placement="bottom" :show-after="500">
             <div class="filename">{{ image.filename }}</div>
@@ -41,7 +53,7 @@
 
 <script setup lang="js">
 
-import {ref, computed, onMounted, onBeforeUnmount} from 'vue'
+import {ref, computed, watch, onMounted, onBeforeUnmount} from 'vue'
 import {ElMessage} from 'element-plus'
 
 import StorageManager from '@/object/StorageManager'
@@ -53,13 +65,65 @@ const selectedPaths = ref(new Set())
 
 const filterExtnameList = ref([])
 
+// 文件名匹配关键字
+const nameFilter = ref('')
+
+// 网格列数：0 或未输入 = 自动按宽度自适应；输入正整数 = 固定列数
+const columnCount = ref(0)
+
+const gridColumns = computed(() => {
+  const count = parseInt(columnCount.value)
+  // minmax(0, 1fr)：忽略内容固有宽度强制均分，避免大图把轨道撑出窗口
+  return count >= 1 ? `repeat(${count}, minmax(0, 1fr))` : 'repeat(auto-fill, minmax(140px, 1fr))'
+})
+
+// 按列数估算所需缩略图高度（4:3 格子 × 设备像素比），钳制在 256~2048 并按 64 对齐，保证画质不浪费内存
+const thumbHeight = computed(() => {
+  const count = parseInt(columnCount.value)
+  if (!(count >= 1)) return 256
+  const dpr = window.devicePixelRatio || 1
+  return Math.min(2048, Math.max(256, Math.round(1200 / count * dpr / 64) * 64))
+})
+
+// 以请求高度重写缩略图地址（路径已编码，仅插入高度前缀）
+const thumbSrc = (image) => {
+  return thumbHeight.value === 256 ? image.thumbUrl : image.thumbUrl.replace('thumb:///', `thumb:///${thumbHeight.value}/`)
+}
+
+// 一列模式：缩略图高度按可视区动态计算，使每个单元格刚好占满一屏
+const gridWrapper = ref(null)
+
+const wrapperHeight = ref(0)
+
+const measureWrapper = () => {
+  wrapperHeight.value = gridWrapper.value?.clientHeight || 0
+}
+
+// 扣除网格容器内边距(24) + 单元格内边距(20) + 文件名(约24) 后的缩略图高度
+const thumbStyle = computed(() => {
+  if (parseInt(columnCount.value) !== 1 || !wrapperHeight.value) return null
+  return {height: `${wrapperHeight.value - 68}px`, aspectRatio: 'auto'}
+})
+
+// 已完成加载的图片；缩略图尺寸变化后全部重新进入加载态，加载完成前显示动画遮罩
+const loadedPaths = ref(new Set())
+
+watch(thumbHeight, () => loadedPaths.value.clear())
+
 // 后缀名筛选项（从当前图片数据动态提取）
 const extnameOptions = computed(() => [...new Set(images.value.map(image => image.extname).filter(Boolean))])
 
-// 筛选后的图片列表
+// 筛选后的图片列表：扩展名多选 + 文件名关键字匹配（不区分大小写），两者叠加生效
 const filteredImages = computed(() => {
-  if (!filterExtnameList.value.length) return images.value
-  return images.value.filter(image => filterExtnameList.value.includes(image.extname))
+  let list = images.value
+  if (filterExtnameList.value.length) {
+    list = list.filter(image => filterExtnameList.value.includes(image.extname))
+  }
+  const keyword = nameFilter.value.trim().toLowerCase()
+  if (keyword) {
+    list = list.filter(image => (image.filename || '').toLowerCase().includes(keyword))
+  }
+  return list
 })
 
 const isAllSelected = computed(() => {
@@ -181,6 +245,8 @@ onMounted(() => {
   document.title = '图片管理器'
   setupTheme()
   window.addEventListener('keydown', handleKeydown)
+  window.addEventListener('resize', measureWrapper)
+  measureWrapper()
   // 先注册监听，再拉取初始快照
   watchImageData()
   watchMoveResult()
@@ -189,6 +255,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)
+  window.removeEventListener('resize', measureWrapper)
   systemThemeMedia?.removeEventListener('change', applyTheme)
 })
 
@@ -242,7 +309,7 @@ onBeforeUnmount(() => {
     }
 
     .ext-filter {
-      width: 180px;
+      width: 150px;
 
       // 筛选 tag 适配亮暗主题（EP 的 info 标签默认不跟随主题）
       :deep(.el-tag) {
@@ -260,6 +327,15 @@ onBeforeUnmount(() => {
         }
       }
     }
+
+    .column-select {
+      width: 96px;
+    }
+
+    .name-filter {
+      width: 150px;
+      margin-left: 8px;
+    }
   }
 
   .grid-wrapper {
@@ -276,6 +352,7 @@ onBeforeUnmount(() => {
   // 未选中时单元格为白色（暗色主题用对应深色），相邻单元格以网格线分隔
   .image-cell {
     position: relative;
+    min-width: 0;
     background: var(--el-bg-color);
     border-right: 1px solid var(--app-border);
     border-bottom: 1px solid var(--app-border);
@@ -325,7 +402,10 @@ onBeforeUnmount(() => {
     }
 
     .thumb {
-      height: 110px;
+      // 高度随单元格宽度按 4:3 缩放，减少列数时图片随之放大
+      aspect-ratio: 4 / 3;
+      width: 100%;
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;

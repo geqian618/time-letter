@@ -516,12 +516,20 @@ const registerUncompressedImageProtocol = () => {
 const registerThumbnailProtocol = () => {
     protocol.handle('thumb', async (request) => {
         try {
-            const filePath = decodeURIComponent(request.url.replace('thumb:///', ''));
+            // 支持可选高度前缀 thumb:///<高度>/<路径>（如 thumb:///512/...），
+            // 渲染进程按显示尺寸请求对应分辨率，缺省 256
+            let rest = decodeURIComponent(request.url.replace('thumb:///', ''));
+            let thumbHeight = 256;
+            const sizeMatch = rest.match(/^(\d{2,4})\/(.+)$/);
+            if (sizeMatch) {
+                thumbHeight = Math.min(Math.max(parseInt(sizeMatch[1]), 64), 2048);
+                rest = sizeMatch[2];
+            }
+            const filePath = rest;
             const buffer = await fs.promises.readFile(filePath);
-            // 使用 sharp 读取图片，并生成缩略图
-            // resize 的参数为 { height: 256 } 表示高度固定为 256px，宽度自适应
+            // 使用 sharp 读取图片，并按请求高度生成缩略图，宽度自适应
             const thumbnail = await sharp(filePath)
-                .resize({height: 256}) // 高度固定，宽度自适应
+                .resize({height: thumbHeight})
                 .webp({quality: 80})   // 转换为 WebP 格式，质量 80
                 .toBuffer();
             if (thumbnail) {
