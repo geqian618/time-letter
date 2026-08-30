@@ -11,7 +11,7 @@
             <el-option v-for="item in extnameOptions" :key="item" :label="item" :value="item"/>
           </el-select>
           <el-input v-model="nameFilter" class="name-filter" size="small" clearable
-                    prefix-icon="Search" placeholder="输入名称匹配"/>
+                    prefix-icon="Search" placeholder="按输入名称筛选"/>
         </div>
         <div class="filter">
           <span class="filter-label">列数：</span>
@@ -31,7 +31,7 @@
       </div>
     </div>
 
-    <div class="grid-wrapper" ref="gridWrapper">
+    <div class="grid-wrapper" ref="gridWrapper" :class="{empty: !filteredImages.length}">
       <div v-if="filteredImages.length" class="image-grid" :style="{gridTemplateColumns: gridColumns}">
         <div v-for="image in filteredImages" :key="image.path" class="image-cell"
              :class="{selected: selectedPaths.has(image.path)}" @click="handleCellClick($event, image)">
@@ -342,6 +342,13 @@ onBeforeUnmount(() => {
     flex: 1;
     overflow: auto;
     padding: 12px;
+
+    // 无图片时空提示在窗口居中
+    &.empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   }
 
   .image-grid {
