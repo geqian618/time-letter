@@ -16,7 +16,7 @@
 
 <script setup lang="js">
 
-import {ref, onMounted} from 'vue'
+import {ref, onMounted, onUnmounted} from 'vue'
 
 import _ from 'lodash'
 
@@ -73,16 +73,14 @@ let scrollTimeout = null;
 
 let isCanvasDraggingMode = false
 
-// 注册画布工作区 DOM 引用，供其他组件读写布局参数
-onMounted(() => {
-  canvasesStore.registerCanvasRefs({
-    canvasWorkspace: canvasWorkspaceRef.value,
-    canvasElement: canvasElement.value,
-    backgroundElement: backgroundElement.value,
-  })
-
-  initCanvasSize()
-})
+// 缩放跟随动画状态：rAF 每帧读取画布过渡中的真实尺寸并同步滚动条，
+// 使光标下的内容点在整段 0.1s 缩放动画期间始终钉住，既保留平滑感又无漂移
+let zoomRafId = null
+// { sx, sy, w0, h0, fx, fy } 锚点，每次滚轮事件按当前状态刷新
+let zoomPin = null
+let zoomLastEvent = 0
+// 覆盖 100ms 过渡 + 连续滚轮重定向的余量
+const ZOOM_RAF_MS = 220
 
 const requestImportFiles = (options) => {
   window.electronAPI.requestImportFiles(options)
@@ -276,6 +274,8 @@ const updateScrollBar = (canvas) => {
 const renderCanvas = async (canvas) => {
   canvasElement.value.classList.remove('scale-animation')
   backgroundElement.value.classList.remove('scale-animation')
+  // 切换/重渲染画布时取消进行中的缩放跟随，避免旧锚点作用到新画布
+  cancelZoomPin()
   const currentVersion = ++renderVersion;
   if (!canvas.completed) {
     canvasEditor.clearCanvas();
@@ -718,24 +718,87 @@ const handleDragend = (event) => {
 }
 
 
-// 处理 canvas 缩放
+// 缩放跟随动画的逐帧同步（状态变量声明在 setup 顶部）
+function runZoomPin() {
+  zoomRafId = null
+  const workspace = canvasWorkspaceRef.value
+  if (!zoomPin || !workspace || !canvasElement.value || !canvasEditor) {
+    zoomPin = null
+    return
+  }
+  const rect = canvasElement.value.getBoundingClientRect()
+  const curW = rect.width
+  const curH = rect.height
+  // 目标滚动 = 起始滚动 + 居中伸缩一半 + 光标占比随尺寸变化
+  // 画布在 flex 容器中居中，尺寸变化时左右各伸缩一半；光标在画布中的相对占比 fx 不变
+  const wantLeft = zoomPin.sx + (zoomPin.w0 - curW) / 2 + zoomPin.fx * (curW - zoomPin.w0)
+  const wantTop = zoomPin.sy + (zoomPin.h0 - curH) / 2 + zoomPin.fy * (curH - zoomPin.h0)
+  const maxScrollLeft = Math.max(0, workspace.scrollWidth - workspace.clientWidth)
+  const maxScrollTop = Math.max(0, workspace.scrollHeight - workspace.clientHeight)
+  const newScrollLeft = Math.max(0, Math.min(wantLeft, maxScrollLeft))
+  const newScrollTop = Math.max(0, Math.min(wantTop, maxScrollTop))
+  workspace.scrollLeft = newScrollLeft
+  workspace.scrollTop = newScrollTop
+  const canvas = CanvasManager.getCurrentCanvas()
+  if (canvas) {
+    canvas.scrollLeft = newScrollLeft
+    canvas.scrollTop = newScrollTop
+  }
+  if (Date.now() - zoomLastEvent < ZOOM_RAF_MS) {
+    zoomRafId = requestAnimationFrame(runZoomPin)
+  } else {
+    zoomPin = null
+  }
+}
+
+function cancelZoomPin() {
+  if (zoomRafId != null) {
+    cancelAnimationFrame(zoomRafId)
+    zoomRafId = null
+  }
+  zoomPin = null
+}
+
+// 处理 canvas 缩放（以鼠标位置为锚点，带平滑动画且全程钉住光标）
 const handleCanvasResize = (event) => {
   // 阻止默认滚动行为
   event.preventDefault();
-  // 根据滚轮方向确定缩放方向
-  const direction = event.deltaY < 0 ? 'in' : 'out';
   const canvas = CanvasManager.getCurrentCanvas();
   if (!canvas) return
+  const workspace = canvasWorkspaceRef.value;
+  const oldZoom = canvasEditor.getZoom();
+  if (!oldZoom) return
+
+  // 计算并夹取缩放比例
+  const initZoom = canvas.initZoom;
+  const {maxZoom, minZoom} = zoomOptions;
+  const direction = event.deltaY < 0 ? 'in' : 'out';
+  let newZoom = direction === 'in' ? oldZoom + oldZoom * 0.1 : oldZoom - oldZoom * 0.1;
+  newZoom = Math.min(Math.max(minZoom * initZoom, newZoom), maxZoom * initZoom);
+  if (newZoom === oldZoom) return
+
+  // 以当前（可能正处在过渡中的）画布尺寸与光标位置重新建立锚点：
+  // fx/fy 为光标在画布中的相对占比（0~1），是缩放不变量
+  const rect = canvasElement.value.getBoundingClientRect();
+  zoomPin = {
+    sx: workspace.scrollLeft,
+    sy: workspace.scrollTop,
+    w0: rect.width,
+    h0: rect.height,
+    fx: (event.clientX - rect.left) / rect.width,
+    fy: (event.clientY - rect.top) / rect.height
+  }
+  zoomLastEvent = Date.now()
+
+  // 启用缩放动画（0.1s 过渡）
   canvasElement.value.classList.add('scale-animation')
   backgroundElement.value.classList.add('scale-animation')
-  const initZoom = canvas.initZoom;
-  const zoom = canvasEditor.getZoom();
-  const {maxZoom, minZoom} = zoomOptions;
-  let newZoom = direction === 'in' ? zoom + zoom * 0.1 : zoom - zoom * 0.1;
-  newZoom = Math.min(Math.max(minZoom * initZoom, newZoom), maxZoom * initZoom);
+  // 应用缩放：内部变换瞬时跳到 newZoom，CSS 盒子走 0.1s 过渡，rAF 同步滚动条钉住光标
   canvas.zoom = newZoom
   canvasEditor.setZoom(newZoom)
   backgroundCanvasEditor.setZoom(newZoom)
+
+  if (zoomRafId == null) zoomRafId = requestAnimationFrame(runZoomPin)
 }
 
 const handleDragMoveCanvas = (event) => {
@@ -913,6 +976,21 @@ useEventListener(document, 'keydown', handleRemoveElement)
 useEventListener(document, 'keydown', handleKeyDownMoveElement)
 useEventListener(document, 'keydown', triggerDragCanvas)
 useEventListener(document, 'keydown', preventSwitchingElements)
+
+// ---------- 生命周期 ----------
+// 注册画布工作区 DOM 引用，供其他组件读写布局参数
+onMounted(() => {
+  canvasesStore.registerCanvasRefs({
+    canvasWorkspace: canvasWorkspaceRef.value,
+    canvasElement: canvasElement.value,
+    backgroundElement: backgroundElement.value,
+  })
+
+  initCanvasSize()
+})
+
+// 卸载时取消进行中的缩放跟随，避免悬空 rAF
+onUnmounted(() => cancelZoomPin())
 
 </script>
 
