@@ -35,7 +35,9 @@
       <div v-if="filteredImages.length" class="image-grid" :style="{gridTemplateColumns: gridColumns}">
         <div v-for="image in filteredImages" :key="image.path" class="image-cell"
              :class="{selected: selectedPaths.has(image.path)}" @click="handleCellClick($event, image)">
-          <span class="check" :class="{checked: selectedPaths.has(image.path)}"></span>
+          <div class="check-row">
+            <span class="check" :class="{checked: selectedPaths.has(image.path)}"></span>
+          </div>
           <div class="thumb" v-loading="!loadedPaths.has(image.path)"
                element-loading-background="var(--app-thumb-bg)" :style="thumbStyle">
             <img :src="thumbSrc(image)" loading="lazy" :alt="image.filename"
@@ -99,10 +101,10 @@ const measureWrapper = () => {
   wrapperHeight.value = gridWrapper.value?.clientHeight || 0
 }
 
-// 扣除网格容器内边距(24) + 单元格内边距(20) + 文件名(约24) 后的缩略图高度
+// 扣除网格容器内边距(24) + 单元格顶部内边距(5) + 文件名(约24) 后的缩略图高度
 const thumbStyle = computed(() => {
   if (parseInt(columnCount.value) !== 1 || !wrapperHeight.value) return null
-  return {height: `${wrapperHeight.value - 68}px`, aspectRatio: 'auto'}
+  return {height: `${wrapperHeight.value - 53}px`, aspectRatio: 'auto'}
 })
 
 // 已完成加载的图片；缩略图尺寸变化后全部重新进入加载态，加载完成前显示动画遮罩
@@ -363,22 +365,25 @@ onBeforeUnmount(() => {
     background: var(--el-bg-color);
     border-right: 1px solid var(--app-border);
     border-bottom: 1px solid var(--app-border);
-    padding: 10px;
+    padding: 5px 10px 0 5px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
 
-    // 复选框：选中时填充主题色并打勾（层级高于加载遮罩的 z-index 2000，不被其覆盖）
+    // 复选框行：独占顶部一行，不遮挡下方图片
+    .check-row {
+      display: flex;
+      margin-bottom: 6px;
+    }
+
+    // 复选框：选中时填充主题色并打勾
     .check {
-      position: absolute;
-      top: 6px;
-      left: 6px;
+      position: relative;
       width: 16px;
       height: 16px;
       border: 1px solid var(--app-border-strong);
       border-radius: 3px;
       background: var(--el-bg-color);
-      z-index: 2001;
 
       &.checked {
         border-color: var(--app-accent);
@@ -387,13 +392,13 @@ onBeforeUnmount(() => {
         &::after {
           content: '';
           position: absolute;
-          left: 5px;
-          top: 2px;
+          left: 50%;
+          top: 50%;
           width: 4px;
           height: 8px;
           border: solid #fff;
           border-width: 0 1.5px 1.5px 0;
-          transform: rotate(45deg);
+          transform: translate(-50%, -55%) rotate(45deg);
         }
       }
     }
