@@ -368,7 +368,7 @@ onBeforeUnmount(() => {
     display: flex;
     flex-direction: column;
 
-    // 复选框：选中时填充主题色并打勾
+    // 复选框：选中时填充主题色并打勾（层级高于加载遮罩的 z-index 2000，不被其覆盖）
     .check {
       position: absolute;
       top: 6px;
@@ -378,7 +378,7 @@ onBeforeUnmount(() => {
       border: 1px solid var(--app-border-strong);
       border-radius: 3px;
       background: var(--el-bg-color);
-      z-index: 1;
+      z-index: 2001;
 
       &.checked {
         border-color: var(--app-accent);
