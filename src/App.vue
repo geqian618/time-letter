@@ -90,27 +90,24 @@ body .el-overlay {
   background-color: var(--app-overlay);
 }
 
-body .el-popper.is-light,
-body .el-popover.el-popper {
+body .el-popper.is-light, body .el-popover.el-popper {
   background-color: var(--el-bg-color-overlay);
   border: 1px solid var(--el-border-color-light);
   color: var(--el-text-color-regular);
   box-shadow: var(--app-popper-shadow);
 }
 
-body .el-input__wrapper,
-body .el-select__wrapper {
+body .el-input__wrapper, body .el-select__wrapper {
   background-color: var(--el-fill-color-blank);
   box-shadow: 0 0 0 1px var(--el-border-color) inset;
 }
 
-body .el-input__wrapper:hover,
-body .el-select__wrapper:hover {
+body .el-input__wrapper:hover, body .el-select__wrapper:hover {
   box-shadow: 0 0 0 1px var(--el-border-color-light) inset;
 }
 
-body .el-input__wrapper.is-focus,
-body .el-select__wrapper.is-focused {
+body .el-input__wrapper.is-focus, body .el-select__wrapper.is-focused {
   box-shadow: 0 0 0 1px var(--el-color-primary) inset;
 }
+
 </style>
