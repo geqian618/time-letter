@@ -45,11 +45,18 @@
       </div>
 
 
-      <el-dropdown trigger="click" placement="top-start" @command="handleZoom"
-                   popper-class="zoom-popper" class="zoom-dropdown">
+      <el-dropdown trigger="click" placement="top-start"
+                   @visible-change="handleVisibleChange"
+                   @command="handleZoom"
+                   popper-class="zoom-popper"
+                   class="zoom-dropdown">
         <div class="tab-wrapper">
-          <img src="/src/assets/icon/zoom-inactive.svg" class="inactive medium-size" alt="缩放">
-          <img src="/src/assets/icon/zoom-active.svg" class="active medium-size" alt="缩放">
+          <el-tooltip effect="dark" content="缩放" placement="top" :disabled="tooltipDisabled">
+            <img src="/src/assets/icon/zoom-inactive.svg" class="inactive medium-size" alt="缩放">
+          </el-tooltip>
+          <el-tooltip effect="dark" content="缩放" placement="top" :disabled="tooltipDisabled">
+            <img src="/src/assets/icon/zoom-active.svg" class="active medium-size" alt="缩放">
+          </el-tooltip>
         </div>
         <template #dropdown>
           <el-dropdown-menu>
@@ -88,7 +95,10 @@
 
 
     <div class="right-preview-bar">
-      <div class="counter">已选 {{ canvasesStore.selectedPreviewList.size }} / 共{{ canvasesStore.availableCanvases.size }}张</div>
+      <div class="counter">已选 {{ canvasesStore.selectedPreviewList.size }} / 共{{
+          canvasesStore.availableCanvases.size
+        }}张
+      </div>
       <div class="filter">
         <div class="filter-label">筛选：</div>
         <div class="filter-select">
@@ -162,6 +172,8 @@ const canvasesStore = useCanvasesStore()
 const settingsStore = useProjectSettingsStore()
 
 const previewList = ref(null)
+
+const tooltipDisabled = ref(false)
 
 // 预览列表右键菜单
 const triggerContextMenu = (e) => {
@@ -580,6 +592,11 @@ const handleZoom = (val) => {
   bgEditor?.setZoom(newZoom);
   canvasActions.reflowWorkspace?.();
 };
+
+
+const handleVisibleChange = (visible) => {
+  tooltipDisabled.value = visible
+}
 
 
 // Ctrl + A 全选预览图
