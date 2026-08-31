@@ -452,8 +452,6 @@ const clearCanvasElements = (path) => {
 const clearCanvas = () => {
   canvasEditor.clearCanvas();
   backgroundCanvasEditor.clearCanvas()
-  canvasEditor.renderAll();
-  backgroundCanvasEditor.renderAll();
   CanvasManager.setSelectedObject({path: '', previewElement: null})
 }
 

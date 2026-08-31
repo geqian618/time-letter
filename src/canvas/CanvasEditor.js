@@ -71,7 +71,6 @@ class CanvasEditor {
         this.hiddenInput = null;
 
 
-
         // 事件回调
         this.eventCallbacks = new Map();
 
@@ -91,7 +90,6 @@ class CanvasEditor {
      * 初始化编辑器
      */
     init() {
-
         //设置高质量渲染选项
         this.ctx.patternQuality = 'best';
         this.ctx.quality = 'best'
@@ -106,9 +104,21 @@ class CanvasEditor {
         if (this.isBrowser) {
             this.eventScope.addEventListener('mousedown', this.handleMouseDown);
             this.createHiddenInput();
+            // 设置响应式
+            this.elements = new ReactiveObserver([], (value) => {
+                const {target, property} = value;
+                if (['chars', 'ascent', 'descent', 'centerX', 'centerY', 'status'].includes(property)) return;
+                const callbacks = this.eventCallbacks.get(UPDATE_OBJECT);
+                if (callbacks && callbacks.size) {
+                    callbacks.forEach(callback => callback(target))
+                }
+                if (property === 'order') {
+                    this.elements.sort((a, b) => a.order - b.order);
+                }
+            }, {
+                deep: true
+            })
         }
-
-        this.resetElements([]);
     }
 
 
@@ -325,32 +335,25 @@ class CanvasEditor {
      * 移除全部元素
      */
     clearElements() {
-        this.resetElements([])
+        this.resetElements()
         this.activeElements = [];
     }
 
 
     /**
      * 重置元素
+     * @param {Array | undefined} [array] - 新数组，不传或传入非数组则重置为空数组
      */
     resetElements(array) {
+        // 规范化参数：确保是真正的数组，防止展开运算符报错
+        const newArray = Array.isArray(array) ? array : [];
+        // 非浏览器环境（如SSR）直接赋值，无需响应式
         if (!this.isBrowser) {
-            this.elements = array;
+            this.elements = newArray;
             return;
         }
-        this.elements = new ReactiveObserver(array, (value) => {
-            const {target, property} = value;
-            if (['chars', 'ascent', 'descent', 'centerX', 'centerY', 'status'].includes(property)) return;
-            const callbacks = this.eventCallbacks.get(UPDATE_OBJECT);
-            if (callbacks && callbacks.size) {
-                callbacks.forEach(callback => callback(target))
-            }
-            if (property === 'order') {
-                this.elements.sort((a, b) => a.order - b.order);
-            }
-        }, {
-            deep: true
-        })
+        // 从索引 0 开始，删除现有全部长度，并插入新数据，保持响应式代理不变
+        this.elements.splice(0, this.elements.length, ...newArray);
     }
 
 
@@ -436,7 +439,7 @@ class CanvasEditor {
             this.isEditing && this.finishEditing();
             this.activeElements = [];
         }
-        this.resetElements([])
+        this.resetElements()
         // 清除画布
         this.ctx.clearRect(0, 0, this.width, this.height);
     }
@@ -2875,6 +2878,7 @@ class ReactiveObserver {
      * @returns {*}
      */
     constructor(target, callback, options = {}) {
+
         this.callback = callback;
         this.proxyToRaw = new WeakMap();
         this.rawToProxy = new WeakMap();
