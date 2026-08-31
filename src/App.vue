@@ -110,4 +110,9 @@ body .el-input__wrapper.is-focus, body .el-select__wrapper.is-focused {
   box-shadow: 0 0 0 1px var(--el-color-primary) inset;
 }
 
+body .el-dropdown-menu__item.active {
+  color: var(--el-color-primary);
+  background-color: var(--el-color-primary-light-9);
+}
+
 </style>

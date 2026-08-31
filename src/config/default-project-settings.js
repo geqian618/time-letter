@@ -46,7 +46,8 @@ const defaultProjectSettings = {
         movingStepSize: 1,
         defaultCanvasScale: 0.75,
         deleteTipVisible: true,
-        autoCenterOnToggle: true
+        autoCenterOnToggle: true,
+        focalZoom: false
     },
     resize: {
         leftSidebar: {

@@ -6,7 +6,7 @@
           <div class="left-resize" v-show="!leftCollapsed" ref="leftResizeRef"
                @mousedown="handleLeftSidebarResize"></div>
           <LeftPanel v-show="!leftCollapsed"/>
-          <el-tooltip :content="leftCollapsed ? '展开左侧面板' : '收起左侧面板'" placement="right" effect="light">
+          <el-tooltip :content="leftCollapsed ? '展开左侧面板' : '收起左侧面板'" placement="right" effect="light" :disabled="tipDisabled">
             <button class="panel-toggle toggle-left" @click="toggleLeft">
               <svg v-if="!leftCollapsed" viewBox="0 0 24 24" width="12" height="12">
                 <path d="M14 6 L7 12 L14 18 Z" fill="currentColor"/>
@@ -24,7 +24,7 @@
           <div class="right-resize" v-show="!rightCollapsed" ref="rightResizeRef"
                @mousedown="handleRightSidebarResize"></div>
           <RightPanel v-show="!rightCollapsed"/>
-          <el-tooltip :content="rightCollapsed ? '展开右侧面板' : '收起右侧面板'" placement="left" effect="light">
+          <el-tooltip :content="rightCollapsed ? '展开右侧面板' : '收起右侧面板'" placement="left" effect="light" :disabled="tipDisabled">
             <button class="panel-toggle toggle-right" @click="toggleRight">
               <svg v-if="!rightCollapsed" viewBox="0 0 24 24" width="12" height="12">
                 <path d="M10 6 L17 12 L10 18 Z" fill="currentColor"/>
@@ -41,7 +41,7 @@
         <div class="bottom-resize" v-show="!bottomCollapsed" ref="bottomResizeRef"
              @mousedown="handleBottomSidebarResize"></div>
         <PreviewPanel v-show="!bottomCollapsed"/>
-        <el-tooltip :content="bottomCollapsed ? '展开底部面板' : '收起底部面板'" placement="top" effect="light">
+        <el-tooltip :content="bottomCollapsed ? '展开底部面板' : '收起底部面板'" placement="top" effect="light" :disabled="tipDisabled">
           <button class="panel-toggle toggle-bottom" @click="toggleBottom">
             <svg v-if="!bottomCollapsed" viewBox="0 0 24 24" width="12" height="12">
               <path d="M6 10 L12 17 L18 10 Z" fill="currentColor"/>
@@ -134,6 +134,14 @@ const savedBottomHeight = ref(25);
 
 const COLLAPSE_DURATION = 220;
 
+// 收放期间禁用收缩标记的悬浮提示：触发元素随面板移动后，popper 可能落到光标下方，
+// 被判定为“悬浮在提示上”而卡住不消失；动画期间禁用可强制隐藏，结束后恢复
+const tipDisabled = ref(false);
+const disableTooltipDuringAnim = () => {
+  tipDisabled.value = true;
+  setTimeout(() => { tipDisabled.value = false; }, COLLAPSE_DURATION + 60);
+};
+
 // 单一 rAF 循环：同时插值一组 CSS 百分比变量并逐帧重排居中画布。
 // 宽度变化与画布位置在同一帧、同一缓动推进，画布由起始位置平滑移至最终居中，
 // 避免宽度(CSS 过渡)与居中(rAF)分属两条时间线而产生的 “先漂左、再回正” 抖动。
@@ -162,6 +170,11 @@ const runResizeAnim = () => {
   } else {
     resizeAnim.onDone?.();
     resizeAnim = null;
+    // 开启“收放居中”时，动画结束后将所有画布的存储滚动也置为居中，
+    // 使切换任意画布时均居中显示（当前画布已由逐帧 reflow 实时居中，跳过）
+    if (settingsStore.projectSettings.others.autoCenterOnToggle) {
+      centerAllCanvases();
+    }
   }
 };
 
@@ -170,6 +183,7 @@ const animateResize = (vars, onDone) => {
     cancelAnimationFrame(resizeRafId);
     resizeRafId = null;
   }
+  disableTooltipDuringAnim();
   resizeAnim = {vars, duration: COLLAPSE_DURATION, start: performance.now(), onDone};
   resizeRafId = requestAnimationFrame(runResizeAnim);
 };
@@ -180,6 +194,23 @@ const syncWorkspaceIdealSize = (wsWidthPct, mainHeightPct) => {
   if (!ws || !page.value) return;
   ws.idealWidth = wsWidthPct / 100 * page.value.clientWidth;
   ws.idealHeight = mainHeightPct / 100 * page.value.clientHeight;
+};
+
+// 将所有（非当前）画布的存储滚动位置重置为居中：依据各画布宽高与当前工作区尺寸，
+// 复用 scrollBarMoveToCenter 的算法（wrapper = max(画布宽, 工作区宽)），不依赖 DOM 渲染
+const centerAllCanvases = () => {
+  const ws = canvasesStore.getWorkspace();
+  if (!ws) return;
+  const viewportW = ws.offsetWidth;
+  const viewportH = ws.offsetHeight;
+  const currentPath = CanvasManager.getSelectedPath();
+  for (const [path, canvas] of CanvasManager.getCanvases()) {
+    if (!canvas || !canvas.width || path === currentPath) continue;
+    const wrapperW = Math.max(canvas.width, viewportW);
+    const wrapperH = Math.max(canvas.height, viewportH);
+    canvas.scrollLeft = Math.max(0, (wrapperW - viewportW) / 2);
+    canvas.scrollTop = Math.max(0, (wrapperH - viewportH) / 2);
+  }
 };
 
 // 左侧面板：收起时宽度归零并等量归还给工作区，展开时反向

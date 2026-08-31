@@ -792,14 +792,16 @@ const handleCanvasResize = (event) => {
 
   // 以当前（可能正处在过渡中的）画布尺寸与光标位置重新建立锚点：
   // fx/fy 为光标在画布中的相对占比（0~1），是缩放不变量
+  // 焦点缩放关闭时以画布中心(0.5)为锚点（中心点缩放），开启时使用鼠标所在位置
   const rect = canvasElement.value.getBoundingClientRect();
+  const focalZoom = settingsStore.projectSettings.others.focalZoom;
   zoomPin = {
     sx: workspace.scrollLeft,
     sy: workspace.scrollTop,
     w0: rect.width,
     h0: rect.height,
-    fx: (event.clientX - rect.left) / rect.width,
-    fy: (event.clientY - rect.top) / rect.height
+    fx: focalZoom ? (event.clientX - rect.left) / rect.width : 0.5,
+    fy: focalZoom ? (event.clientY - rect.top) / rect.height : 0.5
   }
   zoomLastEvent = Date.now()
 

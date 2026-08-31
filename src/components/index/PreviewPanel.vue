@@ -44,6 +44,23 @@
         </el-tooltip>
       </div>
 
+
+      <el-dropdown trigger="click" placement="top-start" @command="handleZoom"
+                   popper-class="zoom-popper" class="zoom-dropdown">
+        <div class="tab-wrapper">
+          <img src="/src/assets/icon/zoom-inactive.svg" class="inactive medium-size" alt="缩放">
+          <img src="/src/assets/icon/zoom-active.svg" class="active medium-size" alt="缩放">
+        </div>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item v-for="item in zoomPresets" :key="item" :command="item"
+                              :class="{active: item === getZoomPct()}">
+              {{ item }}%
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+
       <div class="tab-wrapper">
         <el-tooltip effect="dark" content="全选" placement="top">
           <img src="/src/assets/icon/select-all-inactive.svg" class="inactive medium-size" alt="全选">
@@ -543,6 +560,28 @@ const handleMovePreviewList = useThrottle((e) => {
 }, 200);
 
 
+// 工具栏缩放下拉：点击图标弹出百分比预设，选中即应用（相对 initZoom，100% 即占满工作区的适配尺寸）
+const zoomPresets = [10, 25, 50, 75, 100, 150, 200, 300, 500];
+
+// 当前画布缩放百分比（直接从 canvas.zoom 读取，不另存响应式副本）
+const getZoomPct = () => {
+  const canvas = CanvasManager.getCurrentCanvas();
+  return canvas && canvas.initZoom ? Math.round(canvas.zoom / canvas.initZoom * 100) : 100;
+};
+
+const handleZoom = (val) => {
+  const canvas = CanvasManager.getCurrentCanvas();
+  const editor = canvasesStore.getCanvasEditor();
+  const bgEditor = canvasesStore.getBackgroundCanvasEditor();
+  if (!canvas || !canvas.initZoom || !editor) return;
+  const newZoom = canvas.initZoom * (val / 100);
+  canvas.zoom = newZoom;
+  editor.setZoom(newZoom);
+  bgEditor?.setZoom(newZoom);
+  canvasActions.reflowWorkspace?.();
+};
+
+
 // Ctrl + A 全选预览图
 useEventListener(document, 'keydown', handleSelectAllPreviewElements)
 
@@ -606,6 +645,12 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
       .active:hover {
         opacity: 1;
       }
+    }
+
+    .zoom-dropdown {
+      height: 100%;
+      display: flex;
+      align-items: center;
     }
   }
 
