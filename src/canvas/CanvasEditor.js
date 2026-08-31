@@ -854,15 +854,13 @@ class CanvasEditor {
     }
 
     /**
-     * 获取元素的渲染宽高（image 需乘以 scale）
+     * 获取元素的渲染宽高（委托给元素自身的 getSelectionBounds，避免在此重复形状判断）
      * @param {Object} el - 元素
      * @returns {{w: number, h: number}}
      */
     _elementSize(el) {
-        if (el.type === 'image') {
-            return {w: (el.width || 0) * (el.scale || 1), h: (el.height || 0) * (el.scale || 1)};
-        }
-        return {w: el.width || 0, h: el.height || 0};
+        const {w, h} = el.getSelectionBounds();
+        return {w, h};
     }
 
     /**
@@ -872,13 +870,13 @@ class CanvasEditor {
      * @returns {{left: number|null, right: number|null, top: number|null, bottom: number|null, cx: number, cy: number}}
      */
     _targetAnchors(el) {
-        const {w, h} = this._elementSize(el);
-        const cx = el.x + w / 2;
-        const cy = el.y + h / 2;
+        const {x, y, w, h} = el.getSelectionBounds();
+        const cx = x + w / 2;
+        const cy = y + h / 2;
         if (el.angle) {
             return {left: null, right: null, top: null, bottom: null, cx, cy};
         }
-        return {left: el.x, right: el.x + w, top: el.y, bottom: el.y + h, cx, cy};
+        return {left: x, right: x + w, top: y, bottom: y + h, cx, cy};
     }
 
     /**
@@ -1713,6 +1711,11 @@ class Element {
 
     static EDITING = 'editing'
 
+    // 中心点坐标（所有形状通用；私有访问器，不可枚举，不进入 JSON 导出）
+    #centerX = 0;
+
+    #centerY = 0;
+
     constructor(options) {
 
         // 文本对象 id
@@ -1721,6 +1724,9 @@ class Element {
         this.x = options.x || 0;
 
         this.y = options.y || 0;
+
+        // 旋转角度（所有形状通用）
+        this.angle = options.angle || 0;
 
         this.status = 'none'
 
@@ -1734,6 +1740,80 @@ class Element {
 
         this.meta = options.meta || null
 
+        // 选中效果颜色，可自行覆盖
+        this.selectionColor = options.selectionColor || '#0066FF';
+
+    }
+
+    set centerX(value) {
+        this.#centerX = value;
+    }
+
+    get centerX() {
+        return this.#centerX;
+    }
+
+    set centerY(value) {
+        this.#centerY = value;
+    }
+
+    get centerY() {
+        return this.#centerY;
+    }
+
+    /**
+     * 元素的轴对齐包围盒（选中框、控制点、吸附均基于此）
+     * 基类不假设具体形状（如圆没有 width/height），故不提供默认实现，
+     * 由各子类按自身几何实现
+     * @returns {{x: number, y: number, w: number, h: number}}
+     */
+    getSelectionBounds() {
+        throw new Error('getSelectionBounds() must be implemented by subclass');
+    }
+
+    /**
+     * 绘制选中效果（实线包围盒 + 8 个方形控制点）
+     * 仅绘制外观，不实现拖拽缩放/旋转交互
+     * @param ctx
+     */
+    selection(ctx) {
+        const currentTransform = ctx.getTransform();
+        const scaleX = currentTransform.a; // 水平缩放
+        const scaleY = currentTransform.d; // 垂直缩放
+        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2 || 1;
+        const lineWidth = 1 / avgScale;
+        const {x, y, w, h} = this.getSelectionBounds();
+        ctx.save();
+        ctx.setLineDash([]);
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = this.selectionColor;
+        ctx.lineCap = 'butt';
+        if (this.angle) {
+            // 平移到中心点，旋转，再平移回来
+            ctx.translate(this.centerX, this.centerY);
+            ctx.rotate(this.angle * Math.PI / 180);
+            ctx.translate(-this.centerX, -this.centerY);
+        }
+        // 实线包围盒
+        ctx.beginPath();
+        ctx.rect(x, y, w, h);
+        ctx.stroke();
+        // 8 个控制点：4 个角 + 4 个边中点
+        const handleSize = 8 / avgScale;
+        const half = handleSize / 2;
+        const handles = [
+            [x, y], [x + w, y], [x, y + h], [x + w, y + h],
+            [x + w / 2, y], [x + w / 2, y + h], [x, y + h / 2], [x + w, y + h / 2]
+        ];
+        ctx.fillStyle = '#ffffff';
+        ctx.lineWidth = 1 / avgScale;
+        for (const [hx, hy] of handles) {
+            ctx.beginPath();
+            ctx.rect(hx - half, hy - half, handleSize, handleSize);
+            ctx.fill();
+            ctx.stroke();
+        }
+        ctx.restore();
     }
 
 }
@@ -1747,10 +1827,6 @@ class Text extends Element {
     #width = 0;
 
     #height = 0;
-
-    #centerX = 0;
-
-    #centerY = 0;
 
     #chars = []
 
@@ -1772,9 +1848,6 @@ class Text extends Element {
         this.columnWidth = options.columnWidth || 1;
 
         this.lineHeight = options.lineHeight || 1;
-
-        // 旋转角度
-        this.angle = options.angle || 0;
 
         // 字体属性
         this.fontSize = options.fontSize || 16;
@@ -1817,26 +1890,6 @@ class Text extends Element {
 
     set height(value) {
         this.#height = value;
-    }
-
-
-    set centerX(value) {
-        this.#centerX = value;
-    }
-
-
-    get centerX() {
-        return this.#centerX;
-    }
-
-
-    set centerY(value) {
-        this.#centerY = value;
-    }
-
-
-    get centerY() {
-        return this.#centerY;
     }
 
 
@@ -2014,6 +2067,14 @@ class Text extends Element {
         return localX >= this.x && localX <= this.x + this.width && localY >= this.y && localY <= this.y + this.height;
     }
 
+
+    /**
+     * 选中包围盒（矩形文本基于 width/height）
+     * @returns {{x: number, y: number, w: number, h: number}}
+     */
+    getSelectionBounds() {
+        return {x: this.x, y: this.y, w: this.width, h: this.height};
+    }
 
     /**
      * 测量文字宽高
@@ -2279,31 +2340,6 @@ class Text extends Element {
         };
     }
 
-    selection(ctx) {
-        // 获取当前变换矩阵的缩放比例
-        const currentTransform = ctx.getTransform();
-        const scaleX = currentTransform.a; // 水平缩放
-        const scaleY = currentTransform.d; // 垂直缩放
-        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
-        const color = 'red', lineCap = 'butt'
-        const lineWidth = 2 / avgScale;
-        ctx.save();
-        ctx.setLineDash([8 / avgScale, 5 / avgScale]);
-        ctx.lineWidth = lineWidth;
-        ctx.strokeStyle = color;
-        ctx.lineCap = lineCap;
-        if (this.angle !== 0) {
-            // 平移到文本中心点，旋转，再平移回来
-            ctx.translate(this.centerX, this.centerY);
-            ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-this.centerX, -this.centerY);
-        }
-        ctx.beginPath();
-        ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width + 2 * lineWidth, this.height + 2 * lineWidth);
-        ctx.stroke();
-        ctx.restore();
-    }
-
 
     /**
      * 绘制光标
@@ -2384,10 +2420,6 @@ class EditableText extends Text {
 
 class Image extends Element {
 
-    #centerX = 0;
-
-    #centerY = 0;
-
     constructor(image, options = {}) {
         if (!image) {
             throw new Error('Failed to load image, image is null');
@@ -2402,7 +2434,6 @@ class Image extends Element {
         this.width = options.width
         this.height = options.height
         this.alpha = options.alpha || 1
-        this.angle = options.angle || 0
         // 圆角属性
         this.radius = options.radius || 0;
         // 模糊强度
@@ -2437,23 +2468,6 @@ class Image extends Element {
     }
 
 
-    set centerX(value) {
-        this.#centerX = value;
-    }
-
-
-    set centerY(value) {
-        this.#centerY = value;
-    }
-
-    get centerX() {
-        return this.#centerX;
-    }
-
-
-    get centerY() {
-        return this.#centerY;
-    }
 
     static fromURL(src, options = {}) {
         return new Promise((resolve, reject) => {
@@ -2605,66 +2619,18 @@ class Image extends Element {
         ctx.closePath();
     }
 
-    selection(ctx) {
-        // 获取当前变换矩阵的缩放比例
-        const currentTransform = ctx.getTransform();
-        const scaleX = currentTransform.a; // 水平缩放
-        const scaleY = currentTransform.d; // 垂直缩放
-        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
-        const color = 'red', lineCap = 'butt'
-        const lineWidth = 2 / avgScale
-        ctx.save();
-        ctx.setLineDash([8 / avgScale, 5 / avgScale]);
-        ctx.lineWidth = lineWidth;
-        ctx.strokeStyle = color;
-        ctx.lineCap = lineCap;
-
-        if (this.angle !== 0) {
-            // 平移到文本中心点，旋转，再平移回来
-            ctx.translate(this.centerX, this.centerY);
-            ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-this.centerX, -this.centerY);
-        }
-
-        // 如果设置了圆角，绘制圆角选择框
-        if (this.radius > 0) {
-            const x = this.x - lineWidth;
-            const y = this.y - lineWidth;
-            const width = this.width * this.scale + 2 * lineWidth;
-            const height = this.height * this.scale + 2 * lineWidth;
-            const radius = Math.min(this.radius, width / 2, height / 2);
-
-            ctx.beginPath();
-            ctx.moveTo(x + radius, y);
-            ctx.lineTo(x + width - radius, y);
-            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-            ctx.lineTo(x + width, y + height - radius);
-            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-            ctx.lineTo(x + radius, y + height);
-            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-            ctx.lineTo(x, y + radius);
-            ctx.quadraticCurveTo(x, y, x + radius, y);
-            ctx.closePath();
-        } else {
-            // 绘制直角选择框
-            ctx.beginPath();
-            ctx.rect(this.x - lineWidth, this.y - lineWidth,
-                this.width * this.scale + 2 * lineWidth,
-                this.height * this.scale + 2 * lineWidth);
-        }
-
-        ctx.stroke();
-        ctx.restore();
+    /**
+     * 选中包围盒需按 scale 缩放
+     * @returns {{x: number, y: number, w: number, h: number}}
+     */
+    getSelectionBounds() {
+        return {x: this.x, y: this.y, w: this.width * this.scale, h: this.height * this.scale};
     }
 
 }
 
 
 class LazyImage extends Element {
-
-    #centerX = 0;
-
-    #centerY = 0;
 
     constructor(src, options = {}) {
         super(options);
@@ -2677,7 +2643,6 @@ class LazyImage extends Element {
         this.width = options.width
         this.height = options.height
         this.alpha = options.alpha || 1
-        this.angle = options.angle || 0
         // 圆角属性
         this.radius = options.radius || 0;
         // 模糊强度
@@ -2694,23 +2659,6 @@ class LazyImage extends Element {
     }
 
 
-    set centerX(value) {
-        this.#centerX = value;
-    }
-
-
-    set centerY(value) {
-        this.#centerY = value;
-    }
-
-    get centerX() {
-        return this.#centerX;
-    }
-
-
-    get centerY() {
-        return this.#centerY;
-    }
 
     load() {
         return new Promise((resolve, reject) => {
@@ -2893,64 +2841,17 @@ class LazyImage extends Element {
         ctx.closePath();
     }
 
-    selection(ctx) {
-        // 获取当前变换矩阵的缩放比例
-        const currentTransform = ctx.getTransform();
-        const scaleX = currentTransform.a; // 水平缩放
-        const scaleY = currentTransform.d; // 垂直缩放
-        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
-        const color = 'red', lineCap = 'butt'
-        const lineWidth = 2 / avgScale
-        ctx.save();
-        ctx.setLineDash([8 / avgScale, 5 / avgScale]);
-        ctx.lineWidth = lineWidth;
-        ctx.strokeStyle = color;
-        ctx.lineCap = lineCap;
-
-        if (this.angle !== 0) {
-            // 平移到文本中心点，旋转，再平移回来
-            ctx.translate(this.centerX, this.centerY);
-            ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-this.centerX, -this.centerY);
-        }
-
-        // 如果设置了圆角，绘制圆角选择框
-        if (this.radius > 0) {
-            const x = this.x - lineWidth;
-            const y = this.y - lineWidth;
-            const width = this.width * this.scale + 2 * lineWidth;
-            const height = this.height * this.scale + 2 * lineWidth;
-            const radius = Math.min(this.radius, width / 2, height / 2);
-
-            ctx.beginPath();
-            ctx.moveTo(x + radius, y);
-            ctx.lineTo(x + width - radius, y);
-            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-            ctx.lineTo(x + width, y + height - radius);
-            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-            ctx.lineTo(x + radius, y + height);
-            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-            ctx.lineTo(x, y + radius);
-            ctx.quadraticCurveTo(x, y, x + radius, y);
-            ctx.closePath();
-        } else {
-            // 绘制直角选择框
-            ctx.beginPath();
-            ctx.rect(this.x - lineWidth, this.y - lineWidth,
-                this.width * this.scale + 2 * lineWidth,
-                this.height * this.scale + 2 * lineWidth);
-        }
-        ctx.stroke();
-        ctx.restore();
+    /**
+     * 选中包围盒需按 scale 缩放
+     * @returns {{x: number, y: number, w: number, h: number}}
+     */
+    getSelectionBounds() {
+        return {x: this.x, y: this.y, w: this.width * this.scale, h: this.height * this.scale};
     }
 
 }
 
 class Rect extends Element {
-
-    #centerX = 0;
-
-    #centerY = 0;
 
     constructor(options) {
         super(options);
@@ -2961,7 +2862,6 @@ class Rect extends Element {
         this.radius = options.radius || 0
         this.stroke = options.stroke || 'rgba(0,0,0,1)'
         this.strokeWidth = options.strokeWidth || 0
-        this.angle = options.angle || 0
         this.radius = options.radius || 0
         this.lineDash = options.lineDash || [1, 1]
         this.lineCap = options.lineCap || 'butt'
@@ -2976,23 +2876,6 @@ class Rect extends Element {
     }
 
 
-    set centerX(value) {
-        this.#centerX = value;
-    }
-
-
-    set centerY(value) {
-        this.#centerY = value;
-    }
-
-    get centerX() {
-        return this.#centerX;
-    }
-
-
-    get centerY() {
-        return this.#centerY;
-    }
 
     contains(x, y) {
         // 如果未旋转，使用原来的轴对齐边界框检测
@@ -3014,29 +2897,13 @@ class Rect extends Element {
         return localX >= this.x && localX <= this.x + this.width && localY >= this.y && localY <= this.y + this.height;
     }
 
-    selection(ctx) {
-        // 获取当前变换矩阵的缩放比例
-        const currentTransform = ctx.getTransform();
-        const scaleX = currentTransform.a; // 水平缩放
-        const scaleY = currentTransform.d; // 垂直缩放
-        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
-        const color = 'red', lineCap = 'butt'
-        const lineWidth = 2 / avgScale
-        ctx.save();
-        ctx.setLineDash([8 / avgScale, 5 / avgScale]);
-        ctx.lineWidth = lineWidth;
-        ctx.strokeStyle = color;
-        ctx.lineCap = lineCap;
-        if (this.angle !== 0) {
-            // 平移到文本中心点，旋转，再平移回来
-            ctx.translate(this.centerX, this.centerY);
-            ctx.rotate(this.angle * Math.PI / 180);
-            ctx.translate(-this.centerX, -this.centerY);
-        }
-        ctx.beginPath();
-        ctx.rect(this.x - lineWidth, this.y - lineWidth, this.width + 2 * lineWidth, this.height + 2 * lineWidth);
-        ctx.stroke();
-        ctx.restore();
+
+    /**
+     * 选中包围盒（矩形基于 width/height）
+     * @returns {{x: number, y: number, w: number, h: number}}
+     */
+    getSelectionBounds() {
+        return {x: this.x, y: this.y, w: this.width, h: this.height};
     }
 
     draw(ctx) {
