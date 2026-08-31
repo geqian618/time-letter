@@ -363,10 +363,14 @@
               </div>
             </div>
           </div>
+          <div class="operation">
+            <el-button type="danger" @click="resetAllSettings">恢复全部默认设置</el-button>
+          </div>
         </el-tab-pane>
         <!--        <el-tab-pane label="图片"></el-tab-pane>-->
       </el-tabs>
     </el-dialog>
+    <ConfirmDialog ref="confirmRef"/>
   </div>
 </template>
 
@@ -396,11 +400,15 @@ import {useProjectSettingsStore} from '@/stores/project-settings'
 import {useCanvasesStore} from '@/stores/canvases'
 import {outputSizeOptions, downloadThreadsOptions, defaultProjectSettings} from '@/config/default-project-settings'
 
+import ConfirmDialog from '@/components/index/dialogs/ConfirmDialog.vue'
+
 const settingsStore = useProjectSettingsStore()
 
 const canvasesStore = useCanvasesStore()
 
 const settingsDialogVisible = ref(false)
+
+const confirmRef = ref(null)
 
 // 应用菜单"偏好设置"的 IPC 监听
 window.electronAPI.openSettingsDialog(() => {
@@ -642,6 +650,28 @@ const resetMetadataSettings = () => {
   settingsStore.projectSettings.metadata = _.cloneDeep(defaultProjectSettings.metadata)
   handleUpdateMetadata()
 }
+
+// 恢复全部设置为工厂默认（保留可用字体），并重新联动生效主题 / 布局 / 画布缩放 / 滚动条 / 元数据 / 焦距
+const resetAllSettings = async () => {
+  const ok = await confirmRef.value?.confirm({
+    title: '恢复默认设置',
+    message: '将恢复全部偏好设置为默认值（可用字体保留），是否继续？',
+    confirmText: '恢复',
+    cancelText: '取消',
+    confirmType: 'danger'
+  });
+  if (!ok) return; // 用户取消
+  settingsStore.resetProjectSettings();
+  // 重新生效（与设置导入联动保持一致）
+  handleCanvasScale();
+  renderCanvasScrollbar();
+  handleUpdateMetadata();
+  handleFocalLength(settingsStore.projectSettings.metadata.others.enableEquivalentFocalSegment ? 1 : 0);
+  initAreaResize();
+  canvasActions.centerCanvasScrollBar();
+  applyTheme(settingsStore.projectSettings.appearance?.theme || 'system');
+  Notification.success('已恢复全部默认设置', '提示');
+};
 
 // 双击单元格进入字体别名编辑
 const handleActivateInput = async (row, column, cell) => {

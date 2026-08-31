@@ -9,6 +9,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AboutDialog: typeof import('./src/components/index/dialogs/AboutDialog.vue')['default']
+    ConfirmDialog: typeof import('./src/components/index/dialogs/ConfirmDialog.vue')['default']
     DeleteConfirmDialog: typeof import('./src/components/index/dialogs/DeleteConfirmDialog.vue')['default']
     DownloadProgressDialog: typeof import('./src/components/index/dialogs/DownloadProgressDialog.vue')['default']
     ElAside: typeof import('element-plus/es')['ElAside']
