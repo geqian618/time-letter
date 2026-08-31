@@ -3003,6 +3003,7 @@ class ReactiveObserver {
             },
 
             set: (obj, prop, value) => {
+
                 const oldValue = obj[prop];
 
                 // 检查新旧值是否相等
