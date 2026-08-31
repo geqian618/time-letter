@@ -2,22 +2,55 @@
   <div>
     <div class="page-layout" ref="page">
       <div class="page-main" ref="pageMainRef">
-        <div class="page-left">
-          <div class="left-resize" ref="leftResizeRef" @mousedown="handleLeftSidebarResize"></div>
-          <LeftPanel/>
+        <div class="page-left" ref="leftPanelRef" :class="{collapsed: leftCollapsed}">
+          <div class="left-resize" v-show="!leftCollapsed" ref="leftResizeRef"
+               @mousedown="handleLeftSidebarResize"></div>
+          <LeftPanel v-show="!leftCollapsed"/>
+          <el-tooltip :content="leftCollapsed ? '展开左侧面板' : '收起左侧面板'" placement="right" effect="light">
+            <button class="panel-toggle toggle-left" @click="toggleLeft">
+              <svg v-if="!leftCollapsed" viewBox="0 0 24 24" width="12" height="12">
+                <path d="M14 6 L7 12 L14 18 Z" fill="currentColor"/>
+              </svg>
+              <svg v-else viewBox="0 0 24 24" width="12" height="12">
+                <path d="M10 6 L17 12 L10 18 Z" fill="currentColor"/>
+              </svg>
+            </button>
+          </el-tooltip>
         </div>
 
         <WorkspacePanel/>
 
-        <div class="page-right">
-          <div class="right-resize" ref="rightResizeRef" @mousedown="handleRightSidebarResize"></div>
-          <RightPanel/>
+        <div class="page-right" ref="rightPanelRef" :class="{collapsed: rightCollapsed}">
+          <div class="right-resize" v-show="!rightCollapsed" ref="rightResizeRef"
+               @mousedown="handleRightSidebarResize"></div>
+          <RightPanel v-show="!rightCollapsed"/>
+          <el-tooltip :content="rightCollapsed ? '展开右侧面板' : '收起右侧面板'" placement="left" effect="light">
+            <button class="panel-toggle toggle-right" @click="toggleRight">
+              <svg v-if="!rightCollapsed" viewBox="0 0 24 24" width="12" height="12">
+                <path d="M10 6 L17 12 L10 18 Z" fill="currentColor"/>
+              </svg>
+              <svg v-else viewBox="0 0 24 24" width="12" height="12">
+                <path d="M14 6 L7 12 L14 18 Z" fill="currentColor"/>
+              </svg>
+            </button>
+          </el-tooltip>
         </div>
       </div>
 
-      <div class="page-bottom">
-        <div class="bottom-resize" ref="bottomResizeRef" @mousedown="handleBottomSidebarResize"></div>
-        <PreviewPanel/>
+      <div class="page-bottom" ref="bottomPanelRef" :class="{collapsed: bottomCollapsed}">
+        <div class="bottom-resize" v-show="!bottomCollapsed" ref="bottomResizeRef"
+             @mousedown="handleBottomSidebarResize"></div>
+        <PreviewPanel v-show="!bottomCollapsed"/>
+        <el-tooltip :content="bottomCollapsed ? '展开底部面板' : '收起底部面板'" placement="top" effect="light">
+          <button class="panel-toggle toggle-bottom" @click="toggleBottom">
+            <svg v-if="!bottomCollapsed" viewBox="0 0 24 24" width="12" height="12">
+              <path d="M6 10 L12 17 L18 10 Z" fill="currentColor"/>
+            </svg>
+            <svg v-else viewBox="0 0 24 24" width="12" height="12">
+              <path d="M6 14 L12 7 L18 14 Z" fill="currentColor"/>
+            </svg>
+          </button>
+        </el-tooltip>
       </div>
 
     </div>
@@ -84,6 +117,157 @@ const leftResizeRef = ref(null);
 const rightResizeRef = ref(null);
 
 const bottomResizeRef = ref(null);
+
+// ---------- 面板收起 / 展开 ----------
+const leftPanelRef = ref(null);
+const rightPanelRef = ref(null);
+const bottomPanelRef = ref(null);
+
+const leftCollapsed = ref(false);
+const rightCollapsed = ref(false);
+const bottomCollapsed = ref(false);
+
+// 收起时暂存面板尺寸，展开时按此恢复
+const savedLeftWidth = ref(18);
+const savedRightWidth = ref(22);
+const savedBottomHeight = ref(25);
+
+const COLLAPSE_DURATION = 220;
+
+// 单一 rAF 循环：同时插值一组 CSS 百分比变量并逐帧重排居中画布。
+// 宽度变化与画布位置在同一帧、同一缓动推进，画布由起始位置平滑移至最终居中，
+// 避免宽度(CSS 过渡)与居中(rAF)分属两条时间线而产生的 “先漂左、再回正” 抖动。
+let resizeRafId = null;
+let resizeAnim = null;
+
+// 读取根元素上的百分比变量
+const readPct = (name) => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
+
+// 缓动函数
+const easeInOut = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+const runResizeAnim = () => {
+  resizeRafId = null;
+  const t = Math.min(1, (performance.now() - resizeAnim.start) / resizeAnim.duration);
+  const e = easeInOut(t);
+  const rootStyle = document.documentElement.style;
+  for (const v of resizeAnim.vars) {
+    rootStyle.setProperty(v.name, `${v.from + (v.to - v.from) * e}%`);
+  }
+  if (settingsStore.projectSettings.others.autoCenterOnToggle) {
+    canvasActions.reflowWorkspace?.();
+  }
+  if (t < 1) {
+    resizeRafId = requestAnimationFrame(runResizeAnim);
+  } else {
+    resizeAnim.onDone?.();
+    resizeAnim = null;
+  }
+};
+
+const animateResize = (vars, onDone) => {
+  if (resizeRafId != null) {
+    cancelAnimationFrame(resizeRafId);
+    resizeRafId = null;
+  }
+  resizeAnim = {vars, duration: COLLAPSE_DURATION, start: performance.now(), onDone};
+  resizeRafId = requestAnimationFrame(runResizeAnim);
+};
+
+// 收放后将画布工作区理想尺寸同步为目标值，供后续画布渲染计算缩放
+const syncWorkspaceIdealSize = (wsWidthPct, mainHeightPct) => {
+  const ws = canvasesStore.getWorkspace();
+  if (!ws || !page.value) return;
+  ws.idealWidth = wsWidthPct / 100 * page.value.clientWidth;
+  ws.idealHeight = mainHeightPct / 100 * page.value.clientHeight;
+};
+
+// 左侧面板：收起时宽度归零并等量归还给工作区，展开时反向
+const toggleLeft = () => {
+  const el = leftPanelRef.value;
+  const leftFrom = readPct('--page-left-width');
+  const wsFrom = readPct('--canvas-workspace-width');
+  const mainHeight = readPct('--page-main-height');
+  el.style.minWidth = '0';
+  if (!leftCollapsed.value) {
+    savedLeftWidth.value = leftFrom;
+    leftCollapsed.value = true;
+    const wsTo = wsFrom + leftFrom;
+    syncWorkspaceIdealSize(wsTo, mainHeight);
+    animateResize([
+      {name: '--page-left-width', from: leftFrom, to: 0},
+      {name: '--canvas-workspace-width', from: wsFrom, to: wsTo},
+    ]);
+  } else {
+    leftCollapsed.value = false;
+    const wsTo = Math.max(wsFrom - savedLeftWidth.value, 5);
+    syncWorkspaceIdealSize(wsTo, mainHeight);
+    animateResize([
+      {name: '--page-left-width', from: leftFrom, to: savedLeftWidth.value},
+      {name: '--canvas-workspace-width', from: wsFrom, to: wsTo},
+    ], () => {
+      el.style.minWidth = '';
+    });
+  }
+};
+
+// 右侧面板
+const toggleRight = () => {
+  const el = rightPanelRef.value;
+  const rightFrom = readPct('--page-right-width');
+  const wsFrom = readPct('--canvas-workspace-width');
+  const mainHeight = readPct('--page-main-height');
+  el.style.minWidth = '0';
+  if (!rightCollapsed.value) {
+    savedRightWidth.value = rightFrom;
+    rightCollapsed.value = true;
+    const wsTo = wsFrom + rightFrom;
+    syncWorkspaceIdealSize(wsTo, mainHeight);
+    animateResize([
+      {name: '--page-right-width', from: rightFrom, to: 0},
+      {name: '--canvas-workspace-width', from: wsFrom, to: wsTo},
+    ]);
+  } else {
+    rightCollapsed.value = false;
+    const wsTo = Math.max(wsFrom - savedRightWidth.value, 5);
+    syncWorkspaceIdealSize(wsTo, mainHeight);
+    animateResize([
+      {name: '--page-right-width', from: rightFrom, to: savedRightWidth.value},
+      {name: '--canvas-workspace-width', from: wsFrom, to: wsTo},
+    ], () => {
+      el.style.minWidth = '';
+    });
+  }
+};
+
+// 底部面板：高度归零并等量归还给主区域
+const toggleBottom = () => {
+  const el = bottomPanelRef.value;
+  const bottomFrom = readPct('--page-bottom-height');
+  const mainFrom = readPct('--page-main-height');
+  const wsWidth = readPct('--canvas-workspace-width');
+  el.style.minHeight = '0';
+  if (!bottomCollapsed.value) {
+    savedBottomHeight.value = bottomFrom;
+    bottomCollapsed.value = true;
+    const mainTo = mainFrom + bottomFrom;
+    syncWorkspaceIdealSize(wsWidth, mainTo);
+    animateResize([
+      {name: '--page-bottom-height', from: bottomFrom, to: 0},
+      {name: '--page-main-height', from: mainFrom, to: mainTo},
+    ]);
+  } else {
+    bottomCollapsed.value = false;
+    const mainTo = Math.max(mainFrom - savedBottomHeight.value, 20);
+    syncWorkspaceIdealSize(wsWidth, mainTo);
+    animateResize([
+      {name: '--page-bottom-height', from: bottomFrom, to: savedBottomHeight.value},
+      {name: '--page-main-height', from: mainFrom, to: mainTo},
+    ], () => {
+      el.style.minHeight = '';
+    });
+  }
+};
 
 // 尽早加载本地项目设置，供各模块初始化时读取
 settingsStore.loadProjectSettings()
@@ -509,6 +693,56 @@ onMounted(() => {
     .bottom-resize:hover {
       cursor: ns-resize; /* 左右箭头 */
     }
+  }
+
+  /* 收起态：解除最小尺寸约束（内容已通过 v-show 隐藏） */
+  .page-left.collapsed, .page-right.collapsed {
+    min-width: 0;
+  }
+
+  .page-bottom.collapsed {
+    min-height: 0;
+  }
+
+
+  /* 面板收起 / 展开标记 */
+  .panel-toggle {
+    position: absolute;
+    z-index: 10;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--app-secondary-text);
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background-color var(--app-transition), color var(--app-transition);
+  }
+
+  .panel-toggle:hover {
+    background: var(--app-hover-bg);
+    color: var(--app-accent);
+  }
+
+  /* 贴边线、向工作区一侧延伸；收起态(宽/高 0)也能完整落入工作区，不被屏边裁切 */
+  .toggle-left {
+    top: 4px;
+    left: 100%;
+  }
+
+  .toggle-right {
+    top: 4px;
+    right: 100%;
+  }
+
+  .toggle-bottom {
+    left: 50%;
+    bottom: 100%;
+    transform: translateX(-50%);
   }
 }
 

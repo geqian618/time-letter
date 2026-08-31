@@ -316,6 +316,13 @@
                     class="value"
                     style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
               </div>
+              <div class="option">
+                <span class="label">伸缩居中：</span>
+                <el-switch
+                    v-model="settingsStore.projectSettings.others.autoCenterOnToggle"
+                    class="value"
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+              </div>
             </div>
           </div>
           <div class="border-box">

@@ -265,6 +265,20 @@ const centerCanvasScrollBar = () => {
   }
 }
 
+// 面板收放过渡期间逐帧重设 wrapper 大小至 max(画布宽, 工作区宽)，
+// 使 wrapper 始终填满工作区，画布靠 wrapper 内部 flex 居中，避免滚动钳制导致靠左
+const reflowWorkspace = () => {
+  const canvas = CanvasManager.getCurrentCanvas();
+  if (!canvas || !canvasWrapper.value || !canvasWorkspaceRef.value) return;
+  const wsWidth = canvasWorkspaceRef.value.offsetWidth;
+  const wsHeight = canvasWorkspaceRef.value.offsetHeight;
+  const width = canvas.width || 0;
+  const height = canvas.height || 0;
+  canvasWrapper.value.style.width = Math.max(width, wsWidth) + 'px';
+  canvasWrapper.value.style.height = Math.max(height, wsHeight) + 'px';
+  scrollBarMoveToCenter(canvas);
+}
+
 const updateScrollBar = (canvas) => {
   // 设置滚动位置
   canvasWorkspaceRef.value.scrollLeft = canvas.scrollLeft;
@@ -636,6 +650,7 @@ Object.assign(canvasActions, {
   renderCanvas,
   clearCanvas,
   centerCanvasScrollBar,
+  reflowWorkspace,
   permanentlyRemoveSelectedCanvas,
   useTemplate,
 })

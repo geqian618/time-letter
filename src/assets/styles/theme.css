@@ -7,49 +7,62 @@
   --page-left-width: 18%;
   --preview-container-width: 60%;
   --page-right-width: 22%;
-  --border-color: #d4d4d4;
-  --expand-area-background-color: #fafafa;
-  --menu-background-color: #f1f1f1;
-  --menu-icon-color: #555555;
-  --main-font-color: #333333;
-  --preview-background-color: #e8e8e8;
+
+  /* 基础表面：净白面板浮于冷灰底色，构建现代卡片层次 */
+  --border-color: #e4e7ec;
+  --expand-area-background-color: #ffffff;
+  --menu-background-color: #f7f8fa;
+  --menu-icon-color: #4d5666;
+  --main-font-color: #2b2f36;
+  --preview-background-color: #ebedf2;
   --dialog-main-background-color: #ffffff;
 
-  --app-page-bg: #f5f5f5;
-  --app-page-text: #2e2e2e;
+  --app-page-bg: #eef1f5;
+  --app-page-text: #1f2329;
   --app-accent: #1473e6;
   --app-accent-light: #5c9cef;
   --app-hover-accent: #0d66d0;
-  --app-active-bg: #e3e3e3;
+  --app-active-bg: #e8f1fe;
   --app-active-color: #1473e6;
-  --app-hover-bg: #e8e8e8;
-  --app-hover-color: #222222;
-  --app-border: #e2e2e2;
-  --app-border-strong: #d6d6d6;
-  --app-menu-border: #d0d0d0;
-  --app-toolbar-border: #d4d4d4;
-  --app-placeholder-bg: #ffffff;
+  --app-hover-bg: #f1f4f8;
+  --app-hover-color: #1f2329;
+  --app-border: #e7e9ee;
+  --app-border-strong: #d9dde4;
+  --app-menu-border: #edeff3;
+  --app-toolbar-border: #e7e9ee;
+  --app-placeholder-bg: #f4f6f9;
   --app-control-bg: #ffffff;
-  --app-regular-text: #333333;
-  --app-secondary-text: #6f6f6f;
+  --app-regular-text: #2b2f36;
+  --app-secondary-text: #69707d;
   --app-text-resource-hover-bg: #e8f1fe;
   --app-thumb-bg: #ececec;
   --app-thumb-border: #e2e2e2;
   --app-thumb-active-bg: #b7b7b7;
   --app-thumb-active-line: #888888;
-  --app-dialog-header: #f5f5f5;
-  --app-dialog-icon: #555555;
-  --app-dialog-title: #2e2e2e;
+  --app-dialog-header: #f7f8fa;
+  --app-dialog-icon: #69707d;
+  --app-dialog-title: #1f2329;
   --app-dialog-body-bg: #ffffff;
   --app-tabs-active-bg: #ffffff;
-  --app-scrollbar-track: #f0f0f0;
-  --app-scrollbar-thumb: #c9c9c9;
-  --app-scrollbar-thumb-hover: #a9a9a9;
-  --app-preview-scrollbar-track: #e3e3e3;
-  --app-preview-scrollbar-thumb: #aaaaaa;
-  --app-dialog-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
-  --app-overlay: rgba(35, 35, 35, 0.35);
-  --app-popper-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --app-scrollbar-track: #eef1f5;
+  --app-scrollbar-thumb: #c6cbd4;
+  --app-scrollbar-thumb-hover: #a6acb7;
+  --app-preview-scrollbar-track: #e4e7ed;
+  --app-preview-scrollbar-thumb: #b3b9c4;
+  --app-dialog-shadow: 0 16px 48px rgba(28, 36, 52, 0.16), 0 4px 12px rgba(28, 36, 52, 0.06);
+  --app-overlay: rgba(28, 36, 52, 0.42);
+  --app-popper-shadow: 0 8px 28px rgba(28, 36, 52, 0.14), 0 2px 8px rgba(28, 36, 52, 0.06);
+
+  /* 新增：层次、圆角与动效令牌 */
+  --app-panel-shadow: 0 1px 2px rgba(28, 36, 52, 0.04);
+  --app-card-shadow: 0 2px 8px rgba(28, 36, 52, 0.07);
+  --app-hover-shadow: 0 6px 18px rgba(28, 36, 52, 0.12);
+  --app-radius-sm: 4px;
+  --app-radius-md: 6px;
+  --app-radius-lg: 8px;
+  --app-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --app-transition: 0.18s var(--app-ease);
+  --app-preview-grid-color: rgba(20, 115, 230, 0.03);
 
   --el-color-primary: #1473e6;
   --el-color-primary-light-3: #5c9cef;
@@ -60,25 +73,25 @@
   --el-color-primary-dark-2: #0f5fc2;
 
   --el-bg-color: #ffffff;
-  --el-bg-color-page: #f5f5f5;
+  --el-bg-color-page: #eef1f5;
   --el-bg-color-overlay: #ffffff;
   --el-fill-color-blank: #ffffff;
-  --el-fill-color: #e9e9e9;
-  --el-fill-color-light: #f2f2f2;
-  --el-fill-color-lighter: #f7f7f7;
-  --el-fill-color-extra-light: #fafafa;
-  --el-fill-color-dark: #dcdcdc;
-  --el-fill-color-darker: #c9c9c9;
+  --el-fill-color: #eef1f5;
+  --el-fill-color-light: #f4f6f9;
+  --el-fill-color-lighter: #f8fafc;
+  --el-fill-color-extra-light: #fbfcfd;
+  --el-fill-color-dark: #dfe3ea;
+  --el-fill-color-darker: #cdd3dc;
 
-  --el-text-color-primary: #2e2e2e;
-  --el-text-color-regular: #4b4b4b;
-  --el-text-color-secondary: #707070;
-  --el-text-color-placeholder: #9a9a9a;
+  --el-text-color-primary: #1f2329;
+  --el-text-color-regular: #434a55;
+  --el-text-color-secondary: #69707d;
+  --el-text-color-placeholder: #9aa1ac;
 
-  --el-border-color: #d6d6d6;
-  --el-border-color-light: #dedede;
-  --el-border-color-lighter: #e7e7e7;
-  --el-border-color-extra-light: #f0f0f0;
+  --el-border-color: #d9dde4;
+  --el-border-color-light: #e0e3e9;
+  --el-border-color-lighter: #e7e9ee;
+  --el-border-color-extra-light: #edeff3;
 }
 
 :root[dark-theme] {
@@ -128,6 +141,17 @@
   --app-dialog-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
   --app-overlay: rgba(0, 0, 0, 0.6);
   --app-popper-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+
+  /* 深色模式对应层次 / 圆角 / 动效令牌 */
+  --app-panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --app-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --app-hover-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --app-radius-sm: 4px;
+  --app-radius-md: 6px;
+  --app-radius-lg: 8px;
+  --app-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --app-transition: 0.18s var(--app-ease);
+  --app-preview-grid-color: rgba(255, 255, 255, 0.025);
 
   --el-color-primary: #4d9fff;
   --el-color-primary-light-3: #3f84e0;
