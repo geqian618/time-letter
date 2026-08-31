@@ -1599,7 +1599,8 @@ class CanvasEditor {
             zoom: this.zoom,
             width: this.width,
             height: this.height,
-            elements: this.elements
+            // 返回元素数组的快照拷贝，避免外部持有的引用被后续 clearCanvas 原地清空而丢失
+            elements: [...this.elements]
         }
     }
 
@@ -1615,7 +1616,8 @@ class CanvasEditor {
             this.zoom = zoom;
             this.clearCanvas();
             this.resizeCanvas(width, height)
-            this.elements = elements;
+            // 通过 resetElements 拷入既有响应式代理，保留代理身份与响应式
+            this.resetElements(elements);
         } catch (e) {
             console.error('导入失败:', e);
         }
