@@ -576,7 +576,7 @@ const handleZoom = (val) => {
   if (!canvas || !canvas.initZoom || !editor) return;
   const newZoom = canvas.initZoom * (val / 100);
   canvas.zoom = newZoom;
-  editor.setZoom(newZoom);
+  editor?.setZoom(newZoom);
   bgEditor?.setZoom(newZoom);
   canvasActions.reflowWorkspace?.();
 };
