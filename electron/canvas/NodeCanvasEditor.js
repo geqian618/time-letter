@@ -1,5 +1,3 @@
-import {loadImage} from "@napi-rs/canvas";
-
 const SELECTION_OBJECT = 'selection:object'
 
 const MOVE_OBJECT = 'move:object'
