@@ -57,6 +57,17 @@ class CanvasEditor {
 
         this.gridColor = options.gridColor || '#e3e0e0';
 
+        // 对齐吸附配置
+        this.snapEnabled = options.snapEnabled !== false;
+
+        this.snapThreshold = options.snapThreshold || 6;
+
+        // 对齐线颜色，默认参考 Photoshop 智能参考线的洋红色
+        this.guideColor = options.guideColor || '#FF00FF';
+
+        // 当前帧待绘制的对齐线
+        this.activeGuides = [];
+
         // 编辑状态
         this.editingText = null;
         this.isEditing = false;
@@ -790,6 +801,8 @@ class CanvasEditor {
         this.drawGrid();
         // 绘制元素
         this.drawElements()
+        // 绘制对齐线
+        this.drawGuides()
     }
 
 
@@ -838,6 +851,219 @@ class CanvasEditor {
             x: this.width / 2,
             y: this.height / 2
         }
+    }
+
+    /**
+     * 获取元素的渲染宽高（image 需乘以 scale）
+     * @param {Object} el - 元素
+     * @returns {{w: number, h: number}}
+     */
+    _elementSize(el) {
+        if (el.type === 'image') {
+            return {w: (el.width || 0) * (el.scale || 1), h: (el.height || 0) * (el.scale || 1)};
+        }
+        return {w: el.width || 0, h: el.height || 0};
+    }
+
+    /**
+     * 获取作为吸附目标的锚点集合
+     * 旋转元素仅提供中心锚点，避免绘制误导性的边线
+     * @param {Object} el - 元素
+     * @returns {{left: number|null, right: number|null, top: number|null, bottom: number|null, cx: number, cy: number}}
+     */
+    _targetAnchors(el) {
+        const {w, h} = this._elementSize(el);
+        const cx = el.x + w / 2;
+        const cy = el.y + h / 2;
+        if (el.angle) {
+            return {left: null, right: null, top: null, bottom: null, cx, cy};
+        }
+        return {left: el.x, right: el.x + w, top: el.y, bottom: el.y + h, cx, cy};
+    }
+
+    /**
+     * 根据自由位置计算被拖元素组的轴对齐包围盒
+     * 被拖组含旋转元素时仅以中心点参与（边锚点为 null）
+     * @param {Array} targetElements - 被拖元素
+     * @param {Map} freePositions - 自由位置 Map<el, {x,y,cx,cy}>
+     * @returns {{left: number|null, right: number|null, top: number|null, bottom: number|null, cx: number, cy: number, hasRotated: boolean}}
+     */
+    _draggedBounds(targetElements, freePositions) {
+        let left = Infinity, right = -Infinity, top = Infinity, bottom = -Infinity;
+        let sumCx = 0, sumCy = 0;
+        let hasRotated = false;
+        for (const el of targetElements) {
+            if (el.angle) hasRotated = true;
+            const fp = freePositions.get(el);
+            const {w, h} = this._elementSize(el);
+            const x = fp.x, y = fp.y;
+            sumCx += x + w / 2;
+            sumCy += y + h / 2;
+            left = Math.min(left, x);
+            right = Math.max(right, x + w);
+            top = Math.min(top, y);
+            bottom = Math.max(bottom, y + h);
+        }
+        const count = targetElements.length || 1;
+        return {
+            left: hasRotated ? null : left,
+            right: hasRotated ? null : right,
+            top: hasRotated ? null : top,
+            bottom: hasRotated ? null : bottom,
+            cx: sumCx / count,
+            cy: sumCy / count,
+            hasRotated
+        };
+    }
+
+    /**
+     * 计算磁性吸附偏移量与待绘制对齐线
+     * @param {Array} targetElements - 被拖元素
+     * @param {Map} freePositions - 自由位置 Map<el, {x,y,cx,cy}>
+     * @returns {{dx: number, dy: number, guides: Array}}
+     */
+    computeSnap(targetElements, freePositions) {
+        if (!this.snapEnabled || !targetElements || !targetElements.length) {
+            return {dx: 0, dy: 0, guides: []};
+        }
+        const threshold = this.snapThreshold / (this.zoom || 1);
+        const drag = this._draggedBounds(targetElements, freePositions);
+
+        // 被拖组的 X / Y 锚点（旋转时仅中心）
+        const dragX = drag.hasRotated
+            ? [{key: 'cx', val: drag.cx}]
+            : [{key: 'left', val: drag.left}, {key: 'cx', val: drag.cx}, {key: 'right', val: drag.right}];
+        const dragY = drag.hasRotated
+            ? [{key: 'cy', val: drag.cy}]
+            : [{key: 'top', val: drag.top}, {key: 'cy', val: drag.cy}, {key: 'bottom', val: drag.bottom}];
+
+        // 候选目标：除被拖元素外的所有元素 + 画布（中心与四边）
+        const candidates = [];
+        for (const el of this.elements) {
+            if (targetElements.includes(el)) continue;
+            candidates.push(this._targetAnchors(el));
+        }
+        candidates.push({
+            left: 0, right: this.width, top: 0, bottom: this.height,
+            cx: this.width / 2, cy: this.height / 2, isCanvas: true
+        });
+
+        // 候选锚点键：旋转目标仅中心，画布与轴对齐目标提供全部
+        const tarKeysX = ['left', 'cx', 'right'];
+        const tarKeysY = ['top', 'cy', 'bottom'];
+
+        // X 轴
+        let bestDx = 0, bestDxGap = threshold;
+        let bestX = null; // {val, target}
+        for (const d of dragX) {
+            for (const c of candidates) {
+                for (const tk of tarKeysX) {
+                    const tv = c[tk];
+                    if (tv === null || tv === undefined) continue;
+                    const gap = Math.abs(d.val - tv);
+                    if (gap < bestDxGap) {
+                        bestDxGap = gap;
+                        bestDx = tv - d.val;
+                        bestX = {val: tv, target: c, dragKey: d.key};
+                    }
+                }
+            }
+        }
+
+        // Y 轴
+        let bestDy = 0, bestDyGap = threshold;
+        let bestY = null;
+        for (const d of dragY) {
+            for (const c of candidates) {
+                for (const tk of tarKeysY) {
+                    const tv = c[tk];
+                    if (tv === null || tv === undefined) continue;
+                    const gap = Math.abs(d.val - tv);
+                    if (gap < bestDyGap) {
+                        bestDyGap = gap;
+                        bestDy = tv - d.val;
+                        bestY = {val: tv, target: c, dragKey: d.key};
+                    }
+                }
+            }
+        }
+
+        // 构造对齐线
+        const guides = [];
+        if (bestX) {
+            const t = bestX.target;
+            const y1 = t.isCanvas ? 0 : Math.min(drag.top ?? drag.cy, t.top ?? t.cy);
+            const y2 = t.isCanvas ? this.height : Math.max(drag.bottom ?? drag.cy, t.bottom ?? t.cy);
+            guides.push({orient: 'v', x: bestX.val, y1, y2});
+        }
+        if (bestY) {
+            const t = bestY.target;
+            const x1 = t.isCanvas ? 0 : Math.min(drag.left ?? drag.cx, t.left ?? t.cx);
+            const x2 = t.isCanvas ? this.width : Math.max(drag.right ?? drag.cx, t.right ?? t.cx);
+            guides.push({orient: 'h', y: bestY.val, x1, x2});
+        }
+
+        return {dx: bestDx, dy: bestDy, guides};
+    }
+
+    /**
+     * 绘制对齐线
+     */
+    drawGuides() {
+        if (!this.activeGuides || !this.activeGuides.length) return;
+        const currentTransform = this.ctx.getTransform();
+        const scaleX = currentTransform.a;
+        const scaleY = currentTransform.d;
+        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2 || 1;
+        const lineWidth = 1 / avgScale;
+        this.ctx.save();
+        this.ctx.setLineDash([]);
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.strokeStyle = this.guideColor;
+        for (const g of this.activeGuides) {
+            this.ctx.beginPath();
+            if (g.orient === 'v') {
+                this.ctx.moveTo(g.x, g.y1);
+                this.ctx.lineTo(g.x, g.y2);
+            } else {
+                this.ctx.moveTo(g.x1, g.y);
+                this.ctx.lineTo(g.x2, g.y);
+            }
+            this.ctx.stroke();
+        }
+        this.ctx.restore();
+    }
+
+    /**
+     * 设置对齐吸附开关
+     * @param {boolean} enabled
+     */
+    setSnapEnabled(enabled) {
+        this.snapEnabled = !!enabled;
+    }
+
+    /**
+     * 获取对齐吸附是否开启
+     * @returns {boolean}
+     */
+    isSnapping() {
+        return this.snapEnabled;
+    }
+
+    /**
+     * 设置对齐线颜色
+     * @param {string} color - 颜色值，如 '#FF007F' / 'rgba(255,0,127,0.9)'
+     */
+    setGuideColor(color) {
+        this.guideColor = color;
+    }
+
+    /**
+     * 获取当前对齐线颜色
+     * @returns {string}
+     */
+    getGuideColor() {
+        return this.guideColor;
     }
 
     /**
@@ -935,6 +1161,8 @@ class CanvasEditor {
 
         let lastMoveX = startX;
         let lastMoveY = startY;
+        // 拖拽过程中的自由（未吸附）位置，按元素记录，避免吸附后离开时跳变
+        let freePositions = null;
 
         if (!element) {
             this.handleCancelActive();
@@ -992,18 +1220,37 @@ class CanvasEditor {
                 const targetElements = element.status === Element.NONE
                     ? [element]
                     : Array.from(this.activeElements).filter(el => el.draggable);
-                // 拖拽所有选中的元素
-                for (let el of targetElements) {
-                    el.x += offsetX;
-                    el.y += offsetY;
-                    el.centerX += offsetX;
-                    el.centerY += offsetY;
+                // 首次进入拖拽时，捕获各元素的自由（未吸附）起始位置
+                if (!freePositions) {
+                    freePositions = new Map();
+                    for (const el of targetElements) {
+                        freePositions.set(el, {x: el.x, y: el.y, cx: el.centerX, cy: el.centerY});
+                    }
+                }
+                // 用鼠标增量推进自由位置（不写入元素，避免吸附状态污染）
+                for (const el of targetElements) {
+                    const fp = freePositions.get(el);
+                    fp.x += offsetX;
+                    fp.y += offsetY;
+                    fp.cx += offsetX;
+                    fp.cy += offsetY;
+                }
+                // 计算磁性吸附偏移量与对齐线
+                const snap = this.computeSnap(targetElements, freePositions);
+                // 将「自由位置 + 吸附修正」一次性写入元素（单次赋值，与原有写入频率一致）
+                for (const el of targetElements) {
+                    const fp = freePositions.get(el);
+                    el.x = fp.x + snap.dx;
+                    el.y = fp.y + snap.dy;
+                    el.centerX = fp.cx + snap.dx;
+                    el.centerY = fp.cy + snap.dy;
                     // 触发回调
                     const callbacks = this.eventCallbacks.get(MOVE_OBJECT);
                     if (callbacks && callbacks.size) {
                         callbacks.forEach(callback => callback({x: moveX, y: moveY, target: el}));
                     }
                 }
+                this.activeGuides = snap.guides;
                 // 更新最后移动位置并重新渲染
                 lastMoveX = moveX;
                 lastMoveY = moveY;
@@ -1040,6 +1287,7 @@ class CanvasEditor {
             if (!this.isEditing) {
                 this.canvas.style.cursor = ''
             }
+            this.activeGuides = [];
             this.renderAll();
             document.removeEventListener('mousemove', handleMousemove);
             document.removeEventListener('mouseup', handleMouseup);
