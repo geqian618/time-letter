@@ -6,7 +6,8 @@
           <div class="left-resize" v-show="!leftCollapsed" ref="leftResizeRef"
                @mousedown="handleLeftSidebarResize"></div>
           <LeftPanel v-show="!leftCollapsed"/>
-          <el-tooltip :content="leftCollapsed ? '展开左侧面板' : '收起左侧面板'" placement="right" effect="light" :disabled="tipDisabled">
+          <el-tooltip :content="leftCollapsed ? '展开左侧面板' : '收起左侧面板'" placement="right" effect="light"
+                      :disabled="tipDisabled">
             <button class="panel-toggle toggle-left" @click="toggleLeft">
               <svg v-if="!leftCollapsed" viewBox="0 0 24 24" width="12" height="12">
                 <path d="M14 6 L7 12 L14 18 Z" fill="currentColor"/>
@@ -24,7 +25,8 @@
           <div class="right-resize" v-show="!rightCollapsed" ref="rightResizeRef"
                @mousedown="handleRightSidebarResize"></div>
           <RightPanel v-show="!rightCollapsed"/>
-          <el-tooltip :content="rightCollapsed ? '展开右侧面板' : '收起右侧面板'" placement="left" effect="light" :disabled="tipDisabled">
+          <el-tooltip :content="rightCollapsed ? '展开右侧面板' : '收起右侧面板'" placement="left" effect="light"
+                      :disabled="tipDisabled">
             <button class="panel-toggle toggle-right" @click="toggleRight">
               <svg v-if="!rightCollapsed" viewBox="0 0 24 24" width="12" height="12">
                 <path d="M10 6 L17 12 L10 18 Z" fill="currentColor"/>
@@ -41,7 +43,8 @@
         <div class="bottom-resize" v-show="!bottomCollapsed" ref="bottomResizeRef"
              @mousedown="handleBottomSidebarResize"></div>
         <PreviewPanel v-show="!bottomCollapsed"/>
-        <el-tooltip :content="bottomCollapsed ? '展开底部面板' : '收起底部面板'" placement="top" effect="light" :disabled="tipDisabled">
+        <el-tooltip :content="bottomCollapsed ? '展开底部面板' : '收起底部面板'" placement="top" effect="light"
+                    :disabled="tipDisabled">
           <button class="panel-toggle toggle-bottom" @click="toggleBottom">
             <svg v-if="!bottomCollapsed" viewBox="0 0 24 24" width="12" height="12">
               <path d="M6 10 L12 17 L18 10 Z" fill="currentColor"/>
@@ -139,7 +142,9 @@ const COLLAPSE_DURATION = 220;
 const tipDisabled = ref(false);
 const disableTooltipDuringAnim = () => {
   tipDisabled.value = true;
-  setTimeout(() => { tipDisabled.value = false; }, COLLAPSE_DURATION + 60);
+  setTimeout(() => {
+    tipDisabled.value = false;
+  }, COLLAPSE_DURATION + 60);
 };
 
 // 单一 rAF 循环：同时插值一组 CSS 百分比变量并逐帧重排居中画布。
@@ -188,6 +193,10 @@ const animateResize = (vars, onDone) => {
   resizeRafId = requestAnimationFrame(runResizeAnim);
 };
 
+// 是否有收放动画仍在进行。动画中途 readPct 读到的是中间值，不能用作 saved* 暂存尺寸，
+// 否则在动画未结束就反向收放会让暂存尺寸逐次塌缩至 0、面板再也展不开
+const isResizing = () => resizeRafId != null || resizeAnim != null;
+
 // 收放后将画布工作区理想尺寸同步为目标值，供后续画布渲染计算缩放
 const syncWorkspaceIdealSize = (wsWidthPct, mainHeightPct) => {
   const ws = canvasesStore.getWorkspace();
@@ -221,8 +230,12 @@ const toggleLeft = () => {
   const mainHeight = readPct('--page-main-height');
   el.style.minWidth = '0';
   if (!leftCollapsed.value) {
-    savedLeftWidth.value = leftFrom;
+    // 仅在静止时记录暂存宽度，避免把动画中途的中间值写入导致后续展开高度塌缩
+    if (!isResizing()) {
+      savedLeftWidth.value = leftFrom;
+    }
     leftCollapsed.value = true;
+    // 左侧与工作区宽度之和恒定（右侧不变），收起时整块归还工作区
     const wsTo = wsFrom + leftFrom;
     syncWorkspaceIdealSize(wsTo, mainHeight);
     animateResize([
@@ -231,7 +244,8 @@ const toggleLeft = () => {
     ]);
   } else {
     leftCollapsed.value = false;
-    const wsTo = Math.max(wsFrom - savedLeftWidth.value, 5);
+    // 展开目标工作区 = 当前左+工作区之和 - 暂存宽度，保持“左+工作区”和不变
+    const wsTo = Math.max(wsFrom + leftFrom - savedLeftWidth.value, 5);
     syncWorkspaceIdealSize(wsTo, mainHeight);
     animateResize([
       {name: '--page-left-width', from: leftFrom, to: savedLeftWidth.value},
@@ -250,8 +264,11 @@ const toggleRight = () => {
   const mainHeight = readPct('--page-main-height');
   el.style.minWidth = '0';
   if (!rightCollapsed.value) {
-    savedRightWidth.value = rightFrom;
+    if (!isResizing()) {
+      savedRightWidth.value = rightFrom;
+    }
     rightCollapsed.value = true;
+    // 右侧与工作区宽度之和恒定（左侧不变），收起时整块归还工作区
     const wsTo = wsFrom + rightFrom;
     syncWorkspaceIdealSize(wsTo, mainHeight);
     animateResize([
@@ -260,7 +277,8 @@ const toggleRight = () => {
     ]);
   } else {
     rightCollapsed.value = false;
-    const wsTo = Math.max(wsFrom - savedRightWidth.value, 5);
+    // 展开目标工作区 = 当前右+工作区之和 - 暂存宽度，保持“右+工作区”和不变
+    const wsTo = Math.max(wsFrom + rightFrom - savedRightWidth.value, 5);
     syncWorkspaceIdealSize(wsTo, mainHeight);
     animateResize([
       {name: '--page-right-width', from: rightFrom, to: savedRightWidth.value},
@@ -279,8 +297,12 @@ const toggleBottom = () => {
   const wsWidth = readPct('--canvas-workspace-width');
   el.style.minHeight = '0';
   if (!bottomCollapsed.value) {
-    savedBottomHeight.value = bottomFrom;
+    // 仅在静止时记录暂存高度：动画中途反向收放会让暂存值逐次塌缩，最终展不开
+    if (!isResizing()) {
+      savedBottomHeight.value = bottomFrom;
+    }
     bottomCollapsed.value = true;
+    // 主区域与底部高度之和恒为 100%，收起时底部高度整块归还主区域
     const mainTo = mainFrom + bottomFrom;
     syncWorkspaceIdealSize(wsWidth, mainTo);
     animateResize([
@@ -289,7 +311,8 @@ const toggleBottom = () => {
     ]);
   } else {
     bottomCollapsed.value = false;
-    const mainTo = Math.max(mainFrom - savedBottomHeight.value, 20);
+    // 展开目标主高度 = 当前主+底部之和 - 暂存高度，保持“主+底部”和不变
+    const mainTo = Math.max(mainFrom + bottomFrom - savedBottomHeight.value, 20);
     syncWorkspaceIdealSize(wsWidth, mainTo);
     animateResize([
       {name: '--page-bottom-height', from: bottomFrom, to: savedBottomHeight.value},
