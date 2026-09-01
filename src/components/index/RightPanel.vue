@@ -599,7 +599,8 @@
                       :min="-200"
                       :max="200"
                       placement="top"/>
-                  <input type="number" class="number-input" v-model="canvasesStore.imageOptions.shadow.offsetX" step="1">
+                  <input type="number" class="number-input" v-model="canvasesStore.imageOptions.shadow.offsetX"
+                         step="1">
                 </div>
               </li>
               <li class="option">
@@ -613,7 +614,8 @@
                       :max="200"
                       show-alpha
                       :predefine="predefineColors"/>
-                  <input type="number" class="number-input" v-model="canvasesStore.imageOptions.shadow.offsetY" step="1">
+                  <input type="number" class="number-input" v-model="canvasesStore.imageOptions.shadow.offsetY"
+                         step="1">
                 </div>
               </li>
               <li class="option">

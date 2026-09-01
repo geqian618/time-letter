@@ -45,7 +45,7 @@
             <img :src="thumbSrc(image)" loading="lazy" :alt="image.filename"
                  @load="loadedPaths.add(image.path)" @error="loadedPaths.add(image.path)">
           </div>
-          <el-tooltip effect="light" :content="image.filename" placement="bottom" :show-after="500">
+          <el-tooltip :content="image.filename" placement="bottom" :show-after="500">
             <div class="filename">{{ image.filename }}</div>
           </el-tooltip>
         </div>
@@ -234,7 +234,7 @@ const applyTheme = () => {
   const theme = StorageManager.getProjectSettings()?.appearance?.theme || 'system'
   const isDark = theme === 'dark' || (theme === 'system' && systemThemeMedia?.matches)
   isDark ? document.documentElement.setAttribute('dark-theme', '')
-         : document.documentElement.removeAttribute('dark-theme')
+      : document.documentElement.removeAttribute('dark-theme')
 }
 
 const setupTheme = () => {

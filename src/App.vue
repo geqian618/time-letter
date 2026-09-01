@@ -97,6 +97,19 @@ body .el-popper.is-light, body .el-popover.el-popper {
   box-shadow: var(--app-popper-shadow);
 }
 
+body .el-popper.is-dark {
+  background: var(--app-tooltip-bg);
+  color: var(--app-tooltip-text);
+  border: 1px solid var(--app-tooltip-border);
+  box-shadow: var(--app-tooltip-shadow);
+}
+
+body .el-popper.is-dark > .el-popper__arrow::before {
+  background: var(--app-tooltip-bg);
+  border: 1px solid var(--app-tooltip-border);
+  right: 0;
+}
+
 body .el-input__wrapper, body .el-select__wrapper {
   background-color: var(--el-fill-color-blank);
   box-shadow: 0 0 0 1px var(--el-border-color) inset;

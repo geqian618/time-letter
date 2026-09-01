@@ -23,7 +23,8 @@
             <span>图片库</span>
           </template>
           <div class="image-resources" ref="imageResourceRef">
-            <div class="image-wrapper" :key="key" v-for="([key, image]) in canvasesStore.imageResources" draggable="false">
+            <div class="image-wrapper" :key="key" v-for="([key, image]) in canvasesStore.imageResources"
+                 draggable="false">
               <img class="image-resource"
                    :src="image.thumbUrl || image.url"
                    :path="image.path"
@@ -38,22 +39,22 @@
           </template>
           <el-scrollbar class="scrollBar">
             <div class="text-resources" ref="textResourceRef">
-              <el-tooltip effect="dark" content="文本" placement="top">
+              <el-tooltip content="文本" placement="top">
                 <div class="text-resource" draggable="true" text="文本" type="text">
                   <img draggable="false" src="/src/assets/icon/text.svg" alt="文本">
                 </div>
               </el-tooltip>
-              <el-tooltip effect="dark" content="日期" placement="top">
+              <el-tooltip content="日期" placement="top">
                 <div class="text-resource" draggable="true" type="date">
                   <img draggable="false" src="/src/assets/icon/date.svg" alt="日期">
                 </div>
               </el-tooltip>
-              <el-tooltip effect="dark" content="日期时间" placement="top">
+              <el-tooltip content="日期时间" placement="top">
                 <div class="text-resource" draggable="true" type="datetime">
                   <img draggable="false" src="/src/assets/icon/datetime.svg" alt="日期时间">
                 </div>
               </el-tooltip>
-              <el-tooltip v-for="(text) in textResourcesStore.textResources" :key="text.id" effect="dark" :content="text.tips"
+              <el-tooltip v-for="(text) in textResourcesStore.textResources" :key="text.id" :content="text.tips"
                           placement="top">
                 <div class="text-resource"
                      :id="text.id"

@@ -2,10 +2,10 @@
   <div class="preview-bar">
     <div class="left-preview-bar">
       <div class="tab-wrapper">
-        <el-tooltip effect="dark" content="第一张" placement="top">
+        <el-tooltip content="第一张" placement="top">
           <img src="/src/assets/icon/first-inactive.svg" class="inactive small-size" alt="第一张">
         </el-tooltip>
-        <el-tooltip effect="dark" content="第一张" placement="top">
+        <el-tooltip content="第一张" placement="top">
           <img src="/src/assets/icon/first-active.svg" class="active small-size"
                @click="switchFirstPreviewElement"
                alt="第一张">
@@ -13,20 +13,20 @@
       </div>
 
       <div class="tab-wrapper">
-        <el-tooltip effect="dark" content="上一张" placement="top">
+        <el-tooltip content="上一张" placement="top">
           <img src="/src/assets/images/left-arrow-inactive.png" class="inactive" alt="上一张">
         </el-tooltip>
-        <el-tooltip effect="dark" content="上一张" placement="top">
+        <el-tooltip content="上一张" placement="top">
           <img src="/src/assets/images/left-arrow-active.png" class="active" @click="switchBeforePreviewElement"
                alt="上一张">
         </el-tooltip>
       </div>
 
       <div class="tab-wrapper">
-        <el-tooltip effect="dark" content="下一张" placement="top">
+        <el-tooltip content="下一张" placement="top">
           <img src="/src/assets/images/right-arrow-inactive.png" class="inactive" alt="下一张">
         </el-tooltip>
-        <el-tooltip effect="dark" content="下一张" placement="top">
+        <el-tooltip content="下一张" placement="top">
           <img src="/src/assets/images/right-arrow-active.png" class="active" @click="switchNextPreviewElement"
                alt="下一张">
         </el-tooltip>
@@ -34,10 +34,10 @@
 
 
       <div class="tab-wrapper">
-        <el-tooltip effect="dark" content="最后一张" placement="top">
+        <el-tooltip content="最后一张" placement="top">
           <img src="/src/assets/icon/last-inactive.svg" class="inactive small-size" alt="居中">
         </el-tooltip>
-        <el-tooltip effect="dark" content="最后一张" placement="top">
+        <el-tooltip content="最后一张" placement="top">
           <img src="/src/assets/icon/last-active.svg" class="active small-size"
                @click="switchLastPreviewElement"
                alt="最后一张">
@@ -51,10 +51,10 @@
                    popper-class="zoom-popper"
                    class="zoom-dropdown">
         <div class="tab-wrapper">
-          <el-tooltip effect="dark" content="缩放" placement="top" :disabled="tooltipDisabled">
+          <el-tooltip content="缩放" placement="top" :disabled="tooltipDisabled">
             <img src="/src/assets/icon/zoom-inactive.svg" class="inactive medium-size" alt="缩放">
           </el-tooltip>
-          <el-tooltip effect="dark" content="缩放" placement="top" :disabled="tooltipDisabled">
+          <el-tooltip content="缩放" placement="top" :disabled="tooltipDisabled">
             <img src="/src/assets/icon/zoom-active.svg" class="active medium-size" alt="缩放">
           </el-tooltip>
         </div>
@@ -69,10 +69,10 @@
       </el-dropdown>
 
       <div class="tab-wrapper">
-        <el-tooltip effect="dark" content="全选" placement="top">
+        <el-tooltip content="全选" placement="top">
           <img src="/src/assets/icon/select-all-inactive.svg" class="inactive medium-size" alt="全选">
         </el-tooltip>
-        <el-tooltip effect="dark" content="全选" placement="top">
+        <el-tooltip content="全选" placement="top">
           <img src="/src/assets/icon/select-all-active.svg"
                @click="handleSelectAllPreviewElements"
                class="active medium-size"
@@ -82,10 +82,10 @@
 
 
       <div class="tab-wrapper">
-        <el-tooltip effect="dark" content="居中" placement="top">
+        <el-tooltip content="居中" placement="top">
           <img src="/src/assets/images/center-display-inactivate.png" class="inactive medium-size" alt="居中">
         </el-tooltip>
-        <el-tooltip effect="dark" content="居中" placement="top">
+        <el-tooltip content="居中" placement="top">
           <img src="/src/assets/images/center-display-activate.png" class="active medium-size"
                @click="canvasActions.centerCanvasScrollBar()"
                alt="居中">

@@ -53,6 +53,12 @@
   --app-overlay: rgba(28, 36, 52, 0.42);
   --app-popper-shadow: 0 8px 28px rgba(28, 36, 52, 0.14), 0 2px 8px rgba(28, 36, 52, 0.06);
 
+  /* el-tooltip / el-popper.is-dark 主题令牌 */
+  --app-tooltip-bg: var(--el-bg-color-overlay);
+  --app-tooltip-text: var(--el-text-color-regular);
+  --app-tooltip-border: var(--el-border-color);
+  --app-tooltip-shadow: 0 4px 14px rgba(28, 36, 52, 0.15);
+
   /* 新增：层次、圆角与动效令牌 */
   --app-panel-shadow: 0 1px 2px rgba(28, 36, 52, 0.04);
   --app-card-shadow: 0 2px 8px rgba(28, 36, 52, 0.07);
@@ -141,6 +147,12 @@
   --app-dialog-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
   --app-overlay: rgba(0, 0, 0, 0.6);
   --app-popper-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+
+  /* el-tooltip / el-popper.is-dark 主题令牌 */
+  --app-tooltip-bg: var(--el-fill-color-light);
+  --app-tooltip-text: var(--el-text-color-primary);
+  --app-tooltip-border: var(--el-border-color);
+  --app-tooltip-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
 
   /* 深色模式对应层次 / 圆角 / 动效令牌 */
   --app-panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);

@@ -6,7 +6,7 @@
           <div class="left-resize" v-show="!leftCollapsed" ref="leftResizeRef"
                @mousedown="handleLeftSidebarResize"></div>
           <LeftPanel v-show="!leftCollapsed"/>
-          <el-tooltip :content="leftCollapsed ? '展开左侧面板' : '收起左侧面板'" placement="right" effect="light"
+          <el-tooltip :content="leftCollapsed ? '展开左侧面板' : '收起左侧面板'" placement="right"
                       :disabled="tipDisabled">
             <button class="panel-toggle toggle-left" @click="toggleLeft">
               <svg v-if="!leftCollapsed" viewBox="0 0 24 24" width="12" height="12">
@@ -25,7 +25,7 @@
           <div class="right-resize" v-show="!rightCollapsed" ref="rightResizeRef"
                @mousedown="handleRightSidebarResize"></div>
           <RightPanel v-show="!rightCollapsed"/>
-          <el-tooltip :content="rightCollapsed ? '展开右侧面板' : '收起右侧面板'" placement="left" effect="light"
+          <el-tooltip :content="rightCollapsed ? '展开右侧面板' : '收起右侧面板'" placement="left"
                       :disabled="tipDisabled">
             <button class="panel-toggle toggle-right" @click="toggleRight">
               <svg v-if="!rightCollapsed" viewBox="0 0 24 24" width="12" height="12">
@@ -43,7 +43,7 @@
         <div class="bottom-resize" v-show="!bottomCollapsed" ref="bottomResizeRef"
              @mousedown="handleBottomSidebarResize"></div>
         <PreviewPanel v-show="!bottomCollapsed"/>
-        <el-tooltip :content="bottomCollapsed ? '展开底部面板' : '收起底部面板'" placement="top" effect="light"
+        <el-tooltip :content="bottomCollapsed ? '展开底部面板' : '收起底部面板'" placement="top"
                     :disabled="tipDisabled">
           <button class="panel-toggle toggle-bottom" @click="toggleBottom">
             <svg v-if="!bottomCollapsed" viewBox="0 0 24 24" width="12" height="12">
