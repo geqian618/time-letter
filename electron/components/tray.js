@@ -1,6 +1,6 @@
 const {Tray, Menu, app} = require('electron')
 const path = require('path')
-const {APP_NAME, APP_ICON_PATH, APP_VERSION} = require('../constant/ProjectConstants')
+const {APP_NAME, APP_ICON_PATH, APP_VERSION} = require('../constant/project-constants')
 const createTray = (window) => {
 
     const tray = new Tray(APP_ICON_PATH);

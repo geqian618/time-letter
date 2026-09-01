@@ -4,7 +4,7 @@ const fs = require('fs')
 const AdmZip = require('adm-zip');
 const {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl} = require('../utils/path-helper')
 const {registerFont} = require('../utils/font-manager')
-const {openImageManagerWindow} = require('./ImageManagerWindow')
+const {openImageManagerWindow} = require('./image-manager-window')
 
 const resourcesPath = getResourcePath()
 const fontPath = getFontPath()

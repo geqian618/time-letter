@@ -28,9 +28,9 @@ import {ref, watch, nextTick} from 'vue'
 
 import _ from 'lodash'
 
-import CanvasManager from '@/object/CanvasManager'
+import CanvasManager from '@/object/canvas-manager'
 
-import StorageManager from '@/object/StorageManager'
+import StorageManager from '@/object/storage-manager'
 
 import {useTemplatesStore} from '@/stores/templates'
 import {useCanvasesStore} from '@/stores/canvases'

@@ -2,7 +2,7 @@ const {BrowserWindow, nativeTheme, app} = require('electron')
 const path = require('path')
 const WinState = require('electron-win-state').default
 
-const {APP_ICON_PATH} = require('../constant/ProjectConstants')
+const {APP_ICON_PATH} = require('../constant/project-constants')
 
 const isDev = process.env.NODE_ENV === 'development'
 

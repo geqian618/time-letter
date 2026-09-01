@@ -25,7 +25,7 @@
 
 import _ from 'lodash'
 
-import StorageManager from '@/object/StorageManager'
+import StorageManager from '@/object/storage-manager'
 
 import {useTextResourcesStore} from '@/stores/text-resources'
 

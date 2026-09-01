@@ -20,7 +20,7 @@
 
 <script setup lang="js">
 
-import {canvasActions} from '@/object/CanvasActions'
+import {canvasActions} from '@/object/canvas-actions'
 
 import {useCanvasesStore} from '@/stores/canvases'
 import {useProjectSettingsStore} from '@/stores/project-settings'

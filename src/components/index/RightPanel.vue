@@ -660,7 +660,7 @@ import {predefineColors} from '@/config/color-configuration'
 
 import {Rect, Image} from '@/canvas/CanvasEditor'
 
-import CanvasManager from '@/object/CanvasManager'
+import CanvasManager from '@/object/canvas-manager'
 
 import {useCanvasesStore} from '@/stores/canvases'
 import {useProjectSettingsStore} from '@/stores/project-settings'

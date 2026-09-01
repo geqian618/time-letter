@@ -60,7 +60,7 @@
 import {ref, computed, watch, onMounted, onBeforeUnmount} from 'vue'
 import {ElMessage} from 'element-plus'
 
-import StorageManager from '@/object/StorageManager'
+import StorageManager from '@/object/storage-manager'
 
 // 主窗口推送的画布快照
 const images = ref([])

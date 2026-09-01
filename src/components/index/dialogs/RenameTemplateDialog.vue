@@ -22,7 +22,7 @@
 
 import {ref, watch, nextTick} from 'vue'
 
-import StorageManager from '@/object/StorageManager'
+import StorageManager from '@/object/storage-manager'
 
 import {useTemplatesStore} from '@/stores/templates'
 

@@ -2,7 +2,7 @@ import {ref, computed, watch} from 'vue'
 import {defineStore} from 'pinia'
 import _ from 'lodash'
 
-import StorageManager from '@/object/StorageManager'
+import StorageManager from '@/object/storage-manager'
 
 import {defaultProjectSettings} from '@/config/default-project-settings'
 

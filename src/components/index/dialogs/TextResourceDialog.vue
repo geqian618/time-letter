@@ -41,7 +41,7 @@ import _ from 'lodash'
 
 import {TextResource} from '@/object/Configuration'
 
-import StorageManager from '@/object/StorageManager'
+import StorageManager from '@/object/storage-manager'
 
 import {useTextResourcesStore} from '@/stores/text-resources'
 

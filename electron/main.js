@@ -8,7 +8,7 @@ const sharp = require("sharp");
 
 // 工具模块
 const imageParser = require('./utils/image-parser')
-const imageExportProcessor = require('./thread/imageExportProcessor')
+const imageExportProcessor = require('./thread/image-export-processor')
 const resourcesLoader = require('./utils/resources-loader')
 const {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl} = require('./utils/path-helper')
 const {getSystemFonts, getCustomFonts} = require('./utils/font-manager')
@@ -18,15 +18,15 @@ const ImageMetadataHelper = require("./utils/ImageMetadataHelper");
 // 钩子和组件
 const imageWatcher = require('./components/image-watcher')
 const fontWatcher = require('./components/font-watcher')
-const createTray = require('./components/Tray')
-const createApplicationMenu = require('./components/ApplicationMenu')
-const createContextMenu = require('./components/ContextMenu')
-const createTemplateContextMenu = require('./components/TemplateContextMenu')
-const registerLocalShortcut = require('./components/registerLocalShortcut')
-const {closeImageManagerWindow, getImageManagerWindow} = require('./components/ImageManagerWindow')
+const createTray = require('./components/tray')
+const createApplicationMenu = require('./components/application-menu')
+const createContextMenu = require('./components/context-menu')
+const createTemplateContextMenu = require('./components/template-context-menu')
+const registerLocalShortcut = require('./components/register-local-shortcut')
+const {closeImageManagerWindow, getImageManagerWindow} = require('./components/image-manager-window')
 
 // 配置常量
-const {APP_NAME, APP_ICON_PATH, APP_VERSION} = require('./constant/ProjectConstants')
+const {APP_NAME, APP_ICON_PATH, APP_VERSION} = require('./constant/project-constants')
 const environment = process.env.NODE_ENV
 const isDev = environment === 'development'
 const resourcesPath = getResourcePath()

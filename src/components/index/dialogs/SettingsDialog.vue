@@ -382,19 +382,19 @@ import _ from 'lodash'
 
 import useEventListener from '@/composables/useEventListener'
 
-import FontManager from '@/utils/FontManager'
+import FontManager from '@/utils/font-manager'
 
-import Notification from '@/utils/Notification'
+import Notification from '@/utils/notification'
 
 import {parseDate, formatDate} from '@/utils/datetime'
 
-import CanvasManager from '@/object/CanvasManager'
+import CanvasManager from '@/object/canvas-manager'
 
-import {canvasActions} from '@/object/CanvasActions'
+import {canvasActions} from '@/object/canvas-actions'
 
 import {FontSettings} from '@/object/Configuration'
 
-import StorageManager from '@/object/StorageManager'
+import StorageManager from '@/object/storage-manager'
 
 import {useProjectSettingsStore} from '@/stores/project-settings'
 import {useCanvasesStore} from '@/stores/canvases'

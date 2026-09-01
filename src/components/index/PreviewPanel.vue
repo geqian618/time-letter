@@ -158,9 +158,9 @@ import {useThrottle} from '@/utils/throttle'
 
 import {parseDate, formatDate} from '@/utils/datetime'
 
-import CanvasManager from '@/object/CanvasManager'
+import CanvasManager from '@/object/canvas-manager'
 
-import {canvasActions} from '@/object/CanvasActions'
+import {canvasActions} from '@/object/canvas-actions'
 
 import {CanvasSettings} from '@/object/Configuration'
 

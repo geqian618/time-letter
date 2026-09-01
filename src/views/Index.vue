@@ -72,13 +72,13 @@
 
 import {ref, watch, onMounted} from "vue";
 
-import StorageManager from "@/object/StorageManager";
+import StorageManager from "@/object/storage-manager";
 
 import {TextResource} from "@/object/Configuration";
 
-import CanvasManager from "@/object/CanvasManager";
+import CanvasManager from "@/object/canvas-manager";
 
-import {canvasActions} from "@/object/CanvasActions";
+import {canvasActions} from "@/object/canvas-actions";
 
 import LeftPanel from '@/components/index/LeftPanel.vue'
 import WorkspacePanel from '@/components/index/WorkspacePanel.vue'

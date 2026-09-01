@@ -78,9 +78,9 @@ import {ref} from 'vue'
 
 import useEventListener from '@/composables/useEventListener'
 
-import CanvasManager from '@/object/CanvasManager'
+import CanvasManager from '@/object/canvas-manager'
 
-import StorageManager from '@/object/StorageManager'
+import StorageManager from '@/object/storage-manager'
 
 import {useCanvasesStore} from '@/stores/canvases'
 import {useTemplatesStore} from '@/stores/templates'

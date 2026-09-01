@@ -28,11 +28,11 @@ import {getCurrentDate, getCurrentDateTime} from '@/utils/datetime'
 
 import {executeFunctionScript} from '@/utils/script-helper'
 
-import CanvasManager from '@/object/CanvasManager'
+import CanvasManager from '@/object/canvas-manager'
 
 import DraggableElementFactory from '@/object/DraggableElementFactory'
 
-import {canvasActions} from '@/object/CanvasActions'
+import {canvasActions} from '@/object/canvas-actions'
 
 import {BorderOptions, PhotographOptions} from '@/object/Configuration'
 

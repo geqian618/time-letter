@@ -2,7 +2,7 @@ import {ref, computed} from 'vue'
 import {defineStore} from 'pinia'
 
 import {LinkedMap} from '@/utils/LinkedMap'
-import CanvasManager from '@/object/CanvasManager'
+import CanvasManager from '@/object/canvas-manager'
 import {Metadata, TextOptions, ImageOptions, BorderOptions, PhotographOptions} from '@/object/Configuration'
 
 export const useCanvasesStore = defineStore('canvases', () => {
