@@ -336,6 +336,7 @@ const renderCanvas = async (canvas) => {
     canvas.photographOptions = _.cloneDeep(image.meta)
     canvas.foreground = canvasEditor.exportToObject()
     canvas.background = backgroundCanvasEditor.exportToObject()
+
   } else {
 
     const {foreground, background, zoom, metadata: {width: imageWidth, height: imageHeight}} = canvas;
@@ -349,7 +350,7 @@ const renderCanvas = async (canvas) => {
 
     if (typeof background !== 'string' && typeof background !== 'object') throw new Error('unsupported data type')
 
-    await canvasEditor.load(background)
+    await backgroundCanvasEditor.load(background)
 
     // 非最终渲染图片，放弃渲染
     if (currentVersion !== renderVersion) return;
