@@ -1553,8 +1553,10 @@ class CanvasEditor {
      * 调整 Canvas 大小
      * @param {number} width - 新宽度
      * @param {number} height - 新高度
+     * @param {number} zoom - 缩放倍数
      */
-    resizeCanvas(width, height) {
+    resizeCanvas(width, height, zoom = 1) {
+        this.zoom = zoom;
         this.width = width;
         this.height = height;
         this.setupCanvas()
@@ -1627,9 +1629,8 @@ class CanvasEditor {
         if (!object || typeof object !== 'object') throw new Error('unsupported data type');
         try {
             const {width, height, zoom, elements} = object;
-            this.zoom = zoom;
             this.clearCanvas();
-            this.resizeCanvas(width, height)
+            this.resizeCanvas(width, height, zoom)
             // 通过 resetElements 拷入既有响应式代理，保留代理身份与响应式
             this.resetElements(elements);
         } catch (e) {
@@ -1646,9 +1647,8 @@ class CanvasEditor {
         if (!json || typeof json !== 'string') throw new Error('unsupported data type');
         try {
             const {width, height, elements, zoom} = JSON.parse(json);
-            this.zoom = zoom;
             this.clearCanvas();
-            this.resizeCanvas(width, height);
+            this.resizeCanvas(width, height, zoom);
             for (let element of elements) {
                 if (element.type === 'text') {
                     this.elements.push(new Text(element.text, element))
