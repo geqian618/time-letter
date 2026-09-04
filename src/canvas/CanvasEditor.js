@@ -1607,7 +1607,7 @@ class CanvasEditor {
 
     /**
      * 导入数据
-     * @param {Object | string} data - JSON 格式的文本数据
+     * @param {Object | string} data - 数据
      */
     async load(data) {
         if (typeof data === 'object') {
@@ -1621,7 +1621,7 @@ class CanvasEditor {
 
     /**
      * 从 object 导入数据
-     * @param {Object} object - JSON 格式的文本数据
+     * @param {Object} object - 对象类型数据
      */
     async loadFromObject(object) {
         if (!object || typeof object !== 'object') throw new Error('unsupported data type');
@@ -1640,7 +1640,7 @@ class CanvasEditor {
 
     /**
      * 从 JSON 导入数据
-     * @param {string} json - JSON 格式的文本数据
+     * @param {string} json - JSON 类型数据
      */
     async loadFromJSON(json) {
         if (!json || typeof json !== 'string') throw new Error('unsupported data type');

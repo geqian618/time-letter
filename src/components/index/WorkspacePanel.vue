@@ -339,12 +339,17 @@ const renderCanvas = async (canvas) => {
   } else {
 
     const {foreground, background, zoom, metadata: {width: imageWidth, height: imageHeight}} = canvas;
-    typeof foreground === 'string' ? await canvasEditor.loadFromJSON(foreground) : await canvasEditor.loadFromObject(foreground)
+
+    if (typeof foreground !== 'string' && typeof foreground !== 'object') throw new Error('unsupported data type')
+
+    await canvasEditor.load(foreground)
 
     // 非最终渲染图片，放弃渲染
     if (currentVersion !== renderVersion) return;
 
-    typeof background === 'string' ? await backgroundCanvasEditor.loadFromJSON(background) : await backgroundCanvasEditor.loadFromObject(background)
+    if (typeof background !== 'string' && typeof background !== 'object') throw new Error('unsupported data type')
+
+    await canvasEditor.load(background)
 
     // 非最终渲染图片，放弃渲染
     if (currentVersion !== renderVersion) return;
