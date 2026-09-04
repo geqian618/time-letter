@@ -1606,11 +1606,25 @@ class CanvasEditor {
 
 
     /**
+     * 导入数据
+     * @param {Object | string} data - JSON 格式的文本数据
+     */
+    async load(data) {
+        if (typeof data === 'object') {
+            await this.loadFromObject(data)
+        } else if (typeof data === 'string') {
+            await this.loadFromJSON(data)
+        } else {
+            throw new Error('unsupported data type');
+        }
+    }
+
+    /**
      * 从 object 导入数据
      * @param {Object} object - JSON 格式的文本数据
      */
     async loadFromObject(object) {
-        if (!object) return;
+        if (!object || typeof object !== 'object') throw new Error('unsupported data type');
         try {
             const {width, height, zoom, elements} = object;
             this.zoom = zoom;
@@ -1625,10 +1639,11 @@ class CanvasEditor {
 
 
     /**
-     * 从 JSON 导入文本数据
+     * 从 JSON 导入数据
      * @param {string} json - JSON 格式的文本数据
      */
     async loadFromJSON(json) {
+        if (!json || typeof json !== 'string') throw new Error('unsupported data type');
         try {
             const {width, height, elements, zoom} = JSON.parse(json);
             this.zoom = zoom;
@@ -2470,7 +2485,6 @@ class Image extends Element {
     }
 
 
-
     static fromURL(src, options = {}) {
         return new Promise((resolve, reject) => {
             if (!src) {
@@ -2659,7 +2673,6 @@ class LazyImage extends Element {
             ...options.shadow
         };
     }
-
 
 
     load() {
@@ -2876,7 +2889,6 @@ class Rect extends Element {
             ...options.shadow
         };
     }
-
 
 
     contains(x, y) {

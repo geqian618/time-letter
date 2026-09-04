@@ -260,7 +260,7 @@
             </div>
           </div>
           <div class="operation">
-            <el-button type="info" @click="resetMetadataSettings">重置</el-button>
+            <el-button type="info" @click="resetMetadataSettings">重置元数据</el-button>
           </div>
         </el-tab-pane>
         <el-tab-pane label="性能">
@@ -363,12 +363,14 @@
               </div>
             </div>
           </div>
-          <div class="operation">
-            <el-button type="danger" @click="resetAllSettings">恢复全部默认设置</el-button>
-          </div>
         </el-tab-pane>
         <!--        <el-tab-pane label="图片"></el-tab-pane>-->
       </el-tabs>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="danger" @click="resetAllSettings">重置全部设置</el-button>
+        </div>
+      </template>
     </el-dialog>
     <ConfirmDialog ref="confirmRef"/>
   </div>
@@ -655,8 +657,8 @@ const resetMetadataSettings = () => {
 const resetAllSettings = async () => {
   const ok = await confirmRef.value?.confirm({
     title: '恢复默认设置',
-    message: '将恢复全部偏好设置为默认值（可用字体保留），是否继续？',
-    confirmText: '恢复',
+    message: '将重置全部偏好设置为默认值（可用字体保留），是否继续？',
+    confirmText: '重置',
     cancelText: '取消',
     confirmType: 'danger'
   });
