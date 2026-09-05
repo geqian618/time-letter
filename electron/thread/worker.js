@@ -11,6 +11,8 @@ const ImageMetadataHelper = require("../utils/ImageMetadataHelper");
 const {promises: fs} = require("fs");
 const {createCanvas} = require("@napi-rs/canvas");
 
+let cachedCanvasEditor;
+
 // 自行暴露 gc：@napi-rs/canvas 1.x 分配的原生内存（解码图、Skia surface）不计入
 // V8 堆，子进程的 JS 堆很小、V8 感受不到压力几乎不触发 GC，导出过程中原生内存会
 // 持续堆积（200 张约 1GB）。这里用 vm 新建 context 的方式拿到 gc —— 新 context 与
@@ -29,7 +31,7 @@ if (typeof global.gc !== 'function' && process.env.LEAK_NO_GC !== '1') {
     }
 }
 
-let cachedCanvasEditor;
+
 const getCachedCanvasEditor = () => {
     if (!cachedCanvasEditor) {
         const canvas = new createCanvas(0, 0)
@@ -133,18 +135,6 @@ async function exportFile(params) {
     return null;
 }
 
-// 对外暴露单张导出；每次导出后（含失败）主动触发 GC，让 napi finalizer 立即释放
-// 原生内存，避免子进程在长批次导出中峰值持续上涨。gc 不可用时静默跳过。
-module.exports = async (params) => {
-    try {
-        return await exportFile(params);
-    } finally {
-        if (typeof global.gc === 'function') {
-            global.gc();
-        }
-    }
-};
-
 
 const getExtname = (originalExtname, extnameType) => {
     if (extnameType === 0) {
@@ -188,3 +178,16 @@ function reply(msg) {
         process.send(msg)
     }
 }
+
+
+// 对外暴露单张导出；每次导出后（含失败）主动触发 GC，让 napi finalizer 立即释放
+// 原生内存，避免子进程在长批次导出中峰值持续上涨。gc 不可用时静默跳过。
+module.exports = async (params) => {
+    try {
+        return await exportFile(params);
+    } finally {
+        if (typeof global.gc === 'function') {
+            global.gc();
+        }
+    }
+};
