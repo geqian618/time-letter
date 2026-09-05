@@ -626,13 +626,15 @@ const useTemplate = async (settings, path) => {
 
   }
 
-  canvas.borderOptions = _.cloneDeep(border.meta)
-  canvas.background = JSON.stringify(background)
-  canvas.foreground = JSON.stringify(foreground)
   canvas.initZoom = initZoom;
   canvas.zoom = canvas.zoom !== 1 ? canvas.zoom : zoom;
   canvas.width = imageWidth;
   canvas.height = imageHeight;
+  canvas.borderOptions = _.cloneDeep(border.meta)
+  background.zoom = canvas.zoom
+  foreground.zoom = canvas.zoom
+  canvas.background = JSON.stringify(background)
+  canvas.foreground = JSON.stringify(foreground)
 
   if (!canvas.completed) {
     // 计算滚动位置，使图形内容居中
