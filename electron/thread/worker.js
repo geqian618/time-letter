@@ -87,7 +87,6 @@ module.exports = async (params) => {
     }
 
     const canvasEditor = getCachedCanvasEditor();
-    canvasEditor.resizeCanvas(originalWidth, originalHeight)
     await canvasEditor.loadFromJSON(JSON.stringify(settings))
     canvasEditor.renderAll()
 
