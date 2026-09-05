@@ -1,8 +1,33 @@
+// 导出子进程（utilityProcess 入口）：包含单张导出的渲染逻辑与子进程消息宿主。
+// 由 image-export-processor fork 拉起，串行处理任务（进程内复用同一个缓存
+// CanvasEditor）；一批导出结束后由主进程 kill，@napi-rs/canvas 的原生内存
+// （解码图、Skia surface）随进程退出由操作系统整体回收。
+// 也支持被校验脚本直接 require 后调用单张导出函数。
+'use strict'
+
 const {CanvasEditor} = require("../canvas/NodeCanvasEditor");
 const path = require("path");
 const ImageMetadataHelper = require("../utils/ImageMetadataHelper");
 const {promises: fs} = require("fs");
 const {createCanvas} = require("@napi-rs/canvas");
+
+// 自行暴露 gc：@napi-rs/canvas 1.x 分配的原生内存（解码图、Skia surface）不计入
+// V8 堆，子进程的 JS 堆很小、V8 感受不到压力几乎不触发 GC，导出过程中原生内存会
+// 持续堆积（200 张约 1GB）。这里用 vm 新建 context 的方式拿到 gc —— 新 context 与
+// 主 context 同属一个 isolate，调用它会做整 isolate 的 Full GC，不依赖宿主注入。
+// LEAK_NO_GC=1 供校验脚本构造“无 gc 基线”使用。
+if (typeof global.gc !== 'function' && process.env.LEAK_NO_GC !== '1') {
+    try {
+        require('v8').setFlagsFromString('--expose-gc');
+        const gc = require('vm').runInNewContext('typeof gc === "function" ? gc : undefined');
+        require('v8').setFlagsFromString('--no-expose-gc');
+        if (typeof gc === 'function') {
+            global.gc = gc;
+        }
+    } catch (e) {
+        // 暴露失败时保持原行为：原生内存随子进程退出统一回收
+    }
+}
 
 let cachedCanvasEditor;
 const getCachedCanvasEditor = () => {
@@ -14,7 +39,8 @@ const getCachedCanvasEditor = () => {
 }
 
 
-module.exports = async (params) => {
+// 单张导出：渲染 JSON 背景并写出文件
+async function exportFile(params) {
     const {
         projectSettings: {
             outputSettings: {
@@ -101,7 +127,22 @@ module.exports = async (params) => {
 
     await fs.writeFile(outputPath, buffer);
 
+    // 立即丢弃对已导出内容的引用（解码图等），配合 finally 中的 gc 当场回收
+    canvasEditor.clearCanvas();
+
     return null;
+}
+
+// 对外暴露单张导出；每次导出后（含失败）主动触发 GC，让 napi finalizer 立即释放
+// 原生内存，避免子进程在长批次导出中峰值持续上涨。gc 不可用时静默跳过。
+module.exports = async (params) => {
+    try {
+        return await exportFile(params);
+    } finally {
+        if (typeof global.gc === 'function') {
+            global.gc();
+        }
+    }
 };
 
 
@@ -114,5 +155,36 @@ const getExtname = (originalExtname, extnameType) => {
         return 'png'
     } else if (extnameType === 3) {
         return 'webp'
+    }
+}
+
+
+// ---------- 子进程消息宿主 ----------
+
+// 兼容两种宿主：Electron utilityProcess（process.parentPort，消息在 e.data 里）
+// 与 Node child_process.fork（process.on('message')，供校验脚本使用）
+const isUtility = !!process.parentPort
+
+if (isUtility) {
+    process.parentPort.on('message', (e) => handle(e.data))
+} else if (typeof process.send === 'function') {
+    process.on('message', (m) => handle(m))
+}
+
+async function handle(msg) {
+    if (!msg || msg.type !== 'task') return
+    try {
+        const result = await module.exports(msg.task)
+        reply({type: 'done', taskId: msg.taskId, result: result === undefined ? null : result})
+    } catch (err) {
+        reply({type: 'done', taskId: msg.taskId, error: (err && err.message) || String(err)})
+    }
+}
+
+function reply(msg) {
+    if (isUtility) {
+        process.parentPort.postMessage(msg)
+    } else if (process.send) {
+        process.send(msg)
     }
 }

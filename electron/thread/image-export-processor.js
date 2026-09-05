@@ -1,13 +1,17 @@
 const path = require('path');
-const Piscina = require('piscina');
-const {dialog, app} = require('electron');
+const {dialog, app, utilityProcess} = require('electron');
 const os = require('os');
 
 const sab = new SharedArrayBuffer(4);
 const interrupt = new Int32Array(sab);
 Atomics.store(interrupt, 0, 0);
 
-const WORKER_PATH = path.join(
+// 导出统一放到独立子进程（utilityProcess）中执行：@napi-rs/canvas 的原生内存
+// （解码图、Skia surface）峰值只出现在子进程，主进程不再参与渲染。此前用 Piscina
+// 线程池时，这些原生内存计入主进程，Windows 对已释放的堆页面常不退还提交内存，
+// 表现为导出 200+ 张后任务管理器中主进程私有内存停留在 1GB+ 不回落。
+// 每批导出结束 kill 全部子进程，其全部内存由操作系统直接回收。
+const CHILD_PATH = path.join(
     app.getAppPath(),
     'electron',
     'thread',
@@ -24,16 +28,9 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
         ? progressCallback
         : (p) => console.log(`进度: ${p.completed}/${p.total} 错误: ${p.errors}`);
 
-    const threadPool = new Piscina({
-        filename: WORKER_PATH,
-        maxThreads,
-        minThreads: 0,
-        idleTimeout: 10000,
-    });
-
-    Atomics.store(interrupt, 0, 0);
-
     const total = settings.length;
+    const concurrency = Math.min(Math.max(1, maxThreads), Math.max(1, total));
+
     let completed = 0;
     let errors = 0;
     let nextIndex = 0;
@@ -44,17 +41,42 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
             total,
             completed,
             errors,
-            percentage: Atomics.load(interrupt, 0) === 0
-                ? Math.round((completed / total) * 100)
-                : 0,
+            percentage: Atomics.load(interrupt, 0) === 0 ? Math.round((completed / total) * 100) : 0,
         });
     }
 
-    async function workerLoop() {
+    let taskSeq = 0;
+    const pending = new Map();
+
+    function spawnChild() {
+        const child = utilityProcess.fork(CHILD_PATH, [], {
+            serviceName: 'time-letter-export',
+            stdio: 'inherit',
+        });
+        child.on('message', (msg) => {
+            if (!msg || msg.type !== 'done') return;
+            const entry = pending.get(msg.taskId);
+            if (!entry) return;
+            pending.delete(msg.taskId);
+            if (msg.error) entry.reject(new Error(msg.error));
+            else entry.resolve(msg.result);
+        });
+        return child;
+    }
+
+    function runTask(child, task) {
+        const taskId = ++taskSeq;
+        return new Promise((resolve, reject) => {
+            pending.set(taskId, {resolve, reject});
+            child.postMessage({type: 'task', taskId, task});
+        });
+    }
+
+    async function childLoop(child) {
         while (nextIndex < settings.length && Atomics.load(interrupt, 0) === 0) {
             const setting = settings[nextIndex++];
             try {
-                await threadPool.run({projectSettings, outputDirectory, setting});
+                await runTask(child, {projectSettings, outputDirectory, setting});
             } catch (err) {
                 errors++;
                 errorMessages.push({path: setting.path, message: err.message});
@@ -66,18 +88,33 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
         }
     }
 
+    const children = [];
+
     try {
-        const concurrency = Math.min(maxThreads, settings.length);
-        const workers = Array(concurrency).fill().map(() => workerLoop());
-        await Promise.allSettled(workers);
+        for (let i = 0; i < concurrency; i++) {
+            const child = spawnChild();
+            // 子进程意外退出：让该进程挂起的任务立即失败，任务循环随之结束
+            child.on('exit', () => {
+                for (const [, entry] of pending) entry.reject(new Error('导出子进程意外退出'));
+                pending.clear();
+            });
+            children.push(child);
+        }
+        await Promise.allSettled(children.map((child) => childLoop(child)));
     } finally {
-        await threadPool.destroy();
-        console.log('threadPool destroy...');
+        pending.clear();
+        for (const child of children) {
+            try {
+                child.kill();
+            } catch (err) {
+                console.error('导出子进程关闭失败:', err);
+            }
+        }
+        console.log('export children destroyed...');
     }
 
     if (errorMessages.length > 0) {
-        const summary = errorMessages
-            .slice(0, 10)
+        const summary = errorMessages.slice(0, 10)
             .map((e) => `[${e.path}] ${e.message}`)
             .join('\n');
         const extra = errorMessages.length > 10

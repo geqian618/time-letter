@@ -2,8 +2,8 @@
 // 实现“主进程只保留一个字节码文件”的打包目标：
 //   electron/main.js           -> node_modules/.cache/electron-bundle/main.bundle.js
 //       （含 components/utils/runtime/constant/thread 等全部内部模块）
-//   electron/thread/worker.js  -> node_modules/.cache/electron-bundle/worker.bundle.js
-//       （含 canvas/NodeCanvasEditor、utils/MetadataSync）
+//   electron/thread/worker.js -> node_modules/.cache/electron-bundle/worker.bundle.js
+//       （导出子进程入口，含 canvas/NodeCanvasEditor、utils/ImageMetadataHelper）
 //
 // 加密配置（key / protocol / renderer.output）从项目根 encryptor.config.js 读取，
 // 通过 esbuild define 注入到 main 包（renderer-loader 内使用），

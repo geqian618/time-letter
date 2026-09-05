@@ -7,7 +7,7 @@ const fs = require('fs');
 // node_modules/.cache/electron-bundle/），这里只编译最终需要随包分发的
 // 3 个字节码文件：
 //   node_modules/.cache/electron-bundle/main.bundle.js     -> electron/main.jsc          （主进程整体逻辑）
-//   node_modules/.cache/electron-bundle/worker.bundle.js   -> electron/thread/worker.jsc （导出 worker 整体逻辑）
+//   node_modules/.cache/electron-bundle/worker.bundle.js -> electron/thread/worker.jsc（导出子进程整体逻辑）
 //   electron/preload/index.js                              -> electron/preload/index.jsc（渲染进程 preload）
 const TARGETS = [
     ['node_modules/.cache/electron-bundle/main.bundle.js', 'electron/main.jsc'],
