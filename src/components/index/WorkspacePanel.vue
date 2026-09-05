@@ -339,14 +339,7 @@ const renderCanvas = async (canvas) => {
 
   } else {
 
-    const {foreground, background, zoom, metadata: {width: imageWidth, height: imageHeight}} = canvas;
-
-    if (typeof foreground !== 'string' && typeof foreground !== 'object') throw new Error('unsupported data type')
-
-    await canvasEditor.load(foreground)
-
-    // 非最终渲染图片，放弃渲染
-    if (currentVersion !== renderVersion) return;
+    const {foreground, background, metadata: {width: imageWidth, height: imageHeight}} = canvas;
 
     if (typeof background !== 'string' && typeof background !== 'object') throw new Error('unsupported data type')
 
@@ -355,12 +348,17 @@ const renderCanvas = async (canvas) => {
     // 非最终渲染图片，放弃渲染
     if (currentVersion !== renderVersion) return;
 
-    const {idealWidth, idealHeight} = canvasWorkspaceRef.value;
-    // 设置缩放
-    canvasEditor.setZoom(zoom);
-    backgroundCanvasEditor.setZoom(zoom);
+    if (typeof foreground !== 'string' && typeof foreground !== 'object') throw new Error('unsupported data type')
+
+    await canvasEditor.load(foreground)
+
+    // 非最终渲染图片，放弃渲染
+    if (currentVersion !== renderVersion) return;
+
     backgroundCanvasEditor.renderAll();
     canvasEditor.renderAll();
+
+    const {idealWidth, idealHeight} = canvasWorkspaceRef.value;
 
     // 非最终渲染图片，放弃更新数据
     if (currentVersion !== renderVersion) return;
@@ -816,6 +814,8 @@ const handleCanvasResize = (event) => {
   backgroundElement.value.classList.add('scale-animation')
   // 应用缩放：内部变换瞬时跳到 newZoom，CSS 盒子走 0.1s 过渡，rAF 同步滚动条钉住光标
   canvas.zoom = newZoom
+  canvas.background.zoom = newZoom
+  canvas.foreground.zoom = newZoom
   canvasEditor.setZoom(newZoom)
   backgroundCanvasEditor.setZoom(newZoom)
 
