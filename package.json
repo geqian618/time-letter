@@ -29,6 +29,7 @@
     "exif": "^0.6.0",
     "exiftool-vendored": "^35.21.0",
     "glob": "^13.0.6",
+    "i18next": "^26.4.2",
     "lodash": "^4.17.21",
     "normalize.css": "^8.0.1",
     "p-limit": "^6.2.0",
@@ -36,6 +37,7 @@
     "pinia-plugin-persistedstate": "^3.2.1",
     "sharp": "^0.34.3",
     "vue": "^3.4.15",
+    "vue-i18n": "^9.14.4",
     "vue-router": "^4.2.5",
     "vue3-lazyload": "^0.3.8"
   },

@@ -1,21 +1,21 @@
 <template>
   <div class="dialog-wrapper">
-    <el-dialog v-model="templatesStore.saveTemplateDialogVisible" title="保存预设模版" align-center width="350" draggable>
+    <el-dialog v-model="templatesStore.saveTemplateDialogVisible" :title="$t('template.saveTitle')" align-center width="350" draggable>
       <el-form :model="templatesStore.newTemplate" class="demo-form-inline" :rules="saveTemplateRules" ref="saveTemplateForm"
                @submit.native.prevent>
-        <el-form-item label="模板名称" prop="templateName">
+        <el-form-item :label="$t('template.name')" prop="templateName">
           <el-input v-model="templatesStore.newTemplate.templateName"
                     ref="templateRef"
                     v-focus="templatesStore.saveTemplateDialogVisible"
-                    placeholder="请输入模版名称"
+                    :placeholder="$t('template.namePlaceholder')"
                     clearable
                     @keyup.enter.native="saveTemplates"/>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="templatesStore.saveTemplateDialogVisible = false">取消</el-button>
-          <el-button type="info" @click="saveTemplates">确认</el-button>
+          <el-button @click="templatesStore.saveTemplateDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="info" @click="saveTemplates">{{ $t('common.confirm') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -24,7 +24,9 @@
 
 <script setup lang="js">
 
-import {ref, watch, nextTick} from 'vue'
+import {computed, ref, watch, nextTick} from 'vue'
+
+import {useI18n} from 'vue-i18n'
 
 import _ from 'lodash'
 
@@ -35,6 +37,8 @@ import StorageManager from '@/object/storage-manager'
 import {useTemplatesStore} from '@/stores/templates'
 import {useCanvasesStore} from '@/stores/canvases'
 
+const {t} = useI18n()
+
 const templatesStore = useTemplatesStore()
 
 const canvasesStore = useCanvasesStore()
@@ -43,11 +47,12 @@ const templateRef = ref(null)
 
 const saveTemplateForm = ref({})
 
-const saveTemplateRules = {
+// 校验文案经 computed 翻译，语言切换后保持生效
+const saveTemplateRules = computed(() => ({
   templateName: [
-    {required: true, message: '模板名称不能为空', trigger: 'blur'},
+    {required: true, message: t('template.nameRequired'), trigger: 'blur'},
   ]
-}
+}))
 
 // 弹窗打开时清除上一次的表单校验
 watch(() => templatesStore.saveTemplateDialogVisible, (visible) => {

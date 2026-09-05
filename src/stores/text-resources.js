@@ -3,6 +3,8 @@ import {defineStore} from 'pinia'
 
 import {TextResource} from '@/object/Configuration'
 
+import i18n from '@/locales'
+
 export const useTextResourcesStore = defineStore('textResources', () => {
 
     const textResources = ref([])
@@ -19,7 +21,7 @@ export const useTextResourcesStore = defineStore('textResources', () => {
     const textResourceManagerDialogVisible = ref(false)
 
     const textResourceDialogTitle = computed(() => {
-        return handleTextResourceType.value === 0 ? '新增文本' : '编辑文本'
+        return i18n.global.t(handleTextResourceType.value === 0 ? 'textResource.addTitle' : 'textResource.editTitle')
     })
 
     return {

@@ -3,7 +3,7 @@
     <div class="uploader" ref="uploaderRef" v-show="canvasesStore.uploadVisible"
          @click="requestImportFiles({isDragOver: false})">
       <img src="/src/assets/icon/upload.svg" alt="上传">
-      <span>拖拽上传文件</span>
+      <span>{{ $t('workspace.dragUpload') }}</span>
     </div>
     <div class="canvas-workspace" id="canvas-workspace" ref="canvasWorkspaceRef" @mousedown="triggerContextMenu">
       <div class="canvas-wrapper" ref="canvasWrapper">

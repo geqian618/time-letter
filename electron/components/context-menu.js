@@ -1,4 +1,5 @@
 const {Menu, dialog, app} = require('electron')
+const {t} = require('../locales')
 
 let window;
 
@@ -6,53 +7,53 @@ const createContextMenu = (mainWindow) => {
     window = mainWindow;
     return Menu.buildFromTemplate([
         {
-            label: '移除图片',
+            label: t('menu.removeImage'),
             accelerator: 'CommandOrControl+D',
             click: () => {
                 window.webContents.send('contextMenu:watch', {type: 1});
             }
         },
         {
-            label: '删除图片',
+            label: t('menu.deleteImage'),
             accelerator: 'CommandOrControl+Alt+D',
             click: () => {
                 window.webContents.send('contextMenu:watch', {type: 2});
             }
         },
         {
-            label: '清空画布',
+            label: t('menu.clearCanvas'),
             accelerator: 'CommandOrControl+L',
             click: () => {
                 window.webContents.send('contextMenu:watch', {type: 6});
             }
         },
         {
-            label: '重置画布',
+            label: t('menu.resetCanvas'),
             accelerator: 'CommandOrControl+R',
             click: () => {
                 window.webContents.send('contextMenu:watch', {type: 7});
             }
         },
         {
-            label: '同步配置',
+            label: t('menu.syncConfig'),
             submenu: [
                 {
-                    label: '按固定数值同步',
+                    label: t('menu.syncByValue'),
                     click: () => synchronizeTemplate(0)
                 },
                 {
-                    label: '按比例同步',
+                    label: t('menu.syncByRatio'),
                     click: () => synchronizeTemplate(1)
                 }
             ]
         },
         {
-            label: '保存为预设',
+            label: t('menu.saveAsPreset'),
             accelerator: 'CommandOrControl+T',
             click: saveTemplate
         },
         {
-            label: '导出图片',
+            label: t('menu.exportImages'),
             accelerator: 'CommandOrControl+O',
             click: saveFiles
         }
@@ -74,7 +75,7 @@ const synchronizeTemplate = (method) => {
  */
 const saveFiles = async () => {
     const {canceled, filePaths} = await dialog.showOpenDialog({
-        buttonLabel: '导出',
+        buttonLabel: t('dialog.export'),
         defaultPath: app.getPath('desktop'),
         properties: ['openDirectory', 'createDirectory']
     })

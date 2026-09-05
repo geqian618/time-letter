@@ -4,7 +4,7 @@
       <el-menu :default-openeds="['1']">
         <el-sub-menu index="1" class="templates-options">
           <template #title>
-            <span>模版预设</span>
+            <span>{{ $t('left.templates') }}</span>
           </template>
           <div class="templates" v-drag-sort="handleTemplateSorting">
             <el-menu-item
@@ -20,7 +20,7 @@
         </el-sub-menu>
         <el-sub-menu index="2" class="image-options">
           <template #title>
-            <span>图片库</span>
+            <span>{{ $t('left.imageLibrary') }}</span>
           </template>
           <div class="image-resources" ref="imageResourceRef">
             <div class="image-wrapper" :key="key" v-for="([key, image]) in canvasesStore.imageResources"
@@ -35,23 +35,23 @@
         </el-sub-menu>
         <el-sub-menu index="3" class="text-options">
           <template #title>
-            <span>文本库</span>
+            <span>{{ $t('left.textLibrary') }}</span>
           </template>
           <el-scrollbar class="scrollBar">
             <div class="text-resources" ref="textResourceRef">
-              <el-tooltip content="文本" placement="top">
+              <el-tooltip :content="$t('left.text')" placement="top">
                 <div class="text-resource" draggable="true" text="文本" type="text">
-                  <img draggable="false" src="/src/assets/icon/text.svg" alt="文本">
+                  <img draggable="false" src="/src/assets/icon/text.svg" :alt="$t('left.text')">
                 </div>
               </el-tooltip>
-              <el-tooltip content="日期" placement="top">
+              <el-tooltip :content="$t('left.date')" placement="top">
                 <div class="text-resource" draggable="true" type="date">
-                  <img draggable="false" src="/src/assets/icon/date.svg" alt="日期">
+                  <img draggable="false" src="/src/assets/icon/date.svg" :alt="$t('left.date')">
                 </div>
               </el-tooltip>
-              <el-tooltip content="日期时间" placement="top">
+              <el-tooltip :content="$t('left.datetime')" placement="top">
                 <div class="text-resource" draggable="true" type="datetime">
-                  <img draggable="false" src="/src/assets/icon/datetime.svg" alt="日期时间">
+                  <img draggable="false" src="/src/assets/icon/datetime.svg" :alt="$t('left.datetime')">
                 </div>
               </el-tooltip>
               <el-tooltip v-for="(text) in textResourcesStore.textResources" :key="text.id" :content="text.tips"

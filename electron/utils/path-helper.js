@@ -1,4 +1,10 @@
 const path = require('path');
+const {app} = require('electron');
+
+// 应用偏好配置文件（userData/settings.json）：主题 / 语言等模块共用
+const getSettingsFilePath = () => {
+    return path.join(app.getPath('userData'), 'settings.json');
+}
 
 const getResourcePath = () => {
     return process.env.NODE_ENV === 'development'
@@ -39,4 +45,4 @@ function localPathToThumbUrl(filePath) {
     return `thumb:///${encodeLocalPath(filePath)}`;
 }
 
-module.exports = {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl}
+module.exports = {getSettingsFilePath, getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl}

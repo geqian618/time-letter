@@ -5,12 +5,12 @@
         <el-menu :default-openeds="['1']" ref="menuRef" @open="handleOpenMenu" @close="handleCloseMenu">
           <el-sub-menu index="1">
             <template #title>
-              <span>元数据</span>
+              <span>{{ $t('right.metadata') }}</span>
             </template>
             <ul class="options metadata" ref="metadataRef">
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="cameraBrand">相机品牌
+                  <div class="text-resource" draggable="true" type="metadata" expression="cameraBrand">{{ $t('right.cameraBrand') }}
                   </div>
                 </div>
                 <div class="value">
@@ -19,7 +19,7 @@
               </li>
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="cameraModel">相机型号
+                  <div class="text-resource" draggable="true" type="metadata" expression="cameraModel">{{ $t('right.cameraModel') }}
                   </div>
                 </div>
                 <div class="value">
@@ -28,7 +28,7 @@
               </li>
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="lensModel">镜头型号
+                  <div class="text-resource" draggable="true" type="metadata" expression="lensModel">{{ $t('right.lensModel') }}
                   </div>
                 </div>
                 <div class="value">
@@ -37,7 +37,7 @@
               </li>
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="focalLength">焦段
+                  <div class="text-resource" draggable="true" type="metadata" expression="focalLength">{{ $t('right.focalLength') }}
                   </div>
                 </div>
                 <div class="value">
@@ -46,7 +46,7 @@
               </li>
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="iso">IOS</div>
+                  <div class="text-resource" draggable="true" type="metadata" expression="iso">{{ $t('right.iso') }}</div>
                 </div>
                 <div class="value">
                   <el-input spellcheck="false" v-model="canvasesStore.metadataOptions.iso" size="small"/>
@@ -54,7 +54,7 @@
               </li>
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="shutter">快门</div>
+                  <div class="text-resource" draggable="true" type="metadata" expression="shutter">{{ $t('right.shutter') }}</div>
                 </div>
                 <div class="value">
                   <el-input spellcheck="false" v-model="canvasesStore.metadataOptions.shutter" size="small"/>
@@ -62,7 +62,7 @@
               </li>
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="aperture">光圈</div>
+                  <div class="text-resource" draggable="true" type="metadata" expression="aperture">{{ $t('right.aperture') }}</div>
                 </div>
                 <div class="value">
                   <el-input spellcheck="false" v-model="canvasesStore.metadataOptions.aperture" size="small"/>
@@ -70,7 +70,7 @@
               </li>
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="shootingTime">拍摄日期
+                  <div class="text-resource" draggable="true" type="metadata" expression="shootingTime">{{ $t('right.shootingDate') }}
                   </div>
                 </div>
                 <div class="value">
@@ -79,7 +79,7 @@
               </li>
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="filename">文件名称
+                  <div class="text-resource" draggable="true" type="metadata" expression="filename">{{ $t('right.filename') }}
                   </div>
                 </div>
                 <div class="value">
@@ -90,11 +90,11 @@
           </el-sub-menu>
           <el-sub-menu index="5">
             <template #title>
-              <span>照片</span>
+              <span>{{ $t('right.photo') }}</span>
             </template>
             <ul class="options">
               <li class="option">
-                <div class="label">圆角</div>
+                <div class="label">{{ $t('right.rounded') }}</div>
                 <div class="value">
                   <el-slider
                       @input="handleUpdatePhotograph"
@@ -112,7 +112,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">X轴偏移</div>
+                <div class="label">{{ $t('right.offsetX') }}</div>
                 <div class="value">
                   <el-slider
                       @input="handleUpdatePhotograph"
@@ -130,7 +130,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">Y轴偏移</div>
+                <div class="label">{{ $t('right.offsetY') }}</div>
                 <div class="value">
                   <el-slider
                       @input="handleUpdatePhotograph"
@@ -148,7 +148,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">模糊程度</div>
+                <div class="label">{{ $t('right.blurAmount') }}</div>
                 <div class="value">
                   <el-slider
                       :format-tooltip="formatSliderTooltip"
@@ -165,7 +165,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">阴影颜色</div>
+                <div class="label">{{ $t('right.shadowColor') }}</div>
                 <div class="value">
                   <el-color-picker
                       @change="handleUpdatePhotograph"
@@ -179,28 +179,28 @@
           </el-sub-menu>
           <el-sub-menu index="2">
             <template #title>
-              <span>边框</span>
+              <span>{{ $t('right.border') }}</span>
             </template>
             <ul class="options">
               <li class="option">
-                <div class="label">边框类型</div>
+                <div class="label">{{ $t('right.borderType') }}</div>
                 <div class="value">
                   <el-select
                       @change="handleCreateBorders()"
                       v-model="canvasesStore.borderOptions.borderType"
-                      :options="[{value: 0,label: '通用'}, {value: 1,label: '模糊'},{value: 2, label:'自定义'}]"
+                      :options="[{value: 0,label: $t('right.borderTypeOptions.general')}, {value: 1,label: $t('right.borderTypeOptions.blur')},{value: 2, label: $t('right.borderTypeOptions.custom')}]"
                       size="small"
                       placeholder="Select"/>
                 </div>
               </li>
               <li class="option" v-show="canvasesStore.borderOptions.borderType === 2">
-                <div class="label">边框图片</div>
+                <div class="label">{{ $t('right.borderImage') }}</div>
                 <div class="value">
-                  <el-button @click="requestImportBorderImage" size="small" type="primary">选择</el-button>
+                  <el-button @click="requestImportBorderImage" size="small" type="primary">{{ $t('right.choose') }}</el-button>
                 </div>
               </li>
               <li class="option">
-                <div class="label">上边框</div>
+                <div class="label">{{ $t('right.borderTop') }}</div>
                 <div class="value">
                   <el-slider
                       @input="handleUpdateBorders"
@@ -217,7 +217,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">下边框</div>
+                <div class="label">{{ $t('right.borderBottom') }}</div>
                 <div class="value">
                   <el-slider
                       @input="handleUpdateBorders"
@@ -235,7 +235,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">左边框</div>
+                <div class="label">{{ $t('right.borderLeft') }}</div>
                 <div class="value">
                   <el-slider
                       @input="handleUpdateBorders"
@@ -252,7 +252,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">右边框</div>
+                <div class="label">{{ $t('right.borderRight') }}</div>
                 <div class="value">
                   <el-slider
                       @input="handleUpdateBorders"
@@ -270,7 +270,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">圆角</div>
+                <div class="label">{{ $t('right.rounded') }}</div>
                 <div class="value">
                   <el-slider
                       @input="handleUpdateBorders"
@@ -288,7 +288,7 @@
                 </div>
               </li>
               <li class="option" v-show="[1,2].includes(canvasesStore.borderOptions.borderType)">
-                <div class="label">模糊值</div>
+                <div class="label">{{ $t('right.borderBlur') }}</div>
                 <div class="value">
                   <el-slider
                       @input="handleUpdateBorders"
@@ -306,7 +306,7 @@
                 </div>
               </li>
               <li class="option" v-show="canvasesStore.borderOptions.borderType === 0">
-                <div class="label">边框颜色</div>
+                <div class="label">{{ $t('right.borderColor') }}</div>
                 <div class="value">
                   <el-color-picker
                       size="small"
@@ -320,22 +320,22 @@
           </el-sub-menu>
           <el-sub-menu index="3" id="text-options">
             <template #title>
-              <span>文本</span>
+              <span>{{ $t('right.text') }}</span>
             </template>
-            <div class="group-title">基本属性</div>
+            <div class="group-title">{{ $t('right.basicProps') }}</div>
             <ul class="options">
               <li class="option">
-                <div class="label">排列方向</div>
+                <div class="label">{{ $t('right.direction') }}</div>
                 <div class="value">
                   <el-select
                       v-model="canvasesStore.textOptions.direction"
-                      :options="[{label:'水平', value: 'horizontal'}, {label: '垂直', value: 'vertical'}]"
+                      :options="[{label: $t('right.directionOptions.horizontal'), value: 'horizontal'}, {label: $t('right.directionOptions.vertical'), value: 'vertical'}]"
                       size="small"
                       placeholder="Select"/>
                 </div>
               </li>
               <li class="option">
-                <div class="label">字体类型</div>
+                <div class="label">{{ $t('right.fontType') }}</div>
                 <div class="value">
                   <el-select
                       v-model="canvasesStore.textOptions.fontFamily"
@@ -352,17 +352,17 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">字体样式</div>
+                <div class="label">{{ $t('right.fontStyle') }}</div>
                 <div class="value">
                   <el-select
                       v-model="canvasesStore.textOptions.fontStyle"
-                      :options="[ {label:'正常', value:'normal'}, {label:'斜体', value:'italic'}, {label:'倾斜', value:'oblique'} ]"
+                      :options="[ {label: $t('right.fontStyleOptions.normal'), value:'normal'}, {label: $t('right.fontStyleOptions.italic'), value:'italic'}, {label: $t('right.fontStyleOptions.oblique'), value:'oblique'} ]"
                       size="small"
                       placeholder="Select"/>
                 </div>
               </li>
               <li class="option">
-                <div class="label">字体大小</div>
+                <div class="label">{{ $t('right.fontSize') }}</div>
                 <div class="value">
                   <el-slider
                       :format-tooltip="formatSliderTooltip"
@@ -376,7 +376,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">字体粗细</div>
+                <div class="label">{{ $t('right.fontWeight') }}</div>
                 <div class="value">
                   <el-slider
                       :format-tooltip="formatSliderTooltip"
@@ -391,7 +391,7 @@
                 </div>
               </li>
               <li class="option" v-show="canvasesStore.textOptions.direction === 'horizontal'">
-                <div class="label">行高</div>
+                <div class="label">{{ $t('right.lineHeight') }}</div>
                 <div class="value">
                   <el-slider
                       v-model="canvasesStore.textOptions.lineHeight"
@@ -405,7 +405,7 @@
                 </div>
               </li>
               <li class="option" v-show="canvasesStore.textOptions.direction === 'vertical'">
-                <div class="label">列宽</div>
+                <div class="label">{{ $t('right.columnWidth') }}</div>
                 <div class="value">
                   <el-slider
                       v-model="canvasesStore.textOptions.columnWidth"
@@ -419,7 +419,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">字符间距</div>
+                <div class="label">{{ $t('right.charSpacing') }}</div>
                 <div class="value">
                   <el-slider
                       :format-tooltip="formatSliderTooltip"
@@ -434,7 +434,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">旋转角度</div>
+                <div class="label">{{ $t('right.angle') }}</div>
                 <div class="value">
                   <el-slider
                       :format-tooltip="formatSliderTooltip"
@@ -448,7 +448,7 @@
               </li>
 
               <li class="option">
-                <div class="label">层级</div>
+                <div class="label">{{ $t('right.layer') }}</div>
                 <div class="value">
                   <el-slider
                       :format-tooltip="formatSliderTooltip"
@@ -462,7 +462,7 @@
               </li>
 
               <li class="option">
-                <div class="label">字体颜色</div>
+                <div class="label">{{ $t('right.fontColor') }}</div>
                 <div class="value">
                   <el-color-picker
                       v-model="canvasesStore.textOptions.fontColor"
@@ -472,10 +472,10 @@
                 </div>
               </li>
             </ul>
-            <div class="group-title">文本阴影</div>
+            <div class="group-title">{{ $t('right.textShadow') }}</div>
             <ul class="options">
               <li class="option">
-                <div class="label">X轴偏移</div>
+                <div class="label">{{ $t('right.offsetX') }}</div>
                 <div class="value">
                   <el-slider
                       :format-tooltip="formatSliderTooltip"
@@ -488,7 +488,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">Y轴偏移</div>
+                <div class="label">{{ $t('right.offsetY') }}</div>
                 <div class="value">
                   <el-slider
                       :format-tooltip="formatSliderTooltip"
@@ -502,7 +502,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">模糊程度</div>
+                <div class="label">{{ $t('right.blurAmount') }}</div>
                 <div class="value">
                   <el-slider
                       :format-tooltip="formatSliderTooltip"
@@ -514,7 +514,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">阴影颜色</div>
+                <div class="label">{{ $t('right.shadowColor') }}</div>
                 <div class="value">
                   <el-color-picker
                       v-model="canvasesStore.textOptions.shadow.color"
@@ -527,12 +527,12 @@
           </el-sub-menu>
           <el-sub-menu index="4" id="image-options">
             <template #title>
-              <span>图片</span>
+              <span>{{ $t('right.image') }}</span>
             </template>
-            <div class="group-title">基本属性</div>
+            <div class="group-title">{{ $t('right.basicProps') }}</div>
             <ul class="options">
               <li class="option">
-                <div class="label">缩放</div>
+                <div class="label">{{ $t('right.scale') }}</div>
                 <div class="value">
                   <el-slider
                       :format-tooltip="formatSliderTooltip"
@@ -546,7 +546,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">不透明度</div>
+                <div class="label">{{ $t('right.opacity') }}</div>
                 <div class="value">
                   <el-slider
                       :format-tooltip="formatSliderTooltip"
@@ -560,7 +560,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">旋转角度</div>
+                <div class="label">{{ $t('right.angle') }}</div>
                 <div class="value">
                   <el-slider
                       :format-tooltip="formatSliderTooltip"
@@ -573,7 +573,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">层级</div>
+                <div class="label">{{ $t('right.layer') }}</div>
                 <div class="value">
                   <el-slider
                       :format-tooltip="formatSliderTooltip"
@@ -587,10 +587,10 @@
               </li>
             </ul>
 
-            <div class="group-title">阴影</div>
+            <div class="group-title">{{ $t('right.shadow') }}</div>
             <ul class="options">
               <li class="option">
-                <div class="label">X轴偏移</div>
+                <div class="label">{{ $t('right.offsetX') }}</div>
                 <div class="value">
                   <el-slider
                       :format-tooltip="formatSliderTooltip"
@@ -604,7 +604,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">Y轴偏移</div>
+                <div class="label">{{ $t('right.offsetY') }}</div>
                 <div class="value">
                   <el-slider
                       :format-tooltip="formatSliderTooltip"
@@ -619,7 +619,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">模糊程度</div>
+                <div class="label">{{ $t('right.blurAmount') }}</div>
                 <div class="value">
                   <el-slider
                       :format-tooltip="formatSliderTooltip"
@@ -631,7 +631,7 @@
                 </div>
               </li>
               <li class="option">
-                <div class="label">阴影颜色</div>
+                <div class="label">{{ $t('right.shadowColor') }}</div>
                 <div class="value">
                   <el-color-picker
                       v-model="canvasesStore.imageOptions.shadow.color"
@@ -1103,22 +1103,25 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
           list-style: none;
           padding: 10px 0 10px 10px;
           background-color: var(--expand-area-background-color);
+          // 标签列宽度取组内最长标签（max-content）并右对齐，控件列左缘对齐；
+          // 行通过 subgrid 对齐到同一标签列，行高与上下内边距保持原值
+          display: grid;
+          grid-template-columns: max-content 1fr;
+          column-gap: 6px;
 
           .option {
             height: 35px;
-            width: 100%;
-            display: flex;
+            display: grid;
+            grid-template-columns: subgrid;
+            grid-column: 1 / -1;
             justify-content: start;
             align-items: center;
-            padding: 10px 0;
-            margin-top: 2px;
 
             .label {
               display: flex;
               align-items: center;
               justify-content: end;
-              width: 50px;
-              font-size: 12px;
+              font-size: 11px;
               color: var(--main-font-color);
 
               .text-resource {
@@ -1133,18 +1136,19 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
             .value {
               display: flex;
               align-items: center;
-              width: calc(100% - 55px);
-              padding: 0 5px 0 10px;
+              width: 100%;
+              // 左侧 4px 与滑块左端对齐，下拉框 / 颜色选择器 / 按钮等组件共用同一起点
+              padding-left: 4px;
 
               .number-input {
                 width: 40px;
+                margin-left: 3px;
                 font-size: 11px;
                 outline: none;
                 transition: border-color 0.3s;
                 border: none;
                 background: transparent;
                 color: var(--main-font-color);
-                margin-left: 7px;
               }
 
               .el-icon {
@@ -1153,6 +1157,7 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
 
               :deep(.el-input) {
                 width: calc(100% - 5px);
+                margin-right: 16px;
                 font-size: 10px;
 
                 .el-input__wrapper {
@@ -1183,6 +1188,7 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
 
               :deep(.el-slider) {
                 width: 100%;
+                margin: 0 4px 0 0;
                 --el-slider-button-size: 10px;
                 --el-slider-height: 5px;
 

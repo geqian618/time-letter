@@ -37,6 +37,9 @@ const defaultProjectSettings = {
     performance: {
         downloadThreads: -1,
     },
+    locale: {
+        language: 'system'
+    },
     appearance: {
         theme: 'system',
         enableScrollbar: true
@@ -70,21 +73,4 @@ const defaultProjectSettings = {
     availableFonts: null
 }
 
-// 偏好设置弹窗的静态下拉选项
-const outputSizeOptions = [
-    {label: '最佳尺寸', value: 0},
-    {label: '固定宽度', value: 1},
-    {label: '固定高度', value: 2},
-    {label: '自适应', value: 3},
-]
-
-const downloadThreadsOptions = [
-    {label: '自动', value: -1},
-    {label: '4', value: 4},
-    {label: '8', value: 8},
-    {label: '12', value: 12},
-    {label: '16', value: 16},
-    {label: '32', value: 32}
-]
-
-export {defaultProjectSettings, outputSizeOptions, downloadThreadsOptions}
+export {defaultProjectSettings}

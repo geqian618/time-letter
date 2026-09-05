@@ -17,21 +17,25 @@
 
 import {ref} from 'vue'
 
+import i18n from '@/locales'
+
+const t = i18n.global.t
+
 const visible = ref(false)
-const title = ref('提示')
+const title = ref(t('common.tip'))
 const message = ref('')
-const confirmText = ref('确认')
-const cancelText = ref('取消')
+const confirmText = ref(t('common.confirm'))
+const cancelText = ref(t('common.cancel'))
 const confirmType = ref('primary')
 
 let resolver = null
 
 // 弹出确认框，返回 Promise：true=确认，false=取消 / 关闭
 const confirm = (options = {}) => {
-  title.value = options.title || '提示'
+  title.value = options.title || t('common.tip')
   message.value = options.message || ''
-  confirmText.value = options.confirmText || '确认'
-  cancelText.value = options.cancelText || '取消'
+  confirmText.value = options.confirmText || t('common.confirm')
+  cancelText.value = options.cancelText || t('common.cancel')
   confirmType.value = options.confirmType || 'primary'
   visible.value = true
   return new Promise((resolve) => {

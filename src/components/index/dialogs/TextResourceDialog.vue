@@ -4,29 +4,29 @@
       <el-form :model="textResourcesStore.textResource" class="text-label-form" ref="textResourceForm" :rules="textResourceRules"
                label-width="auto"
                @submit.native.prevent>
-        <el-form-item label="文本类型" prop="type">
-          <el-select v-model="textResourcesStore.textResource.type" placeholder="文本类型">
+        <el-form-item :label="$t('textResource.textType')" prop="type">
+          <el-select v-model="textResourcesStore.textResource.type" :placeholder="$t('textResource.textType')">
             <el-option
-                v-for="(item,index) in [{label:'普通文本', value:'text'}, {label:'JavaScript脚本', value:'script'}]"
+                v-for="(item,index) in [{label:$t('textResource.typePlain'), value:'text'}, {label:$t('textResource.typeScript'), value:'script'}]"
                 :key="index"
                 :label="item.label"
                 :value="item.value"/>
           </el-select>
         </el-form-item>
-        <el-form-item label="提示" prop="tips">
+        <el-form-item :label="$t('textResource.tips')" prop="tips">
           <el-input v-model="textResourcesStore.textResource.tips" v-focus="textResourcesStore.textResourceDialogVisible"/>
         </el-form-item>
-        <el-form-item label="文本" prop="content" v-if="textResourcesStore.textResource.type === 'text'">
+        <el-form-item :label="$t('textResource.text')" prop="content" v-if="textResourcesStore.textResource.type === 'text'">
           <el-input v-model="textResourcesStore.textResource.content" :rows="4" type="textarea"/>
         </el-form-item>
-        <el-form-item label="脚本" prop="script" v-if="textResourcesStore.textResource.type === 'script'">
+        <el-form-item :label="$t('textResource.script')" prop="script" v-if="textResourcesStore.textResource.type === 'script'">
           <el-input v-model="textResourcesStore.textResource.script" :rows="4" type="textarea"/>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="textResourcesStore.textResourceDialogVisible = false">取消</el-button>
-          <el-button type="info" @click="saveTextResource">确认</el-button>
+          <el-button @click="textResourcesStore.textResourceDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="info" @click="saveTextResource">{{ $t('common.confirm') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -35,7 +35,9 @@
 
 <script setup lang="js">
 
-import {ref, watch, nextTick} from 'vue'
+import {computed, ref, watch, nextTick} from 'vue'
+
+import {useI18n} from 'vue-i18n'
 
 import _ from 'lodash'
 
@@ -45,24 +47,27 @@ import StorageManager from '@/object/storage-manager'
 
 import {useTextResourcesStore} from '@/stores/text-resources'
 
+const {t} = useI18n()
+
 const textResourcesStore = useTextResourcesStore()
 
 const textResourceForm = ref({})
 
-const textResourceRules = {
+// 校验文案经 computed 翻译，语言切换后保持生效
+const textResourceRules = computed(() => ({
   type: [
-    {required: true, message: '文本类型不能为空', trigger: 'blur'},
+    {required: true, message: t('textResource.rules.type'), trigger: 'blur'},
   ],
   tips: [
-    {required: true, message: '提示信息不能为空', trigger: 'blur'},
+    {required: true, message: t('textResource.rules.tips'), trigger: 'blur'},
   ],
   content: [
-    {required: true, message: '文本内容不能为空', trigger: 'blur'},
+    {required: true, message: t('textResource.rules.content'), trigger: 'blur'},
   ],
   script: [
-    {required: true, message: '脚本不能为空', trigger: 'blur'},
+    {required: true, message: t('textResource.rules.script'), trigger: 'blur'},
   ]
-}
+}))
 
 // 弹窗打开时清除上一次的表单校验
 watch(() => textResourcesStore.textResourceDialogVisible, (visible) => {

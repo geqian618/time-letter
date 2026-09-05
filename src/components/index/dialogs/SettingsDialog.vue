@@ -1,15 +1,15 @@
 <template>
   <div class="dialog-wrapper">
-    <el-dialog v-model="settingsDialogVisible" title="偏好设置" top="10vh" width="750">
+    <el-dialog v-model="settingsDialogVisible" :title="$t('settings.title')" top="10vh" width="750">
       <el-tabs type="border-card" class="demo-tabs">
-        <el-tab-pane label="导出">
+        <el-tab-pane :label="$t('settings.tabs.export')">
           <div class="border-box">
-            <span class="border-label">图片尺寸</span>
+            <span class="border-label">{{ $t('settings.imageSize') }}</span>
             <div class="options">
               <div class="option">
-                <span class="label">调整方式：</span>
+                <span class="label">{{ $t('settings.adjustMode') }}</span>
                 <el-select v-model="settingsStore.projectSettings.outputSettings.outputSize.type"
-                           placeholder="Select"
+                           :placeholder="$t('common.select')"
                            class="value"
                            size="small">
                   <el-option
@@ -20,57 +20,65 @@
                 </el-select>
               </div>
               <div class="option" v-show="settingsStore.projectSettings.outputSettings.outputSize.type===1">
-                <span class="label">宽度：</span>
-                <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.width"
-                          size="small"
-                          class="value"
-                          placeholder="宽尺寸"/>
-                <span>&nbsp;px</span>
+                <span class="label">{{ $t('settings.width') }}</span>
+                <div class="input-unit">
+                  <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.width"
+                            size="small"
+                            class="value"
+                            :placeholder="$t('settings.widthPlaceholder')"/>
+                  <span>&nbsp;px</span>
+                </div>
               </div>
               <div class="option" v-show="settingsStore.projectSettings.outputSettings.outputSize.type ===2">
-                <span class="label">高度：</span>
-                <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.height"
-                          size="small"
-                          class="value"
-                          placeholder="高尺寸"/>
-                <span>&nbsp;px</span>
+                <span class="label">{{ $t('settings.height') }}</span>
+                <div class="input-unit">
+                  <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.height"
+                            size="small"
+                            class="value"
+                            :placeholder="$t('settings.heightPlaceholder')"/>
+                  <span>&nbsp;px</span>
+                </div>
               </div>
 
               <div class="option" v-show="settingsStore.projectSettings.outputSettings.outputSize.type===3">
-                <span class="label">最大宽度：</span>
-                <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.maxWidth"
-                          size="small"
-                          class="value"
-                          placeholder="最大宽度"/>
-                <span>&nbsp;px</span>
+                <span class="label">{{ $t('settings.maxWidth') }}</span>
+                <div class="input-unit">
+                  <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.maxWidth"
+                            size="small"
+                            class="value"
+                            :placeholder="$t('settings.maxWidthPlaceholder')"/>
+                  <span>&nbsp;px</span>
+                </div>
               </div>
 
               <div class="option" v-show="settingsStore.projectSettings.outputSettings.outputSize.type===3">
-                <span class="label">最大高度：</span>
-                <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.maxHeight"
-                          size="small"
-                          class="value"
-                          placeholder="最大高度"/>
-                <span>&nbsp;px</span>
+                <span class="label">{{ $t('settings.maxHeight') }}</span>
+                <div class="input-unit">
+                  <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.maxHeight"
+                            size="small"
+                            class="value"
+                            :placeholder="$t('settings.maxHeightPlaceholder')"/>
+                  <span>&nbsp;px</span>
+                </div>
               </div>
 
             </div>
           </div>
           <div class="border-box">
-            <span class="border-label">图片设置</span>
+            <span class="border-label">{{ $t('settings.imageSettings') }}</span>
             <div class="options">
               <div class="option">
-                <span class="label">输出格式：</span>
+                <span class="label">{{ $t('settings.outputFormat') }}</span>
                 <el-select class="value" v-model="settingsStore.projectSettings.outputSettings.extname" size="small">
                   <el-option
-                      v-for="item in [{label:'原格式', value: 0}, {label:'JPEG', value:1}, {label:'PNG', value: 2}, {label:'WEBP', value: 3}]"
+                      v-for="item in [{label:$t('settings.formatOriginal'), value: 0}, {label:'JPEG', value:1}, {label:'PNG', value: 2}, {label:'WEBP', value: 3}]"
                       :key="item.value"
                       :label="item.label"
                       :value="item.value"/>
                 </el-select>
               </div>
               <div class="option" v-show="[1,3].includes(settingsStore.projectSettings.outputSettings.extname) ">
-                <span class="label">图片品质：</span>
+                <span class="label">{{ $t('settings.imageQuality') }}</span>
                 <div class="slider-demo-block">
                   <el-slider
                       v-model="settingsStore.projectSettings.outputSettings.quality"
@@ -82,7 +90,7 @@
                 </div>
               </div>
               <div class="option">
-                <span class="label">同步元数据：</span>
+                <span class="label">{{ $t('settings.syncMetadata') }}</span>
                 <el-switch
                     v-model="settingsStore.projectSettings.outputSettings.isSynchronizeMetadata"
                     class="value"
@@ -91,21 +99,21 @@
             </div>
           </div>
           <div class="border-box">
-            <span class="border-label">文件命名</span>
+            <span class="border-label">{{ $t('settings.fileNaming') }}</span>
             <div class="options">
               <div class="option">
-                <span class="label">命名方式：</span>
+                <span class="label">{{ $t('settings.namingMode') }}</span>
                 <el-select class="value" v-model="settingsStore.projectSettings.outputSettings.fileNaming.basename"
                            size="small">
                   <el-option
-                      v-for="item in [{label:'原名称', value: 0}, {label:'序号', value: 1}, {label:'随机名称', value: 2}]"
+                      v-for="item in [{label:$t('settings.nameOriginal'), value: 0}, {label:$t('settings.nameIndex'), value: 1}, {label:$t('settings.nameRandom'), value: 2}]"
                       :key="item.value"
                       :label="item.label"
                       :value="item.value"/>
                 </el-select>
               </div>
               <div class="option">
-                <span class="label">前缀：</span>
+                <span class="label">{{ $t('settings.prefix') }}</span>
                 <el-input class="value"
                           spellcheck="false"
                           v-model="settingsStore.projectSettings.outputSettings.fileNaming.prefix"
@@ -113,7 +121,7 @@
                 </el-input>
               </div>
               <div class="option">
-                <span class="label">后缀：</span>
+                <span class="label">{{ $t('settings.suffix') }}</span>
                 <el-input class="value"
                           spellcheck="false"
                           v-model="settingsStore.projectSettings.outputSettings.fileNaming.suffix"
@@ -123,27 +131,27 @@
             </div>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="外观">
+        <el-tab-pane :label="$t('settings.tabs.appearance')">
           <div class="border-box">
-            <span class="border-label">主题</span>
+            <span class="border-label">{{ $t('settings.themeGroup') }}</span>
             <div class="options">
               <div class="option">
-                <span class="label">主题模式：</span>
+                <span class="label">{{ $t('settings.themeMode') }}</span>
                 <el-radio-group
                     v-model="settingsStore.projectSettings.appearance.theme"
                     @change="handleThemeChange">
-                  <el-radio-button value="dark">深色</el-radio-button>
-                  <el-radio-button value="light">浅色</el-radio-button>
-                  <el-radio-button value="system">跟随系统</el-radio-button>
+                  <el-radio-button value="dark">{{ $t('settings.themeDark') }}</el-radio-button>
+                  <el-radio-button value="light">{{ $t('settings.themeLight') }}</el-radio-button>
+                  <el-radio-button value="system">{{ $t('settings.themeSystem') }}</el-radio-button>
                 </el-radio-group>
               </div>
             </div>
           </div>
           <div class="border-box">
-            <span class="border-label">画布视口</span>
+            <span class="border-label">{{ $t('settings.canvasViewport') }}</span>
             <div class="options">
               <div class="option">
-                <span class="label">滚动条：</span>
+                <span class="label">{{ $t('settings.scrollbar') }}</span>
                 <el-switch
                     @change="renderCanvasScrollbar"
                     v-model="settingsStore.projectSettings.appearance.enableScrollbar"
@@ -153,12 +161,12 @@
             </div>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="元数据">
+        <el-tab-pane :label="$t('settings.tabs.metadata')">
           <div class="border-box">
-            <span class="border-label">格式化</span>
+            <span class="border-label">{{ $t('settings.formatting') }}</span>
             <div class="options">
               <div class="option">
-                <span class="label">相机品牌：</span>
+                <span class="label">{{ $t('settings.cameraBrand') }}</span>
                 <el-input spellcheck="false"
                           class="metadata-input"
                           @change="handleUpdateMetadata"
@@ -166,7 +174,7 @@
                 </el-input>
               </div>
               <div class="option">
-                <span class="label">相机型号：</span>
+                <span class="label">{{ $t('settings.cameraModel') }}</span>
                 <el-input spellcheck="false"
                           class="metadata-input"
                           @change="handleUpdateMetadata"
@@ -174,7 +182,7 @@
                 </el-input>
               </div>
               <div class="option">
-                <span class="label">镜头型号：</span>
+                <span class="label">{{ $t('settings.lensModel') }}</span>
                 <el-input spellcheck="false"
                           class="metadata-input"
                           @change="handleUpdateMetadata"
@@ -182,7 +190,7 @@
                 </el-input>
               </div>
               <div class="option">
-                <span class="label">焦段：</span>
+                <span class="label">{{ $t('settings.focalLength') }}</span>
                 <el-input spellcheck="false"
                           class="metadata-input"
                           @change="handleUpdateMetadata"
@@ -190,7 +198,7 @@
                 </el-input>
               </div>
               <div class="option">
-                <span class="label">ISO：</span>
+                <span class="label">{{ $t('settings.iso') }}</span>
                 <el-input spellcheck="false"
                           class="metadata-input"
                           @change="handleUpdateMetadata"
@@ -198,7 +206,7 @@
                 </el-input>
               </div>
               <div class="option">
-                <span class="label">快门：</span>
+                <span class="label">{{ $t('settings.shutter') }}</span>
                 <el-input spellcheck="false"
                           class="metadata-input"
                           @change="handleUpdateMetadata"
@@ -206,7 +214,7 @@
                 </el-input>
               </div>
               <div class="option">
-                <span class="label">光圈：</span>
+                <span class="label">{{ $t('settings.aperture') }}</span>
                 <el-input spellcheck="false"
                           class="metadata-input"
                           @change="handleUpdateMetadata"
@@ -214,13 +222,13 @@
                 </el-input>
               </div>
               <div class="option">
-                <span class="label">拍摄日期：</span>
+                <span class="label">{{ $t('settings.shootingDate') }}</span>
                 <el-input spellcheck="false"
                           class="metadata-input shooting-time"
                           @change="handleUpdateMetadata"
                           v-model="settingsStore.projectSettings.metadata.formats.shootingTime">
                 </el-input>
-                <span class="label shooting-time-label">日期格式：</span>
+                <span class="label shooting-time-label">{{ $t('settings.dateFormat') }}</span>
                 <el-input spellcheck="false"
                           class="metadata-input shooting-time"
                           @change="handleUpdateMetadata"
@@ -228,7 +236,7 @@
                 </el-input>
               </div>
               <div class="option">
-                <span class="label">文件名称：</span>
+                <span class="label">{{ $t('settings.filename') }}</span>
                 <el-input spellcheck="false"
                           class="metadata-input"
                           @change="handleUpdateMetadata"
@@ -239,10 +247,10 @@
           </div>
 
           <div class="border-box">
-            <span class="border-label">焦距转换</span>
+            <span class="border-label">{{ $t('settings.focalConversion') }}</span>
             <div class="options">
               <div class="option">
-                <span class="label">等效焦距：</span>
+                <span class="label">{{ $t('settings.equivFocal') }}</span>
                 <el-switch
                     @change="handleFocalLength(0)"
                     v-model="settingsStore.projectSettings.metadata.others.enableEquivalentFocalSegment"
@@ -250,7 +258,7 @@
                     style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
               </div>
               <div class="option">
-                <span class="label">转换倍数：</span>
+                <span class="label">{{ $t('settings.cropFactor') }}</span>
                 <el-input class="value"
                           spellcheck="false"
                           @change="handleFocalLength(1)"
@@ -260,15 +268,15 @@
             </div>
           </div>
           <div class="operation">
-            <el-button type="info" @click="resetMetadataSettings">重置元数据</el-button>
+            <el-button type="info" @click="resetMetadataSettings">{{ $t('settings.resetMetadata') }}</el-button>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="性能">
+        <el-tab-pane :label="$t('settings.tabs.performance')">
           <div class="border-box">
-            <span class="border-label">下载</span>
+            <span class="border-label">{{ $t('settings.download') }}</span>
             <div class="options">
               <div class="option">
-                <span class="label">线程数：</span>
+                <span class="label">{{ $t('settings.threads') }}</span>
                 <el-select class="value" v-model="settingsStore.projectSettings.performance.downloadThreads"
                            size="small">
                   <el-option
@@ -281,11 +289,11 @@
             </div>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="字体">
+        <el-tab-pane :label="$t('settings.tabs.fonts')">
           <el-table size="small" height="400" highlight-current-row :data="settingsStore.availableFonts" border
                     @cell-dblclick="handleActivateInput">
-            <el-table-column fixed prop="family" label="字体家族" show-overflow-tooltip/>
-            <el-table-column prop="familyAlias" label="字体别名" show-overflow-tooltip>
+            <el-table-column fixed prop="family" :label="$t('settings.fontFamilyCol')" show-overflow-tooltip/>
+            <el-table-column prop="familyAlias" :label="$t('settings.fontAliasCol')" show-overflow-tooltip>
               <template #default="scope">
                 <input type="text"
                        spellcheck="false"
@@ -298,26 +306,43 @@
             </el-table-column>
           </el-table>
         </el-tab-pane>
-        <el-tab-pane label="其他">
+        <el-tab-pane :label="$t('settings.tabs.language')">
           <div class="border-box">
-            <span class="border-label">个性化</span>
+            <span class="border-label">{{ $t('settings.languageGroup') }}</span>
             <div class="options">
               <div class="option">
-                <span class="label">属性锚点：</span>
+                <span class="label">{{ $t('settings.interfaceLanguage') }}</span>
+                <el-select v-model="settingsStore.projectSettings.locale.language" @change="applyLanguage" class="value" size="small">
+                  <el-option
+                      v-for="item in languageOptions"
+                      :key="item.value"
+                      :label="item.labelKey ? $t(item.labelKey) : item.label"
+                      :value="item.value"/>
+                </el-select>
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane :label="$t('settings.tabs.others')">
+          <div class="border-box">
+            <span class="border-label">{{ $t('settings.personalization') }}</span>
+            <div class="options">
+              <div class="option">
+                <span class="label">{{ $t('settings.optionAnchor') }}</span>
                 <el-switch
                     v-model="settingsStore.projectSettings.others.optionAnchorPoint"
                     class="value"
                     style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
               </div>
               <div class="option">
-                <span class="label">删除提示：</span>
+                <span class="label">{{ $t('settings.deleteTips') }}</span>
                 <el-switch
                     v-model="settingsStore.projectSettings.others.deleteTipVisible"
                     class="value"
                     style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
               </div>
               <div class="option">
-                <span class="label">伸缩居中：</span>
+                <span class="label">{{ $t('settings.autoCenter') }}</span>
                 <el-switch
                     v-model="settingsStore.projectSettings.others.autoCenterOnToggle"
                     class="value"
@@ -326,10 +351,10 @@
             </div>
           </div>
           <div class="border-box">
-            <span class="border-label">画布</span>
+            <span class="border-label">{{ $t('settings.canvasGroup') }}</span>
             <div class="options">
               <div class="option">
-                <span class="label">移动步长：</span>
+                <span class="label">{{ $t('settings.moveStep') }}</span>
                 <div class="slider-demo-block">
                   <el-slider
                       v-model="settingsStore.projectSettings.others.movingStepSize"
@@ -341,7 +366,7 @@
                 </div>
               </div>
               <div class="option">
-                <span class="label">默认缩放：</span>
+                <span class="label">{{ $t('settings.defaultScale') }}</span>
                 <div class="slider-demo-block">
                   <el-slider
                       @change="handleCanvasScale"
@@ -355,7 +380,7 @@
                 </div>
               </div>
               <div class="option">
-                <span class="label">焦点缩放：</span>
+                <span class="label">{{ $t('settings.focalZoom') }}</span>
                 <el-switch
                     v-model="settingsStore.projectSettings.others.focalZoom"
                     class="value"
@@ -368,7 +393,7 @@
       </el-tabs>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="danger" @click="resetAllSettings">重置全部设置</el-button>
+          <el-button type="danger" @click="resetAllSettings">{{ $t('settings.resetAll') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -378,9 +403,11 @@
 
 <script setup lang="js">
 
-import {ref, nextTick} from 'vue'
+import {ref, nextTick, computed} from 'vue'
 
 import _ from 'lodash'
+
+import {useI18n} from 'vue-i18n'
 
 import useEventListener from '@/composables/useEventListener'
 
@@ -400,9 +427,29 @@ import StorageManager from '@/object/storage-manager'
 
 import {useProjectSettingsStore} from '@/stores/project-settings'
 import {useCanvasesStore} from '@/stores/canvases'
-import {outputSizeOptions, downloadThreadsOptions, defaultProjectSettings} from '@/config/default-project-settings'
+import {defaultProjectSettings} from '@/config/default-project-settings'
+import {languageOptions, applyLanguage} from '@/locales'
 
 import ConfirmDialog from '@/components/index/dialogs/ConfirmDialog.vue'
+
+const {t} = useI18n()
+
+// 偏好设置弹窗的静态下拉选项：经 computed 依赖 locale，切换语言自动更新
+const outputSizeOptions = computed(() => [
+    {label: t('settings.outputSizeOptions.best'), value: 0},
+    {label: t('settings.outputSizeOptions.fixedWidth'), value: 1},
+    {label: t('settings.outputSizeOptions.fixedHeight'), value: 2},
+    {label: t('settings.outputSizeOptions.adaptive'), value: 3},
+])
+
+const downloadThreadsOptions = computed(() => [
+    {label: t('settings.downloadThreadsOptions.auto'), value: -1},
+    {label: '4', value: 4},
+    {label: '8', value: 8},
+    {label: '12', value: 12},
+    {label: '16', value: 16},
+    {label: '32', value: 32}
+])
 
 const settingsStore = useProjectSettingsStore()
 
@@ -555,11 +602,11 @@ const watchImportFonts = () => {
               FontManager.loadFont(family, font.url)
               if (type === 0) {
                 setTimeout(() => {
-                  Notification.success(`字体 ${family} 加载成功`, '提示')
+                  Notification.success(t('settings.fontLoaded', {family}), t('common.notice'))
                 }, 100)
               }
             } catch (error) {
-              Notification.error(error.message, '提示')
+              Notification.error(error.message, t('common.notice'))
               continue
             }
           }
@@ -622,6 +669,7 @@ const watchProjectSettings = () => {
         canvasActions.centerCanvasScrollBar()
       }
       applyTheme(newUserSettings.appearance?.theme || 'system')
+      applyLanguage(newUserSettings.locale?.language || 'system')
     } else if (type === 1) {
       const userSettings = _.cloneDeep(settingsStore.projectSettings);
       delete userSettings.availableFonts;
@@ -656,10 +704,10 @@ const resetMetadataSettings = () => {
 // 恢复全部设置为工厂默认（保留可用字体），并重新联动生效主题 / 布局 / 画布缩放 / 滚动条 / 元数据 / 焦距
 const resetAllSettings = async () => {
   const ok = await confirmRef.value?.confirm({
-    title: '恢复默认设置',
-    message: '将重置全部偏好设置为默认值（可用字体保留），是否继续？',
-    confirmText: '重置',
-    cancelText: '取消',
+    title: t('settings.resetConfirm.title'),
+    message: t('settings.resetConfirm.message'),
+    confirmText: t('settings.resetConfirm.confirm'),
+    cancelText: t('common.cancel'),
     confirmType: 'danger'
   });
   if (!ok) return; // 用户取消
@@ -672,7 +720,8 @@ const resetAllSettings = async () => {
   initAreaResize();
   canvasActions.centerCanvasScrollBar();
   applyTheme(settingsStore.projectSettings.appearance?.theme || 'system');
-  Notification.success('已恢复全部默认设置', '提示');
+  applyLanguage(settingsStore.projectSettings.locale?.language || 'system');
+  Notification.success(t('settings.allReset'), t('common.notice'));
 };
 
 // 双击单元格进入字体别名编辑
@@ -741,35 +790,50 @@ const handleStopActivateInput = (row, column) => {
 
       .options {
         width: 100%;
+        // 标签列宽度取组内最长标签（max-content）并右对齐，控件列左缘对齐：
+        // 中英文标签长短不同均可自适应，不换行、也不留大片空白
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        column-gap: 8px;
 
         .option {
           font-size: 13px;
-          width: 100%;
-          display: flex;
+          // 行通过 subgrid 对齐到同一标签列，行高保持原值
+          display: grid;
+          grid-template-columns: subgrid;
+          grid-column: 1 / -1;
+          justify-content: start;
           align-items: center;
-          height: 40px;
+          min-height: 40px;
 
           .label {
             font-size: 13px;
-            width: 80px;
             text-align: right;
+            white-space: nowrap;
           }
 
           .shooting-time-label {
-            margin-left: 20px;
+            margin-left: 0;
           }
 
           .value {
             width: 150px;
           }
 
+          // 数值输入 + 单位（px）的组合，占满标签右侧剩余宽度
+          .input-unit {
+            display: flex;
+            align-items: center;
+            column-gap: 8px;
+          }
+
 
           .metadata-input {
-            width: calc(100% - 100px);
+            width: 100%;
           }
 
           .metadata-input.shooting-time {
-            width: calc(50% - 100px);
+            width: 100%;
           }
 
           .el-select {

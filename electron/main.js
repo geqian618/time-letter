@@ -18,7 +18,7 @@ const ImageMetadataHelper = require("./utils/ImageMetadataHelper");
 // 钩子和组件
 const imageWatcher = require('./components/image-watcher')
 const fontWatcher = require('./components/font-watcher')
-const createTray = require('./components/tray')
+const {createTray, rebuildTrayMenu} = require('./components/tray')
 const createApplicationMenu = require('./components/application-menu')
 const createContextMenu = require('./components/context-menu')
 const createTemplateContextMenu = require('./components/template-context-menu')
@@ -27,6 +27,8 @@ const {closeImageManagerWindow, getImageManagerWindow} = require('./components/i
 
 // 配置常量
 const {APP_NAME, APP_ICON_PATH, APP_VERSION} = require('./constant/project-constants')
+const {initLanguage, t, setLanguage, changeLanguage} = require('./locales')
+const {initTheme, setTheme} = require('./components/theme')
 const environment = process.env.NODE_ENV
 const isDev = environment === 'development'
 const resourcesPath = getResourcePath()
@@ -106,25 +108,6 @@ const loadAppContent = (window) => {
 
 
 /**
- * 设置主题
- */
-const setTheme = () => {
-    let theme = 'system';
-    try {
-        const themePath = path.join(app.getPath('userData'), 'theme.json');
-        const buffer = fs.readFileSync(themePath);
-        if (buffer.length > 0) {
-            const themeObject = JSON.parse(String(buffer));
-            if (themeObject.theme) {
-                theme = themeObject.theme;
-            }
-        }
-    } catch (e) { /* empty */
-    }
-    nativeTheme.themeSource = theme;
-};
-
-/**
  * 初始化组件
  */
 const initializeComponents = (window) => {
@@ -142,6 +125,19 @@ const initializeComponents = (window) => {
     imageWatcher.watch(window, resourcesPath)
 
     fontWatcher.watch(window, fontPath)
+}
+
+/**
+ * 语言切换后按当前语言重建全部原生 UI（应用菜单 / 画布与模板右键菜单 / 托盘菜单 / 副窗口标题）
+ */
+const rebuildNativeUI = () => {
+    if (mainWindow) {
+        applicationMenu = createApplicationMenu(mainWindow);
+        contextMenu = createContextMenu(mainWindow);
+        templateContextMenu = createTemplateContextMenu(mainWindow);
+    }
+    rebuildTrayMenu()
+    getImageManagerWindow()?.setTitle(t('window.imageManager'))
 }
 
 /**
@@ -215,7 +211,7 @@ const setupIpcHandlers = () => {
     ipcMain.handle('select-directory', async () => {
         try {
             const {canceled, filePaths} = await dialog.showOpenDialog({
-                buttonLabel: '选择',
+                buttonLabel: t('dialog.choose'),
                 properties: ['multiSelections', 'createDirectory', 'openFile', 'openDirectory']
             })
             return !canceled && filePaths?.length ? filePaths[0] : null
@@ -225,23 +221,16 @@ const setupIpcHandlers = () => {
         }
     })
 
+    // 语言切换：持久化偏好并重建全部原生 UI（菜单 / 右键菜单 / 托盘 / 窗口标题），广播各窗口跟随
+    ipcMain.on('language:set', (event, language) => {
+        const resolved = setLanguage(language)
+        rebuildNativeUI()
+        BrowserWindow.getAllWindows().forEach(w => w.webContents.send('language:changed', resolved))
+    })
+
     // 主题切换
     ipcMain.on('theme:set', (event, theme) => {
-        console.log(theme)
-        const finalTheme = theme || 'system';
-        if (['light', 'dark', 'system'].includes(finalTheme)) {
-            const themePath = path.join(app.getPath('userData'), 'theme.json');
-            nativeTheme.themeSource = finalTheme;
-            // 确保目录存在
-            const dir = path.dirname(themePath);
-            if (!fs.existsSync(dir)) {
-                fs.mkdirSync(dir, {recursive: true});
-            }
-            // 写入主题配置（文件存在会覆盖）
-            fs.writeFileSync(themePath, JSON.stringify({theme: finalTheme}));
-            // 同步主题到所有窗口（图片管理器等副窗口跟随）
-            BrowserWindow.getAllWindows().forEach(w => w.webContents.send('theme:changed', finalTheme));
-        }
+        setTheme(theme)
     });
 
 
@@ -260,8 +249,8 @@ const setupIpcHandlers = () => {
         let filePaths = paths;
         if (!isDragOver) {
             const result = await dialog.showOpenDialog({
-                title: '导入文件',
-                buttonLabel: '导入',
+                title: t('dialog.importFile'),
+                buttonLabel: t('dialog.import'),
                 properties: ['openFile', 'multiSelections'],
                 filters: [{name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp']}]
             });
@@ -417,8 +406,8 @@ const setupIpcHandlers = () => {
     ipcMain.on('image-manager:move', async (event, filePaths) => {
         if (!filePaths?.length) return
         const {canceled, filePaths: dirs} = await dialog.showOpenDialog({
-            title: '移动到',
-            buttonLabel: '移动',
+            title: t('dialog.moveTo'),
+            buttonLabel: t('dialog.move'),
             defaultPath: app.getPath('desktop'),
             properties: ['openDirectory', 'createDirectory']
         })
@@ -468,8 +457,8 @@ const setupIpcHandlers = () => {
 
     ipcMain.on('image:request-import', async () => {
         const {filePaths} = await dialog.showOpenDialog({
-            title: '导入图片',
-            buttonLabel: '确认',
+            title: t('dialog.importImages'),
+            buttonLabel: t('dialog.ok'),
             defaultPath: app.getPath('desktop'),
             properties: ['openFile'],
             filters: [{name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']}]
@@ -533,7 +522,7 @@ const registerThumbnailProtocol = () => {
                 .webp({quality: 80})   // 转换为 WebP 格式，质量 80
                 .toBuffer();
             if (thumbnail) {
-                    return new Response(thumbnail, {
+                return new Response(thumbnail, {
                     headers: {
                         'Content-Type': 'image/webp',
                         // 每次请求都按当前源文件重新生成,无需缓存协商
@@ -618,7 +607,10 @@ const initializeApp = () => {
     setupUserData()
 
     // 设置主题
-    setTheme()
+    initTheme()
+
+    // 初始化语言：读取 language.json 并以解析后的语言初始化 i18next
+    initLanguage()
 
     // 自定义协议权限必须在 app ready 之前注册
     registerPrivilegedSchemes()

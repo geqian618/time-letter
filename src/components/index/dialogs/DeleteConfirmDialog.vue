@@ -1,16 +1,16 @@
 <template>
   <div class="dialog-wrapper">
-    <el-dialog v-model="canvasesStore.deleteTipsDialogVisible" title="确认删除" width="350" align-center
+    <el-dialog v-model="canvasesStore.deleteTipsDialogVisible" :title="$t('deleteConfirm.title')" width="350" align-center
                :close-on-click-modal="false">
-      <div style="margin: 5px 0">文件将从磁盘中删除，是否确认删除文件？</div>
+      <div style="margin: 5px 0">{{ $t('deleteConfirm.message') }}</div>
       <template #footer>
         <div class="delete-tips-dialog-footer">
           <div class="left-dialog-footer">
-            <el-checkbox v-model="settingsStore.isHideDeleteTips" @change="settingsStore.deleteTipsDialogVisible" label="不再提示"/>
+            <el-checkbox v-model="settingsStore.isHideDeleteTips" @change="settingsStore.deleteTipsDialogVisible" :label="$t('deleteConfirm.noMore')"/>
           </div>
           <div class="right-dialog-footer">
-            <el-button @click="cancelRemoveSelectedCanvas">取消</el-button>
-            <el-button type="danger" @click="permanentlyRemoveSelectedCanvas">确认</el-button>
+            <el-button @click="cancelRemoveSelectedCanvas">{{ $t('common.cancel') }}</el-button>
+            <el-button type="danger" @click="permanentlyRemoveSelectedCanvas">{{ $t('common.confirm') }}</el-button>
           </div>
         </div>
       </template>

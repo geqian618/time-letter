@@ -5,6 +5,7 @@ const AdmZip = require('adm-zip');
 const {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl} = require('../utils/path-helper')
 const {registerFont} = require('../utils/font-manager')
 const {openImageManagerWindow} = require('./image-manager-window')
+const {t} = require('../locales')
 
 const resourcesPath = getResourcePath()
 const fontPath = getFontPath()
@@ -21,52 +22,52 @@ const createApplicationMenu = (mainWindow) => {
     window = mainWindow;
     const applicationMenu = Menu.buildFromTemplate([
         {
-            label: '文件',
+            label: t('menu.file'),
             submenu: [
                 {
-                    label: '导入图片',
+                    label: t('menu.importImages'),
                     // 无传参
                     click: selectFile,
                     accelerator: 'CommandOrControl+I'
 
                 },
                 {
-                    label: '导出图片',
+                    label: t('menu.exportImages'),
                     click: saveFiles,
                     accelerator: 'CommandOrControl+O'
                 }
             ]
         },
         {
-            label: '设置',
+            label: t('menu.settings'),
             submenu: [
                 {
-                    label: '偏好设置',
+                    label: t('menu.preferences'),
                     click: openSettingsDialog,
                     accelerator: 'CommandOrControl+Alt+S',
                 },
                 {
-                    label: '模板预设',
+                    label: t('menu.templatePresets'),
                     submenu: [
                         {
-                            label: '导入文件',
+                            label: t('menu.importFile'),
                             click: importTemplates
                         },
                         {
-                            label: '导出文件',
+                            label: t('menu.exportFile'),
                             click: exportTemplates
                         }
                     ],
                 },
                 {
-                    label: '全局设置',
+                    label: t('menu.globalSettings'),
                     submenu: [
                         {
-                            label: '导入文件',
+                            label: t('menu.importFile'),
                             click: importSettings
                         },
                         {
-                            label: '导出文件',
+                            label: t('menu.exportFile'),
                             click: exportSettings
                         }
                     ],
@@ -74,17 +75,17 @@ const createApplicationMenu = (mainWindow) => {
             ]
         },
         {
-            label: '扩展',
+            label: t('menu.extensions'),
             submenu: [
                 {
-                    label: '文本库',
+                    label: t('menu.textLibrary'),
                     submenu: [
                         {
-                            label: '新增文本',
+                            label: t('menu.addText'),
                             click: customTextLabels
                         },
                         {
-                            label: '管理文本',
+                            label: t('menu.manageText'),
                             click: () => {
                                 window.webContents.send('resources:watch-change', {type: 3})
                             }
@@ -92,14 +93,14 @@ const createApplicationMenu = (mainWindow) => {
                     ],
                 },
                 {
-                    label: '图片库',
+                    label: t('menu.imageLibrary'),
                     submenu: [
                         {
-                            label: '导入图片',
+                            label: t('menu.importImages'),
                             click: selectImageResources
                         },
                         {
-                            label: '打开资源管理器',
+                            label: t('menu.openResources'),
                             click: () => {
                                 // 尝试打开文件夹
                                 shell.openPath(resourcesPath);
@@ -108,14 +109,14 @@ const createApplicationMenu = (mainWindow) => {
                     ]
                 },
                 {
-                    label: '字体库',
+                    label: t('menu.fontLibrary'),
                     submenu: [
                         {
-                            label: '导入字体',
+                            label: t('menu.importFonts'),
                             click: selectFonts
                         },
                         {
-                            label: '打开资源管理器',
+                            label: t('menu.openResources'),
                             click: () => {
                                 // 尝试打开文件夹
                                 shell.openPath(fontPath);
@@ -126,26 +127,26 @@ const createApplicationMenu = (mainWindow) => {
             ]
         },
         {
-            label: '工具',
+            label: t('menu.tools'),
             submenu: [
                 {
-                    label: '图片管理器',
+                    label: t('menu.imageManager'),
                     click: openImageManagerWindow
                 },
             ]
         },
         {
-            label: '帮助',
+            label: t('menu.help'),
             submenu: [
                 {
-                    label: '控制台',
+                    label: t('menu.console'),
                     // role: 'toggleDevTools',
                     click: (menuItem, browserWindow, event) => {
                         browserWindow.webContents.openDevTools({mode: "detach"})
                     }
                 },
                 {
-                    label: '关于',
+                    label: t('menu.about'),
                     click: openAboutDialog
                 }
             ]
@@ -163,8 +164,8 @@ const createApplicationMenu = (mainWindow) => {
  */
 const selectFile = async () => {
     const {filePaths} = await dialog.showOpenDialog({
-        title: '导入文件',
-        buttonLabel: '导入',
+        title: t('dialog.importFile'),
+        buttonLabel: t('dialog.import'),
         properties: ['openFile', 'multiSelections'],
         filters: [{name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp']}]
     });
@@ -189,8 +190,8 @@ const selectFile = async () => {
 
 const importTemplates = async () => {
     const {filePaths} = await dialog.showOpenDialog({
-        title: '导入文件',
-        buttonLabel: '导入',
+        title: t('dialog.importFile'),
+        buttonLabel: t('dialog.import'),
         properties: ['openFile'],
         filters: [{name: 'TILE', extensions: ['tile']}]
     });
@@ -265,8 +266,8 @@ const importTemplates = async () => {
 
 const exportTemplates = async () => {
     const {canceled, filePath} = await dialog.showSaveDialog({
-        title: '保存文件',
-        buttonLabel: '保存',
+        title: t('dialog.saveFile'),
+        buttonLabel: t('dialog.save'),
         defaultPath: path.join(app.getPath('desktop'), 'templates.tile'),
         filters: [{name: 'TILE', extensions: ['tile']}]
     })
@@ -278,8 +279,8 @@ const exportTemplates = async () => {
 
 const selectFonts = async () => {
     const {filePaths} = await dialog.showOpenDialog({
-        title: '导入文件',
-        buttonLabel: '导入',
+        title: t('dialog.importFile'),
+        buttonLabel: t('dialog.import'),
         properties: ['openFile', 'multiSelections'],
         filters: [
             {name: 'Fonts', extensions: ['ttf', 'otf', 'woff', 'woff2']}
@@ -335,8 +336,8 @@ const selectFonts = async () => {
 
 const selectImageResources = async () => {
     const {filePaths} = await dialog.showOpenDialog({
-        title: '导入文件',
-        buttonLabel: '导入',
+        title: t('dialog.importFile'),
+        buttonLabel: t('dialog.import'),
         properties: ['openFile', 'multiSelections'],
         filters: [{name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']}]
     });
@@ -372,7 +373,7 @@ const customTextLabels = () => {
  */
 const saveFiles = async () => {
     const {canceled, filePaths} = await dialog.showOpenDialog({
-        buttonLabel: '导出',
+        buttonLabel: t('dialog.export'),
         defaultPath: app.getPath('desktop'),
         properties: ['openDirectory', 'createDirectory']
     })
@@ -394,8 +395,8 @@ const openAboutDialog = () => {
 
 const exportSettings = async () => {
     const {canceled, filePath} = await dialog.showSaveDialog({
-        title: '保存文件',
-        buttonLabel: '保存',
+        title: t('dialog.saveFile'),
+        buttonLabel: t('dialog.save'),
         defaultPath: path.join(app.getPath('desktop'), 'settings.json'),
         filters: [{name: 'JSON', extensions: ['json']}]
     })
@@ -407,8 +408,8 @@ const exportSettings = async () => {
 
 const importSettings = async () => {
     const {filePaths} = await dialog.showOpenDialog({
-        title: '导入文件',
-        buttonLabel: '导入',
+        title: t('dialog.importFile'),
+        buttonLabel: t('dialog.import'),
         properties: ['openFile'],
         filters: [{name: 'JSON', extensions: ['json']}]
     });

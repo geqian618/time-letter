@@ -36,4 +36,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     imageManagerMove: (args) => ipcRenderer.send('image-manager:move', args),
     watchImageManagerMoveResult: (callback) => ipcRenderer.on('image-manager:move-result', callback),
     watchThemeChanged: (callback) => ipcRenderer.on('theme:changed', callback),
+
+    // 语言切换（渲染进程为设置来源，主进程持久化并重建原生 UI 后广播回各窗口）
+    setLanguage: (language) => ipcRenderer.send('language:set', language),
+    watchLanguageChanged: (callback) => ipcRenderer.on('language:changed', callback),
 });

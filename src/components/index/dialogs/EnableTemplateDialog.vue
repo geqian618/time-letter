@@ -1,15 +1,15 @@
 <template>
   <div class="dialog-wrapper">
-    <el-dialog v-model="templatesStore.enableTemplateDialogVisible" title="应用模版" width="400" align-center draggable>
+    <el-dialog v-model="templatesStore.enableTemplateDialogVisible" :title="$t('template.applyTitle')" width="400" align-center draggable>
       <el-radio-group v-model="templatesStore.synchronousMode">
-        <el-radio :value="0" size="large">按固定值定位位置</el-radio>
-        <el-radio :value="1" size="large">按比例定位位置</el-radio>
+        <el-radio :value="0" size="large">{{ $t('template.positionByValue') }}</el-radio>
+        <el-radio :value="1" size="large">{{ $t('template.positionByRatio') }}</el-radio>
       </el-radio-group>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="templatesStore.enableTemplateDialogVisible = false">取消</el-button>
+          <el-button @click="templatesStore.enableTemplateDialogVisible = false">{{ $t('common.cancel') }}</el-button>
           <el-button type="info" @click="enableTemplate">
-            应用
+            {{ $t('template.apply') }}
           </el-button>
         </div>
       </template>

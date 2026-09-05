@@ -1,9 +1,25 @@
 <template>
-  <RouterView/>
+  <el-config-provider :locale="elementLocale">
+    <RouterView/>
+  </el-config-provider>
 </template>
 
 <script setup lang="ts">
 import {RouterView} from 'vue-router'
+
+import {useLanguage} from '@/locales'
+
+import {useProjectSettingsStore} from '@/stores/project-settings'
+
+const settingsStore = useProjectSettingsStore()
+
+// 图片管理器为独立窗口（与主窗口共享 localStorage），在根组件统一加载项目设置，
+// 保证两个窗口的语言设置初始值一致
+settingsStore.loadProjectSettings()
+
+// 语言组合式函数：语言应用 / 主进程同步 / 跟随系统与广播跟随（含 Element Plus 组件库 locale）
+const {elementLocale} = useLanguage()
+
 </script>
 
 <style>

@@ -2,45 +2,45 @@
   <div class="preview-bar">
     <div class="left-preview-bar">
       <div class="tab-wrapper">
-        <el-tooltip content="第一张" placement="top">
-          <img src="/src/assets/icon/first-inactive.svg" class="inactive small-size" alt="第一张">
+        <el-tooltip :content="$t('preview.first')" placement="top">
+          <img src="/src/assets/icon/first-inactive.svg" class="inactive small-size" :alt="$t('preview.first')">
         </el-tooltip>
-        <el-tooltip content="第一张" placement="top">
+        <el-tooltip :content="$t('preview.first')" placement="top">
           <img src="/src/assets/icon/first-active.svg" class="active small-size"
                @click="switchFirstPreviewElement"
-               alt="第一张">
+               :alt="$t('preview.first')">
         </el-tooltip>
       </div>
 
       <div class="tab-wrapper">
-        <el-tooltip content="上一张" placement="top">
-          <img src="/src/assets/images/left-arrow-inactive.png" class="inactive" alt="上一张">
+        <el-tooltip :content="$t('preview.prev')" placement="top">
+          <img src="/src/assets/images/left-arrow-inactive.png" class="inactive" :alt="$t('preview.prev')">
         </el-tooltip>
-        <el-tooltip content="上一张" placement="top">
+        <el-tooltip :content="$t('preview.prev')" placement="top">
           <img src="/src/assets/images/left-arrow-active.png" class="active" @click="switchBeforePreviewElement"
-               alt="上一张">
+               :alt="$t('preview.prev')">
         </el-tooltip>
       </div>
 
       <div class="tab-wrapper">
-        <el-tooltip content="下一张" placement="top">
-          <img src="/src/assets/images/right-arrow-inactive.png" class="inactive" alt="下一张">
+        <el-tooltip :content="$t('preview.next')" placement="top">
+          <img src="/src/assets/images/right-arrow-inactive.png" class="inactive" :alt="$t('preview.next')">
         </el-tooltip>
-        <el-tooltip content="下一张" placement="top">
+        <el-tooltip :content="$t('preview.next')" placement="top">
           <img src="/src/assets/images/right-arrow-active.png" class="active" @click="switchNextPreviewElement"
-               alt="下一张">
+               :alt="$t('preview.next')">
         </el-tooltip>
       </div>
 
 
       <div class="tab-wrapper">
-        <el-tooltip content="最后一张" placement="top">
-          <img src="/src/assets/icon/last-inactive.svg" class="inactive small-size" alt="居中">
+        <el-tooltip :content="$t('preview.last')" placement="top">
+          <img src="/src/assets/icon/last-inactive.svg" class="inactive small-size" :alt="$t('preview.center')">
         </el-tooltip>
-        <el-tooltip content="最后一张" placement="top">
+        <el-tooltip :content="$t('preview.last')" placement="top">
           <img src="/src/assets/icon/last-active.svg" class="active small-size"
                @click="switchLastPreviewElement"
-               alt="最后一张">
+               :alt="$t('preview.last')">
         </el-tooltip>
       </div>
 
@@ -51,11 +51,11 @@
                    popper-class="zoom-popper"
                    class="zoom-dropdown">
         <div class="tab-wrapper">
-          <el-tooltip content="缩放" placement="top" :disabled="tooltipDisabled">
-            <img src="/src/assets/icon/zoom-inactive.svg" class="inactive medium-size" alt="缩放">
+          <el-tooltip :content="$t('preview.zoom')" placement="top" :disabled="tooltipDisabled">
+            <img src="/src/assets/icon/zoom-inactive.svg" class="inactive medium-size" :alt="$t('preview.zoom')">
           </el-tooltip>
-          <el-tooltip content="缩放" placement="top" :disabled="tooltipDisabled">
-            <img src="/src/assets/icon/zoom-active.svg" class="active medium-size" alt="缩放">
+          <el-tooltip :content="$t('preview.zoom')" placement="top" :disabled="tooltipDisabled">
+            <img src="/src/assets/icon/zoom-active.svg" class="active medium-size" :alt="$t('preview.zoom')">
           </el-tooltip>
         </div>
         <template #dropdown>
@@ -69,42 +69,39 @@
       </el-dropdown>
 
       <div class="tab-wrapper">
-        <el-tooltip content="全选" placement="top">
-          <img src="/src/assets/icon/select-all-inactive.svg" class="inactive medium-size" alt="全选">
+        <el-tooltip :content="$t('preview.selectAll')" placement="top">
+          <img src="/src/assets/icon/select-all-inactive.svg" class="inactive medium-size" :alt="$t('preview.selectAll')">
         </el-tooltip>
-        <el-tooltip content="全选" placement="top">
+        <el-tooltip :content="$t('preview.selectAll')" placement="top">
           <img src="/src/assets/icon/select-all-active.svg"
                @click="handleSelectAllPreviewElements"
                class="active medium-size"
-               alt="全选">
+               :alt="$t('preview.selectAll')">
         </el-tooltip>
       </div>
 
 
       <div class="tab-wrapper">
-        <el-tooltip content="居中" placement="top">
-          <img src="/src/assets/images/center-display-inactivate.png" class="inactive medium-size" alt="居中">
+        <el-tooltip :content="$t('preview.center')" placement="top">
+          <img src="/src/assets/images/center-display-inactivate.png" class="inactive medium-size" :alt="$t('preview.center')">
         </el-tooltip>
-        <el-tooltip content="居中" placement="top">
+        <el-tooltip :content="$t('preview.center')" placement="top">
           <img src="/src/assets/images/center-display-activate.png" class="active medium-size"
                @click="canvasActions.centerCanvasScrollBar()"
-               alt="居中">
+               :alt="$t('preview.center')">
         </el-tooltip>
       </div>
     </div>
 
 
     <div class="right-preview-bar">
-      <div class="counter">已选 {{ canvasesStore.selectedPreviewList.size }} / 共{{
-          canvasesStore.availableCanvases.size
-        }}张
-      </div>
+      <div class="counter">{{ $t('preview.counter', {selected: canvasesStore.selectedPreviewList.size, total: canvasesStore.availableCanvases.size}) }}</div>
       <div class="filter">
-        <div class="filter-label">筛选：</div>
+        <div class="filter-label">{{ $t('preview.filter') }}</div>
         <div class="filter-select">
-          <el-select v-model="canvasesStore.filterType" size="small" placeholder="Select">
+          <el-select v-model="canvasesStore.filterType" size="small" :placeholder="$t('common.select')">
             <el-option
-                v-for="item in [{label:'无',value:0},{label:'横图',value:1},{label:'竖图',value:2}]"
+                v-for="item in [{label:$t('preview.filterNone'),value:0},{label:$t('preview.filterLandscape'),value:1},{label:$t('preview.filterPortrait'),value:2}]"
                 :key="item.value"
                 :label="item.label"
                 :value="item.value"/>
@@ -123,10 +120,10 @@
           trigger="hover">
         <template #default>
           <div style="font-size: 10px">
-            <p v-if="canvas.metadata.filename">文件名称：{{ canvas.metadata.fullFilename }}</p>
-            <p v-if="canvas.metadata.shootingTime">拍摄时间：{{ canvas.metadata.shootingTime }}</p>
-            <p v-if="canvas.metadata.resolution">分辨率：{{ canvas.metadata.resolution }}</p>
-            <p v-if="canvas.metadata.fileSize">大小：{{ canvas.metadata.fileSize }}</p>
+            <p v-if="canvas.metadata.filename">{{ $t('preview.filename') }}{{ canvas.metadata.fullFilename }}</p>
+            <p v-if="canvas.metadata.shootingTime">{{ $t('preview.shootingTime') }}{{ canvas.metadata.shootingTime }}</p>
+            <p v-if="canvas.metadata.resolution">{{ $t('preview.resolution') }}{{ canvas.metadata.resolution }}</p>
+            <p v-if="canvas.metadata.fileSize">{{ $t('preview.size') }}{{ canvas.metadata.fileSize }}</p>
           </div>
         </template>
         <template #reference>
@@ -693,6 +690,7 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
       }
 
       .filter-select {
+        margin-left: 6px;
         margin-right: 20px;
 
         .el-select {

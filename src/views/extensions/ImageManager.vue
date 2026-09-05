@@ -5,29 +5,29 @@
         <el-checkbox :model-value="isAllSelected" :indeterminate="isIndeterminate"
                      @change="toggleSelectAll"/>
         <div class="filter">
-          <span class="filter-label">筛选：</span>
+          <span class="filter-label">{{ $t('imageManager.filter') }}</span>
           <el-select v-model="filterExtnameList" class="ext-filter" multiple collapse-tags clearable
-                     size="small" placeholder="按扩展名筛选">
+                     size="small" :placeholder="$t('imageManager.filterByExt')">
             <el-option v-for="item in extnameOptions" :key="item" :label="item" :value="item"/>
           </el-select>
           <el-input v-model="nameFilter" class="name-filter" size="small" clearable
-                    prefix-icon="Search" placeholder="按输入名称筛选"/>
+                    prefix-icon="Search" :placeholder="$t('imageManager.filterByName')"/>
         </div>
         <div class="filter">
-          <span class="filter-label">列数：</span>
-          <el-select v-model="columnCount" class="column-select" size="small" placeholder="自动"
+          <span class="filter-label">{{ $t('imageManager.columns') }}</span>
+          <el-select v-model="columnCount" class="column-select" size="small" :placeholder="$t('imageManager.auto')"
                      clearable allow-create filterable>
-            <el-option label="自动" :value="0"/>
+            <el-option :label="$t('imageManager.auto')" :value="0"/>
             <el-option v-for="n in [1, 2, 3, 4, 5, 6, 8]" :key="n" :label="String(n)" :value="n"/>
           </el-select>
         </div>
-        <el-button size="small" :disabled="!selectedPaths.size" @click="clearSelected">清除选中</el-button>
-        <span class="counter">已选 {{ selectedPaths.size }} / 共 {{ filteredImages.length }} 张</span>
+        <el-button size="small" :disabled="!selectedPaths.size" @click="clearSelected">{{ $t('imageManager.clearSelected') }}</el-button>
+        <span class="counter">{{ $t('imageManager.counter', {selected: selectedPaths.size, total: filteredImages.length}) }}</span>
       </div>
       <div class="toolbar-right">
-        <el-button size="small" :disabled="!selectedPaths.size" @click="removeSelected">移除</el-button>
-        <el-button size="small" type="danger" :disabled="!selectedPaths.size" @click="deleteSelected">删除</el-button>
-        <el-button size="small" type="primary" :disabled="!selectedPaths.size" @click="moveSelected">移动到</el-button>
+        <el-button size="small" :disabled="!selectedPaths.size" @click="removeSelected">{{ $t('imageManager.remove') }}</el-button>
+        <el-button size="small" type="danger" :disabled="!selectedPaths.size" @click="deleteSelected">{{ $t('imageManager.delete') }}</el-button>
+        <el-button size="small" type="primary" :disabled="!selectedPaths.size" @click="moveSelected">{{ $t('imageManager.moveTo') }}</el-button>
       </div>
     </div>
 
@@ -50,7 +50,7 @@
           </el-tooltip>
         </div>
       </div>
-      <el-empty v-else description="暂无图片，请先在主界面导入图片"/>
+      <el-empty v-else :description="$t('imageManager.empty')"/>
     </div>
   </div>
 </template>
@@ -59,8 +59,11 @@
 
 import {ref, computed, watch, onMounted, onBeforeUnmount} from 'vue'
 import {ElMessage} from 'element-plus'
+import {useI18n} from 'vue-i18n'
 
 import StorageManager from '@/object/storage-manager'
+
+const {t, locale} = useI18n()
 
 // 主窗口推送的画布快照
 const images = ref([])
@@ -218,12 +221,22 @@ const watchImageData = () => {
 // 移动结果提示
 const watchMoveResult = () => {
   window.electronAPI.watchImageManagerMoveResult((event, {movedCount, skippedCount, failedCount}) => {
-    const parts = [`成功移动 ${movedCount} 张`]
-    if (skippedCount) parts.push(`跳过 ${skippedCount} 张（同名或同目录）`)
-    if (failedCount) parts.push(`失败 ${failedCount} 张`)
-    ElMessage({message: parts.join('，'), type: failedCount ? 'warning' : 'success'})
+    const parts = [t('imageManager.moveResult.moved', {n: movedCount})]
+    if (skippedCount) parts.push(t('imageManager.moveResult.skipped', {n: skippedCount}))
+    if (failedCount) parts.push(t('imageManager.moveResult.failed', {n: failedCount}))
+    ElMessage({message: parts.join(locale.value === 'zh-CN' ? '，' : ', '), type: failedCount ? 'warning' : 'success'})
   })
 }
+
+
+// ---------- 窗口标题（独立窗口，跟随界面语言） ----------
+
+const applyDocumentTitle = () => {
+  document.title = t('imageManager.title')
+}
+
+// 语言切换（含广播跟随）时同步窗口标题
+watch(locale, applyDocumentTitle)
 
 
 // ---------- 主题（独立窗口自行应用亮 / 暗主题） ----------
@@ -248,7 +261,7 @@ const setupTheme = () => {
 
 
 onMounted(() => {
-  document.title = '图片管理器'
+  applyDocumentTitle()
   setupTheme()
   window.addEventListener('keydown', handleKeydown)
   window.addEventListener('resize', measureWrapper)

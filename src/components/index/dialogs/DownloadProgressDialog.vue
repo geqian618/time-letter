@@ -1,7 +1,7 @@
 <template>
   <div class="dialog-wrapper">
     <el-dialog v-model="canvasesStore.downloadProgressVisible"
-               title="导出进度"
+               :title="$t('downloadProgress.title')"
                align-center
                @close="handleDownloadProgressClose"
                @closed="handleDownloadProgressClosed"
@@ -10,7 +10,7 @@
       <el-progress class="download-progress" :percentage="canvasesStore.downloadProgressPercentage"/>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="info" @click="canvasesStore.downloadProgressVisible = false">取消</el-button>
+          <el-button type="info" @click="canvasesStore.downloadProgressVisible = false">{{ $t('common.cancel') }}</el-button>
         </div>
       </template>
     </el-dialog>

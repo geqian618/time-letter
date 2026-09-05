@@ -14,6 +14,8 @@ import 'element-plus/dist/index.css'
 
 import VueLazyload from 'vue3-lazyload'
 
+import i18n from './locales'
+
 import inputFocus from '@/directive/input-focus';
 
 import dragSort from '@/directive/drag-sort';
@@ -30,6 +32,8 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 }
 
 app.use(ElementPlus)
+
+app.use(i18n)
 
 app.use(VueLazyload, {
     // 错误图片

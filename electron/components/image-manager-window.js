@@ -1,6 +1,7 @@
 const {BrowserWindow, nativeTheme, app} = require('electron')
 const path = require('path')
 const WinState = require('electron-win-state').default
+const {t} = require('../locales')
 
 const {APP_ICON_PATH} = require('../constant/project-constants')
 
@@ -32,7 +33,7 @@ const openImageManagerWindow = () => {
 
     imageManagerWindow = new BrowserWindow({
         ...winState.winOptions,
-        title: '图片管理器',
+        title: t('window.imageManager'),
         icon: APP_ICON_PATH,
         show: false,
         backgroundColor: isDarkTheme ? '#262626' : '#f5f5f5',
