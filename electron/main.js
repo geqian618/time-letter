@@ -18,7 +18,7 @@ const ImageMetadataHelper = require("./utils/ImageMetadataHelper");
 // 钩子和组件
 const imageWatcher = require('./components/image-watcher')
 const fontWatcher = require('./components/font-watcher')
-const {createTray, rebuildTrayMenu} = require('./components/tray')
+const {createTray} = require('./components/tray')
 const createApplicationMenu = require('./components/application-menu')
 const createContextMenu = require('./components/context-menu')
 const createTemplateContextMenu = require('./components/template-context-menu')
@@ -130,14 +130,23 @@ const initializeComponents = (window) => {
 /**
  * 语言切换后按当前语言重建全部原生 UI（应用菜单 / 画布与模板右键菜单 / 托盘菜单 / 副窗口标题）
  */
-const rebuildNativeUI = () => {
-    if (mainWindow) {
+const rebuildAppComponents = () => {
+
+    if (mainWindow && !tray.isDestroyed()) {
         applicationMenu = createApplicationMenu(mainWindow);
         contextMenu = createContextMenu(mainWindow);
         templateContextMenu = createTemplateContextMenu(mainWindow);
     }
-    rebuildTrayMenu()
-    getImageManagerWindow()?.setTitle(t('window.imageManager'))
+
+    if (tray && !tray.isDestroyed()) {
+        tray.destroy();
+        tray = createTray(window);
+    }
+
+    const imageManagerWindow = getImageManagerWindow();
+    if (imageManagerWindow && !imageManagerWindow.isDestroyed()) {
+        imageManagerWindow.setMenu(null);
+    }
 }
 
 /**
@@ -224,13 +233,15 @@ const setupIpcHandlers = () => {
     // 语言切换：持久化偏好并重建全部原生 UI（菜单 / 右键菜单 / 托盘 / 窗口标题），广播各窗口跟随
     ipcMain.on('language:set', (event, language) => {
         const resolved = setLanguage(language)
-        rebuildNativeUI()
         BrowserWindow.getAllWindows().forEach(w => w.webContents.send('language:changed', resolved))
+        rebuildAppComponents()
     })
 
     // 主题切换
     ipcMain.on('theme:set', (event, theme) => {
         setTheme(theme)
+        // 同步主题到所有窗口（图片管理器等副窗口跟随）
+        BrowserWindow.getAllWindows().forEach(w => w.webContents.send('theme:changed', theme));
     });
 
 

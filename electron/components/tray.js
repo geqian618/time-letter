@@ -15,7 +15,11 @@ const createTray = (window) => {
 
     tray.setToolTip(APP_NAME)
 
-    rebuildTrayMenu();
+    const contextMenu = Menu.buildFromTemplate([
+        {label: t('menu.quit'), type: 'normal', click: () => app.quit()}
+    ]);
+
+    tray.setContextMenu(contextMenu);
 
     tray.on('click', () => {
         // 窗口显示点击托盘图标隐藏窗口，窗口隐藏点击托盘图标显示窗口
@@ -25,13 +29,5 @@ const createTray = (window) => {
     return tray;
 }
 
-// 语言切换后按当前语言重建托盘菜单（复用托盘实例，避免重复创建托盘图标）
-const rebuildTrayMenu = () => {
-    if (!tray) return
-    const contextMenu = Menu.buildFromTemplate([
-        {label: t('menu.quit'), type: 'normal', click: () => app.quit()}
-    ]);
-    tray.setContextMenu(contextMenu);
-}
 
-module.exports = {createTray, rebuildTrayMenu}
+module.exports = {createTray}

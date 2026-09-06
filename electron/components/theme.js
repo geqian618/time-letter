@@ -1,7 +1,6 @@
 const {nativeTheme, BrowserWindow} = require('electron')
 const settingsManager = require('../utils/settings-manager')
 
-
 // 主题的候选值（存储值：system 为跟随系统）
 const THEMES = ['light', 'dark', 'system']
 
@@ -24,8 +23,6 @@ const setTheme = (theme) => {
     nativeTheme.themeSource = theme;
     // 持久化主题偏好（合并写入，保留语言等其他字段）
     settingsManager.write({theme});
-    // 同步主题到所有窗口（图片管理器等副窗口跟随）
-    BrowserWindow.getAllWindows().forEach(w => w.webContents.send('theme:changed', theme));
-}
+  }
 
 module.exports = {initTheme, setTheme}
