@@ -68,6 +68,7 @@ class DraggableElementFactory {
                     width: width / zoom,
                     height: height / zoom,
                     draggable: true,
+                    cacheable: true,
                     meta: {path}
                 }).then(image => {
                     resolve(image);

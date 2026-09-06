@@ -1634,7 +1634,7 @@ class CanvasEditor {
             // 通过 resetElements 拷入既有响应式代理，保留代理身份与响应式
             this.resetElements(elements);
         } catch (e) {
-            console.error('导入失败:', e);
+            throw new Error(`加载失败: ${e.message}`);
         }
     }
 
@@ -1647,26 +1647,28 @@ class CanvasEditor {
         if (!json || typeof json !== 'string') throw new Error('unsupported data type');
         try {
             const {width, height, elements, zoom} = JSON.parse(json);
-            this.clearCanvas();
-            this.resizeCanvas(width, height, zoom);
+            // 1. 先解码图片、构造元素，期间 canvas 保持旧画面不动，避免「已 resize 未绘制」的空白帧
+            const preparedElements = [];
             for (let element of elements) {
                 if (element.type === 'text') {
-                    this.elements.push(new Text(element.text, element))
-                }
-                if (element.type === 'image') {
+                    preparedElements.push(new Text(element.text, element));
+                } else if (element.type === 'image') {
                     const image = this.enableCache ? this.cache.get(element.src) : null;
                     const instance = image ? new Image(image, element) : await Image.fromURL(element.src, element);
-                    this.elements.push(instance)
+                    preparedElements.push(instance);
                     if (this.enableCache && instance.cacheable && !this.cache.has(element.src)) {
                         this.cache.set(instance.src, instance.image);
                     }
-                }
-                if (element.type === 'rect') {
-                    this.elements.push(new Rect(element));
+                } else if (element.type === 'rect') {
+                    preparedElements.push(new Rect(element));
                 }
             }
+            // 2. 元素就绪后，一次性 clear + resize + 塞元素（同步）；绘制由调用方的 renderAll 接续完成
+            this.clearCanvas();
+            this.resizeCanvas(width, height, zoom);
+            this.resetElements(preparedElements);
         } catch (e) {
-            console.error('导入失败:', e);
+            throw new Error(`加载失败: ${e.message}`);
         }
     }
 

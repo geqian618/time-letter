@@ -341,16 +341,16 @@ const renderCanvas = async (canvas) => {
 
     const {foreground, background, metadata: {width: imageWidth, height: imageHeight}} = canvas;
 
-    if (typeof background !== 'string' && typeof background !== 'object') throw new Error('unsupported data type')
+    if (typeof foreground !== 'string' && typeof foreground !== 'object') throw new Error('unsupported data type')
 
-    await backgroundCanvasEditor.load(background)
+    await canvasEditor.load(foreground)
 
     // 非最终渲染图片，放弃渲染
     if (currentVersion !== renderVersion) return;
 
-    if (typeof foreground !== 'string' && typeof foreground !== 'object') throw new Error('unsupported data type')
+    if (typeof background !== 'string' && typeof background !== 'object') throw new Error('unsupported data type')
 
-    await canvasEditor.load(foreground)
+    await backgroundCanvasEditor.load(background)
 
     // 非最终渲染图片，放弃渲染
     if (currentVersion !== renderVersion) return;
