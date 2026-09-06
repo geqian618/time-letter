@@ -11,7 +11,7 @@ import zhCN from './languages/zh-CN.js'
 import en from './languages/en.js'
 
 // 语言设置的候选值（存储值：system 为跟随系统）
-export const LANGUAGE_VALUES = ['system', 'zh-CN', 'en']
+export const LANGUAGES = ['system', 'zh-CN', 'en']
 
 // 语言下拉框选项：中英文项以各自语言原生名称显示
 export const languageOptions = [
@@ -20,12 +20,12 @@ export const languageOptions = [
     {value: 'en', label: 'English'},
 ]
 
-// 从 localStorage 读取语言设置（挂载前调用，与 index.html 内联主题脚本同模式，避免首屏语言闪烁）
-const readLanguageSetting = () => {
+
+const getLanguage = () => {
     try {
         const settings = JSON.parse(localStorage.getItem('projectSettings')) || {}
         const language = settings.locale?.language
-        return LANGUAGE_VALUES.includes(language) ? language : 'system'
+        return LANGUAGES.includes(language) ? language : 'system'
     } catch (e) {
         return 'system'
     }
@@ -82,7 +82,7 @@ export const useLanguage = () => {
         document.documentElement.lang = resolvedLocale
     })
 
-    return {elementLocale}
+    return {elementLocale, applyLanguage}
 }
 
 
@@ -90,7 +90,7 @@ export const useLanguage = () => {
 const i18n = createI18n({
     legacy: false,
     globalInjection: true,
-    locale: resolveLocale(readLanguageSetting()),
+    locale: resolveLocale(getLanguage()),
     fallbackLocale: 'zh-CN',
     messages: {
         'zh-CN': zhCN,
