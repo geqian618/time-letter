@@ -4,7 +4,7 @@ import {createI18n, useI18n} from 'vue-i18n'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import enLocale from 'element-plus/es/locale/lang/en'
 
-import useEventListener from '@/composables/useEventListener'
+import useEventListener from '@/composables/common/useEventListener'
 import {useProjectSettingsStore} from '@/stores/project-settings'
 
 import zhCN from './languages/zh-CN.js'

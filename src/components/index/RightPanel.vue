@@ -656,7 +656,7 @@ import {storeToRefs} from 'pinia'
 
 import _ from 'lodash'
 
-import useEventListener from '@/composables/useEventListener'
+import useEventListener from '@/composables/common/useEventListener'
 
 import {predefineColors} from '@/config/color-configuration'
 

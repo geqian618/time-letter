@@ -17,18 +17,16 @@ export const useProjectSettingsStore = defineStore('projectSettings', () => {
         return Array.from(projectSettings.value.availableFonts.values())
     })
 
+
     const isHideDeleteTips = computed(() => {
         return !projectSettings.value.others.deleteTipVisible
     })
 
-    // 任意设置变化时持久化到本地
-    watch(projectSettings, (newVal) => {
-        const clonedSettings = _.cloneDeep(newVal);
-        clonedSettings.availableFonts = Array.from(clonedSettings.availableFonts.entries())
-        StorageManager.saveProjectSettings(clonedSettings)
-    }, {
-        deep: true
-    });
+
+    const deleteTipsDialogVisible = () => {
+        projectSettings.value.others.deleteTipVisible = !projectSettings.value.others.deleteTipVisible
+    }
+
 
     const loadProjectSettings = () => {
         const userConfig = StorageManager.getProjectSettings();
@@ -63,9 +61,14 @@ export const useProjectSettingsStore = defineStore('projectSettings', () => {
         return _.cloneDeep(defaultProjectSettings)
     }
 
-    const deleteTipsDialogVisible = () => {
-        projectSettings.value.others.deleteTipVisible = !projectSettings.value.others.deleteTipVisible
-    }
+    // 任意设置变化时持久化到本地
+    watch(projectSettings, (newVal) => {
+        const clonedSettings = _.cloneDeep(newVal);
+        clonedSettings.availableFonts = Array.from(clonedSettings.availableFonts.entries())
+        StorageManager.saveProjectSettings(clonedSettings)
+    }, {
+        deep: true
+    });
 
     return {
         // 状态操作

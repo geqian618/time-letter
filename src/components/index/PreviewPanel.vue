@@ -149,7 +149,7 @@ import {ref, watch, nextTick} from 'vue'
 
 import _ from 'lodash'
 
-import useEventListener from '@/composables/useEventListener'
+import useEventListener from '@/composables/common/useEventListener'
 
 import {useThrottle} from '@/utils/throttle'
 

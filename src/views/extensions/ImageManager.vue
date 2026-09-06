@@ -72,10 +72,16 @@
 <script setup lang="js">
 
 import {ref, computed, watch, onMounted} from 'vue'
+
 import {ElMessage} from 'element-plus'
+
 import {useI18n} from 'vue-i18n'
-import useEventListener from "@/composables/useEventListener";
+
+import useEventListener from "@/composables/common/useEventListener";
+
 import {useProjectSettingsStore} from '@/stores/project-settings'
+
+import {useTheme} from '@/composables/shared/useTheme';
 
 const {t, locale} = useI18n()
 
@@ -257,43 +263,7 @@ watch(locale, applyDocumentTitle)
 
 // ---------- 主题（独立窗口自行应用亮 / 暗主题） ----------
 
-const systemTheme = window.matchMedia('(prefers-color-scheme: light)')
-
-/**
- * 解析主题值，将 'system' 转换为实际亮/暗模式
- */
-const resolveTheme = (theme) => {
-  if (theme === 'system') {
-    return systemTheme.matches ? 'light' : 'dark';
-  }
-  return theme;
-};
-
-
-/**
- * 根据解析后的主题设置文档根元素的属性
- */
-const renderTheme = (resolvedTheme) => {
-  if (resolvedTheme === 'dark') {
-    document.documentElement.setAttribute('dark-theme', '');
-  } else {
-    document.documentElement.removeAttribute('dark-theme');
-  }
-};
-
-/**
- * 应用主题（包括通知主进程）
- * @param {string} theme - 'light' | 'dark' | 'system'
- */
-const applyTheme = (theme) => {
-  const resolved = resolveTheme(theme);
-  renderTheme(resolved);
-  // 通知主进程（仅在 API 存在且主题值合法时）
-  if (window.electronAPI?.setTheme) {
-    window.electronAPI.setTheme(['light', 'dark', 'system'].includes(theme) ? theme : 'system');
-  }
-};
-
+const {renderTheme} = useTheme();
 
 onMounted(() => {
   applyDocumentTitle()
@@ -305,16 +275,8 @@ onMounted(() => {
 
   // 跟随主窗口的主题切换广播
   window.electronAPI?.watchThemeChanged?.((event, theme) => {
-    const resolved = resolveTheme(theme);
-    renderTheme(resolved);
+    renderTheme(theme);
   });
-
-  // 系统主题变化时，跟随系统模式的设置同步应用
-  useEventListener(systemTheme, 'change', () => {
-    if (settingsStore.projectSettings.appearance?.theme === 'system') {
-      applyTheme('system')
-    }
-  })
 
   useEventListener(window, 'keydown', handleKeydown)
   useEventListener(window, 'resize', measureWrapper)

@@ -312,7 +312,8 @@
             <div class="options">
               <div class="option">
                 <span class="label">{{ $t('settings.interfaceLanguage') }}</span>
-                <el-select v-model="settingsStore.projectSettings.locale.language" @change="applyLanguage" class="value" size="small">
+                <el-select v-model="settingsStore.projectSettings.locale.language" @change="applyLanguage" class="value"
+                           size="small">
                   <el-option
                       v-for="item in languageOptions"
                       :key="item.value"
@@ -409,8 +410,6 @@ import _ from 'lodash'
 
 import {useI18n} from 'vue-i18n'
 
-import useEventListener from '@/composables/useEventListener'
-
 import FontManager from '@/utils/font-manager'
 
 import Notification from '@/utils/notification'
@@ -432,23 +431,25 @@ import {languageOptions, applyLanguage} from '@/locales'
 
 import ConfirmDialog from '@/components/index/dialogs/ConfirmDialog.vue'
 
+import {useTheme} from '@/composables/shared/useTheme'
+
 const {t} = useI18n()
 
 // 偏好设置弹窗的静态下拉选项：经 computed 依赖 locale，切换语言自动更新
 const outputSizeOptions = computed(() => [
-    {label: t('settings.outputSizeOptions.best'), value: 0},
-    {label: t('settings.outputSizeOptions.fixedWidth'), value: 1},
-    {label: t('settings.outputSizeOptions.fixedHeight'), value: 2},
-    {label: t('settings.outputSizeOptions.adaptive'), value: 3},
+  {label: t('settings.outputSizeOptions.best'), value: 0},
+  {label: t('settings.outputSizeOptions.fixedWidth'), value: 1},
+  {label: t('settings.outputSizeOptions.fixedHeight'), value: 2},
+  {label: t('settings.outputSizeOptions.adaptive'), value: 3},
 ])
 
 const downloadThreadsOptions = computed(() => [
-    {label: t('settings.downloadThreadsOptions.auto'), value: -1},
-    {label: '4', value: 4},
-    {label: '8', value: 8},
-    {label: '12', value: 12},
-    {label: '16', value: 16},
-    {label: '32', value: 32}
+  {label: t('settings.downloadThreadsOptions.auto'), value: -1},
+  {label: '4', value: 4},
+  {label: '8', value: 8},
+  {label: '12', value: 12},
+  {label: '16', value: 16},
+  {label: '32', value: 32}
 ])
 
 const settingsStore = useProjectSettingsStore()
@@ -459,32 +460,13 @@ const settingsDialogVisible = ref(false)
 
 const confirmRef = ref(null)
 
-const systemTheme = window.matchMedia('(prefers-color-scheme: light)')
+const {applyTheme} = useTheme();
 
 // 应用菜单"偏好设置"的 IPC 监听
 window.electronAPI.openSettingsDialog(() => {
   settingsDialogVisible.value = true
 })
 
-// 应用主题：写入根元素属性并同步主进程窗口主题
-const applyTheme = (theme) => {
-  const resolvedTheme = theme === 'system' ? (systemTheme.matches ? 'light' : 'dark') : theme
-  if (resolvedTheme === 'dark') {
-    document.documentElement.setAttribute('dark-theme', '')
-  } else {
-    document.documentElement.removeAttribute('dark-theme')
-  }
-  if (window.electronAPI?.setTheme) {
-    window.electronAPI.setTheme(['light', 'dark', 'system'].includes(theme) ? theme : 'system')
-  }
-}
-
-// 系统主题变化时，跟随系统模式的设置同步应用
-useEventListener(systemTheme, 'change', () => {
-  if (settingsStore.projectSettings.appearance?.theme === 'system') {
-    applyTheme('system')
-  }
-})
 
 // 把 resize 各项写入根元素 CSS 变量
 const initAreaResize = () => {

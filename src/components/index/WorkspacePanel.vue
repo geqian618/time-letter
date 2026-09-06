@@ -20,7 +20,7 @@ import {ref, onMounted, onUnmounted} from 'vue'
 
 import _ from 'lodash'
 
-import useEventListener from '@/composables/useEventListener'
+import useEventListener from '@/composables/common/useEventListener'
 
 import {CanvasEditor, Image, LazyImage, Rect, Text} from '@/canvas/CanvasEditor'
 
