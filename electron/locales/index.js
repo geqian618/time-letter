@@ -1,13 +1,12 @@
 const i18next = require('i18next')
-
-const {readAppSettings, writeAppSettings} = require('../utils/app-settings')
+const settingsManager = require('../utils/settings-manager')
 
 const zhCN = require('./languages/zh-CN.js')
 const en = require('./languages/en.js')
 
 
 // 语言设置的候选值（存储值：system 为跟随系统）
-const LANGUAGE_VALUES = ['system', 'zh-CN', 'en']
+const LANGUAGES = ['system', 'zh-CN', 'en']
 
 /**
  * 跟随系统时按系统语言解析：zh* → 中文，其余 → English
@@ -34,8 +33,8 @@ const resolveLanguage = (language) => {
 const initLanguage = () => {
     // 当前配置的语言偏好（配置文件不存在或解析失败时使用默认值）
     let language = 'system'
-    const configured = readAppSettings().language
-    if (LANGUAGE_VALUES.includes(configured)) {
+    const configured = settingsManager.read().language
+    if (LANGUAGES.includes(configured)) {
         language = configured
     }
 
@@ -69,9 +68,9 @@ const changeLanguage = (language) => {
  * @returns {string}
  */
 const setLanguage = (language) => {
-    if (!LANGUAGE_VALUES.includes(language)) return i18next.language
-    writeAppSettings({language})
+    if (!LANGUAGES.includes(language)) return i18next.language
+    settingsManager.write({language})
     return changeLanguage(language)
 }
 
-module.exports = {initLanguage, t, setLanguage, changeLanguage, resolveLanguage, LANGUAGE_VALUES}
+module.exports = {initLanguage, t, setLanguage, changeLanguage, resolveLanguage, LANGUAGES}
