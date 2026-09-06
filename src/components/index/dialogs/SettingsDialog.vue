@@ -459,12 +459,12 @@ const settingsDialogVisible = ref(false)
 
 const confirmRef = ref(null)
 
+const systemTheme = window.matchMedia('(prefers-color-scheme: light)')
+
 // 应用菜单"偏好设置"的 IPC 监听
 window.electronAPI.openSettingsDialog(() => {
   settingsDialogVisible.value = true
 })
-
-const systemTheme = window.matchMedia('(prefers-color-scheme: light)')
 
 // 应用主题：写入根元素属性并同步主进程窗口主题
 const applyTheme = (theme) => {

@@ -21,13 +21,27 @@
             <el-option v-for="n in [1, 2, 3, 4, 5, 6, 8]" :key="n" :label="String(n)" :value="n"/>
           </el-select>
         </div>
-        <el-button size="small" :disabled="!selectedPaths.size" @click="clearSelected">{{ $t('imageManager.clearSelected') }}</el-button>
-        <span class="counter">{{ $t('imageManager.counter', {selected: selectedPaths.size, total: filteredImages.length}) }}</span>
+        <el-button size="small" :disabled="!selectedPaths.size" @click="clearSelected">
+          {{ $t('imageManager.clearSelected') }}
+        </el-button>
+        <span class="counter">{{
+            $t('imageManager.counter', {
+              selected: selectedPaths.size,
+              total: filteredImages.length
+            })
+          }}</span>
       </div>
       <div class="toolbar-right">
-        <el-button size="small" :disabled="!selectedPaths.size" @click="removeSelected">{{ $t('imageManager.remove') }}</el-button>
-        <el-button size="small" type="danger" :disabled="!selectedPaths.size" @click="deleteSelected">{{ $t('imageManager.delete') }}</el-button>
-        <el-button size="small" type="primary" :disabled="!selectedPaths.size" @click="moveSelected">{{ $t('imageManager.moveTo') }}</el-button>
+        <el-button size="small" :disabled="!selectedPaths.size" @click="removeSelected">{{
+            $t('imageManager.remove')
+          }}
+        </el-button>
+        <el-button size="small" type="danger" :disabled="!selectedPaths.size" @click="deleteSelected">
+          {{ $t('imageManager.delete') }}
+        </el-button>
+        <el-button size="small" type="primary" :disabled="!selectedPaths.size" @click="moveSelected">
+          {{ $t('imageManager.moveTo') }}
+        </el-button>
       </div>
     </div>
 
@@ -57,11 +71,11 @@
 
 <script setup lang="js">
 
-import {ref, computed, watch, onMounted, onBeforeUnmount} from 'vue'
+import {ref, computed, watch, onMounted} from 'vue'
 import {ElMessage} from 'element-plus'
 import {useI18n} from 'vue-i18n'
-
-import StorageManager from '@/object/storage-manager'
+import useEventListener from "@/composables/useEventListener";
+import {useProjectSettingsStore} from '@/stores/project-settings'
 
 const {t, locale} = useI18n()
 
@@ -77,6 +91,8 @@ const nameFilter = ref('')
 
 // 网格列数：0 或未输入 = 自动按宽度自适应；输入正整数 = 固定列数
 const columnCount = ref(0)
+
+const settingsStore = useProjectSettingsStore()
 
 const gridColumns = computed(() => {
   const count = parseInt(columnCount.value)
@@ -241,41 +257,67 @@ watch(locale, applyDocumentTitle)
 
 // ---------- 主题（独立窗口自行应用亮 / 暗主题） ----------
 
-let systemThemeMedia = null
+const systemTheme = window.matchMedia('(prefers-color-scheme: light)')
 
-const applyTheme = () => {
-  const theme = StorageManager.getProjectSettings()?.appearance?.theme || 'system'
-  const isDark = theme === 'dark' || (theme === 'system' && systemThemeMedia?.matches)
-  isDark ? document.documentElement.setAttribute('dark-theme', '')
-      : document.documentElement.removeAttribute('dark-theme')
-}
+/**
+ * 解析主题值，将 'system' 转换为实际亮/暗模式
+ */
+const resolveTheme = (theme) => {
+  if (theme === 'system') {
+    return systemTheme.matches ? 'light' : 'dark';
+  }
+  return theme;
+};
 
-const setupTheme = () => {
-  systemThemeMedia = window.matchMedia('(prefers-color-scheme: dark)')
-  // 跟随系统主题变化
-  systemThemeMedia.addEventListener('change', applyTheme)
-  applyTheme()
-  // 跟随主窗口的主题切换广播
-  window.electronAPI.watchThemeChanged(applyTheme)
-}
+
+/**
+ * 根据解析后的主题设置文档根元素的属性
+ */
+const renderTheme = (resolvedTheme) => {
+  if (resolvedTheme === 'dark') {
+    document.documentElement.setAttribute('dark-theme', '');
+  } else {
+    document.documentElement.removeAttribute('dark-theme');
+  }
+};
+
+/**
+ * 应用主题（包括通知主进程）
+ * @param {string} theme - 'light' | 'dark' | 'system'
+ */
+const applyTheme = (theme) => {
+  const resolved = resolveTheme(theme);
+  renderTheme(resolved);
+  // 通知主进程（仅在 API 存在且主题值合法时）
+  if (window.electronAPI?.setTheme) {
+    window.electronAPI.setTheme(['light', 'dark', 'system'].includes(theme) ? theme : 'system');
+  }
+};
 
 
 onMounted(() => {
   applyDocumentTitle()
-  setupTheme()
-  window.addEventListener('keydown', handleKeydown)
-  window.addEventListener('resize', measureWrapper)
   measureWrapper()
   // 先注册监听，再拉取初始快照
   watchImageData()
   watchMoveResult()
   window.electronAPI.imageManagerRequestData()
-})
 
-onBeforeUnmount(() => {
-  window.removeEventListener('keydown', handleKeydown)
-  window.removeEventListener('resize', measureWrapper)
-  systemThemeMedia?.removeEventListener('change', applyTheme)
+  // 跟随主窗口的主题切换广播
+  window.electronAPI?.watchThemeChanged?.((event, theme) => {
+    const resolved = resolveTheme(theme);
+    renderTheme(resolved);
+  });
+
+  // 系统主题变化时，跟随系统模式的设置同步应用
+  useEventListener(systemTheme, 'change', () => {
+    if (settingsStore.projectSettings.appearance?.theme === 'system') {
+      applyTheme('system')
+    }
+  })
+
+  useEventListener(window, 'keydown', handleKeydown)
+  useEventListener(window, 'resize', measureWrapper)
 })
 
 </script>
