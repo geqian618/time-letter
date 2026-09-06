@@ -153,7 +153,7 @@ const createApplicationMenu = (mainWindow) => {
         }
     ]);
 
-    Menu.setApplicationMenu(applicationMenu)
+    window.setMenu(applicationMenu)
 
     return applicationMenu;
 }

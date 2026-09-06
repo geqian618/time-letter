@@ -1,4 +1,4 @@
-const {nativeTheme, BrowserWindow} = require('electron')
+const {nativeTheme} = require('electron')
 const settingsManager = require('../utils/settings-manager')
 
 // 主题的候选值（存储值：system 为跟随系统）

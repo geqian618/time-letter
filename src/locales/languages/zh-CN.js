@@ -194,10 +194,10 @@ export default {
     },
     imageManager: {
         title: '图片管理器',
-        filter: '筛选：',
+        filter: '筛选',
         filterByExt: '按扩展名筛选',
         filterByName: '按输入名称筛选',
-        columns: '列数：',
+        columns: '列数',
         auto: '自动',
         clearSelected: '清除选中',
         counter: '已选 {selected} / 共 {total} 张',

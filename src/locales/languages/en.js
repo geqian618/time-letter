@@ -194,10 +194,10 @@ export default {
     },
     imageManager: {
         title: 'Image Manager',
-        filter: 'Filter:',
+        filter: 'Filter',
         filterByExt: 'Filter by extension',
         filterByName: 'Filter by name',
-        columns: 'Columns:',
+        columns: 'Columns',
         auto: 'Auto',
         clearSelected: 'Clear Selection',
         counter: 'Selected {selected} / {total}',

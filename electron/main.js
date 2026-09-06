@@ -140,12 +140,7 @@ const rebuildAppComponents = () => {
 
     if (tray && !tray.isDestroyed()) {
         tray.destroy();
-        tray = createTray(window);
-    }
-
-    const imageManagerWindow = getImageManagerWindow();
-    if (imageManagerWindow && !imageManagerWindow.isDestroyed()) {
-        imageManagerWindow.setMenu(null);
+        tray = createTray(mainWindow);
     }
 }
 
