@@ -302,20 +302,20 @@ const doRenderCanvas = async (canvas, currentVersion) => {
     // 非最终渲染图片，放弃渲染
     if (currentVersion !== renderVersion) return;
 
-    canvasEditor.clearCanvas();
-    backgroundCanvasEditor.clearCanvas();
-
     const width = image.width;
     const height = image.height;
     const background = new Rect({width, height, strokeWidth: 0, meta: new BorderOptions()});
-    // 设置画布宽高等于缩放后的图片尺寸
-    canvasEditor.resizeCanvas(width, height);
-    backgroundCanvasEditor.resizeCanvas(width, height);
+
     const {idealWidth, idealHeight} = canvasWorkspaceRef.value;
     const initZoom = Math.min(idealHeight / height, idealWidth / width);
     const scale = initZoom * settingsStore.projectSettings.others.defaultCanvasScale;
-    canvasEditor.setZoom(scale)
-    backgroundCanvasEditor.setZoom(scale)
+
+    canvasEditor.clearCanvas();
+    backgroundCanvasEditor.clearCanvas();
+
+    // 设置画布宽高等于缩放后的图片尺寸
+    canvasEditor.resizeCanvas(width, height, scale);
+    backgroundCanvasEditor.resizeCanvas(width, height, scale);
     backgroundCanvasEditor.addElement(background);
     backgroundCanvasEditor.addElement(image);
 
