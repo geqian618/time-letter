@@ -293,9 +293,6 @@ const doRenderCanvas = async (canvas, currentVersion) => {
 
   if (!canvas.completed) {
 
-    canvasEditor.clearCanvas();
-    backgroundCanvasEditor.clearCanvas();
-
     const image = await Image.fromURL(canvas.url, {
       selectable: false,
       cacheable: true,
@@ -304,6 +301,9 @@ const doRenderCanvas = async (canvas, currentVersion) => {
 
     // 非最终渲染图片，放弃渲染
     if (currentVersion !== renderVersion) return;
+
+    canvasEditor.clearCanvas();
+    backgroundCanvasEditor.clearCanvas();
 
     const width = image.width;
     const height = image.height;
@@ -318,6 +318,7 @@ const doRenderCanvas = async (canvas, currentVersion) => {
     backgroundCanvasEditor.setZoom(scale)
     backgroundCanvasEditor.addElement(background);
     backgroundCanvasEditor.addElement(image);
+
     backgroundCanvasEditor.renderAll()
 
     canvasWrapper.value.style.width = Math.max(width, idealWidth) + 'px'

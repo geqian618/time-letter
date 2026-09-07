@@ -286,10 +286,10 @@ const switchPreviewImage = async (event, canvas) => {
     const beforePath = CanvasManager.getSelectedPath();
 
     // 前一次预览元素与当前预览元素不同，隐藏前一次预览元素
-    if (beforePath && beforePath !== canvas.path) {
-      canvasesStore.getCanvasEditor().clearCanvas();
-      canvasesStore.getBackgroundCanvasEditor().clearCanvas();
-    }
+    // if (beforePath && beforePath !== canvas.path) {
+    //   canvasesStore.getCanvasEditor().clearCanvas();
+    //   canvasesStore.getBackgroundCanvasEditor().clearCanvas();
+    // }
 
     // 没有预览元素或前一次预览元素与当前预览元素不同时显示，多次点击预览同一元素不重复渲染
     if (!beforePath || beforePath !== canvas.path) {
@@ -465,7 +465,7 @@ const switchBeforePreviewElement = useThrottle(async () => {
     CanvasManager.setSelectedObject({path: beforeCanvas.path, previewElement: beforeElement})
     canvasesStore.selectedPreviewList.set(beforeCanvas.path, beforeElement)
 
-    await canvasActions.renderCanvas(beforeCanvas)
+      await canvasActions.renderCanvas(beforeCanvas)
 
     // 方式二，过渡比较流畅
     scrollBarMoveToHorizontalCenter(previewList.value, beforeElement)
