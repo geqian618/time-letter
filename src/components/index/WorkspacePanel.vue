@@ -64,6 +64,10 @@ let backgroundCanvasEditor = null;
 // 渲染版本号，防止快速切图时的异步渲染竞态
 let renderVersion = 0;
 
+// 渲染串行队列：保证同一时刻最多一个渲染在操作 canvasEditor / backgroundCanvasEditor
+// 这两个共享实例。避免多次 load 的配置在 await 期间交错写入同一编辑器造成渲染错乱
+let renderTask = Promise.resolve();
+
 const zoomOptions = {
   minZoom: 0.1,
   maxZoom: 5
@@ -285,15 +289,13 @@ const updateScrollBar = (canvas) => {
   canvasWorkspaceRef.value.scrollTop = canvas.scrollTop;
 }
 
-const renderCanvas = async (canvas) => {
-  canvasElement.value.classList.remove('scale-animation')
-  backgroundElement.value.classList.remove('scale-animation')
-  // 切换/重渲染画布时取消进行中的缩放跟随，避免旧锚点作用到新画布
-  cancelZoomPin()
-  const currentVersion = ++renderVersion;
+const doRenderCanvas = async (canvas, currentVersion) => {
+
   if (!canvas.completed) {
+
     canvasEditor.clearCanvas();
     backgroundCanvasEditor.clearCanvas();
+
     const image = await Image.fromURL(canvas.url, {
       selectable: false,
       cacheable: true,
@@ -317,9 +319,6 @@ const renderCanvas = async (canvas) => {
     backgroundCanvasEditor.addElement(background);
     backgroundCanvasEditor.addElement(image);
     backgroundCanvasEditor.renderAll()
-
-    // 非最终渲染图片，放弃更新数据
-    if (currentVersion !== renderVersion) return;
 
     canvasWrapper.value.style.width = Math.max(width, idealWidth) + 'px'
     canvasWrapper.value.style.height = Math.max(height, idealHeight) + 'px'
@@ -358,9 +357,6 @@ const renderCanvas = async (canvas) => {
 
     const {idealWidth, idealHeight} = canvasWorkspaceRef.value;
 
-    // 非最终渲染图片，放弃更新数据
-    if (currentVersion !== renderVersion) return;
-
     canvasWrapper.value.style.width = Math.max(imageWidth, idealWidth) + 'px'
     canvasWrapper.value.style.height = Math.max(imageHeight, idealHeight) + 'px'
     updateScrollBar(canvas)
@@ -375,6 +371,24 @@ const renderCanvas = async (canvas) => {
       canvas.background = backgroundCanvasEditor.exportToObject()
     }
   }
+}
+
+const renderCanvas = (canvas) => {
+  canvasElement.value.classList.remove('scale-animation')
+  backgroundElement.value.classList.remove('scale-animation')
+  // 切换/重渲染画布时取消进行中的缩放跟随，避免旧锚点作用到新画布
+  cancelZoomPin()
+  const currentVersion = ++renderVersion;
+  // 串行执行：等待上一次渲染落定后再开始本次变更。
+  renderTask = renderTask.then(async () => {
+    // 排队期间已有更新的渲染入队，本次为过期请求，直接跳过避免无谓的 load
+    if (currentVersion !== renderVersion) return;
+    await doRenderCanvas(canvas, currentVersion);
+  }).catch((error) => {
+    // 单次渲染失败不能打断队列，否则后续渲染会永久卡死
+    console.error('[renderCanvas] render failed:', error);
+  });
+  return renderTask;
 }
 
 
