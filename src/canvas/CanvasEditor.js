@@ -1630,9 +1630,9 @@ class CanvasEditor {
         try {
             const {width, height, zoom, elements} = object;
             this.clearCanvas();
-            this.resizeCanvas(width, height, zoom)
             // 通过 resetElements 拷入既有响应式代理，保留代理身份与响应式
             this.resetElements(elements);
+            this.resizeCanvas(width, height, zoom)
         } catch (e) {
             throw new Error(`加载失败: ${e.message}`);
         }
@@ -1665,8 +1665,8 @@ class CanvasEditor {
             }
             // 2. 元素就绪后，一次性 clear + resize + 塞元素（同步）；绘制由调用方的 renderAll 接续完成
             this.clearCanvas();
-            this.resizeCanvas(width, height, zoom);
             this.resetElements(preparedElements);
+            this.resizeCanvas(width, height, zoom);
         } catch (e) {
             throw new Error(`加载失败: ${e.message}`);
         }

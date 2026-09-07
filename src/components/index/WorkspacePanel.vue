@@ -343,20 +343,18 @@ const renderCanvas = async (canvas) => {
 
     if (typeof foreground !== 'string' && typeof foreground !== 'object') throw new Error('unsupported data type')
 
-    await canvasEditor.load(foreground)
-
-    // 非最终渲染图片，放弃渲染
-    if (currentVersion !== renderVersion) return;
-
     if (typeof background !== 'string' && typeof background !== 'object') throw new Error('unsupported data type')
 
-    await backgroundCanvasEditor.load(background)
+    await Promise.all([
+      backgroundCanvasEditor.load(background),
+      canvasEditor.load(foreground)
+    ]);
 
     // 非最终渲染图片，放弃渲染
     if (currentVersion !== renderVersion) return;
 
     backgroundCanvasEditor.renderAll();
-    canvasEditor.renderAll();
+    canvasEditor.renderAll()
 
     const {idealWidth, idealHeight} = canvasWorkspaceRef.value;
 
