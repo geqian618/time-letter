@@ -664,7 +664,10 @@ import {Rect, Image} from '@/canvas/CanvasEditor'
 
 import CanvasManager from '@/object/canvas-manager'
 
+import {canvasActions} from '@/object/canvas-actions'
+
 import {useCanvasesStore} from '@/stores/canvases'
+
 import {useProjectSettingsStore} from '@/stores/project-settings'
 
 const canvasesStore = useCanvasesStore()

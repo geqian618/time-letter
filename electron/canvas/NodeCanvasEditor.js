@@ -1555,8 +1555,8 @@ class CanvasEditor {
      * @param {number} height - 新高度
      * @param {number} zoom - 缩放倍数
      */
-    resizeCanvas(width, height, zoom = 1) {
-        this.zoom = zoom;
+    resizeCanvas(width, height, zoom) {
+        if (zoom) this.zoom = zoom;
         this.width = width;
         this.height = height;
         this.setupCanvas()

@@ -24,6 +24,7 @@ import _ from 'lodash'
 import {canvasActions} from '@/object/canvas-actions'
 
 import {useTemplatesStore} from '@/stores/templates'
+
 import {useCanvasesStore} from '@/stores/canvases'
 
 const templatesStore = useTemplatesStore()
