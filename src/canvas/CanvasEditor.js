@@ -1667,6 +1667,7 @@ class CanvasEditor {
             this.clearCanvas();
             this.resetElements(preparedElements);
             this.resizeCanvas(width, height, zoom);
+            console.log(this.elements)
         } catch (e) {
             throw new Error(`加载失败: ${e.message}`);
         }
@@ -3196,14 +3197,15 @@ class ReactiveObserver {
 
                         // 只在开启深度代理时，对新添加的对象元素进行代理
                         if (this.deep && ['push', 'unshift', 'splice'].includes(prop)) {
+                            // splice 的 args 为 [start, deleteCount, ...items]，需跳过前两项
+                            const items = prop === 'splice' ? args.slice(2) : args;
                             const startIndex = prop === 'push' ? obj.length - args.length :
                                 prop === 'unshift' ? 0 : args[0];
 
-                            for (let i = 0; i < args.length; i++) {
-                                const arg = args[i];
+                            for (let i = 0; i < items.length; i++) {
+                                const arg = items[i];
                                 if (arg && typeof arg === 'object' && this.shouldProxy(arg)) {
-                                    const index = startIndex + i;
-                                    obj[index] = this.createProxy(arg);
+                                    obj[startIndex + i] = this.createProxy(arg);
                                 }
                             }
                         }

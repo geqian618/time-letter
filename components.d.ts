@@ -21,6 +21,7 @@ declare module 'vue' {
     ElDropdown: typeof import('element-plus/es')['ElDropdown']
     ElDropdownItem: typeof import('element-plus/es')['ElDropdownItem']
     ElDropdownMenu: typeof import('element-plus/es')['ElDropdownMenu']
+    ElEmpty: typeof import('element-plus/es')['ElEmpty']
     ElForm: typeof import('element-plus/es')['ElForm']
     ElFormItem: typeof import('element-plus/es')['ElFormItem']
     ElInput: typeof import('element-plus/es')['ElInput']
@@ -54,5 +55,8 @@ declare module 'vue' {
     TextResourceDialog: typeof import('./src/components/index/dialogs/TextResourceDialog.vue')['default']
     TextResourceManagerDialog: typeof import('./src/components/index/dialogs/TextResourceManagerDialog.vue')['default']
     WorkspacePanel: typeof import('./src/components/index/WorkspacePanel.vue')['default']
+  }
+  export interface GlobalDirectives {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }
