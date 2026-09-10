@@ -1770,6 +1770,9 @@ class Element {
         // 选中效果颜色，可自行覆盖
         this.selectionColor = options.selectionColor || '#0066FF';
 
+        // 选框偏移量，选框向四周扩展的像素值，可自行覆盖
+        this.selectionOffset = options.selectionOffset || 0;
+
     }
 
     set centerX(value) {
@@ -1810,6 +1813,12 @@ class Element {
         const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2 || 1;
         const lineWidth = 1 / avgScale;
         const {x, y, w, h} = this.getSelectionBounds();
+        // 应用偏移量：选框向四周扩展 selectionOffset 像素
+        const offset = [this.selectionOffset || 1] / avgScale;
+        const sx = x - offset;
+        const sy = y - offset;
+        const sw = w + offset * 2;
+        const sh = h + offset * 2;
         ctx.save();
         ctx.setLineDash([]);
         ctx.lineWidth = lineWidth;
@@ -1823,14 +1832,14 @@ class Element {
         }
         // 实线包围盒
         ctx.beginPath();
-        ctx.rect(x, y, w, h);
+        ctx.rect(sx, sy, sw, sh);
         ctx.stroke();
         // 8 个控制点：4 个角 + 4 个边中点
         const handleSize = 8 / avgScale;
         const half = handleSize / 2;
         const handles = [
-            [x, y], [x + w, y], [x, y + h], [x + w, y + h],
-            [x + w / 2, y], [x + w / 2, y + h], [x, y + h / 2], [x + w, y + h / 2]
+            [sx, sy], [sx + sw, sy], [sx, sy + sh], [sx + sw, sy + sh],
+            [sx + sw / 2, sy], [sx + sw / 2, sy + sh], [sx, sy + sh / 2], [sx + sw, sy + sh / 2]
         ];
         ctx.fillStyle = '#ffffff';
         ctx.lineWidth = 1 / avgScale;
