@@ -85,6 +85,9 @@ class CanvasEditor {
         // 事件回调
         this.eventCallbacks = new Map();
 
+        // 标记是否处于 order 变更触发的内部排序中
+        this._sorting = false;
+
         // 绑定事件处理函数
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.handleInput = this.handleInput.bind(this);
@@ -119,12 +122,16 @@ class CanvasEditor {
             this.elements = new ReactiveObserver([], (value) => {
                 const {target, property} = value;
                 if (['chars', 'ascent', 'descent', 'centerX', 'centerY', 'status'].includes(property)) return;
+                // 跳过 order 变更内部排序触发的冗余回调
+                if (property === 'sort' && this._sorting) return;
                 const callbacks = this.eventCallbacks.get(UPDATE_OBJECT);
                 if (callbacks && callbacks.size) {
                     callbacks.forEach(callback => callback(target))
                 }
                 if (property === 'order') {
+                    this._sorting = true;
                     this.elements.sort((a, b) => a.order - b.order);
+                    this._sorting = false;
                 }
             }, {
                 deep: true
@@ -3027,7 +3034,7 @@ class ReactiveObserver {
     }
 
     // 深度比较两个值是否相等
-    deepEqual(a, b) {
+    deepEqual(a, b, visited = new WeakSet()) {
         if (a === b) return true;
         if (Number.isNaN(a) && Number.isNaN(b)) return true;
         if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) {
@@ -3036,10 +3043,12 @@ class ReactiveObserver {
         if (Object.prototype.toString.call(a) !== Object.prototype.toString.call(b)) {
             return false;
         }
+        if (visited.has(a)) return true;
+        visited.add(a);
         if (Array.isArray(a)) {
             if (a.length !== b.length) return false;
             for (let i = 0; i < a.length; i++) {
-                if (!this.deepEqual(a[i], b[i])) return false;
+                if (!this.deepEqual(a[i], b[i], visited)) return false;
             }
             return true;
         }
@@ -3047,7 +3056,7 @@ class ReactiveObserver {
         const keysB = Object.keys(b);
         if (keysA.length !== keysB.length) return false;
         for (const key of keysA) {
-            if (!keysB.includes(key) || !this.deepEqual(a[key], b[key])) {
+            if (!keysB.includes(key) || !this.deepEqual(a[key], b[key], visited)) {
                 return false;
             }
         }
@@ -3168,9 +3177,10 @@ class ReactiveObserver {
             },
 
             deleteProperty: (obj, prop) => {
+                const hadOwn = Object.prototype.hasOwnProperty.call(obj, prop);
                 const oldValue = obj[prop];
                 const success = delete obj[prop];
-                if (success) {
+                if (success && hadOwn) {
                     // 触发回调，添加根对象属性
                     const proxy = this.rawToProxy.get(obj);
                     this.callback({
@@ -3199,9 +3209,15 @@ class ReactiveObserver {
                         if (this.deep && ['push', 'unshift', 'splice'].includes(prop)) {
                             // splice 的 args 为 [start, deleteCount, ...items]，需跳过前两项
                             const items = prop === 'splice' ? args.slice(2) : args;
-                            const startIndex = prop === 'push' ? obj.length - args.length :
-                                prop === 'unshift' ? 0 : args[0];
-
+                            let startIndex;
+                            if (prop === 'push') {
+                                startIndex = obj.length - args.length;
+                            } else if (prop === 'unshift') {
+                                startIndex = 0;
+                            } else {
+                                const start = args[0];
+                                startIndex = start < 0 ? Math.max(0, oldArray.length + start) : Math.min(start, oldArray.length);
+                            }
                             for (let i = 0; i < items.length; i++) {
                                 const arg = items[i];
                                 if (arg && typeof arg === 'object' && this.shouldProxy(arg)) {
