@@ -2,9 +2,8 @@ const path = require('path');
 const {dialog, app, utilityProcess} = require('electron');
 const os = require('os');
 
-const sab = new SharedArrayBuffer(4);
-const interrupt = new Int32Array(sab);
-Atomics.store(interrupt, 0, 0);
+// 中断标志：stopExportFiles 置 true，exportFiles 开头复位为 false。
+let interrupt = false;
 
 // 导出统一放到独立子进程（utilityProcess）中执行：@napi-rs/canvas 的原生内存
 // （解码图、Skia surface）峰值只出现在子进程，主进程不再参与渲染。此前用 Piscina
@@ -19,6 +18,8 @@ const CHILD_PATH = path.join(
 );
 
 const exportFiles = async ({projectSettings, outputDirectory, settings}, progressCallback) => {
+
+    interrupt = false;
 
     const maxThreads = projectSettings.performance.downloadThreads === -1
         ? os.cpus().length
@@ -41,7 +42,7 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
             total,
             completed,
             errors,
-            percentage: Atomics.load(interrupt, 0) === 0 ? Math.round((completed / total) * 100) : 0,
+            percentage: !interrupt ? Math.round((completed / total) * 100) : 0,
         });
     }
 
@@ -73,7 +74,7 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
     }
 
     async function childLoop(child) {
-        while (nextIndex < settings.length && Atomics.load(interrupt, 0) === 0) {
+        while (nextIndex < settings.length && !interrupt) {
             const setting = settings[nextIndex++];
             try {
                 await runTask(child, {projectSettings, outputDirectory, setting});
@@ -125,7 +126,7 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
 };
 
 const stopExportFiles = () => {
-    Atomics.store(interrupt, 0, 1);
+    interrupt = true;
 };
 
 module.exports = {exportFiles, stopExportFiles};
