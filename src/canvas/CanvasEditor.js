@@ -2164,11 +2164,9 @@ class Text extends Element {
             : this.parseHorizontalChars(ctx)
         let {chars, height, width, lines} = layout
 
-        if (!this.centerX || !this.centerY || this.angle === 0) {
-            // 计算文本中心点
-            this.centerX = this.x + width / 2;
-            this.centerY = this.y + height / 2;
-        }
+        // 修改 x,y 时自动更新 centerX 与 centerY
+        this.centerX = this.x + width / 2;
+        this.centerY = this.y + height / 2;
 
         if (this.angle !== 0) {
             if (this.width !== width || this.height !== height) {
@@ -2577,11 +2575,9 @@ class Image extends Element {
         const scaleY = currentTransform.d; // 垂直缩放
         const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
 
-        if (!this.centerX || !this.centerY || this.angle === 0) {
-            // 计算文本中心点
-            this.centerX = this.x + width / 2;
-            this.centerY = this.y + height / 2;
-        }
+        // 修改 x,y 时自动更新 centerX 与 centerY
+        this.centerX = this.x + width / 2;
+        this.centerY = this.y + height / 2;
 
         // 设置变换
         if (this.angle !== 0) {
@@ -2796,11 +2792,9 @@ class LazyImage extends Element {
         const scaleY = currentTransform.d; // 垂直缩放
         const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
 
-        if (!this.centerX || !this.centerY || this.angle === 0) {
-            // 计算文本中心点
-            this.centerX = this.x + width / 2;
-            this.centerY = this.y + height / 2;
-        }
+        // 修改 x,y 时自动更新 centerX 与 centerY
+        this.centerX = this.x + width / 2;
+        this.centerY = this.y + height / 2;
 
         // 设置变换
         if (this.angle !== 0) {
@@ -2962,11 +2956,9 @@ class Rect extends Element {
         ctx.shadowOffsetX = shadowOffsetX || 0;
         ctx.shadowOffsetY = shadowOffsetY || 0;
 
-        if (!this.centerX || !this.centerY || this.angle === 0) {
-            // 计算文本中心点
-            this.centerX = this.x + this.width / 2;
-            this.centerY = this.y + this.height / 2;
-        }
+        // 修改 x,y 时自动更新 centerX 与 centerY
+        this.centerX = this.x + this.width / 2;
+        this.centerY = this.y + this.height / 2;
 
         if (this.angle !== 0) {
             // 根据新的宽高和原中心点重新计算位置
