@@ -2162,29 +2162,36 @@ class Text extends Element {
         let layout = this.direction === 'vertical'
             ? this.parseVerticalChars(ctx)
             : this.parseHorizontalChars(ctx)
+
         let {chars, height, width, lines} = layout
 
-        if (!this.centerX || !this.centerY || this.angle === 0) {
-            // 计算文本中心点
-            this.centerX = this.x + width / 2;
-            this.centerY = this.y + height / 2;
-        }
-
         if (this.angle !== 0) {
-            if (this.width !== width || this.height !== height) {
-                // 根据新的宽高和原中心点重新计算位置
-                this.x = this.centerX - width / 2
-                this.y = this.centerY - height / 2
+            // 首次绘制时初始化中心点（centerX/centerY 默认为 0）
+            if (!this.centerX && !this.centerY) {
+                this.centerX = this.x + width / 2;
+                this.centerY = this.y + height / 2;
+            }
+            // 旋转时中心点不变：缩放导致宽高变化时，由中心点反推 x、y
+            const newX = this.centerX - width / 2;
+            const newY = this.centerY - height / 2;
+            if (newX !== this.x || newY !== this.y) {
+                this.x = newX;
+                this.y = newY;
+                // x、y 变化后重新解析字符位置
                 layout = this.direction === 'vertical' ? this.parseVerticalChars(ctx) : this.parseHorizontalChars(ctx)
                 chars = layout.chars
                 lines = layout.lines
                 width = layout.width
                 height = layout.height
             }
-            // 平移到文本中心点，旋转，再平移回来
+            // 绕中心点旋转
             ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
             ctx.translate(-this.centerX, -this.centerY);
+        } else {
+            // 未旋转：x、y 为左上角基准（缩放锚点），中心点由其派生
+            this.centerX = this.x + width / 2;
+            this.centerY = this.y + height / 2;
         }
 
 
@@ -2577,20 +2584,23 @@ class Image extends Element {
         const scaleY = currentTransform.d; // 垂直缩放
         const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
 
-        if (!this.centerX || !this.centerY || this.angle === 0) {
-            // 计算文本中心点
-            this.centerX = this.x + width / 2;
-            this.centerY = this.y + height / 2;
-        }
-
-        // 设置变换
         if (this.angle !== 0) {
-            // 根据新的宽高和原中心点重新计算位置
+            // 首次绘制时初始化中心点（centerX/centerY 默认为 0）
+            if (!this.centerX && !this.centerY) {
+                this.centerX = this.x + width / 2;
+                this.centerY = this.y + height / 2;
+            }
+            // 旋转时中心点不变：缩放导致宽高变化时，由中心点反推 x、y
             this.x = this.centerX - width / 2;
             this.y = this.centerY - height / 2;
+            // 绕中心点旋转
             ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
             ctx.translate(-this.centerX, -this.centerY);
+        } else {
+            // 未旋转：x、y 为左上角基准（缩放锚点），中心点由其派生
+            this.centerX = this.x + width / 2;
+            this.centerY = this.y + height / 2;
         }
 
         // 先绘制阴影（如果存在）
@@ -2652,7 +2662,7 @@ class Image extends Element {
         ctx.lineTo(x, y + radius);
         ctx.quadraticCurveTo(x, y, x + radius, y);
         ctx.closePath();
-    }
+    };
 
     /**
      * 选中包围盒需按 scale 缩放
@@ -2796,21 +2806,23 @@ class LazyImage extends Element {
         const scaleY = currentTransform.d; // 垂直缩放
         const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
 
-        if (!this.centerX || !this.centerY || this.angle === 0) {
-            // 计算文本中心点
-            this.centerX = this.x + width / 2;
-            this.centerY = this.y + height / 2;
-        }
-
-        // 设置变换
         if (this.angle !== 0) {
-            // 根据新的宽高和原中心点重新计算位置
+            // 首次绘制时初始化中心点（centerX/centerY 默认为 0）
+            if (!this.centerX && !this.centerY) {
+                this.centerX = this.x + width / 2;
+                this.centerY = this.y + height / 2;
+            }
+            // 旋转时中心点不变：缩放导致宽高变化时，由中心点反推 x、y
             this.x = this.centerX - width / 2;
             this.y = this.centerY - height / 2;
-
+            // 绕中心点旋转
             ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
             ctx.translate(-this.centerX, -this.centerY);
+        } else {
+            // 未旋转：x、y 为左上角基准（缩放锚点），中心点由其派生
+            this.centerX = this.x + width / 2;
+            this.centerY = this.y + height / 2;
         }
 
         // 先绘制阴影（如果存在）
@@ -2962,21 +2974,23 @@ class Rect extends Element {
         ctx.shadowOffsetX = shadowOffsetX || 0;
         ctx.shadowOffsetY = shadowOffsetY || 0;
 
-        if (!this.centerX || !this.centerY || this.angle === 0) {
-            // 计算文本中心点
-            this.centerX = this.x + this.width / 2;
-            this.centerY = this.y + this.height / 2;
-        }
-
         if (this.angle !== 0) {
-            // 根据新的宽高和原中心点重新计算位置
+            // 首次绘制时初始化中心点（centerX/centerY 默认为 0）
+            if (!this.centerX && !this.centerY) {
+                this.centerX = this.x + this.width / 2;
+                this.centerY = this.y + this.height / 2;
+            }
+            // 旋转时中心点不变：缩放导致宽高变化时，由中心点反推 x、y
             this.x = this.centerX - this.width / 2;
             this.y = this.centerY - this.height / 2;
-
+            // 绕中心点旋转
             ctx.translate(this.centerX, this.centerY);
-            // 旋转画布
             ctx.rotate(this.angle * Math.PI / 180);
             ctx.translate(-this.centerX, -this.centerY);
+        } else {
+            // 未旋转：x、y 为左上角基准（缩放锚点），中心点由其派生
+            this.centerX = this.x + this.width / 2;
+            this.centerY = this.y + this.height / 2;
         }
 
         // 绘制圆角
