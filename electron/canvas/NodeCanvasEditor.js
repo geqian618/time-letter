@@ -1674,7 +1674,6 @@ class CanvasEditor {
             this.clearCanvas();
             this.resetElements(preparedElements);
             this.resizeCanvas(width, height, zoom);
-            console.log(this.elements)
         } catch (e) {
             throw new Error(`加载失败: ${e.message}`);
         }
@@ -2691,7 +2690,7 @@ class LazyImage extends Element {
         // 圆角属性
         this.radius = options.radius || 0;
         // 模糊强度
-        this.blur = blur || 0;
+        this.blur = options.blur || 0;
 
         // 图片阴影
         this.shadow = {
