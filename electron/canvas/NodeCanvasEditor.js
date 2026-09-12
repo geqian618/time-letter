@@ -1016,11 +1016,8 @@ class CanvasEditor {
      */
     drawGuides() {
         if (!this.activeGuides || !this.activeGuides.length) return;
-        const currentTransform = this.ctx.getTransform();
-        const scaleX = currentTransform.a;
-        const scaleY = currentTransform.d;
-        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2 || 1;
-        const lineWidth = 1 / avgScale;
+        const transformScale = this.getTransformScale(this.ctx);
+        const lineWidth = 1 / transformScale;
         this.ctx.save();
         this.ctx.setLineDash([]);
         this.ctx.lineWidth = lineWidth;
@@ -1038,6 +1035,13 @@ class CanvasEditor {
         }
         this.ctx.restore();
     }
+
+
+    getTransformScale(ctx) {
+        const {a, b, c, d} = ctx.getTransform();
+        return Math.sqrt(Math.abs(a * d - b * c)) || 1;
+    }
+
 
     /**
      * 设置对齐吸附开关
@@ -1791,6 +1795,16 @@ class Element {
     }
 
     /**
+     *
+     * @param {CanvasRenderingContext2D} ctx
+     * @returns {number}
+     */
+    static getTransformScale(ctx) {
+        const {a, b, c, d} = ctx.getTransform();
+        return Math.sqrt(Math.abs(a * d - b * c)) || 1;
+    }
+
+    /**
      * 元素的轴对齐包围盒（选中框、控制点、吸附均基于此）
      * 基类不假设具体形状（如圆没有 width/height），故不提供默认实现，
      * 由各子类按自身几何实现
@@ -1806,14 +1820,11 @@ class Element {
      * @param ctx
      */
     selection(ctx) {
-        const currentTransform = ctx.getTransform();
-        const scaleX = currentTransform.a; // 水平缩放
-        const scaleY = currentTransform.d; // 垂直缩放
-        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2 || 1;
-        const lineWidth = 1 / avgScale;
+        const transformScale = Element.getTransformScale(ctx);
+        const lineWidth = 1 / transformScale;
         const {x, y, w, h} = this.getSelectionBounds();
         // 应用偏移量：选框向四周扩展 selectionOffset 像素
-        const offset = [this.selectionOffset || 1] / avgScale;
+        const offset = [this.selectionOffset || 1] / transformScale;
         const sx = x - offset;
         const sy = y - offset;
         const sw = w + offset * 2;
@@ -1834,14 +1845,14 @@ class Element {
         ctx.rect(sx, sy, sw, sh);
         ctx.stroke();
         // 8 个控制点：4 个角 + 4 个边中点
-        const handleSize = 8 / avgScale;
+        const handleSize = 8 / transformScale;
         const half = handleSize / 2;
         const handles = [
             [sx, sy], [sx + sw, sy], [sx, sy + sh], [sx + sw, sy + sh],
             [sx + sw / 2, sy], [sx + sw / 2, sy + sh], [sx, sy + sh / 2], [sx + sw, sy + sh / 2]
         ];
         ctx.fillStyle = '#ffffff';
-        ctx.lineWidth = 1 / avgScale;
+        ctx.lineWidth = 1 / transformScale;
         for (const [hx, hy] of handles) {
             ctx.beginPath();
             ctx.rect(hx - half, hy - half, handleSize, handleSize);
@@ -2143,20 +2154,16 @@ class Text extends Element {
         // 字体颜色
         ctx.fillStyle = this.fontColor;
 
-        // 获取当前变换矩阵的缩放比例
-        const currentTransform = ctx.getTransform();
-        const scaleX = currentTransform.a; // 水平缩放
-        const scaleY = currentTransform.d; // 垂直缩放
-        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
+        const transformScale = Element.getTransformScale(ctx);
 
         // 默认不透明黑色
         ctx.shadowColor = this.shadow.color;
         // 默认模糊 0 像素
-        ctx.shadowBlur = this.shadow.blur * avgScale;
+        ctx.shadowBlur = this.shadow.blur * transformScale;
         // 默认X偏移
-        ctx.shadowOffsetX = this.shadow.offsetX * avgScale;
+        ctx.shadowOffsetX = this.shadow.offsetX * transformScale;
         // 默认Y偏移
-        ctx.shadowOffsetY = this.shadow.offsetY * avgScale;
+        ctx.shadowOffsetY = this.shadow.offsetY * transformScale;
 
         let layout = this.direction === 'vertical'
             ? this.parseVerticalChars(ctx)
@@ -2577,11 +2584,7 @@ class Image extends Element {
         const {color: shadowColor, blur: shadowBlur, offsetX: shadowOffsetX, offsetY: shadowOffsetY} = this.shadow;
         const hasShadow = shadowColor && (shadowBlur > 0 || shadowOffsetX !== 0 || shadowOffsetY !== 0);
 
-        // 获取当前变换矩阵的缩放比例
-        const currentTransform = ctx.getTransform();
-        const scaleX = currentTransform.a; // 水平缩放
-        const scaleY = currentTransform.d; // 垂直缩放
-        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
+        const transformScale = Element.getTransformScale(ctx);
 
         if (this.angle !== 0) {
             // 首次绘制时初始化中心点（centerX/centerY 默认为 0）
@@ -2605,9 +2608,9 @@ class Image extends Element {
         // 先绘制阴影（如果存在）
         if (hasShadow) {
             ctx.shadowColor = shadowColor;
-            ctx.shadowBlur = shadowBlur * avgScale;
-            ctx.shadowOffsetX = shadowOffsetX * avgScale;
-            ctx.shadowOffsetY = shadowOffsetY * avgScale;
+            ctx.shadowBlur = shadowBlur * transformScale;
+            ctx.shadowOffsetX = shadowOffsetX * transformScale;
+            ctx.shadowOffsetY = shadowOffsetY * transformScale;
         }
 
         if (this.radius && this.radius > 0) {
@@ -2621,7 +2624,7 @@ class Image extends Element {
         // 如果有背景模糊效果
         if (this.blur && this.blur > 0) {
             // 计算模糊扩展区域（防止边缘半透明）
-            const blurAmount = this.blur * avgScale;
+            const blurAmount = this.blur * transformScale;
             // 扩展区域，通常是模糊半径的2倍
             const expansion = Math.ceil(blurAmount * 2);
             // 保存当前上下文状态
@@ -2799,11 +2802,7 @@ class LazyImage extends Element {
         const {color: shadowColor, blur: shadowBlur, offsetX: shadowOffsetX, offsetY: shadowOffsetY} = this.shadow;
         const hasShadow = shadowColor && (shadowBlur > 0 || shadowOffsetX !== 0 || shadowOffsetY !== 0);
 
-        // 获取当前变换矩阵的缩放比例
-        const currentTransform = ctx.getTransform();
-        const scaleX = currentTransform.a; // 水平缩放
-        const scaleY = currentTransform.d; // 垂直缩放
-        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
+        const transformScale = Element.getTransformScale(ctx);
 
         if (this.angle !== 0) {
             // 首次绘制时初始化中心点（centerX/centerY 默认为 0）
@@ -2827,9 +2826,9 @@ class LazyImage extends Element {
         // 先绘制阴影（如果存在）
         if (hasShadow) {
             ctx.shadowColor = shadowColor;
-            ctx.shadowBlur = shadowBlur * avgScale;
-            ctx.shadowOffsetX = shadowOffsetX * avgScale;
-            ctx.shadowOffsetY = shadowOffsetY * avgScale;
+            ctx.shadowBlur = shadowBlur * transformScale;
+            ctx.shadowOffsetX = shadowOffsetX * transformScale;
+            ctx.shadowOffsetY = shadowOffsetY * transformScale;
         }
 
         if (this.radius && this.radius > 0) {
@@ -2843,7 +2842,7 @@ class LazyImage extends Element {
         // 如果有背景模糊效果
         if (this.blur && this.blur > 0) {
             // 计算模糊扩展区域（防止边缘半透明）
-            const blurAmount = this.blur * avgScale;
+            const blurAmount = this.blur * transformScale;
             // 扩展区域，通常是模糊半径的2倍
             const expansion = Math.ceil(blurAmount * 2);
             // 保存当前上下文状态
@@ -2953,25 +2952,20 @@ class Rect extends Element {
     draw(ctx) {
         // 保存当前画布状态
         ctx.save();
-        // 获取当前变换矩阵的缩放比例
-        const currentTransform = ctx.getTransform();
-        const scaleX = currentTransform.a; // 水平缩放
-        const scaleY = currentTransform.d; // 垂直缩放
-        const avgScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
+        const transformScale = Element.getTransformScale(ctx);
         const {color: shadowColor, blur: shadowBlur, offsetX: shadowOffsetX, offsetY: shadowOffsetY} = this.shadow;
         ctx.fillStyle = this.fill;
         ctx.strokeStyle = this.stroke;
-        ctx.lineWidth = this.strokeWidth / avgScale;
+        ctx.lineWidth = this.strokeWidth / transformScale;
         ctx.lineCap = this.lineCap;
-        ctx.setLineDash([this.lineDash[0] / avgScale, this.lineDash[1] / avgScale]);
+        ctx.setLineDash([this.lineDash[0] / transformScale, this.lineDash[1] / transformScale]);
 
         // 设置阴影颜色（支持RGBA格式）
         ctx.shadowColor = shadowColor || 'rgba(0, 0, 0, 1)';
-        // 设置阴影模糊度（像素）
-        ctx.shadowBlur = shadowBlur || 0;
-        // 设置阴影偏移（像素）
-        ctx.shadowOffsetX = shadowOffsetX || 0;
-        ctx.shadowOffsetY = shadowOffsetY || 0;
+        // 阴影模糊与偏移是设备空间属性，不受变换矩阵缩放，需按渲染缩放补偿
+        ctx.shadowBlur = (shadowBlur || 0) * transformScale;
+        ctx.shadowOffsetX = (shadowOffsetX || 0) * transformScale;
+        ctx.shadowOffsetY = (shadowOffsetY || 0) * transformScale;
 
         if (this.angle !== 0) {
             // 首次绘制时初始化中心点（centerX/centerY 默认为 0）
