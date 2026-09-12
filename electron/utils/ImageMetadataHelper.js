@@ -108,7 +108,7 @@ class ImageMetadataHelper {
 
     /**
      * 把 source 的元数据迁移到 target，返回与 target 同类型的新图。
-     * 典型用法：原图（任何格式）→ canvas 导出图（jpg/png/webp）元数据回灌。
+     * 典型用法：原图（任何格式）→ canvas 导出图（jpg/png/webp/gif/avif）元数据回灌。
      * @param {string|Buffer|Uint8Array} source 原图（可与 target 不同格式）
      * @param {string|Buffer|Uint8Array} target 目标图（如 canvas 导出图）
      * @param {{orientation?: 'reset'|'keep', windowsCompatible?: boolean, useMWG?: boolean, sourceFormat?: string, targetFormat?: string}} [options]

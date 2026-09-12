@@ -120,8 +120,8 @@ async function exportFile(params) {
 
     const canvas = canvasEditor.getCanvas();
 
-    // 7. 保存图片 (使用 Buffer 写入)
-    let buffer = outputExtname === 'png' ? canvas.toBuffer('image/png') : canvas.toBuffer(`image/${outputExtname === 'jpg' ? 'jpeg' : outputExtname}`, extnameType === 0 ? 100 : quality);
+    // 7. 保存图片 (使用 Buffer 写入)；保留原格式时强制最高质量
+    let buffer = encodeCanvas(canvas, outputExtname, extnameType === 0 ? 100 : quality);
 
     if (isSynchronizeMetadata) {
         buffer = await ImageMetadataHelper.syncMetadata(filePath, buffer, {format: outputExtname});
@@ -137,14 +137,43 @@ async function exportFile(params) {
 
 
 const getExtname = (originalExtname, extnameType) => {
-    if (extnameType === 0) {
-        return originalExtname
-    } else if (extnameType === 1) {
-        return 'jpeg'
-    } else if (extnameType === 2) {
-        return 'png'
-    } else if (extnameType === 3) {
-        return 'webp'
+    switch (extnameType) {
+        case 0:
+            return originalExtname
+        case 1:
+            return 'jpeg'
+        case 2:
+            return 'png'
+        case 3:
+            return 'webp'
+        case 4:
+            return 'avif'
+        case 5:
+            return 'gif'
+    }
+}
+
+// canvas 按输出扩展名编码为 Buffer。png / gif 无损，不参与质量控制；
+// jpeg / webp 直接传质量值；avif 走 AvifConfig。
+// avif 的 quality 须反转后传入：@napi-rs/canvas 1.0.7 把它直接当作 rav1e 的
+// quantizer（0-255，越小画质越好），与类型标注“0-100 scale, 100 is lossless”
+// 相反，实测 q=100 输出仅几百字节且画面严重劣化、q=0 才接近无损，故滑块 100
+// 映射为库值 0。
+const encodeCanvas = (canvas, format, quality) => {
+    switch (format) {
+        case 'png':
+            return canvas.toBuffer('image/png')
+        case 'jpg':
+        case 'jpeg':
+            return canvas.toBuffer('image/jpeg', quality)
+        case 'webp':
+            return canvas.toBuffer('image/webp', quality)
+        case 'avif':
+            return canvas.toBuffer('image/avif', {quality: 100 - quality})
+        case 'gif':
+            return canvas.toBuffer('image/gif')
+        default:
+            throw new Error(`不支持的导出格式: ${format}`)
     }
 }
 

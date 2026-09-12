@@ -6,6 +6,7 @@ const {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl} = requ
 const {registerFont} = require('../utils/font-manager')
 const {openImageManagerWindow} = require('./image-manager-window')
 const {t} = require('../locales')
+const {IMAGE_TYPES} = require("../constant/project-constants");
 
 const resourcesPath = getResourcePath()
 const fontPath = getFontPath()
@@ -82,7 +83,7 @@ const createApplicationMenu = (mainWindow) => {
                     submenu: [
                         {
                             label: t('menu.addText'),
-                            click: customTextLabels
+                            click: addTextResource
                         },
                         {
                             label: t('menu.manageText'),
@@ -167,7 +168,7 @@ const selectFile = async () => {
         title: t('dialog.importFile'),
         buttonLabel: t('dialog.import'),
         properties: ['openFile', 'multiSelections'],
-        filters: [{name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp']}]
+        filters: [{name: 'Images', extensions: IMAGE_TYPES}]
     });
     if (filePaths && filePaths.length) {
         const files = await Promise.all(
@@ -364,7 +365,7 @@ const selectImageResources = async () => {
 }
 
 
-const customTextLabels = () => {
+const addTextResource = () => {
     window.webContents.send('resources:watch-change', {type: 1})
 }
 

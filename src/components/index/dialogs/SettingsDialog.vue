@@ -71,13 +71,13 @@
                 <span class="label">{{ $t('settings.outputFormat') }}</span>
                 <el-select class="value" v-model="settingsStore.projectSettings.outputSettings.extname" size="small">
                   <el-option
-                      v-for="item in [{label:$t('settings.formatOriginal'), value: 0}, {label:'JPEG', value:1}, {label:'PNG', value: 2}, {label:'WEBP', value: 3}]"
+                      v-for="item in [{label:$t('settings.formatOriginal'), value: 0}, {label:'JPEG', value:1}, {label:'PNG', value: 2}, {label:'WEBP', value: 3}, {label:'AVIF', value: 4}, {label:'GIF', value: 5}]"
                       :key="item.value"
                       :label="item.label"
                       :value="item.value"/>
                 </el-select>
               </div>
-              <div class="option" v-show="[1,3].includes(settingsStore.projectSettings.outputSettings.extname) ">
+              <div class="option" v-show="[1,3,4].includes(settingsStore.projectSettings.outputSettings.extname) ">
                 <span class="label">{{ $t('settings.imageQuality') }}</span>
                 <div class="slider-demo-block">
                   <el-slider

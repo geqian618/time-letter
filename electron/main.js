@@ -26,7 +26,7 @@ const registerLocalShortcut = require('./components/register-local-shortcut')
 const {closeImageManagerWindow, getImageManagerWindow} = require('./components/image-manager-window')
 
 // 配置常量
-const {APP_NAME, APP_ICON_PATH, APP_VERSION} = require('./constant/project-constants')
+const {APP_NAME, APP_ICON_PATH, APP_VERSION, IMAGE_TYPES} = require('./constant/project-constants')
 const {initLanguage, t, setLanguage, changeLanguage} = require('./locales')
 const {initTheme, setTheme} = require('./components/theme')
 const environment = process.env.NODE_ENV
@@ -258,7 +258,7 @@ const setupIpcHandlers = () => {
                 title: t('dialog.importFile'),
                 buttonLabel: t('dialog.import'),
                 properties: ['openFile', 'multiSelections'],
-                filters: [{name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp']}]
+                filters: [{name: 'Images', extensions: IMAGE_TYPES}]
             });
             filePaths = result.filePaths;
         }
@@ -467,7 +467,7 @@ const setupIpcHandlers = () => {
             buttonLabel: t('dialog.ok'),
             defaultPath: app.getPath('desktop'),
             properties: ['openFile'],
-            filters: [{name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']}]
+            filters: [{name: 'Images', extensions: IMAGE_TYPES}]
         });
         if (filePaths && filePaths.length) {
             const filePath = filePaths[0];
