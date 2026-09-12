@@ -340,7 +340,7 @@ const selectImageResources = async () => {
         title: t('dialog.importFile'),
         buttonLabel: t('dialog.import'),
         properties: ['openFile', 'multiSelections'],
-        filters: [{name: 'Images', extensions: [...IMAGE_TYPES, 'svg', 'ico']}]
+        filters: [{name: 'Images', extensions: [...IMAGE_TYPES, 'svg']}]
     });
     if (filePaths && filePaths.length) {
         const files = await Promise.all(
