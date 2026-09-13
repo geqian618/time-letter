@@ -345,16 +345,17 @@ const doRenderCanvas = async (canvas, currentVersion) => {
 
     if (typeof background !== 'string' && typeof background !== 'object') throw new Error('unsupported data type')
 
-    await Promise.all([
-      backgroundCanvasEditor.load(background),
-      canvasEditor.load(foreground)
+    // 批量准备两层 JSON 数据（并发解码图片，期间旧画面保持不动），拿到可在同一同步任务内原子应用全部编辑器的批次句柄
+    const batchExecutor = await CanvasEditor.prepareAll([
+      {editor: backgroundCanvasEditor, data: background},
+      {editor: canvasEditor, data: foreground}
     ]);
 
     // 非最终渲染图片，放弃渲染
     if (currentVersion !== renderVersion) return;
 
-    backgroundCanvasEditor.renderAll();
-    canvasEditor.renderAll()
+    // 同帧原子应用：两层画布的清空、灌入、改尺寸与重绘一次完成，浏览器只绘制最终状态，不产生中间空白帧与尺寸错位帧
+    batchExecutor.apply()
 
     const {idealWidth, idealHeight} = canvasWorkspaceRef.value;
 

@@ -1619,46 +1619,132 @@ class CanvasEditor {
 
 
     /**
-     * 导入数据
+     * 导入数据并渲染：按数据类型自动分发（object / JSON 字符串）
      * @param {Object | string} data - 数据
      */
     async load(data) {
-        if (typeof data === 'object') {
-            await this.loadFromObject(data)
-        } else if (typeof data === 'string') {
-            await this.loadFromJSON(data)
-        } else {
-            throw new Error('unsupported data type');
-        }
+        const handle = this._createApplyHandle(await this._parse(data))
+        handle.apply();
     }
 
     /**
-     * 从 object 导入数据
+     * 从 object 导入数据并渲染（仅接受 object 类型，不符抛 unsupported data type）
      * @param {Object} object - 对象类型数据
      */
     async loadFromObject(object) {
-        if (!object || typeof object !== 'object') throw new Error('unsupported data type');
-        try {
-            const {width, height, zoom, elements} = object;
-            this.clearCanvas();
-            // 通过 resetElements 拷入既有响应式代理，保留代理身份与响应式
-            this.resetElements(elements);
-            this.resizeCanvas(width, height, zoom)
-        } catch (e) {
-            throw new Error(`加载失败: ${e.message}`);
-        }
+        const handle = this._createApplyHandle(this._parseFromObject(object))
+        handle.apply();
     }
 
 
     /**
-     * 从 JSON 导入数据
+     * 从 JSON 导入数据并渲染（仅接受 JSON 字符串，类型不符抛 unsupported data type）
      * @param {string} json - JSON 类型数据
      */
     async loadFromJSON(json) {
+        const handle = this._createApplyHandle(await this._parseFromJSON(json))
+        handle.apply();
+    }
+
+
+    /**
+     * 批量导入多个编辑器的数据并渲染：获取批次句柄后立即触发渲染
+     * @param {Array<{editor: CanvasEditor, data: Object|string}>} targets
+     * @returns {Promise<void>}
+     */
+    static async loadAll(targets) {
+        const batch = await CanvasEditor.prepareAll(targets);
+        batch.apply();
+    }
+
+
+    /**
+     * 准备阶段：解析数据、解码图片并构造元素实例。与 load 的区别：load 获取句柄后立即执行，本方法把执行时机交给调用方
+     * @param {Object | string} data - 数据（object 或 JSON 字符串）
+     * @returns {Promise<{apply: () => void}>}
+     */
+    async prepare(data) {
+        return this._createApplyHandle(await this._parse(data));
+    }
+
+    /**
+     * 从 object 准备渲染句柄：仅接受 object 类型，不符抛 unsupported data type。
+     * 返回带 apply() 的渲染句柄（与 prepare 一致）：apply 一次性完成灌入与渲染上屏
+     * @param {Object} object - 对象类型数据
+     * @returns {{apply: () => void}}
+     */
+    prepareFromObject(object) {
+        return this._createApplyHandle(this._parseFromObject(object));
+    }
+
+
+    /**
+     * 从 JSON 准备渲染句柄：仅接受 JSON 字符串，类型不符抛 unsupported data type。
+     * 返回带 apply() 的渲染句柄（与 prepare 一致）：apply 一次性完成灌入与渲染上屏
+     * @param {string} json - JSON 类型数据
+     * @returns {Promise<{apply: () => void}>}
+     */
+    async prepareFromJSON(json) {
+        return this._createApplyHandle(await this._parseFromJSON(json));
+    }
+
+
+    /**
+     * 批量准备多个编辑器的导入数据：并发解码图片、构造元素，不触发渲染。
+     * 与 loadAll 的区别：loadAll 获取句柄后立触发渲染，本方法把执行时机交给调用方
+     * @param {Array<{editor: CanvasEditor, data: Object|string}>} targets
+     * @returns {Promise<{apply: () => void}>}
+     */
+    static async prepareAll(targets) {
+        const list = Array.isArray(targets) ? targets : [];
+        const handles = await Promise.all(
+            list.map(({editor, data}) => editor.prepare(data))
+        );
+        return {
+            apply() {
+                handles.forEach(handle => handle.apply());
+            }
+        };
+    }
+
+
+    /**
+     * 解析阶段的内部分发：按数据类型分发到对应解析方法，产出裸数据（不触碰画布）
+     * @param {Object | string} data - 数据
+     * @returns {Promise<{width, height, zoom, elements}>}
+     */
+    async _parse(data) {
+        if (data && typeof data === 'object') {
+            return this._parseFromObject(data)
+        }
+        if (typeof data === 'string') {
+            return this._parseFromJSON(data)
+        }
+        throw new Error('unsupported data type');
+    }
+
+    /**
+     * 从 object 解析裸数据（不触碰画布）
+     * @param {Object} object - 对象类型数据
+     * @returns {{width, height, zoom, elements}}
+     */
+    _parseFromObject(object) {
+        if (!object || typeof object !== 'object') throw new Error('unsupported data type');
+        const {width, height, zoom, elements} = object;
+        // 直接透传既有元素实例，由 resetElements 拷入以保留响应式代理身份
+        return {width, height, zoom, elements};
+    }
+
+
+    /**
+     * 从 JSON 解析裸数据：解析 JSON、解码图片并构造元素（不触碰画布）
+     * @param {string} json - JSON 类型数据
+     * @returns {Promise<{width, height, zoom, elements}>}
+     */
+    async _parseFromJSON(json) {
         if (!json || typeof json !== 'string') throw new Error('unsupported data type');
         try {
             const {width, height, elements, zoom} = JSON.parse(json);
-            // 1. 先解码图片、构造元素，期间 canvas 保持旧画面不动，避免「已 resize 未绘制」的空白帧
             const preparedElements = [];
             for (let element of elements) {
                 if (element.type === 'text') {
@@ -1674,13 +1760,34 @@ class CanvasEditor {
                     preparedElements.push(new Rect(element));
                 }
             }
-            // 2. 元素就绪后，一次性 clear + resize + 塞元素（同步）；绘制由调用方的 renderAll 接续完成
-            this.clearCanvas();
-            this.resetElements(preparedElements);
-            this.resizeCanvas(width, height, zoom);
+            return {width, height, zoom, elements: preparedElements};
         } catch (e) {
             throw new Error(`加载失败: ${e.message}`);
         }
+    }
+
+
+    /**
+     * 将裸数据包装为渲染句柄：apply 在同一同步任务内完成清空、灌入、
+     * 尺寸调整与重绘，所有句柄语义统一（单编辑器句柄与 prepareAll 批次句柄行为一致）
+     * @param {{width, height, zoom, elements}} prepared - 准备阶段产出的数据
+     * @returns {{apply: () => void}}
+     */
+    _createApplyHandle(prepared) {
+        return {
+            apply: () => {
+                try {
+                    const {width, height, zoom, elements} = prepared;
+                    this.clearCanvas();
+                    this.resizeCanvas(width, height, zoom);
+                    // 必须先清空再灌入：clearCanvas 内部会 resetElements() 清空元素，顺序颠倒会导致刚塞入的元素被清掉、编辑器恒为空
+                    this.resetElements(elements);
+                } catch (e) {
+                    throw new Error(`加载失败: ${e.message}`);
+                }
+                this.renderAll();
+            }
+        };
     }
 
 
