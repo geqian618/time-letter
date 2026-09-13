@@ -24,8 +24,6 @@ import {computed, ref, watch, nextTick} from 'vue'
 
 import {useI18n} from 'vue-i18n'
 
-import StorageManager from '@/object/storage-manager'
-
 import {useTemplatesStore} from '@/stores/templates'
 
 const {t} = useI18n()
@@ -50,7 +48,7 @@ watch(() => templatesStore.renameTemplateDialogVisible, (visible) => {
   }
 })
 
-// 按模板 id 更新名称并持久化
+// 按模板 id 更新名称
 const renameTemplate = () => {
   if (!renameTemplateForm?.value) return
   renameTemplateForm.value.validate(async (valid, fields) => {
@@ -60,7 +58,6 @@ const renameTemplate = () => {
         for (let i = 0; i < templates.length; i++) {
           if (templates[i].templateId === templatesStore.oldTemplate.templateId) {
             templates[i].templateName = templatesStore.oldTemplate.templateName
-            StorageManager.saveTemplates(templates)
             templatesStore.renameTemplateDialogVisible = false
             return
           }

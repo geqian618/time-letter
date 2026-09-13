@@ -75,7 +75,7 @@
 
 import {ref, watch, onMounted} from "vue";
 
-import StorageManager from "@/object/storage-manager";
+import _ from 'lodash';
 
 import {TextResource} from "@/object/Configuration";
 
@@ -323,9 +323,6 @@ const toggleBottom = () => {
   }
 };
 
-// 尽早加载本地项目设置，供各模块初始化时读取
-settingsStore.loadProjectSettings()
-
 const handleLeftSidebarResize = (e) => {
 
   let lastMoveX = e.clientX;
@@ -371,7 +368,6 @@ const handleLeftSidebarResize = (e) => {
       // 存储到项目设置
       settingsStore.projectSettings.resize.leftSidebar.width = `${sidebarPercent}%`;
       settingsStore.projectSettings.resize.canvasWorkspace.width = `${previewPercent}%`;
-      StorageManager.saveProjectSettings(settingsStore.projectSettings);
     }
   };
 
@@ -431,7 +427,6 @@ const handleRightSidebarResize = (e) => {
       // 存储到项目设置
       settingsStore.projectSettings.resize.rightSidebar.width = `${sidebarPercent}%`;
       settingsStore.projectSettings.resize.canvasWorkspace.width = `${previewPercent}%`;
-      StorageManager.saveProjectSettings(settingsStore.projectSettings);
     }
   };
 
@@ -491,7 +486,6 @@ const handleBottomSidebarResize = (e) => {
       settingsStore.projectSettings.resize.canvasWorkspace.height = `${previewPercent}%`;
       settingsStore.projectSettings.resize.leftSidebar.height = `${previewPercent}`;
       settingsStore.projectSettings.resize.rightSidebar.height = `${previewPercent}%`;
-      StorageManager.saveProjectSettings(settingsStore.projectSettings);
     }
   };
 
@@ -512,11 +506,10 @@ const watchTemplates = () => {
   window.electronAPI.watchTemplates(async (event, {type, data}) => {
     if (type === 1) {
       // 获取模版数据
-      window.electronAPI.exportTemplates({outputPath: data, templates: StorageManager.getTemplates()});
+      window.electronAPI.exportTemplates({outputPath: data, templates: _.cloneDeep(templatesStore.templates)});
     } else if (type === 2) {
       // 接收模板数据
       data.forEach(template => templatesStore.templates.push(template))
-      StorageManager.saveTemplates(templatesStore.templates)
     }
   })
 }
@@ -528,7 +521,6 @@ const deleteTemplate = () => {
     for (let i = 0; i < templates.length; i++) {
       if (templates[i].templateId === templatesStore.oldTemplate.templateId) {
         templates.splice(i, 1)
-        StorageManager.saveTemplates(templates)
         return
       }
     }
@@ -646,10 +638,6 @@ const watchImageManagerMoved = () => {
 onMounted(() => {
   // 注册页面根元素引用，供画布初始化与布局计算使用
   canvasesStore.registerCanvasRefs({page: page.value})
-
-  // 加载本地模板与文本资源
-  templatesStore.templates = StorageManager.getTemplates()
-  textResourcesStore.textResources = StorageManager.getTextResources()
 
   // 注册业务监听
   watchTemplates()

@@ -33,4 +33,12 @@ export const useTextResourcesStore = defineStore('textResources', () => {
         textResourceManagerDialogVisible,
         textResourceDialogTitle,
     }
+}, {
+    // 仅持久化 textResources：key 为 store id（textResources），以纯数组形式读写，与历史本地数据格式一致
+    persist: {
+        serializer: {
+            serialize: (state) => JSON.stringify(state.textResources),
+            deserialize: (json) => ({textResources: JSON.parse(json)})
+        }
+    }
 })

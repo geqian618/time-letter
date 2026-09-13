@@ -54,20 +54,20 @@ const defaultProjectSettings = {
     },
     resize: {
         leftSidebar: {
-            width: '18%',
-            height: '75%'
+            width: "20%",
+            height: "80%"
         },
         canvasWorkspace: {
-            width: '60%',
-            height: '75%'
+            width: "60%",
+            height: "80%"
         },
         rightSidebar: {
-            width: '22%',
-            height: '75%'
+            width: "20%",
+            height: "80%"
         },
         bottomSidebar: {
-            width: '100%',
-            height: '25%'
+            width: "100%",
+            height: "20%"
         }
     },
     availableFonts: null

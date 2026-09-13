@@ -32,8 +32,6 @@ import _ from 'lodash'
 
 import CanvasManager from '@/object/canvas-manager'
 
-import StorageManager from '@/object/storage-manager'
-
 import {useTemplatesStore} from '@/stores/templates'
 import {useCanvasesStore} from '@/stores/canvases'
 
@@ -105,7 +103,6 @@ const saveTemplates = async () => {
       templatesStore.templates = []
       await nextTick();
       templatesStore.templates = newTemplates;
-      StorageManager.saveTemplates(newTemplates)
       templatesStore.newTemplate.templateName = ''
       templatesStore.saveTemplateDialogVisible = false
     }

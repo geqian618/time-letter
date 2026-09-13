@@ -25,8 +25,6 @@
 
 import _ from 'lodash'
 
-import StorageManager from '@/object/storage-manager'
-
 import {useTextResourcesStore} from '@/stores/text-resources'
 
 const textResourcesStore = useTextResourcesStore()
@@ -38,13 +36,12 @@ const openTextResourceEditorDialog = (row) => {
   textResourcesStore.textResourceDialogVisible = true
 }
 
-// 删除文本资源并持久化
+// 删除文本资源
 const deleteTextResource = (row) => {
   const textResources = textResourcesStore.textResources
   for (let i = 0; i < textResources.length; i++) {
     if (textResources[i].id === row.id) {
       textResources.splice(i, 1)
-      StorageManager.saveTextResources(textResources)
       return
     }
   }

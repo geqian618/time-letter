@@ -81,8 +81,6 @@ import useEventListener from '@/composables/common/useEventListener'
 
 import CanvasManager from '@/object/canvas-manager'
 
-import StorageManager from '@/object/storage-manager'
-
 import {useCanvasesStore} from '@/stores/canvases'
 import {useTemplatesStore} from '@/stores/templates'
 import {useTextResourcesStore} from '@/stores/text-resources'
@@ -114,7 +112,7 @@ const openEnableTemplateDialog = ({settings}) => {
   }
 }
 
-// 拖拽排序结束后按 DOM 顺序重排模板并持久化
+// 拖拽排序结束后按 DOM 顺序重排模板
 const handleTemplateSorting = (el, dragaElement, targetElement) => {
   let newTemplates = []
   const elements = el.querySelectorAll('.template');
@@ -128,7 +126,6 @@ const handleTemplateSorting = (el, dragaElement, targetElement) => {
     }
   }
   templatesStore.templates = newTemplates
-  StorageManager.saveTemplates(newTemplates)
 }
 
 // 图片库 / 文本库条目拖拽开始时打包数据

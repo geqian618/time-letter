@@ -43,8 +43,6 @@ import _ from 'lodash'
 
 import {TextResource} from '@/object/Configuration'
 
-import StorageManager from '@/object/storage-manager'
-
 import {useTextResourcesStore} from '@/stores/text-resources'
 
 const {t} = useI18n()
@@ -93,7 +91,6 @@ const submitTextResource = () => {
       }
     }
   }
-  StorageManager.saveTextResources(textResources)
   textResourcesStore.textResource = new TextResource()
   textResourcesStore.textResourceDialogVisible = false;
 }

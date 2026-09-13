@@ -223,17 +223,19 @@
               </div>
               <div class="option">
                 <span class="label">{{ $t('settings.shootingDate') }}</span>
-                <el-input spellcheck="false"
-                          class="metadata-input shooting-time"
-                          @change="handleUpdateMetadata"
-                          v-model="settingsStore.projectSettings.metadata.formats.shootingTime">
-                </el-input>
-                <span class="label shooting-time-label">{{ $t('settings.dateFormat') }}</span>
-                <el-input spellcheck="false"
-                          class="metadata-input shooting-time"
-                          @change="handleUpdateMetadata"
-                          v-model="settingsStore.projectSettings.metadata.others.shootingTimeFormat">
-                </el-input>
+                <div class="date-format-group">
+                  <el-input spellcheck="false"
+                            class="metadata-input shooting-time"
+                            @change="handleUpdateMetadata"
+                            v-model="settingsStore.projectSettings.metadata.formats.shootingTime">
+                  </el-input>
+                  <span class="label shooting-time-label">{{ $t('settings.dateFormat') }}</span>
+                  <el-input spellcheck="false"
+                            class="metadata-input shooting-time"
+                            @change="handleUpdateMetadata"
+                            v-model="settingsStore.projectSettings.metadata.others.shootingTimeFormat">
+                  </el-input>
+                </div>
               </div>
               <div class="option">
                 <span class="label">{{ $t('settings.filename') }}</span>
@@ -422,8 +424,6 @@ import {canvasActions} from '@/object/canvas-actions'
 
 import {FontSettings} from '@/object/Configuration'
 
-import StorageManager from '@/object/storage-manager'
-
 import {useProjectSettingsStore} from '@/stores/project-settings'
 import {useCanvasesStore} from '@/stores/canvases'
 import {defaultProjectSettings} from '@/config/default-project-settings'
@@ -597,13 +597,11 @@ const watchImportFonts = () => {
             fontSettings.family = family
             fontSettings.familyAlias = family
             settingsStore.projectSettings.availableFonts.set(family, {...fontSettings, ...font});
-            StorageManager.saveProjectSettings(settingsStore.projectSettings)
           }
         }
       } else if (type === 1) {
         const family = data.family;
         settingsStore.projectSettings.availableFonts.delete(family)
-        StorageManager.saveProjectSettings(settingsStore.projectSettings)
       }
     }
   })
@@ -795,7 +793,8 @@ const handleStopActivateInput = (row, column) => {
           }
 
           .shooting-time-label {
-            margin-left: 0;
+            // 合并行中与前一输入框拉开间隔，区分“拍摄日期”“日期格式”两项（8px 间隙 + 12px = 20px）
+            margin-left: 12px;
           }
 
           .value {
@@ -814,8 +813,20 @@ const handleStopActivateInput = (row, column) => {
             width: 100%;
           }
 
-          .metadata-input.shooting-time {
-            width: 100%;
+          // 拍摄日期 + 日期格式合并为一行：首个标签仍走 subgrid 对齐公共标签列，
+          // 右侧组合内部用 flex 排布，两个输入框平分剩余宽度
+          .date-format-group {
+            display: flex;
+            align-items: center;
+            // 与 .options 的 column-gap 保持一致，保证各处“标签-组件”间距统一
+            column-gap: 8px;
+            min-width: 0;
+
+            .metadata-input.shooting-time {
+              width: auto;
+              flex: 1;
+              min-width: 0;
+            }
           }
 
           .el-select {

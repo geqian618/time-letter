@@ -1,8 +1,6 @@
-import {ref, computed, watch} from 'vue'
+import {ref, computed} from 'vue'
 import {defineStore} from 'pinia'
 import _ from 'lodash'
-
-import StorageManager from '@/object/storage-manager'
 
 import {defaultProjectSettings} from '@/config/default-project-settings'
 
@@ -28,21 +26,10 @@ export const useProjectSettingsStore = defineStore('projectSettings', () => {
     }
 
 
-    const loadProjectSettings = () => {
-        const userConfig = StorageManager.getProjectSettings();
-        if (userConfig) {
-            const newUserConfig = _.merge({}, projectSettings.value, userConfig);
-            newUserConfig.availableFonts = new Map(newUserConfig.availableFonts)
-            projectSettings.value = newUserConfig
-            StorageManager.saveProjectSettings(newUserConfig)
-        }
-    }
-
     // 合并导入的设置（返回合并后的完整设置对象）
     const mergeProjectSettings = (userSettings) => {
         const newUserSettings = _.merge({}, projectSettings.value, userSettings);
         projectSettings.value = newUserSettings
-        StorageManager.saveProjectSettings(newUserSettings)
         return newUserSettings
     }
 
@@ -52,7 +39,6 @@ export const useProjectSettingsStore = defineStore('projectSettings', () => {
         // availableFonts 属于运行时维护的字体缓存，重置时保留
         newUserSettings.availableFonts = projectSettings.value.availableFonts
         projectSettings.value = newUserSettings
-        StorageManager.saveProjectSettings(newUserSettings)
         return newUserSettings
     }
 
@@ -61,18 +47,8 @@ export const useProjectSettingsStore = defineStore('projectSettings', () => {
         return _.cloneDeep(defaultProjectSettings)
     }
 
-    // 任意设置变化时持久化到本地
-    watch(projectSettings, (newVal) => {
-        const clonedSettings = _.cloneDeep(newVal);
-        clonedSettings.availableFonts = Array.from(clonedSettings.availableFonts.entries())
-        StorageManager.saveProjectSettings(clonedSettings)
-    }, {
-        deep: true
-    });
-
     return {
         // 状态操作
-        loadProjectSettings,
         mergeProjectSettings,
         resetProjectSettings,
         getDefaultProjectSettings,
@@ -80,5 +56,22 @@ export const useProjectSettingsStore = defineStore('projectSettings', () => {
         projectSettings,
         availableFonts,
         isHideDeleteTips,
+    }
+}, {
+    // 仅持久化 projectSettings：key 为 store id（projectSettings），与历史本地数据格式一致；
+    // availableFonts 为 Map，存储时转为数组、恢复时转回 Map
+    persist: {
+        serializer: {
+            serialize: (state) => {
+                const settings = _.cloneDeep(state.projectSettings)
+                settings.availableFonts = Array.from(settings.availableFonts?.entries() ?? [])
+                return JSON.stringify(settings)
+            },
+            deserialize: (json) => {
+                const settings = JSON.parse(json)
+                settings.availableFonts = new Map(Array.isArray(settings.availableFonts) ? settings.availableFonts : [])
+                return {projectSettings: settings}
+            }
+        }
     }
 })
