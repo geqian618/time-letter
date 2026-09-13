@@ -346,7 +346,7 @@ const doRenderCanvas = async (canvas, currentVersion) => {
     if (typeof background !== 'string' && typeof background !== 'object') throw new Error('unsupported data type')
 
     // 批量准备两层 JSON 数据（并发解码图片，期间旧画面保持不动），拿到可在同一同步任务内原子应用全部编辑器的批次句柄
-    const batchExecutor = await CanvasEditor.prepareAll([
+    const batchExecutor = await CanvasEditor.preloadAll([
       {editor: backgroundCanvasEditor, data: background},
       {editor: canvasEditor, data: foreground}
     ]);

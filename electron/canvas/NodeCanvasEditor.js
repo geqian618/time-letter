@@ -1653,52 +1653,52 @@ class CanvasEditor {
      * @returns {Promise<void>}
      */
     static async loadAll(targets) {
-        const batch = await CanvasEditor.prepareAll(targets);
+        const batch = await CanvasEditor.preloadAll(targets);
         batch.apply();
     }
 
 
     /**
-     * 准备阶段：解析数据、解码图片并构造元素实例。与 load 的区别：load 获取句柄后立即执行，本方法把执行时机交给调用方
+     * 预加载阶段：解析数据、解码图片并构造元素实例。与 load 的区别：load 获取句柄后立即执行，本方法把执行时机交给调用方
      * @param {Object | string} data - 数据（object 或 JSON 字符串）
      * @returns {Promise<{apply: () => void}>}
      */
-    async prepare(data) {
+    async preload(data) {
         return this._createApplyHandle(await this._parse(data));
     }
 
     /**
-     * 从 object 准备渲染句柄：仅接受 object 类型，不符抛 unsupported data type。
-     * 返回带 apply() 的渲染句柄（与 prepare 一致）：apply 一次性完成灌入与渲染上屏
+     * 从 object 预加载渲染句柄：仅接受 object 类型，不符抛 unsupported data type。
+     * 返回带 apply() 的渲染句柄（与 preload 一致）：apply 一次性完成灌入与渲染上屏
      * @param {Object} object - 对象类型数据
      * @returns {{apply: () => void}}
      */
-    prepareFromObject(object) {
+    preloadFromObject(object) {
         return this._createApplyHandle(this._parseFromObject(object));
     }
 
 
     /**
-     * 从 JSON 准备渲染句柄：仅接受 JSON 字符串，类型不符抛 unsupported data type。
-     * 返回带 apply() 的渲染句柄（与 prepare 一致）：apply 一次性完成灌入与渲染上屏
+     * 从 JSON 预加载渲染句柄：仅接受 JSON 字符串，类型不符抛 unsupported data type。
+     * 返回带 apply() 的渲染句柄（与 preload 一致）：apply 一次性完成灌入与渲染上屏
      * @param {string} json - JSON 类型数据
      * @returns {Promise<{apply: () => void}>}
      */
-    async prepareFromJSON(json) {
+    async preloadFromJSON(json) {
         return this._createApplyHandle(await this._parseFromJSON(json));
     }
 
 
     /**
-     * 批量准备多个编辑器的导入数据：并发解码图片、构造元素，不触发渲染。
+     * 批量预加载多个编辑器的导入数据：并发解码图片、构造元素，不触发渲染。
      * 与 loadAll 的区别：loadAll 获取句柄后立触发渲染，本方法把执行时机交给调用方
      * @param {Array<{editor: CanvasEditor, data: Object|string}>} targets
      * @returns {Promise<{apply: () => void}>}
      */
-    static async prepareAll(targets) {
+    static async preloadAll(targets) {
         const list = Array.isArray(targets) ? targets : [];
         const handles = await Promise.all(
-            list.map(({editor, data}) => editor.prepare(data))
+            list.map(({editor, data}) => editor.preload(data))
         );
         return {
             apply() {
@@ -1745,22 +1745,22 @@ class CanvasEditor {
         if (!json || typeof json !== 'string') throw new Error('unsupported data type');
         try {
             const {width, height, elements, zoom} = JSON.parse(json);
-            const preparedElements = [];
+            const preloadElements = [];
             for (let element of elements) {
                 if (element.type === 'text') {
-                    preparedElements.push(new Text(element.text, element));
+                    preloadElements.push(new Text(element.text, element));
                 } else if (element.type === 'image') {
                     const image = this.enableCache ? this.cache.get(element.src) : null;
                     const instance = image ? new Image(image, element) : await Image.fromURL(element.src, element);
-                    preparedElements.push(instance);
+                    preloadElements.push(instance);
                     if (this.enableCache && instance.cacheable && !this.cache.has(element.src)) {
                         this.cache.set(instance.src, instance.image);
                     }
                 } else if (element.type === 'rect') {
-                    preparedElements.push(new Rect(element));
+                    preloadElements.push(new Rect(element));
                 }
             }
-            return {width, height, zoom, elements: preparedElements};
+            return {width, height, zoom, elements: preloadElements};
         } catch (e) {
             throw new Error(`加载失败: ${e.message}`);
         }
@@ -1769,15 +1769,15 @@ class CanvasEditor {
 
     /**
      * 将裸数据包装为渲染句柄：apply 在同一同步任务内完成清空、灌入、
-     * 尺寸调整与重绘，所有句柄语义统一（单编辑器句柄与 prepareAll 批次句柄行为一致）
-     * @param {{width, height, zoom, elements}} prepared - 准备阶段产出的数据
+     * 尺寸调整与重绘，所有句柄语义统一（单编辑器句柄与 preloadAll 批次句柄行为一致）
+     * @param {{width, height, zoom, elements}} preload - 预加载阶段产出的数据
      * @returns {{apply: () => void}}
      */
-    _createApplyHandle(prepared) {
+    _createApplyHandle(preload) {
         return {
             apply: () => {
                 try {
-                    const {width, height, zoom, elements} = prepared;
+                    const {width, height, zoom, elements} = preload;
                     this.clearCanvas();
                     this.resizeCanvas(width, height, zoom);
                     // 必须先清空再灌入：clearCanvas 内部会 resetElements() 清空元素，顺序颠倒会导致刚塞入的元素被清掉、编辑器恒为空
