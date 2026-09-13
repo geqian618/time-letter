@@ -13,7 +13,9 @@
                 let projectSettings = {};
                 try {
                     projectSettings = JSON.parse(localStorage.getItem('projectSettings')) || {};
-                } catch (e) { /* empty */ }
+                } catch (e) {
+                    /* empty */
+                }
                 const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
                 const theme = projectSettings.appearance?.theme
                 if (theme) {
