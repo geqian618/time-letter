@@ -775,16 +775,23 @@ const handleStopActivateInput = (row, column) => {
         display: grid;
         grid-template-columns: max-content 1fr;
         column-gap: 8px;
+        // 各行的 .label 与控件直接参与本网格，由这里统一垂直居中
+        align-items: center;
 
         .option {
           font-size: 13px;
-          // 行通过 subgrid 对齐到同一标签列，行高保持原值
-          display: grid;
-          grid-template-columns: subgrid;
-          grid-column: 1 / -1;
-          justify-content: start;
-          align-items: center;
-          min-height: 40px;
+          // Electron 22（Chromium 108）不支持 subgrid，改用兼容性更好的 display: contents：
+          // 行盒子自身不再生成，.label 与控件直接落入父级两列网格，所有行仍共享同一标签列
+          display: contents;
+
+          // 行高保持原值（原先由 .option 的 min-height 提供，现由标签撑起）；
+          // 标签内部垂直居中，控件保持自然高度、由 .options 的 align-items 统一居中
+          > .label {
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+          }
 
           .label {
             font-size: 13px;
@@ -813,7 +820,7 @@ const handleStopActivateInput = (row, column) => {
             width: 100%;
           }
 
-          // 拍摄日期 + 日期格式合并为一行：首个标签仍走 subgrid 对齐公共标签列，
+          // 拍摄日期 + 日期格式合并为一行：首个标签仍落在公共标签列，
           // 右侧组合内部用 flex 排布，两个输入框平分剩余宽度
           .date-format-group {
             display: flex;

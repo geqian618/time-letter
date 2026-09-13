@@ -1106,19 +1106,22 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
           list-style: none;
           padding: 10px 0 10px 10px;
           background-color: var(--expand-area-background-color);
-          // 标签列宽度取组内最长标签（max-content）并右对齐，控件列左缘对齐；
-          // 行通过 subgrid 对齐到同一标签列，行高与上下内边距保持原值
+          // 标签列宽度取组内最长标签（max-content）并右对齐，控件列左缘对齐
           display: grid;
           grid-template-columns: max-content 1fr;
           column-gap: 6px;
+          // 各行的 .label 与 .value 直接参与本网格，由这里统一垂直居中
+          align-items: center;
 
           .option {
-            height: 35px;
-            display: grid;
-            grid-template-columns: subgrid;
-            grid-column: 1 / -1;
-            justify-content: start;
-            align-items: center;
+            // Electron 22（Chromium 108）不支持 subgrid，改用兼容性更好的 display: contents：
+            // 行盒子自身不再生成，.label 与 .value 直接落入父级两列网格，所有行仍共享同一标签列
+            display: contents;
+
+            // 行高保持原值（原先由 .option 的 height 提供，现转移到行内子元素上）
+            > * {
+              height: 35px;
+            }
 
             .label {
               display: flex;

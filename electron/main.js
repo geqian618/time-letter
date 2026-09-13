@@ -509,7 +509,7 @@ const registerUncompressedImageProtocol = () => {
  * 避免缩略图直接读取并解码原图导致大量图片时加载缓慢
  */
 const registerThumbnailProtocol = () => {
-    protocol.handle('thumb', async (request) => {
+    protocol.registerBufferProtocol('thumb', async (request, callback) => {
         try {
             // 支持可选高度前缀 thumb:///<高度>/<路径>（如 thumb:///512/...），
             // 渲染进程按显示尺寸请求对应分辨率，缺省 256
@@ -528,18 +528,20 @@ const registerThumbnailProtocol = () => {
                 .webp({quality: 80})   // 转换为 WebP 格式，质量 80
                 .toBuffer();
             if (thumbnail) {
-                return new Response(thumbnail, {
+                callback({
+                    data: thumbnail,
+                    mimeType: 'image/webp',
                     headers: {
-                        'Content-Type': 'image/webp',
                         // 每次请求都按当前源文件重新生成,无需缓存协商
                         'Cache-Control': 'no-cache'
                     }
                 })
+                return
             }
-            return new Response(buffer)
+            callback(buffer)
         } catch (error) {
             console.error('缩略图协议处理失败:', error)
-            return new Response(null, {status: 404, statusText: 'Not Found'})
+            callback({statusCode: 404, data: Buffer.alloc(0)})
         }
     })
 }
