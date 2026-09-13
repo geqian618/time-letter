@@ -116,7 +116,6 @@ async function exportFile(params) {
 
     const canvasEditor = getCachedCanvasEditor();
     await canvasEditor.loadFromJSON(JSON.stringify(settings))
-    canvasEditor.renderAll()
 
     const canvas = canvasEditor.getCanvas();
 
