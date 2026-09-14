@@ -1,6 +1,7 @@
 const path = require('path');
 const {dialog, app, utilityProcess} = require('electron');
 const os = require('os');
+const {getFontPath} = require('../utils/path-helper');
 
 // 中断标志：stopExportFiles 置 true，exportFiles 开头复位为 false。
 let interrupt = false;
@@ -16,6 +17,10 @@ const CHILD_PATH = path.join(
     'thread',
     app.isPackaged ? 'worker-loader.js' : 'worker.js'
 );
+
+// 自定义字体目录：GlobalFonts 是进程内字体库，主进程注册的自定义字体对子进程
+// 不可见，fork 时经环境变量传给子进程，由子进程启动时自行扫描注册
+const FONT_DIR = getFontPath();
 
 const exportFiles = async ({projectSettings, outputDirectory, settings}, progressCallback) => {
 
@@ -53,6 +58,7 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
         const child = utilityProcess.fork(CHILD_PATH, [], {
             serviceName: 'time-letter-export',
             stdio: 'inherit',
+            env: {...process.env, TIME_LETTER_FONT_DIR: FONT_DIR},
         });
         child.on('message', (msg) => {
             if (!msg || msg.type !== 'done') return;

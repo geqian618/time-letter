@@ -5,11 +5,18 @@
 // 也支持被校验脚本直接 require 后调用单张导出函数。
 'use strict'
 
-const {CanvasEditor} = require("../canvas/NodeCanvasEditor");
-const path = require("path");
-const ImageMetadataHelper = require("../utils/ImageMetadataHelper");
 const {promises: fs} = require("fs");
+const path = require("path");
 const {createCanvas} = require("@napi-rs/canvas");
+
+const ImageMetadataHelper = require("../utils/ImageMetadataHelper");
+const {CanvasEditor} = require("../canvas/NodeCanvasEditor");
+const {loadCustomFonts} = require("../utils/child-font-loader");
+
+// 每个进程的 GlobalFonts 独立，且默认只扫描系统字体目录，主进程注册的自定义字体
+// 对本进程不可见。进程启动时像默认实现加载系统字体那样扫描注册自定义字体：
+// 目录由主进程 fork 时经环境变量传入（开发/打包的资源布局不同，由主进程统一解析）。
+loadCustomFonts(process.env.TIME_LETTER_FONT_DIR);
 
 let cachedCanvasEditor;
 
