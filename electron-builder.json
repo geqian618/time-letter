@@ -17,6 +17,20 @@
     "icon": "electron/resources/favicon.png",
     "target": ["nsis", "zip"]
   },
+  "linux": {
+    "icon": "electron/resources/favicon.png",
+    "category": "Graphics",
+    "executableName": "time-letter",
+    "artifactName": "${name}-${version}-${arch}.${ext}",
+    "target": ["AppImage", "tar.gz"]
+  },
+  "mac": {
+    "icon": "electron/resources/favicon.png",
+    "identity": null,
+    "category": "public.app-category.photography",
+    "artifactName": "${name}-${version}-${arch}.${ext}",
+    "target": ["dmg", "zip"]
+  },
   "files": [
     "dist/**/*",
     "electron/**/*",

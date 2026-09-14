@@ -20,8 +20,17 @@ const fontPath = getFontPath()
 let window;
 
 const createApplicationMenu = (mainWindow) => {
+
     window = mainWindow;
-    const applicationMenu = Menu.buildFromTemplate([
+
+    const template = [];
+
+    // macOS 需要标准 role 菜单：应用菜单缺失时 Cmd+Q / 隐藏等快捷键不生效
+    if (process.platform === 'darwin') {
+        template.push({role: 'appMenu'})
+    }
+
+    template.push(
         {
             label: t('menu.file'),
             submenu: [
@@ -135,24 +144,33 @@ const createApplicationMenu = (mainWindow) => {
                     click: openImageManagerWindow
                 },
             ]
-        },
-        {
-            label: t('menu.help'),
-            submenu: [
-                {
-                    label: t('menu.console'),
-                    // role: 'toggleDevTools',
-                    click: (menuItem, browserWindow, event) => {
-                        browserWindow.webContents.openDevTools({mode: "detach"})
-                    }
-                },
-                {
-                    label: t('menu.about'),
-                    click: openAboutDialog
-                }
-            ]
         }
-    ]);
+    );
+
+    // macOS 编辑/窗口菜单：role 缺失时输入框 Cmd+C / Cmd+V / Cmd+W 不生效；
+    // Windows/Linux 下 Chromium 原生处理剪贴板快捷键，无需增加菜单项
+    if (process.platform === 'darwin') {
+        template.push({role: 'editMenu'}, {role: 'windowMenu'})
+    }
+
+    template.push({
+        label: t('menu.help'),
+        submenu: [
+            {
+                label: t('menu.console'),
+                // role: 'toggleDevTools',
+                click: (menuItem, browserWindow, event) => {
+                    browserWindow.webContents.openDevTools({mode: "detach"})
+                }
+            },
+            {
+                label: t('menu.about'),
+                click: openAboutDialog
+            }
+        ]
+    });
+
+    const applicationMenu = Menu.buildFromTemplate(template);
 
     window.setMenu(applicationMenu)
 

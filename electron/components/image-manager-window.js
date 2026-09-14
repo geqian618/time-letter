@@ -57,7 +57,10 @@ const openImageManagerWindow = () => {
     }
 
     // 图片管理器窗口不显示应用菜单
-    imageManagerWindow.setMenu(null)
+    // macOS 菜单为应用级全局共享，setMenu(null) 会把全局菜单重置成 Electron 默认菜单，跳过
+    if (process.platform !== 'darwin') {
+        imageManagerWindow.setMenu(null)
+    }
 
     // WinState 管理窗口（持久化位置与大小）
     winState.manage(imageManagerWindow)

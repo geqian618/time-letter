@@ -50,7 +50,32 @@ npm run electron:serve
 
 # 2. 打包（自动依次执行 vite build → bytenode 编译 → electron-builder + 加密）
 npm run electron:build
+
+# 3. 指定平台打包（electron-builder 默认按当前系统出包，亦可显式指定）
+npm run electron:build:win
+npm run electron:build:linux
+npm run electron:build:mac
 ```
+
+### 跨平台适配与构建
+
+支持 Windows / macOS / Linux。平台差异已在主进程内按 `process.platform` 适配：
+
+| 差异点 | 适配方式 |
+| --- | --- |
+| 数据目录（模板/文本/图片资源、设置、窗口状态） | 开发环境与 Windows 打包沿用工作目录下 `data/`；macOS / Linux 打包使用系统标准用户数据目录（`~/Library/Application Support/时光信笺/data`、`~/.config/时光信笺/data`），因 Finder/AppImage/deb 场景下安装位置不可写 |
+| 应用图标 | Windows 用 `favicon.ico`，macOS / Linux 用 `favicon.png`（icns 由 electron-builder 自动生成） |
+| 托盘 | Windows / Linux：常驻菜单 + 左键切换窗口显隐；macOS：左键切换窗口、右键弹菜单（macOS 常驻菜单会吞掉点击事件） |
+| 应用菜单 | macOS 追加 `appMenu` / `editMenu` / `windowMenu` role，否则 Cmd+Q 退出、输入框 Cmd+C/V 复制粘贴不生效 |
+| 打包布局 | macOS 资源位于 `<App>.app/Contents/Resources`，`renderer.pkg` / `app.asar` 校验的读取路径按平台处理（`renderer-loader.js`、`encryptor-afterpack.js`） |
+| exiftool 原生依赖 | `afterPack` 重打包时 unpack 规则覆盖全平台二进制包（`exiftool-vendored.*`） |
+
+**构建注意事项**：
+
+- 主进程字节码（bytenode `.jsc`）与构建机的 Electron V8 版本、CPU 架构绑定，**产物不跨平台复用**：Windows 安装包在 Windows 上构建，macOS 包必须在 macOS 上构建，Linux 包建议在 Linux 上构建（仓库提供 `.github/workflows/build.yml` 三平台 CI 矩阵，打 tag 自动出包）。
+- macOS 产物未做代码签名（`mac.identity: null`），首次打开需右键 → 打开，或在"系统设置 → 隐私与安全性"中放行。
+- Linux 托盘依赖系统 `libappindicator`（Ubuntu 22.04+ 需自行安装 `libayatana-appindicator3-1`）；部分桌面环境不触发托盘 click 事件，菜单仍可用。
+- Linux 目标选用 AppImage / tar.gz（免 wine、免 dpkg 工具链）；如需 deb / rpm 建议在 Linux 构建机上追加 target。
 
 ### 注意事项
 

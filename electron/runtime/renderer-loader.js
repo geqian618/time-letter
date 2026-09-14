@@ -109,9 +109,9 @@ function registerPrivilegedSchemes() {
  * （在 app ready 之后、创建窗口加载渲染进程之前调用）。
  */
 function registerRendererProtocol() {
+
   if (resourcesMap) return
-  const execDir = path.dirname(process.execPath)
-  const pkgPath = path.join(execDir, PKG_RELATIVE_PATH)
+  const pkgPath = path.join(getPackagedAppRootDir(), PKG_RELATIVE_PATH)
   resourcesMap = buildResourcesMap(pkgPath)
 
   protocol.registerBufferProtocol(PROTOCOL, (request, callback) => {
@@ -135,13 +135,27 @@ function registerRendererProtocol() {
 }
 
 /**
+ * 打包布局的平台差异：
+ *   Windows / Linux —— 可执行文件同级 resources/ 目录（electron-builder 默认布局）；
+ *   macOS           —— <App>.app/Contents/Resources（process.resourcesPath）。
+ * renderer.pkg 由 encryptor 写入 <App>.app/Contents/Resources/resources/ 下，
+ * app.asar / app.yml 各平台均位于 process.resourcesPath。
+ */
+function getPackagedAppRootDir() {
+  if (process.platform === 'darwin') {
+    return process.resourcesPath
+  }
+  return path.dirname(process.execPath)
+}
+
+/**
  * 校验 app.asar 是否被篡改：与 resources/app.yml 中的 file_md5 比对，
  * 不一致则弹窗并退出。
  */
 function verifyAsarIntegrity() {
-  const execDir = path.dirname(process.execPath)
-  const asarPath = path.join(execDir, 'resources', 'app.asar')
-  const ymlPath = path.join(execDir, 'resources', 'app.yml')
+  const resourcesDir = process.resourcesPath || path.join(path.dirname(process.execPath), 'resources')
+  const asarPath = path.join(resourcesDir, 'app.asar')
+  const ymlPath = path.join(resourcesDir, 'app.yml')
   let expected = null
   try {
     const text = fs.readFileSync(ymlPath, 'utf-8')

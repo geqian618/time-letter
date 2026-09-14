@@ -585,7 +585,12 @@ const setupAppLifecycle = () => {
                 if (mainWindow.isMinimized()) {
                     mainWindow.restore();
                 }
+                mainWindow.show();
                 mainWindow.focus();
+                // macOS：应用非激活状态下 focus() 可能不抢焦点，需强制前置
+                if (process.platform === 'darwin') {
+                    app.focus({steal: true});
+                }
             }
         });
     } else {
@@ -597,9 +602,19 @@ const setupAppLifecycle = () => {
 
 /**
  * 设置用户数据（必须在 whenReady 方法执行之前调用才生效）
+ *
+ * 数据目录按平台选择：
+ *   开发环境 —— npm 脚本均从项目根启动，各平台统一使用项目根 data/；
+ *   Windows 打包 —— 沿用工作目录下 data/（安装目录便携化，保持既有行为）；
+ *   macOS / Linux 打包 —— 工作目录不可靠：macOS 从 Finder/Dock 启动时 cwd 为 /，
+ *     且 Gatekeeper 会把应用转移到随机只读路径；AppImage 挂载点与 deb 安装目录同样只读。
+ *     改用系统标准用户数据目录（如 ~/.config/时光信笺/data、
+ *     ~/Library/Application Support/时光信笺/data）
  */
 const setupUserData = () => {
-    const userDataPath = path.join(process.cwd(), 'data');
+    const userDataPath = (isDev || process.platform === 'win32')
+        ? path.join(process.cwd(), 'data')
+        : path.join(app.getPath('userData'), 'data');
     if (!fs.existsSync(userDataPath)) {
         fs.mkdirSync(userDataPath, {recursive: true})
     }

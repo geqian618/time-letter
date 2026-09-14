@@ -8,14 +8,14 @@ const createTemplateContextMenu = (mainWindow) => {
     return Menu.buildFromTemplate([
         {
             label: t('menu.delete'),
-            accelerator: 'ctrl+d',
+            accelerator: 'CommandOrControl+D',
             click: () => {
                 window.webContents.send('template-contextMenu:watch', {type: 0});
             }
         },
         {
             label: t('menu.rename'),
-            accelerator: 'ctrl+m',
+            accelerator: 'CommandOrControl+M',
             click: () => {
                 window.webContents.send('template-contextMenu:watch', {type: 1});
             }

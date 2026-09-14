@@ -38,11 +38,17 @@ function encryptMd5(str, key) {
 
 module.exports = async function afterPack(context) {
   const projectDir = context.packager?.projectDir || process.cwd()
-  const appOutDir = context.appOutDir
-  if (!appOutDir) {
+  if (!context.appOutDir) {
     console.warn('[encryptor-afterpack] warning: no appOutDir, skip')
     return
   }
+  // macOS 布局：asar / renderer.pkg / app.yml 位于 <Product>.app/Contents/Resources，
+  // 与 electron-builder-encryptor 内部的 appOutDir 修正保持一致；
+  // Windows / Linux 资源目录为可执行文件同级 resources/
+  const isMac = context.electronPlatformName === 'darwin' || context.electronPlatformName === 'mas'
+  const appOutDir = isMac
+    ? path.join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`, 'Contents')
+    : context.appOutDir
   const resourcesDir = path.join(appOutDir, 'resources')
   const appAsarPath = path.join(resourcesDir, 'app.asar')
 
@@ -61,17 +67,21 @@ module.exports = async function afterPack(context) {
   asar.uncache(appAsarPath)
   asar.uncacheAll()
   const originalLoader = fs.readFileSync(path.join(projectDir, 'electron', 'main-loader.js'), 'utf-8')
-  const fixDir = path.join(appOutDir, '..', 'app-fix')
+  // 临时修复目录放在包外（context.appOutDir 的兄弟目录），避免污染 .app 包体
+  const fixDir = path.join(context.appOutDir, '..', 'app-fix')
   fs.rmSync(fixDir, { recursive: true, force: true })
   await asar.extractAll(appAsarPath, fixDir)
   fs.writeFileSync(path.join(fixDir, 'electron', 'main-loader.js'), originalLoader, 'utf-8')
   fs.rmSync(path.join(fixDir, 'electron', 'main-c.jsc'), { force: true })
   // 关键：electron-builder 会把含原生二进制的包智能解包到 app.asar.unpacked
-  // （当前项目为 @img（sharp 的 dll/.node）与 exiftool-vendored.exe）。
+  // （当前项目为 @img（sharp 的 dll/.node）与 exiftool-vendored.*）。
+  // exiftool-vendored 为跨平台分发：Windows 是 exiftool-vendored.exe 包，
+  // macOS / Linux 是 exiftool-vendored.mac-*/.linux-*/.pl 包，必须整体解包，
+  // 否则可执行文件被打进 asar 内无法 spawn（如 exiftool 启动失败）。
   // 重打包时必须保留同样的 unpack 规则，否则 .node/.dll 被打进 asar 内，
   // 运行时 dlopen 失败（如 sharp 报 "Could not load the sharp module"）。
   await asar.createPackageWithOptions(fixDir, appAsarPath, {
-    unpack: '**/node_modules/{@img,exiftool-vendored.exe}/**'
+    unpack: '**/node_modules/{@img,exiftool-vendored.*}/**'
   })
   fs.rmSync(fixDir, { recursive: true, force: true })
   console.log('[encryptor-afterpack] main-loader.js restored, main-c.jsc removed (unpack preserved)')
