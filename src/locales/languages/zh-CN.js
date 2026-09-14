@@ -73,7 +73,7 @@ export default {
         equivFocal: '等效焦距',
         cropFactor: '转换倍数',
         download: '下载',
-        threads: '线程数',
+        threads: '进程数',
         fontFamilyCol: '字体家族',
         fontAliasCol: '字体别名',
         languageGroup: '语言',

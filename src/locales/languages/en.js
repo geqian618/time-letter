@@ -73,7 +73,7 @@ export default {
         equivFocal: '35mm Equiv.',
         cropFactor: 'Crop Factor',
         download: 'Download',
-        threads: 'Threads',
+        threads: 'Processes',
         fontFamilyCol: 'Font Family',
         fontAliasCol: 'Font Alias',
         languageGroup: 'Language',
