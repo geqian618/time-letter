@@ -375,11 +375,18 @@ const setupIpcHandlers = () => {
 
     // 删除文件（移入回收站）
     ipcMain.on('images:delete', async (event, filePaths) => {
-        if (!filePaths) return
-        for (let filePath of filePaths) {
-            await shell.trashItem(filePath)
+        if (!Array.isArray(filePaths) || filePaths.length === 0) return;
+        for (const filePath of filePaths) {
+            try {
+                // 1. 确保路径格式正确
+                const resolvedPath = path.resolve(filePath);
+                await shell.trashItem(resolvedPath);
+                console.log(`已移入回收站: ${resolvedPath}`);
+            } catch (error) {
+                console.error(`删除失败: ${filePath}`, error);
+            }
         }
-    })
+    });
 
 
     // ---------- 图片管理器（独立窗口，经主进程中转同步画布数据） ----------
@@ -504,6 +511,7 @@ const registerUncompressedImageProtocol = () => {
     })
 }
 
+
 /**
  * 注册缩略图协议：预览列表通过 thumb:// 加载主进程生成的小图，
  * 避免缩略图直接读取并解码原图导致大量图片时加载缓慢
@@ -511,40 +519,48 @@ const registerUncompressedImageProtocol = () => {
 const registerThumbnailProtocol = () => {
     protocol.registerBufferProtocol('thumb', async (request, callback) => {
         try {
-            // 支持可选高度前缀 thumb:///<高度>/<路径>（如 thumb:///512/...），
-            // 渲染进程按显示尺寸请求对应分辨率，缺省 256
-            let rest = decodeURIComponent(request.url.replace('thumb:///', ''));
+            // 支持可选高度前缀 thumb:///512/路径，缺省 256。例如：thumb:///512/D:/photos/a.jpg
+            let filePath = decodeURIComponent(request.url.replace('thumb:///', ''));
             let thumbHeight = 256;
-            const sizeMatch = rest.match(/^(\d{2,4})\/(.+)$/);
+
+            const sizeMatch = filePath.match(/^(\d{2,4})\/(.+)$/);
             if (sizeMatch) {
-                thumbHeight = Math.min(Math.max(parseInt(sizeMatch[1]), 64), 2048);
-                rest = sizeMatch[2];
+                thumbHeight = Math.min(
+                    Math.max(parseInt(sizeMatch[1], 10), 64),
+                    2048
+                );
+                filePath = sizeMatch[2];
             }
-            const filePath = rest;
+
+            // 直接读取原图文件为 Buffer
             const buffer = await fs.promises.readFile(filePath);
-            // 使用 sharp 读取图片，并按请求高度生成缩略图，宽度自适应
-            const thumbnail = await sharp(filePath)
+
+            // 用 Buffer 生成缩略图，避免 sharp 再次按路径读取文件
+            const thumbnail = await sharp(buffer)
                 .resize({height: thumbHeight})
-                .webp({quality: 80})   // 转换为 WebP 格式，质量 80
+                // 转换为 WebP 格式，质量 80
+                .webp({quality: 80})
                 .toBuffer();
-            if (thumbnail) {
+
+            if (thumbnail?.length) {
                 callback({
                     data: thumbnail,
                     mimeType: 'image/webp',
                     headers: {
-                        // 每次请求都按当前源文件重新生成,无需缓存协商
+                        // 每次请求都按当前源文件重新生成，无需缓存协商
                         'Cache-Control': 'no-cache'
                     }
-                })
-                return
+                });
+                return;
             }
-            callback(buffer)
+            // 兜底：返回原图 Buffer
+            callback(buffer);
         } catch (error) {
-            console.error('缩略图协议处理失败:', error)
-            callback({statusCode: 404, data: Buffer.alloc(0)})
+            console.error('缩略图协议处理失败:', error);
+            callback({statusCode: 404, data: Buffer.alloc(0)});
         }
-    })
-}
+    });
+};
 
 
 /**

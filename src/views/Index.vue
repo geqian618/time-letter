@@ -6,7 +6,7 @@
           <div class="left-resize" v-show="!leftCollapsed" ref="leftResizeRef"
                @mousedown="handleLeftSidebarResize"></div>
           <LeftPanel v-show="!leftCollapsed"/>
-            <el-tooltip :content="leftCollapsed ? $t('panel.expandLeft') : $t('panel.collapseLeft')" placement="right"
+          <el-tooltip :content="leftCollapsed ? $t('panel.expandLeft') : $t('panel.collapseLeft')" placement="right"
                       :disabled="tipDisabled">
             <button class="panel-toggle toggle-left" @click="toggleLeft">
               <svg v-if="!leftCollapsed" viewBox="0 0 24 24" width="12" height="12">
