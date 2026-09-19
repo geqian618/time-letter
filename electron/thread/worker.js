@@ -11,7 +11,7 @@ const {createCanvas} = require("@napi-rs/canvas");
 
 const ImageMetadataHelper = require("../utils/ImageMetadataHelper");
 const {CanvasEditor} = require("../canvas/NodeCanvasEditor");
-const {loadCustomFonts} = require("../utils/child-font-loader");
+const {loadCustomFonts} = require("./child-font-loader");
 
 // 每个进程的 GlobalFonts 独立，且默认只扫描系统字体目录，主进程注册的自定义字体
 // 对本进程不可见。进程启动时像默认实现加载系统字体那样扫描注册自定义字体：
