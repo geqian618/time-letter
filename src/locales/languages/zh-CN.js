@@ -82,7 +82,7 @@ export default {
         personalization: '个性化',
         optionAnchor: '属性锚点',
         deleteTips: '删除提示',
-        autoCenter: '伸缩居中',
+        autoCenter: '缩放居中',
         canvasGroup: '画布',
         moveStep: '移动步长',
         defaultScale: '默认缩放',

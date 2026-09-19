@@ -54,11 +54,11 @@ const defaultProjectSettings = {
     },
     resize: {
         leftSidebar: {
-            width: "20%",
+            width: "17%",
             height: "80%"
         },
         canvasWorkspace: {
-            width: "60%",
+            width: "63%",
             height: "80%"
         },
         rightSidebar: {
