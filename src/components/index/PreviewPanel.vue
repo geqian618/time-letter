@@ -17,7 +17,7 @@
           <img src="/src/assets/images/left-arrow-inactive.png" class="inactive" :alt="$t('preview.prev')">
         </el-tooltip>
         <el-tooltip :content="$t('preview.prev')" placement="top">
-          <img src="/src/assets/images/left-arrow-active.png" class="active" @click="switchBeforePreviewElement"
+          <img src="/src/assets/images/left-arrow-active.png" class="active" @click="switchPrevPreviewElement"
                :alt="$t('preview.prev')">
         </el-tooltip>
       </div>
@@ -399,7 +399,6 @@ const handleSelectMultiplePreviewElements = (event, canvas) => {
         return
       }
     }
-
   }
 }
 
@@ -438,7 +437,7 @@ const handleSelectAllPreviewElements = (event) => {
 }
 
 
-const switchBeforePreviewElement = useThrottle(async () => {
+const switchPrevPreviewElement = useThrottle(async () => {
 
   const {path: selectedPath, previewElement: currentElement} = CanvasManager.getSelectedObject();
 
