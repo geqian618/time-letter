@@ -114,9 +114,9 @@ const thumbHeight = computed(() => {
   return Math.min(2048, Math.max(256, Math.round(1200 / count * dpr / 64) * 64))
 })
 
-// 以请求高度重写缩略图地址（路径已编码，仅插入高度前缀）
+// 以请求高度重写缩略图地址（路径已编码，追加 ?height= 查询参数）
 const thumbSrc = (image) => {
-  return thumbHeight.value === 256 ? image.thumbUrl : image.thumbUrl.replace('thumb:///', `thumb:///${thumbHeight.value}/`)
+  return thumbHeight.value === 128 ? image.thumbUrl : `${image.thumbUrl}?height=${thumbHeight.value}`
 }
 
 // 一列模式：缩略图高度按可视区动态计算，使每个单元格刚好占满一屏

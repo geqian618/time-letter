@@ -518,26 +518,32 @@ const registerUncompressedImageProtocol = () => {
  */
 const registerThumbnailProtocol = () => {
     protocol.registerBufferProtocol('thumb', async (request, callback) => {
-        try {
-            // 支持可选高度前缀 thumb:///512/路径，缺省 256。例如：thumb:///512/D:/photos/a.jpg
-            let filePath = decodeURIComponent(request.url.replace('thumb:///', ''));
-            let thumbHeight = 256;
 
-            const sizeMatch = filePath.match(/^(\d{2,4})\/(.+)$/);
-            if (sizeMatch) {
-                thumbHeight = Math.min(
-                    Math.max(parseInt(sizeMatch[1], 10), 64),
-                    2048
-                );
-                filePath = sizeMatch[2];
+        try {
+            // 可选高度作为查询参数 thumb:///D:/photos/a.jpg?height=512，缺省 128
+            const requestUrl = request.url.replace('thumb:///', '');
+
+            // 分离路径与查询参数：路径分段已逐段编码，真实的 ? 即查询分隔符
+            const queryIndex = requestUrl.indexOf('?');
+            const encodedPath = queryIndex === -1 ? requestUrl : requestUrl.slice(0, queryIndex);
+            const filePath = decodeURIComponent(encodedPath);
+
+            // 期望高度：缺省 128，?height= 可覆盖；下限 64
+            let thumbHeight = 128;
+
+            if (queryIndex !== -1) {
+                const height = parseInt(new URLSearchParams(requestUrl.slice(queryIndex + 1)).get('height'), 10);
+                if (!Number.isNaN(height)) {
+                    thumbHeight = Math.max(height, 64);
+                }
             }
 
             // 直接读取原图文件为 Buffer
             const buffer = await fs.promises.readFile(filePath);
 
-            // 用 Buffer 生成缩略图，避免 sharp 再次按路径读取文件
+            // withoutEnlargement：期望高度超过原图时不下采样放大，由 sharp 原生封顶为原图尺寸
             const thumbnail = await sharp(buffer)
-                .resize({height: thumbHeight})
+                .resize({height: thumbHeight, withoutEnlargement: true})
                 // 转换为 WebP 格式，质量 80
                 .webp({quality: 80})
                 .toBuffer();
