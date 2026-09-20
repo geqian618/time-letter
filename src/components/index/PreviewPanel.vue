@@ -70,7 +70,8 @@
 
       <div class="tab-wrapper">
         <el-tooltip :content="$t('preview.selectAll')" placement="top">
-          <img src="/src/assets/icon/select-all-inactive.svg" class="inactive medium-size" :alt="$t('preview.selectAll')">
+          <img src="/src/assets/icon/select-all-inactive.svg" class="inactive medium-size"
+               :alt="$t('preview.selectAll')">
         </el-tooltip>
         <el-tooltip :content="$t('preview.selectAll')" placement="top">
           <img src="/src/assets/icon/select-all-active.svg"
@@ -83,7 +84,8 @@
 
       <div class="tab-wrapper">
         <el-tooltip :content="$t('preview.center')" placement="top">
-          <img src="/src/assets/images/center-display-inactivate.png" class="inactive medium-size" :alt="$t('preview.center')">
+          <img src="/src/assets/images/center-display-inactivate.png" class="inactive medium-size"
+               :alt="$t('preview.center')">
         </el-tooltip>
         <el-tooltip :content="$t('preview.center')" placement="top">
           <img src="/src/assets/images/center-display-activate.png" class="active medium-size"
@@ -95,7 +97,13 @@
 
 
     <div class="right-preview-bar">
-      <div class="counter">{{ $t('preview.counter', {selected: canvasesStore.selectedPreviewList.size, total: canvasesStore.availableCanvases.size}) }}</div>
+      <div class="counter">{{
+          $t('preview.counter', {
+            selected: canvasesStore.selectedPreviewList.size,
+            total: canvasesStore.availableCanvases.size
+          })
+        }}
+      </div>
       <div class="filter">
         <div class="filter-label">{{ $t('preview.filter') }}</div>
         <div class="filter-select">
@@ -121,7 +129,9 @@
         <template #default>
           <div style="font-size: 10px">
             <p v-if="canvas.metadata.filename">{{ $t('preview.filename') }}{{ canvas.metadata.fullFilename }}</p>
-            <p v-if="canvas.metadata.shootingTime">{{ $t('preview.shootingTime') }}{{ canvas.metadata.shootingTime }}</p>
+            <p v-if="canvas.metadata.shootingTime">{{ $t('preview.shootingTime') }}{{
+                canvas.metadata.shootingTime
+              }}</p>
             <p v-if="canvas.metadata.resolution">{{ $t('preview.resolution') }}{{ canvas.metadata.resolution }}</p>
             <p v-if="canvas.metadata.fileSize">{{ $t('preview.size') }}{{ canvas.metadata.fileSize }}</p>
           </div>
@@ -163,6 +173,7 @@ import {CanvasSettings} from '@/object/Configuration'
 
 import {useCanvasesStore} from '@/stores/canvases'
 import {useProjectSettingsStore} from '@/stores/project-settings'
+import canvasManager from "@/object/canvas-manager";
 
 const canvasesStore = useCanvasesStore()
 
@@ -283,20 +294,24 @@ const switchPreviewImage = async (event, canvas) => {
       canvasesStore.selectedPreviewList.clear()
     }
 
-    const beforePath = CanvasManager.getSelectedPath();
+    const targetPath = canvas.path;
+    const currentPath = CanvasManager.getSelectedPath();
+    const currentCanvas = canvasManager.getCurrentCanvas();
 
-    // 前一次预览元素与当前预览元素不同，隐藏前一次预览元素
-    // if (beforePath && beforePath !== canvas.path) {
-    //   canvasesStore.getCanvasEditor().clearCanvas();
-    //   canvasesStore.getBackgroundCanvasEditor().clearCanvas();
-    // }
+    // 前一次预览元素与当前预览元素不同
+    if (currentPath && currentPath !== targetPath) {
+      const backgroundCanvasEditor = canvasesStore.getBackgroundCanvasEditor();
+      const canvasEditor = canvasesStore.getCanvasEditor();
+      currentCanvas.foreground = canvasEditor.exportToJSON()
+      currentCanvas.background = backgroundCanvasEditor.exportToJSON()
+    }
 
     // 没有预览元素或前一次预览元素与当前预览元素不同时显示，多次点击预览同一元素不重复渲染
-    if (!beforePath || beforePath !== canvas.path) {
+    if (!currentPath || currentPath !== targetPath) {
       // 更改新的选择元素
       CanvasManager.setSelectedObject({path: event.target.getAttribute('path'), previewElement: event.target})
       // 添加当前选中元素到选中列表中
-      canvasesStore.selectedPreviewList.set(canvas.path, event.target)
+      canvasesStore.selectedPreviewList.set(targetPath, event.target)
       // 设置选择样式
       event.target.classList.add('active')
 
@@ -449,25 +464,30 @@ const switchPrevPreviewElement = useThrottle(async () => {
 
   const prevNode = currentNode.prev ? currentNode.prev : canvasesStore.availableCanvases.getLastNode();
 
-  const beforeCanvas = prevNode.value;
+  const prevCanvas = prevNode.value;
 
-  if (currentCanvas && beforeCanvas) {
+  if (currentCanvas && prevCanvas && currentCanvas.path !== prevCanvas.path) {
 
     currentElement.setAttribute('selected', 'false')
     currentElement.classList.remove('active')
     canvasesStore.selectedPreviewList.delete(selectedPath)
 
-    const beforeElement = beforeCanvas.getPreviewElement();
-    beforeElement.classList.add('active')
-    beforeElement.setAttribute('selected', 'true')
+    const prevElement = prevCanvas.getPreviewElement();
+    prevElement.classList.add('active')
+    prevElement.setAttribute('selected', 'true')
 
-    CanvasManager.setSelectedObject({path: beforeCanvas.path, previewElement: beforeElement})
-    canvasesStore.selectedPreviewList.set(beforeCanvas.path, beforeElement)
+    CanvasManager.setSelectedObject({path: prevCanvas.path, previewElement: prevElement})
+    canvasesStore.selectedPreviewList.set(prevCanvas.path, prevElement)
 
-      await canvasActions.renderCanvas(beforeCanvas)
+    const backgroundCanvasEditor = canvasesStore.getBackgroundCanvasEditor();
+    const canvasEditor = canvasesStore.getCanvasEditor();
+    currentCanvas.foreground = canvasEditor.exportToJSON()
+    currentCanvas.background = backgroundCanvasEditor.exportToJSON()
+
+    await canvasActions.renderCanvas(prevCanvas)
 
     // 方式二，过渡比较流畅
-    scrollBarMoveToHorizontalCenter(previewList.value, beforeElement)
+    scrollBarMoveToHorizontalCenter(previewList.value, prevElement)
   }
 }, 200)
 
@@ -486,7 +506,7 @@ const switchNextPreviewElement = useThrottle(async () => {
 
   const nextCanvas = prevNode.value;
 
-  if (currentCanvas && nextCanvas) {
+  if (currentCanvas && nextCanvas && currentCanvas.path !== nextCanvas.path) {
     currentElement.setAttribute('selected', 'false')
     currentElement.classList.remove('active')
     canvasesStore.selectedPreviewList.delete(selectedPath)
@@ -496,6 +516,11 @@ const switchNextPreviewElement = useThrottle(async () => {
     nextElement.setAttribute('selected', 'true')
     CanvasManager.setSelectedObject({path: nextCanvas.path, previewElement: nextElement})
     canvasesStore.selectedPreviewList.set(nextCanvas.path, nextElement)
+
+    const backgroundCanvasEditor = canvasesStore.getBackgroundCanvasEditor();
+    const canvasEditor = canvasesStore.getCanvasEditor();
+    currentCanvas.foreground = canvasEditor.exportToJSON()
+    currentCanvas.background = backgroundCanvasEditor.exportToJSON()
 
     await canvasActions.renderCanvas(nextCanvas)
 

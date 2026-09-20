@@ -226,17 +226,21 @@ const initCanvasSize = () => {
     })
 
     canvasEditor.on('update:object', (event) => {
-      // console.log('修改元素', event)
+      // const canvas = CanvasManager.getCurrentCanvas();
+      // canvas.foreground = canvasEditor.exportToObject()
+      // canvas.background = backgroundCanvasEditor.exportToObject()
     })
 
     canvasEditor.on('move:object', (event) => {
-      const canvas = CanvasManager.getCurrentCanvas();
-      canvas.foreground = canvasEditor.exportToObject()
-      canvas.background = backgroundCanvasEditor.exportToObject()
+      // const canvas = CanvasManager.getCurrentCanvas();
+      // canvas.foreground = canvasEditor.exportToObject()
+      // canvas.background = backgroundCanvasEditor.exportToObject()
     })
 
     canvasEditor.on('add:object', (event) => {
-      // console.log('添加元素', event)
+      // const canvas = CanvasManager.getCurrentCanvas();
+      // canvas.foreground = canvasEditor.exportToObject()
+      // canvas.background = backgroundCanvasEditor.exportToObject()
     })
 
   }, 1000)
