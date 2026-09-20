@@ -106,12 +106,12 @@ const gridColumns = computed(() => {
   return count >= 1 ? `repeat(${count}, minmax(0, 1fr))` : 'repeat(auto-fill, minmax(140px, 1fr))'
 })
 
-// 按列数估算所需缩略图高度（4:3 格子 × 设备像素比），钳制在 256~2048 并按 64 对齐，保证画质不浪费内存
+// 按列数估算所需缩略图高度（4:3 格子 × 设备像素比），钳制在 128~2048 并按 64 对齐，保证画质不浪费内存
 const thumbHeight = computed(() => {
   const count = parseInt(columnCount.value)
-  if (!(count >= 1)) return 256
+  if (!(count >= 1)) return 128
   const dpr = window.devicePixelRatio || 1
-  return Math.min(2048, Math.max(256, Math.round(1200 / count * dpr / 64) * 64))
+  return Math.min(2048, Math.max(128, Math.round(1200 / count * dpr / 64) * 64))
 })
 
 // 以请求高度重写缩略图地址（路径已编码，追加 ?height= 查询参数）
