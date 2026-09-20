@@ -26,7 +26,7 @@
             <div class="image-wrapper" :key="key" v-for="([key, image]) in canvasesStore.imageResources"
                  draggable="false">
               <img class="image-resource"
-                   :src="image.thumbUrl || image.url"
+                   :src="image.url"
                    :path="image.path"
                    draggable="true"
                    alt="">
