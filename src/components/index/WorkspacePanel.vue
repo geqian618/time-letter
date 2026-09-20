@@ -192,11 +192,10 @@ const initCanvasSize = () => {
     renderCanvasScrollbar()
 
     canvasEditor = new CanvasEditor(canvasElement.value, {
-      enableCache: true,
       eventScope: canvasElement.value.parentNode
     });
 
-    backgroundCanvasEditor = new CanvasEditor(backgroundElement.value, {enableCache: true});
+    backgroundCanvasEditor = new CanvasEditor(backgroundElement.value);
 
     // 注册编辑器实例，供其他组件读写画布
     canvasesStore.setCanvasEditor(canvasEditor)
