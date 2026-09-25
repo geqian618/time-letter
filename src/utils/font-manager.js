@@ -1,51 +1,32 @@
 // 用于记录已加载的字体及其对应的 FontFace 实例
 const fontMap = new Map();
 
-// 记录加载中的字体任务：同一字体的并发调用共享同一个加载 Promise
-const pendingLoads = new Map();
-
-const loadFont = (family, path) => {
+const loadFont = async (family, path) => {
     // 如果字体已经加载过，直接返回
     if (fontMap.has(family)) {
         console.log(`字体 "${family}" 已加载，跳过重复加载`);
-        return Promise.resolve();
+        return;
     }
-    // 同一字体的重复调用复用进行中的加载任务
-    if (pendingLoads.has(family)) {
-        return pendingLoads.get(family);
+    try {
+        // 定义字体
+        const fontFace = new FontFace(
+            family,
+            `url('${path}')`,
+            {
+                format: 'truetype',
+                display: 'swap'
+            }
+        );
+        // 加载字体
+        const loadedFace = await fontFace.load();
+        // 将字体添加到文档中
+        document.fonts.add(loadedFace);
+        // 记录已加载的字体及其FontFace实例
+        fontMap.set(family, loadedFace);
+        console.log(`字体 "${family}" 加载成功`);
+    } catch (error) {
+        console.error(`字体 "${family}" 加载失败:`, error);
     }
-    const task = (async () => {
-        try {
-            // 定义字体
-            const fontFace = new FontFace(
-                family,
-                `url('${path}')`,
-                {
-                    format: 'truetype',
-                    display: 'swap'
-                }
-            );
-            // 加载字体
-            const loadedFace = await fontFace.load();
-            // 将字体添加到文档中
-            document.fonts.add(loadedFace);
-            // 记录已加载的字体及其FontFace实例
-            fontMap.set(family, loadedFace);
-            console.log(`字体 "${family}" 加载成功`);
-        } catch (error) {
-            console.error(`字体 "${family}" 加载失败:`, error);
-        } finally {
-            pendingLoads.delete(family);
-        }
-    })();
-    pendingLoads.set(family, task);
-    return task;
-}
-
-// 等待所有进行中的字体加载结束（无进行中任务时立即返回）
-// 用于启动阶段：应用模板 / 渲染画布前先等字体就绪，避免用回退字体度量文本
-const waitFontsLoaded = () => {
-    return Promise.allSettled([...pendingLoads.values()]);
 }
 
 
@@ -100,4 +81,4 @@ const isLoaded = (family) => {
 };
 
 
-export default {loadFont, waitFontsLoaded, unloadFont, unloadAllFonts, isLoaded}
+export default {loadFont, unloadFont, unloadAllFonts, isLoaded}
