@@ -93,8 +93,7 @@
                 <span class="label">{{ $t('settings.syncMetadata') }}</span>
                 <el-switch
                     v-model="settingsStore.projectSettings.outputSettings.isSynchronizeMetadata"
-                    class="value"
-                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+                    class="value"/>
               </div>
             </div>
           </div>
@@ -155,8 +154,13 @@
                 <el-switch
                     @change="renderCanvasScrollbar"
                     v-model="settingsStore.projectSettings.appearance.enableScrollbar"
-                    class="value"
-                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+                    class="value"/>
+              </div>
+              <div class="option">
+                <span class="label">{{ $t('settings.zoomPill') }}</span>
+                <el-switch
+                    v-model="settingsStore.projectSettings.appearance.enableZoomPill"
+                    class="value"/>
               </div>
             </div>
           </div>
@@ -256,8 +260,7 @@
                 <el-switch
                     @change="handleFocalLength(0)"
                     v-model="settingsStore.projectSettings.metadata.others.enableEquivalentFocalSegment"
-                    class="value"
-                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+                    class="value"/>
               </div>
               <div class="option">
                 <span class="label">{{ $t('settings.cropFactor') }}</span>
@@ -334,22 +337,19 @@
                 <span class="label">{{ $t('settings.optionAnchor') }}</span>
                 <el-switch
                     v-model="settingsStore.projectSettings.others.optionAnchorPoint"
-                    class="value"
-                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+                    class="value"/>
               </div>
               <div class="option">
                 <span class="label">{{ $t('settings.deleteTips') }}</span>
                 <el-switch
                     v-model="settingsStore.projectSettings.others.deleteTipVisible"
-                    class="value"
-                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+                    class="value"/>
               </div>
               <div class="option">
                 <span class="label">{{ $t('settings.autoCenter') }}</span>
                 <el-switch
                     v-model="settingsStore.projectSettings.others.autoCenterOnToggle"
-                    class="value"
-                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+                    class="value"/>
               </div>
             </div>
           </div>
@@ -386,8 +386,7 @@
                 <span class="label">{{ $t('settings.focalZoom') }}</span>
                 <el-switch
                     v-model="settingsStore.projectSettings.others.focalZoom"
-                    class="value"
-                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"/>
+                    class="value"/>
               </div>
             </div>
           </div>
@@ -581,7 +580,16 @@ const watchImportFonts = () => {
           if (!font.isSystem && font.url) {
             try {
               // 加载字体
-              FontManager.loadFont(family, font.url)
+              FontManager.loadFont(family, font.url).then(() => {
+                // 启动恢复（type -1）的字体加载完成后，若画布已用回退字体渲染过，
+                // 重绘一次当前画布，消除首帧字体度量偏差（如装饰框切字）
+                if (type === -1) {
+                  const canvas = CanvasManager.getCurrentCanvas();
+                  if (canvas?.completed) {
+                    canvasActions.renderCanvas(canvas);
+                  }
+                }
+              })
               if (type === 0) {
                 setTimeout(() => {
                   Notification.success(t('settings.fontLoaded', {family}), t('common.notice'))
@@ -724,20 +732,38 @@ const handleStopActivateInput = (row, column) => {
 <style scoped lang="scss">
 @use '@/assets/styles/dialog';
 
+/* 切换设置项的标签条：仅调整 Element Plus 默认高度（40px），其余保持组件默认样式 */
 :deep(.el-tabs) {
-  .el-tabs__nav-scroll {
-    height: 35px;
-    background: var(--app-dialog-header);
+  --el-tabs-header-height: 36px;
+}
 
-    .el-tabs__item {
-      font-size: 11px;
-    }
-  }
+/* 弹窗整体限高 65vh：header/footer 不被压缩，标签页区域弹性伸缩、内容区内部滚动
+   （原先 .el-tabs 的 max-height: 70vh 由该限高接管） */
+.dialog-wrapper :deep(.el-dialog) {
+  max-height: 65vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-wrapper :deep(.el-dialog__header),
+.dialog-wrapper :deep(.el-dialog__footer) {
+  flex-shrink: 0;
+}
+
+.dialog-wrapper :deep(.el-dialog__body) {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .el-tabs {
   width: 100%;
-  max-height: 70vh;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   font-size: 12px;
 
   .operation {
@@ -748,12 +774,14 @@ const handleStopActivateInput = (row, column) => {
   }
 
   :deep(.el-tabs__content) {
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
-    background-color: var(--dialog-main-background-color);
+    background-color: var(--app-dialog-body-bg);
     /* 基础样式 */
     .border-box {
       position: relative;
-      border: 1px solid var(--app-border-strong);
+      border: 1px solid var(--app-dialog-line);
       border-radius: 2px;
       padding: 15px 10px;
       margin: 25px 0;
@@ -762,7 +790,7 @@ const handleStopActivateInput = (row, column) => {
         position: absolute;
         top: -7px;
         left: 15px;
-        background-color: var(--dialog-main-background-color);
+        background-color: var(--app-dialog-body-bg);
         padding: 0 12px;
         font-size: 13px;
         color: var(--app-secondary-text);

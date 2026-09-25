@@ -42,7 +42,8 @@ const defaultProjectSettings = {
     },
     appearance: {
         theme: 'system',
-        enableScrollbar: true
+        enableScrollbar: true,
+        enableZoomPill: true
     },
     others: {
         optionAnchorPoint: true,

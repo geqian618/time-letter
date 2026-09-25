@@ -32,7 +32,6 @@ export const useCanvasesStore = defineStore('canvases', () => {
     const deleteTipsDialogVisible = ref(false)
 
 
-
     // ---------- 共享资源注册（非响应式：DOM 引用与画布编辑器实例，仅存取） ----------
 
     // 各面板注册进来的 DOM 模板引用

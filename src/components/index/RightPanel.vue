@@ -2,10 +2,10 @@
   <div class="settings-details">
     <el-aside>
       <el-scrollbar>
-        <el-menu :default-openeds="['1']" ref="menuRef" @open="handleOpenMenu" @close="handleCloseMenu">
-          <el-sub-menu index="1">
+        <el-menu :default-openeds="['1', '5', '2', '3', '4']" ref="menuRef" @open="handleOpenMenu" @close="handleCloseMenu">
+          <el-sub-menu index="1" class="sub-menu sub-menu-metadata" :class="{'is-active': activeSection === '1'}">
             <template #title>
-              <span>{{ $t('right.metadata') }}</span>
+              <span class="title-text" @click="setActiveSection('1')">{{ $t('right.metadata') }}</span>
             </template>
             <ul class="options metadata" ref="metadataRef">
               <li class="option">
@@ -88,9 +88,9 @@
               </li>
             </ul>
           </el-sub-menu>
-          <el-sub-menu index="5">
+          <el-sub-menu index="5" class="sub-menu" :class="{'is-active': activeSection === '5'}">
             <template #title>
-              <span>{{ $t('right.photo') }}</span>
+              <span class="title-text" @click="setActiveSection('5')">{{ $t('right.photo') }}</span>
             </template>
             <ul class="options">
               <li class="option">
@@ -177,22 +177,29 @@
               </li>
             </ul>
           </el-sub-menu>
-          <el-sub-menu index="2">
+          <el-sub-menu index="2" class="sub-menu" :class="{'is-active': activeSection === '2'}">
             <template #title>
-              <span>{{ $t('right.border') }}</span>
+              <span class="title-text" @click="setActiveSection('2')">{{ $t('right.border') }}</span>
             </template>
+
+            <!-- 边框类型：分段控件（绑定同一 borderType 字段，替换原下拉框） -->
+            <div class="segmented-control">
+              <button
+                  v-for="item in [
+                    {value: 0, label: $t('right.borderTypeOptions.general')},
+                    {value: 1, label: $t('right.borderTypeOptions.blur')},
+                    {value: 2, label: $t('right.borderTypeOptions.custom')}
+                  ]"
+                  :key="item.value"
+                  type="button"
+                  class="segment"
+                  :class="{'is-active': canvasesStore.borderOptions.borderType === item.value}"
+                  @click="handleBorderTypeChange(item.value)">
+                {{ item.label }}
+              </button>
+            </div>
+
             <ul class="options">
-              <li class="option">
-                <div class="label">{{ $t('right.borderType') }}</div>
-                <div class="value">
-                  <el-select
-                      @change="handleCreateBorders()"
-                      v-model="canvasesStore.borderOptions.borderType"
-                      :options="[{value: 0,label: $t('right.borderTypeOptions.general')}, {value: 1,label: $t('right.borderTypeOptions.blur')},{value: 2, label: $t('right.borderTypeOptions.custom')}]"
-                      size="small"
-                      placeholder="Select"/>
-                </div>
-              </li>
               <li class="option" v-show="canvasesStore.borderOptions.borderType === 2">
                 <div class="label">{{ $t('right.borderImage') }}</div>
                 <div class="value">
@@ -318,9 +325,9 @@
               </li>
             </ul>
           </el-sub-menu>
-          <el-sub-menu index="3" id="text-options">
+          <el-sub-menu index="3" id="text-options" class="sub-menu" :class="{'is-active': activeSection === '3'}">
             <template #title>
-              <span>{{ $t('right.text') }}</span>
+              <span class="title-text" @click="setActiveSection('3')">{{ $t('right.text') }}</span>
             </template>
             <div class="group-title">{{ $t('right.basicProps') }}</div>
             <ul class="options">
@@ -525,9 +532,9 @@
               </li>
             </ul>
           </el-sub-menu>
-          <el-sub-menu index="4" id="image-options">
+          <el-sub-menu index="4" id="image-options" class="sub-menu" :class="{'is-active': activeSection === '4'}">
             <template #title>
-              <span>{{ $t('right.image') }}</span>
+              <span class="title-text" @click="setActiveSection('4')">{{ $t('right.image') }}</span>
             </template>
             <div class="group-title">{{ $t('right.basicProps') }}</div>
             <ul class="options">
@@ -688,6 +695,21 @@ const sliderRange = {
 // 维护已展开子菜单索引的数组
 const openedMenus = ref([])
 
+// 当前高亮的属性分组（点击分组标题或自动展开时更新，用于绘制卡片激活态）
+// 当前高亮的属性分组：点击分组标题或选中画布元素时更新，
+// 默认「照片」——刚载入图片时最常用的画布级分组
+const activeSection = ref('5')
+
+const setActiveSection = (index) => {
+  activeSection.value = index
+}
+
+// 分段控件切换边框类型：与原生下拉框行为一致
+const handleBorderTypeChange = (value) => {
+  canvasesStore.borderOptions.borderType = value
+  handleCreateBorders()
+}
+
 // 处理子菜单展开事件
 const handleOpenMenu = (index) => {
   // 如果索引不在已展开数组中，则添加
@@ -733,6 +755,7 @@ const requestImportBorderImage = () => {
 // 选中画布元素时（选项对象被整体替换）自动展开对应的属性子菜单
 watch(textOptions, (newVal, oldValue) => {
   if (newVal === oldValue || !settingsStore.projectSettings.others.optionAnchorPoint) return
+  activeSection.value = '3'
   openSubMenu('3')
   nextTick(() => {
     document.getElementById('text-options').scrollIntoView({behavior: 'smooth'});
@@ -741,6 +764,7 @@ watch(textOptions, (newVal, oldValue) => {
 
 watch(imageOptions, (newVal, oldValue) => {
   if (newVal === oldValue || !settingsStore.projectSettings.others.optionAnchorPoint) return
+  activeSection.value = '4'
   openSubMenu('4')
   nextTick(() => {
     document.getElementById('image-options').scrollIntoView({behavior: 'smooth'});
@@ -1052,185 +1076,331 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
   box-sizing: border-box;
 
   .el-aside {
-    color: var(--el-text-color-primary);
-    background: var(--expand-area-background-color);
+    color: var(--ui-text);
+    background: var(--ui-panel);
     width: 100%;
     height: 100%;
 
     .el-menu {
       border-right: none;
-      background-color: var(--expand-area-background-color);
+      background-color: var(--ui-panel);
+      padding: 10px 12px 16px;
 
-      :deep(.el-sub-menu) {
+      /* ---------- 分组卡片 ---------- */
+      .sub-menu {
+        background-color: var(--ui-card);
+        border: 1px solid var(--ui-border);
+        border-radius: var(--app-radius-lg);
+        margin-bottom: 10px;
+        /* 标题行与卡片边框齐平：无内边距，用 overflow 裁出顶部圆角 */
+        padding: 0;
+        overflow: hidden;
+        transition: border-color var(--app-transition), background-color var(--app-transition);
+      }
 
-        .el-sub-menu__title {
-          height: 40px;
-        }
+      /* 收起后去掉卡片外壳，只留整行可点的标题行，避免双层圆角叠在一起 */
+      .sub-menu:not(.is-opened) {
+        background-color: transparent;
+        border-color: transparent;
+      }
 
-        span, svg {
-          color: var(--menu-icon-color);
+      /* 元数据分组：与其他分组一样套卡片，只是用开关代替折叠箭头 */
+      .sub-menu.sub-menu-metadata :deep(.el-sub-menu__title .el-sub-menu__icon-arrow) {
+        display: none;
+      }
+
+      /* 元数据分组：输入框加宽，收回右侧留白 */
+      .options.metadata {
+        .option .value :deep(.el-input) {
+          width: 100%;
+          margin-right: 0;
         }
       }
 
-      .el-sub-menu {
-        background-color: var(--menu-background-color);
-        border-bottom: 1px solid var(--app-menu-border);
+      :deep(.el-sub-menu__title) {
+        height: 34px;
+        line-height: 34px;
+        padding: 0 8px 0 10px;
+        /* 顶部与卡片边框重合，左右撑满，圆角交给卡片裁切 */
+        border-radius: 0;
+        background-color: var(--ui-row);
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--ui-text);
+        transition: background-color var(--app-transition);
 
-        .control-option {
-          background-color: var(--app-control-bg);
-          display: flex;
-          align-items: center;
-          height: 50px;
-          padding-left: 20px;
+        &:hover {
+          background-color: var(--ui-row-hover);
         }
 
-        .group-title {
-          color: var(--main-font-color);
-          width: 100%;
-          height: 30px;
-          font-size: 14px;
-          font-weight: 600;
-          background-color: var(--expand-area-background-color);
-          display: flex;
-          justify-content: center;
-          align-items: end;
-          border-top: 1px solid var(--app-menu-border);
+        .title-text {
+          flex: 1;
+          min-width: 0;
+          color: inherit;
+          font-weight: inherit;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
-        .group-title:first-child {
-          border-top: none;
+        .el-sub-menu__icon-arrow {
+          color: var(--ui-text-muted);
+          font-size: 12px;
+          transition: color var(--app-transition);
         }
+      }
 
-        .options {
-          width: 100%;
-          list-style: none;
-          padding: 10px 0 10px 10px;
-          background-color: var(--expand-area-background-color);
-          // 标签列宽度取组内最长标签（max-content）并右对齐，控件列左缘对齐
-          display: grid;
-          grid-template-columns: max-content 1fr;
-          column-gap: 6px;
-          // 各行的 .label 与 .value 直接参与本网格，由这里统一垂直居中
-          align-items: center;
+      /* 展开的分组：箭头取琥珀色 */
+      .sub-menu.is-opened :deep(.el-sub-menu__title .el-sub-menu__icon-arrow) {
+        color: var(--ui-accent);
+      }
 
-          .option {
-            // Electron 22（Chromium 108）不支持 subgrid，改用兼容性更好的 display: contents：
-            // 行盒子自身不再生成，.label 与 .value 直接落入父级两列网格，所有行仍共享同一标签列
-            display: contents;
+      /* 元数据分组：右侧为开关，隐藏折叠箭头 */
+      .sub-menu.no-card :deep(.el-sub-menu__title .el-sub-menu__icon-arrow) {
+        display: none;
+      }
 
-            // 行高保持原值（原先由 .option 的 height 提供，现转移到行内子元素上）
-            > * {
-              height: 35px;
+      /* ---------- 内层容器 ---------- */
+      :deep(.el-menu--inline) {
+        background-color: transparent;
+        padding: 4px 4px 8px;
+      }
+
+      .sub-menu:last-child {
+        margin-bottom: 0;
+      }
+
+      .group-title {
+        margin: 4px 0 0;
+        padding: 6px 0 2px;
+        height: auto;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--ui-text-secondary);
+        /* 不再用白色子卡片包住分组，只留居中标题，与照片分组保持一致 */
+        background-color: transparent;
+        border: none;
+        border-radius: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .group-title + .options {
+        margin: 0 0 4px;
+        padding: 4px 6px 4px 0;
+        background-color: transparent;
+        border: none;
+        border-radius: 0;
+      }
+
+      .group-title:first-child {
+        margin-top: 2px;
+      }
+
+      /* ---------- 属性行 ---------- */
+      .options {
+        width: 100%;
+        list-style: none;
+        padding: 4px 6px 4px 0;
+        background-color: transparent;
+        /* 标签列宽度取组内最长标签（max-content）并右对齐，控件列左缘对齐 */
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        column-gap: 10px;
+        /* 各行的 .label 与 .value 直接参与本网格，由这里统一垂直居中 */
+        align-items: center;
+
+        .option {
+          /* Electron 22（Chromium 108）不支持 subgrid，改用兼容性更好的 display: contents：
+             行盒子自身不再生成，.label 与 .value 直接落入父级两列网格，所有行仍共享同一标签列 */
+          display: contents;
+
+          > * {
+            min-height: 34px;
+          }
+
+          .label {
+            display: flex;
+            align-items: center;
+            justify-content: end;
+            padding-left: 6px;
+            font-size: 11.5px;
+            color: var(--ui-text-secondary);
+            white-space: nowrap;
+
+            .text-resource {
+              background-color: transparent;
+              width: fit-content;
+              height: fit-content;
+              cursor: move;
+              user-select: none;
+            }
+          }
+
+          .value {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            min-width: 0;
+            padding-left: 4px;
+
+          .number-input {
+            /* 缩窄数字框让滑块更宽；右缘贴齐父容器 */
+            flex: 0 0 40px;
+            width: 40px;
+            margin-left: 0;
+            margin-right: 0;
+              font-size: 11.5px;
+              font-variant-numeric: tabular-nums;
+              text-align: right;
+              outline: none;
+              border: none;
+              background: transparent;
+              color: var(--ui-text-secondary);
             }
 
-            .label {
-              display: flex;
-              align-items: center;
-              justify-content: end;
-              font-size: 11px;
-              color: var(--main-font-color);
+            .el-icon {
+              margin-left: 5px;
+            }
 
-              .text-resource {
-                background-color: var(--expand-area-background-color);
-                width: fit-content;
-                height: fit-content;
-                cursor: move;
-                user-select: none;
+            :deep(.el-input) {
+              width: calc(100% - 5px);
+              margin-right: 16px;
+              font-size: 12px;
+              /* 输入框对齐下拉框的高度（28px） */
+              height: 28px;
+
+              .el-input__wrapper {
+                height: 100%;
+                /* 卡片本身是浅灰底，输入框用白底 + 描边才能看清边界 */
+                background: var(--ui-elevated);
+                box-shadow: 0 0 0 1px var(--ui-border) inset;
+                border-radius: var(--app-radius-xs);
+                padding: 0 10px;
+                transition: box-shadow var(--app-transition), background-color var(--app-transition);
+              }
+
+              .el-input__wrapper:hover {
+                box-shadow: 0 0 0 1px var(--ui-border-strong) inset;
+              }
+
+              .el-input__wrapper.is-focus {
+                background: var(--ui-elevated);
+                box-shadow: 0 0 0 1px var(--ui-accent) inset;
+              }
+
+              .el-input__inner {
+                color: var(--ui-text);
               }
             }
 
-            .value {
-              display: flex;
-              align-items: center;
-              width: 100%;
-              // 左侧 4px 与滑块左端对齐，下拉框 / 颜色选择器 / 按钮等组件共用同一起点
-              padding-left: 4px;
-
-              .number-input {
-                width: 40px;
-                margin-left: 3px;
-                font-size: 11px;
-                outline: none;
-                transition: border-color 0.3s;
-                border: none;
-                background: transparent;
-                color: var(--main-font-color);
-              }
-
+            :deep(.el-color-picker) {
               .el-icon {
-                margin-left: 5px;
+                font-size: 12px;
+                margin: 0;
+              }
+            }
+
+            :deep(.el-select) {
+              /* 宽度与右侧留白都对齐元数据的输入框 */
+              width: calc(100% - 5px);
+              margin-right: 16px;
+
+              .el-select__wrapper {
+                background: var(--ui-elevated);
+                box-shadow: 0 0 0 1px var(--ui-border) inset;
+                border-radius: var(--app-radius-xs);
+                /* 与 .el-input 保持一致 */
+                min-height: 28px;
+                padding: 0 10px;
               }
 
-              :deep(.el-input) {
-                width: calc(100% - 5px);
-                margin-right: 16px;
-                font-size: 10px;
+              span {
+                color: var(--ui-text);
+              }
+            }
 
-                .el-input__wrapper {
-                  background: var(--app-control-bg);
-                }
+            :deep(.el-button) {
+              height: 30px;
+              border-radius: var(--app-radius-xs);
+              background: var(--ui-card);
+              border: 1px solid var(--ui-border);
+              color: var(--ui-text);
+
+              span {
+                color: inherit;
               }
 
-              :deep(.el-color-picker) {
-                .el-icon {
-                  font-size: 12px;
-                  margin: 0;
-                }
+              &:hover {
+                background: var(--ui-accent-soft);
+                border-color: var(--ui-accent-soft-border);
+                color: var(--ui-accent-soft-text);
+              }
+            }
+
+            :deep(.el-slider) {
+              /* 弹性占据剩余宽度，与右侧数字输入框之间只留 2px */
+              flex: 1 1 auto;
+              min-width: 0;
+              margin: 0 2px 0 0;
+              --el-slider-button-size: 12px;
+              --el-slider-height: 4px;
+              /* 滑块在滑轨上垂直居中：offset = (滑轨高 - 手柄容器高) / 2 = (4 - 36) / 2 */
+              --el-slider-button-wrapper-size: 36px;
+              --el-slider-button-wrapper-offset: -16px;
+              --el-slider-main-bg-color: var(--ui-accent);
+              --el-slider-runway-bg-color: var(--ui-track);
+
+              .el-slider__runway {
+                border-radius: 2px;
               }
 
-              :deep(.el-select) {
-                width: calc(100% - 38px);
-
-                span {
-                  color: var(--app-regular-text);
-                }
-              }
-
-              :deep(.el-button) {
-                span {
-                  color: white;
-                }
-              }
-
-              :deep(.el-slider) {
-                width: 100%;
-                margin: 0 4px 0 0;
-                --el-slider-button-size: 10px;
-                --el-slider-height: 5px;
-
-                .el-slider__button {
-                  margin-bottom: 1px;
-                }
+              .el-slider__button {
+                margin-bottom: 0;
+                border: 2px solid var(--ui-accent);
+                background: var(--ui-elevated);
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
               }
             }
           }
-
-          .option:first-child {
-            margin-top: 0;
-          }
         }
       }
 
-      .el-sub-menu:first-child {
-        border-top: none;
-      }
+      /* ---------- 分段控件 ---------- */
+      .segmented-control {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
+        gap: 6px;
+        margin: 4px 0 6px;
 
-      .el-sub-menu:last-child {
-        border-bottom: none;
-      }
-
-      :deep(.el-sub-menu) {
-
-        span, svg {
-          color: var(--menu-icon-color);
+        .segment {
+          height: 30px;
+          padding: 0 8px;
+          border-radius: var(--app-radius-xs);
+          background: var(--ui-elevated);
+          border: 1px solid var(--ui-border);
+          color: var(--ui-text-secondary);
+          font-family: inherit;
+          font-size: 12.5px;
+          cursor: pointer;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          transition: background-color var(--app-transition), border-color var(--app-transition), color var(--app-transition);
         }
 
-        .el-sub-menu__title:hover {
-          background-color: var(--menu-background-color);
+        .segment:hover {
+          border-color: var(--ui-border-strong);
+          color: var(--ui-text);
+        }
 
-          span {
-            color: var(--app-hover-accent);
-          }
+        .segment.is-active {
+          background: var(--ui-accent-soft);
+          border-color: var(--ui-accent);
+          color: var(--ui-accent-soft-text);
+          font-weight: 600;
         }
       }
     }

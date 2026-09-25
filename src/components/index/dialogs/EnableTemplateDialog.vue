@@ -8,7 +8,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="templatesStore.enableTemplateDialogVisible = false">{{ $t('common.cancel') }}</el-button>
-          <el-button type="info" @click="enableTemplate">
+          <el-button type="primary" @click="enableTemplate">
             {{ $t('template.apply') }}
           </el-button>
         </div>

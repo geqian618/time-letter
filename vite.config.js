@@ -18,7 +18,9 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url))
+            '@': fileURLToPath(new URL('./src', import.meta.url)),
+            // 应用图标等原生资源与 Electron 侧同源，避免在 src 下再存一份副本
+            '@resources': fileURLToPath(new URL('./electron/resources', import.meta.url))
         }
     },
     optimizeDeps: {

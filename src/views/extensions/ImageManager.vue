@@ -437,10 +437,7 @@ onMounted(() => {
       outline-offset: -1px;
     }
 
-    // 选中：深灰底（亮色主题）/ 亮灰底（暗色主题），与白色底反差明显
-    &.selected {
-      background: var(--app-thumb-active-bg);
-    }
+    // 选中状态由左上角复选框标识，单元格底色保持不变
 
     .thumb {
       // 高度随单元格宽度按 4:3 缩放，减少列数时图片随之放大

@@ -1,6 +1,7 @@
 const {contextBridge, ipcRenderer} = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+    platform: process.platform,
     parsePhotoMetadata: (args) => ipcRenderer.invoke('photo:parse-metadata', args),
     watchImportImages: (callback) => ipcRenderer.on('images:watch-import', callback),
     watchImportFonts: (callback) => ipcRenderer.on('fonts:watch-import', callback),
@@ -36,6 +37,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     imageManagerMove: (args) => ipcRenderer.send('image-manager:move', args),
     watchImageManagerMoveResult: (callback) => ipcRenderer.on('image-manager:move-result', callback),
     watchThemeChanged: (callback) => ipcRenderer.on('theme:changed', callback),
+
+    // 自绘窗口控制（无边框窗口）
+    minimizeWindow: () => ipcRenderer.send('window:minimize'),
+    toggleMaximizeWindow: () => ipcRenderer.send('window:toggle-maximize'),
+    closeWindow: () => ipcRenderer.send('window:close'),
+    isWindowMaximized: () => ipcRenderer.invoke('window:is-maximized'),
+    // 弹出原生应用菜单的顶级子菜单（自绘菜单栏复用原生命令）
+    popupAppMenu: (args) => ipcRenderer.send('menu:popup', args),
+    // 触发原生菜单中的某一项（自绘导出按钮复用「文件 › 导出图片」）
+    invokeAppMenu: (id) => ipcRenderer.send('menu:invoke', id),
 
     // 语言切换（渲染进程为设置来源，主进程持久化并重建原生 UI 后广播回各窗口）
     setLanguage: (language) => ipcRenderer.send('language:set', language),

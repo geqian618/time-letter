@@ -3,28 +3,84 @@
 // 祖先节点上存在组件的 data-v 属性。因此每个弹窗组件的模板必须用一层普通元素
 // （<div class="dialog-wrapper">）包裹 <el-dialog>，不能让 <el-dialog> 直接作为模板根节点，
 // 否则 Element Plus 内部的 Teleport/Transition 结构会导致 data-v 属性无处落点，覆盖样式不生效。
+//
+// 视觉规格（按设计参考图统一，全部弹窗共用）：
+// - 弹窗为中性地平面；标题栏保留分隔线
+// - 关闭按钮：无底色细 X，悬停才给淡淡的底
+// - 输入控件：描边式 —— 填充同弹窗底色 + 1px 描边；聚焦换 1px 琥珀描边
+//   （聚焦边框宽度与 Element Plus 默认一致，仅换颜色；
+//     圆角、尺寸一律沿用 Element Plus / 全局默认，本文件不再覆盖）
+// - 按钮：主按钮琥珀底 + 深色字；次按钮中性填充、无描边
+//
+// ⚠️ 只改配色，不动尺寸：这里不设输入框高度 / 内边距 / 字号，
+//    否则 el-input-number（计数器）这类按固定高度排布的组件会错行。
 
 :deep(.el-dialog) {
-  background-color: var(--dialog-main-background-color);
+  background-color: var(--app-dialog-body-bg);
+  /* 四周仅留 1px 内衬：让标题栏通栏铺满弹窗顶部 */
   padding: 1px 1px 10px 1px;
 
+  /* 弹窗内部的 Element Plus 令牌统一到「弹窗平面」：
+     表格 / 分组框 / 标签页条 / 单选框等组件不再沿用主界面的深蓝紫底色，
+     否则同一个弹窗里会出现两种色温的深色（偏好设置、管理文本就是这样）。
+     下拉、气泡等被 teleport 到 body 的浮层不在此作用域内，仍用全局令牌。 */
+  --el-bg-color: var(--app-dialog-body-bg);
+  --el-fill-color-blank: var(--app-dialog-body-bg);
+  --el-fill-color-light: var(--app-dialog-subtle-bg);
+  --el-fill-color: var(--app-dialog-subtle-bg);
+  /* 所有带边框的组件（标签页框、复选框、开关、下拉等）统一用弹窗描边色 */
+  --el-border-color: var(--app-dialog-line-strong);
+  --el-border-color-light: var(--app-dialog-line-strong);
+  --el-border-color-lighter: var(--app-dialog-line-strong);
+  --el-text-color-primary: var(--ui-text);
+  --el-text-color-regular: var(--ui-text-secondary);
+  /* 注意：Element Plus 把 --el-table-* 声明在 .el-table 元素自身（值为 --el-fill-color-*），
+     所以在弹窗这一层设变量会被它覆盖。表格相关变量必须直接命中 .el-table。
+     同理 --el-radio-button-checked-* 声明在 .el-radio-button 元素自身，必须直接命中。 */
+
   .el-dialog__header {
-    height: 26px;
-    padding-bottom: 0;
+    height: var(--app-dialog-header-height);
+    box-sizing: border-box;
+    padding: 0 10px 0 14px;
     display: flex;
     align-items: center;
-    background-color: var(--app-dialog-header);
+    background-color: transparent;
+    /* 标题栏分隔线：保留（不用底色区分时，靠这条线划出标题区） */
+    border-bottom: 1px solid var(--app-dialog-line);
+    margin-right: 0;
+    flex-shrink: 0;
+  }
 
-    i {
-      height: 100%;
-      width: 100%;
-      color: var(--app-dialog-icon);
-      border-radius: 0 4px 0 0;
+  .el-dialog__title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: var(--app-dialog-title);
+  }
+
+  /* 关闭按钮：无底色细 X，悬停才出现淡淡的底 */
+  .el-dialog__headerbtn {
+    top: calc((var(--app-dialog-header-height) - 24px) / 2 + 1px);
+    right: 11px;
+    width: 30px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: var(--app-radius-xs);
+    background: transparent;
+    color: var(--app-dialog-icon);
+    transition: background-color var(--app-transition), color var(--app-transition);
+
+    .el-dialog__close {
+      font-size: 14px;
+      color: inherit;
     }
 
-    i:hover {
-      color: white;
-      background-color: rgba(201, 48, 48, 0.97);
+    &:hover {
+      background: var(--app-dialog-close-hover-bg);
+      color: var(--app-dialog-close-hover-text);
     }
   }
 
@@ -33,22 +89,115 @@
     width: 100%;
   }
 
+  /* ---------- 输入控件：描边式 ---------- */
+  .el-input__wrapper,
+  .el-select__wrapper {
+    background-color: var(--app-dialog-field-bg);
+    box-shadow: 0 0 0 1px var(--app-dialog-field-border) inset;
+    transition: box-shadow var(--app-transition), background-color var(--app-transition);
 
-  .el-dialog__headerbtn {
-    height: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: end;
+    &:hover {
+      box-shadow: 0 0 0 1px var(--app-dialog-field-border-hover) inset;
+    }
+
+    &.is-focus,
+    &.is-focused {
+      box-shadow: 0 0 0 1px var(--ui-accent) inset;
+    }
   }
 
-  .el-dialog__title {
-    font-size: 12px;
-    color: var(--app-dialog-title);
-    margin-left: 10px;
+  .el-textarea__inner {
+    background-color: var(--app-dialog-field-bg);
+    box-shadow: 0 0 0 1px var(--app-dialog-field-border) inset;
+    color: var(--ui-text);
+    transition: box-shadow var(--app-transition);
+
+    &:hover {
+      box-shadow: 0 0 0 1px var(--app-dialog-field-border-hover) inset;
+    }
+
+    &:focus {
+      box-shadow: 0 0 0 1px var(--ui-accent) inset;
+    }
   }
 
+  /* 主题模式等 radio-button 组：EP 用 outline 画边框，颜色与输入控件描边同源；
+     选中态琥珀显式指定 —— 亮色下 --el-color-primary 会被后加载的 EP 默认蓝
+     （:root 同名声明）覆盖，暗色靠 :root[dark-theme] 特异性幸免；
+     变量必须直接命中 .el-radio-button（EP 在组件根元素上声明，祖先设置无效） */
+  .el-radio-button {
+    --el-radio-button-checked-bg-color: var(--ui-accent);
+    --el-radio-button-checked-border-color: var(--ui-accent);
+  }
+
+  .el-radio-button__inner {
+    outline-color: var(--app-dialog-field-border);
+  }
+
+  /* 悬浮态同样显式琥珀：EP 的 hover 直接读 --el-color-primary，亮色下是 EP 默认蓝 */
+  .el-radio-button__inner:hover {
+    color: var(--ui-accent);
+  }
+
+  /* 表单标签：次级文字色、字号略小 */
+  .el-form-item__label {
+    color: var(--ui-text-secondary);
+  }
+
+  /* 标签页外框与标签条下边框：都用更淡的分隔线档（不跟随表格/控件的亮描边）。
+     标签条的下边框（border-bottom）就是「最后一项后面空白区」那条线，
+     它走的是 --el-border-color-light，不单独压回去会比标签项边框亮 */
+  .el-tabs--border-card,
+  .el-tabs--border-card > .el-tabs__header,
+  .el-tabs--border-card > .el-tabs__header .el-tabs__item {
+    border-color: var(--app-dialog-line);
+  }
+
+  /* ---------- 表格：底色与弹窗保持一致，只靠描边区分 ---------- */
+  .el-table {
+    --el-table-bg-color: var(--app-dialog-body-bg);
+    --el-table-tr-bg-color: var(--app-dialog-body-bg);
+    --el-table-header-bg-color: var(--app-dialog-body-bg);
+    --el-table-border-color: var(--app-dialog-line-strong);
+    --el-table-row-hover-bg-color: var(--app-dialog-row-hover-bg);
+  }
+
+  /* ---------- 选中态配色（中性底 + 琥珀点缀） ---------- */
+  /* 表格选中行：中性填充，首列加一道琥珀细标 */
+  .el-table__body tr.current-row > td.el-table__cell {
+    background-color: var(--app-dialog-selected-bg);
+  }
+
+  .el-table__body tr.current-row > td.el-table__cell:first-child {
+    box-shadow: inset 2px 0 0 var(--ui-accent);
+  }
+
+  /* 标签页（border-card）选中项：中性填充，文字琥珀（同上：不依赖 --el-color-primary） */
+  .el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active {
+    background-color: var(--app-dialog-selected-bg);
+    color: var(--ui-accent);
+  }
+
+  /* 标签页悬浮：同 hover 蓝的根因，显式琥珀 */
+  .el-tabs--border-card > .el-tabs__header .el-tabs__item:not(.is-disabled):hover {
+    color: var(--ui-accent);
+  }
+
+  /* 底部按钮：主按钮琥珀底深字，次按钮中性填充无描边（圆角沿用 Element Plus 默认） */
   .el-dialog__footer {
     padding-top: 0;
+
+    .el-button--primary {
+      border-color: transparent;
+      color: var(--ui-accent-contrast);
+    }
+
+    /* 次按钮（普通 / info）：中性填充、无描边；primary 琥珀、danger 红等语义色不动 */
+    .el-button:not(.el-button--primary):not(.el-button--danger):not(.el-button--success):not(.el-button--warning):not(.is-link):not(.is-text) {
+      border-color: transparent;
+      background-color: var(--app-dialog-btn-bg);
+      color: var(--app-dialog-btn-text);
+    }
 
     button:last-child {
       margin-right: 10px;

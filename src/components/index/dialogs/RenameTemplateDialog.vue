@@ -11,7 +11,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="templatesStore.renameTemplateDialogVisible = false">{{ $t('common.cancel') }}</el-button>
-          <el-button type="info" @click="renameTemplate">{{ $t('common.confirm') }}</el-button>
+          <el-button type="primary" @click="renameTemplate">{{ $t('common.confirm') }}</el-button>
         </div>
       </template>
     </el-dialog>

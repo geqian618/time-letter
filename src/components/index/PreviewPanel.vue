@@ -1,161 +1,187 @@
 <template>
-  <div class="preview-bar">
-    <div class="left-preview-bar">
-      <div class="tab-wrapper">
+  <div class="preview-panel">
+
+    <!-- 工具条 -->
+    <div class="preview-bar">
+      <div class="left-preview-bar">
+        <!-- 底部面板伸缩 -->
+        <el-tooltip :content="$t('panel.collapseBottom')" placement="top">
+          <button type="button" class="bar-icon" @click="$emit('toggle-bottom')">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <rect x="2.75" y="2.75" width="10.5" height="10.5" rx="2.6" fill="none" stroke="currentColor"
+                    stroke-width="1.4"/>
+              <path d="M2.9 10.7 H13.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </el-tooltip>
+
         <el-tooltip :content="$t('preview.first')" placement="top">
-          <img src="/src/assets/icon/first-inactive.svg" class="inactive small-size" :alt="$t('preview.first')">
-        </el-tooltip>
-        <el-tooltip :content="$t('preview.first')" placement="top">
-          <img src="/src/assets/icon/first-active.svg" class="active small-size"
-               @click="switchFirstPreviewElement"
-               :alt="$t('preview.first')">
-        </el-tooltip>
-      </div>
-
-      <div class="tab-wrapper">
-        <el-tooltip :content="$t('preview.prev')" placement="top">
-          <img src="/src/assets/images/left-arrow-inactive.png" class="inactive" :alt="$t('preview.prev')">
+          <button type="button" class="bar-icon" @click="switchFirstPreviewElement">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M3.4 3.4 V12.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M12.4 3.8 L6.6 8 L12.4 12.2 Z" fill="currentColor"/>
+            </svg>
+          </button>
         </el-tooltip>
         <el-tooltip :content="$t('preview.prev')" placement="top">
-          <img src="/src/assets/images/left-arrow-active.png" class="active" @click="switchPrevPreviewElement"
-               :alt="$t('preview.prev')">
-        </el-tooltip>
-      </div>
-
-      <div class="tab-wrapper">
-        <el-tooltip :content="$t('preview.next')" placement="top">
-          <img src="/src/assets/images/right-arrow-inactive.png" class="inactive" :alt="$t('preview.next')">
+          <button type="button" class="bar-icon" @click="switchPrevPreviewElement">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M10.4 3.4 L5.2 8 L10.4 12.6" fill="none" stroke="currentColor" stroke-width="1.7"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
         </el-tooltip>
         <el-tooltip :content="$t('preview.next')" placement="top">
-          <img src="/src/assets/images/right-arrow-active.png" class="active" @click="switchNextPreviewElement"
-               :alt="$t('preview.next')">
-        </el-tooltip>
-      </div>
-
-
-      <div class="tab-wrapper">
-        <el-tooltip :content="$t('preview.last')" placement="top">
-          <img src="/src/assets/icon/last-inactive.svg" class="inactive small-size" :alt="$t('preview.center')">
+          <button type="button" class="bar-icon" @click="switchNextPreviewElement">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M5.6 3.4 L10.8 8 L5.6 12.6" fill="none" stroke="currentColor" stroke-width="1.7"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
         </el-tooltip>
         <el-tooltip :content="$t('preview.last')" placement="top">
-          <img src="/src/assets/icon/last-active.svg" class="active small-size"
-               @click="switchLastPreviewElement"
-               :alt="$t('preview.last')">
+          <button type="button" class="bar-icon" @click="switchLastPreviewElement">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M12.6 3.4 V12.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M3.6 3.8 L9.4 8 L3.6 12.2 Z" fill="currentColor"/>
+            </svg>
+          </button>
         </el-tooltip>
-      </div>
 
+        <el-tooltip :content="$t('preview.zoom')" placement="top" :disabled="tooltipDisabled">
+          <el-dropdown trigger="click" placement="top-start"
+                       @visible-change="handleVisibleChange"
+                       @command="handleZoom"
+                       popper-class="zoom-popper"
+                       class="zoom-dropdown">
+            <button type="button" class="bar-icon is-text">{{ zoomRatioLabel }}</button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item v-for="item in zoomPresets" :key="item" :command="item"
+                                  :class="{active: item === getZoomPct()}">
+                  {{ item }}%
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </el-tooltip>
 
-      <el-dropdown trigger="click" placement="top-start"
-                   @visible-change="handleVisibleChange"
-                   @command="handleZoom"
-                   popper-class="zoom-popper"
-                   class="zoom-dropdown">
-        <div class="tab-wrapper">
-          <el-tooltip :content="$t('preview.zoom')" placement="top" :disabled="tooltipDisabled">
-            <img src="/src/assets/icon/zoom-inactive.svg" class="inactive medium-size" :alt="$t('preview.zoom')">
-          </el-tooltip>
-          <el-tooltip :content="$t('preview.zoom')" placement="top" :disabled="tooltipDisabled">
-            <img src="/src/assets/icon/zoom-active.svg" class="active medium-size" :alt="$t('preview.zoom')">
-          </el-tooltip>
-        </div>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item v-for="item in zoomPresets" :key="item" :command="item"
-                              :class="{active: item === getZoomPct()}">
-              {{ item }}%
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
-
-      <div class="tab-wrapper">
         <el-tooltip :content="$t('preview.selectAll')" placement="top">
-          <img src="/src/assets/icon/select-all-inactive.svg" class="inactive medium-size"
-               :alt="$t('preview.selectAll')">
-        </el-tooltip>
-        <el-tooltip :content="$t('preview.selectAll')" placement="top">
-          <img src="/src/assets/icon/select-all-active.svg"
-               @click="handleSelectAllPreviewElements"
-               class="active medium-size"
-               :alt="$t('preview.selectAll')">
-        </el-tooltip>
-      </div>
-
-
-      <div class="tab-wrapper">
-        <el-tooltip :content="$t('preview.center')" placement="top">
-          <img src="/src/assets/images/center-display-inactivate.png" class="inactive medium-size"
-               :alt="$t('preview.center')">
+          <button type="button" class="bar-icon" @click="handleSelectAllPreviewElements">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2.6" fill="none" stroke="currentColor"
+                    stroke-width="1.5"/>
+              <path d="M5.6 8.2 L7.3 9.9 L10.6 6.4" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
         </el-tooltip>
         <el-tooltip :content="$t('preview.center')" placement="top">
-          <img src="/src/assets/images/center-display-activate.png" class="active medium-size"
-               @click="canvasActions.centerCanvasScrollBar()"
-               :alt="$t('preview.center')">
+          <button type="button" class="bar-icon" @click="canvasActions.centerCanvasScrollBar()">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M2.4 5.2 V3.4 A1 1 0 0 1 3.4 2.4 H5.2 M10.8 2.4 H12.6 A1 1 0 0 1 13.6 3.4 V5.2
+                       M13.6 10.8 V12.6 A1 1 0 0 1 12.6 13.6 H10.8 M5.2 13.6 H3.4 A1 1 0 0 1 2.4 12.6 V10.8"
+                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="8" cy="8" r="1.7" fill="currentColor"/>
+            </svg>
+          </button>
         </el-tooltip>
       </div>
-    </div>
 
 
-    <div class="right-preview-bar">
-      <div class="counter">{{
-          $t('preview.counter', {
-            selected: canvasesStore.selectedPreviewList.size,
-            total: canvasesStore.availableCanvases.size
-          })
-        }}
-      </div>
-      <div class="filter">
-        <div class="filter-label">{{ $t('preview.filter') }}</div>
-        <div class="filter-select">
-          <el-select v-model="canvasesStore.filterType" size="small" :placeholder="$t('common.select')">
-            <el-option
-                v-for="item in [{label:$t('preview.filterNone'),value:0},{label:$t('preview.filterLandscape'),value:1},{label:$t('preview.filterPortrait'),value:2}]"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"/>
-          </el-select>
+      <div class="right-preview-bar">
+        <div class="counter">{{
+            $t('preview.counter', {
+              selected: canvasesStore.selectedPreviewList.size,
+              total: canvasesStore.availableCanvases.size
+            })
+          }}
         </div>
-      </div>
-    </div>
-
-  </div>
-  <div class="preview-list" ref="previewList" @wheel="handleMovePreviewList" @contextmenu="triggerContextMenu">
-    <template :key="key" v-for="([key, canvas]) in CanvasManager.getCanvases()">
-      <el-popover
-          width="fit-content"
-          :show-after="2000"
-          :hide-after="0"
-          trigger="hover">
-        <template #default>
-          <div style="font-size: 10px">
-            <p v-if="canvas.metadata.filename">{{ $t('preview.filename') }}{{ canvas.metadata.fullFilename }}</p>
-            <p v-if="canvas.metadata.shootingTime">{{ $t('preview.shootingTime') }}{{
-                canvas.metadata.shootingTime
-              }}</p>
-            <p v-if="canvas.metadata.resolution">{{ $t('preview.resolution') }}{{ canvas.metadata.resolution }}</p>
-            <p v-if="canvas.metadata.fileSize">{{ $t('preview.size') }}{{ canvas.metadata.fileSize }}</p>
+        <div class="filter">
+          <div class="filter-label">{{ $t('preview.filter') }}</div>
+          <div class="filter-select">
+            <el-select v-model="canvasesStore.filterType" size="small" :placeholder="$t('common.select')">
+              <el-option
+                  v-for="item in [{label:$t('preview.filterNone'),value:0},{label:$t('preview.filterLandscape'),value:1},{label:$t('preview.filterPortrait'),value:2}]"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"/>
+            </el-select>
           </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 胶片列表 -->
+    <div class="preview-list" ref="previewList" @wheel="handleMovePreviewList" @contextmenu="triggerContextMenu">
+      <template :key="key" v-for="([key, canvas]) in CanvasManager.getCanvases()">
+        <el-popover
+            width="fit-content"
+            :show-after="2000"
+            :hide-after="0"
+            trigger="hover">
+          <template #default>
+            <div style="font-size: 10px">
+              <p v-if="canvas.metadata.filename">{{ $t('preview.filename') }}{{ canvas.metadata.fullFilename }}</p>
+              <p v-if="canvas.metadata.shootingTime">{{ $t('preview.shootingTime') }}{{
+                  canvas.metadata.shootingTime
+                }}</p>
+              <p v-if="canvas.metadata.resolution">{{ $t('preview.resolution') }}{{ canvas.metadata.resolution }}</p>
+              <p v-if="canvas.metadata.fileSize">{{ $t('preview.size') }}{{ canvas.metadata.fileSize }}</p>
+            </div>
+          </template>
+          <template #reference>
+            <div class="previewItem"
+                 :ref="setPreviewElementRef"
+                 v-show="canvasesStore.thumbnailVisible(canvas)"
+                 :path="canvas.path"
+                 @click.meta.exact="handleSelectPreviewElement($event,canvas)"
+                 @click.ctrl.exact="handleSelectPreviewElement($event, canvas)"
+                 @click.shift.exact="handleSelectMultiplePreviewElements($event,canvas)"
+                 @click="switchPreviewImage($event, canvas)"
+                 @dblclick="handleDbClickPreviewImage($event,canvas)">
+              <img class="preview-thumb" v-lazy="canvas.thumbUrl || canvas.url" draggable="false" alt="">
+              <span class="preview-check">
+                <svg viewBox="0 0 12 12" aria-hidden="true">
+                  <path d="M2.7 6.3 L4.9 8.5 L9.3 4.1" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </div>
+          </template>
+        </el-popover>
+      </template>
+
+      <button type="button" class="import-more" @click="requestImportFiles">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M8 3.4 V12.6 M3.4 8 H12.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <span>{{ $t('preview.importMore') }}</span>
+      </button>
+    </div>
+
+    <!-- 状态栏 -->
+    <div class="preview-status">
+      <!-- 左侧：当前选中照片的元信息（路径 / 拍摄时间 / 分辨率 / 文件大小） -->
+      <div class="status-left">
+        <template v-if="statusItems.length">
+          <template v-for="(item, index) in statusItems" :key="index">
+            <span class="status-separator" v-if="index > 0">·</span>
+            <span class="status-path" v-if="item.title" :title="item.title">{{ item.text }}</span>
+            <span class="status-item" v-else>{{ item.text }}</span>
+          </template>
         </template>
-        <template #reference>
-          <img class="previewItem"
-               :ref="setPreviewElementRef"
-               v-show="canvasesStore.thumbnailVisible(canvas)"
-               :path="canvas.path"
-               v-lazy="canvas.thumbUrl || canvas.url"
-               @click.meta.exact="handleSelectPreviewElement($event,canvas)"
-               @click.ctrl.exact="handleSelectPreviewElement($event, canvas)"
-               @click.shift.exact="handleSelectMultiplePreviewElements($event,canvas)"
-               @click="switchPreviewImage($event, canvas)"
-               @dblclick="handleDbClickPreviewImage($event,canvas)">
-        </template>
-      </el-popover>
-    </template>
+      </div>
+      <div class="status-right">{{ $t('preview.statusRight') }}</div>
+    </div>
+
   </div>
 </template>
 
 <script setup lang="js">
 
-import {ref, watch, nextTick} from 'vue'
+import {ref, watch, nextTick, computed, onUnmounted} from 'vue'
 
 import _ from 'lodash'
 
@@ -163,7 +189,12 @@ import useEventListener from '@/composables/common/useEventListener'
 
 import {useThrottle} from '@/utils/throttle'
 
+// 底部面板伸缩事件转发给 Index.vue（面板状态由父组件持有）
+defineEmits(['toggle-bottom'])
+
 import {parseDate, formatDate} from '@/utils/datetime'
+
+import {useI18n} from 'vue-i18n'
 
 import CanvasManager from '@/object/canvas-manager'
 
@@ -179,9 +210,35 @@ const canvasesStore = useCanvasesStore()
 
 const settingsStore = useProjectSettingsStore()
 
+const {t} = useI18n()
+
 const previewList = ref(null)
 
 const tooltipDisabled = ref(false)
+
+// 状态栏左侧：当前选中画布的元信息。
+// CanvasManager 的 selectedObject 是 reactive，切换照片后这里自动更新
+const selectedCanvas = computed(() => {
+  const path = CanvasManager.getSelectedPath()
+  return path ? CanvasManager.getCanvas(path) : null
+})
+
+const statusItems = computed(() => {
+  const canvas = selectedCanvas.value
+  const metadata = canvas?.metadata
+  if (!metadata) return []
+  const items = []
+  if (canvas.path) items.push({text: t('preview.filePath') + canvas.path, title: canvas.path})
+  if (metadata.shootingTime) items.push({text: t('preview.shootingTime') + metadata.shootingTime})
+  if (metadata.resolution) items.push({text: t('preview.resolution') + metadata.resolution})
+  if (metadata.fileSize) items.push({text: t('preview.size') + metadata.fileSize})
+  return items
+})
+
+// 导入更多图片：复用工作区的导入流程
+const requestImportFiles = () => {
+  window.electronAPI.requestImportFiles({isDragOver: false})
+}
 
 // 预览列表右键菜单
 const triggerContextMenu = (e) => {
@@ -309,11 +366,11 @@ const switchPreviewImage = async (event, canvas) => {
     // 没有预览元素或前一次预览元素与当前预览元素不同时显示，多次点击预览同一元素不重复渲染
     if (!currentPath || currentPath !== targetPath) {
       // 更改新的选择元素
-      CanvasManager.setSelectedObject({path: event.target.getAttribute('path'), previewElement: event.target})
+      CanvasManager.setSelectedObject({path: event.currentTarget.getAttribute('path'), previewElement: event.currentTarget})
       // 添加当前选中元素到选中列表中
-      canvasesStore.selectedPreviewList.set(targetPath, event.target)
+      canvasesStore.selectedPreviewList.set(targetPath, event.currentTarget)
       // 设置选择样式
-      event.target.classList.add('active')
+      event.currentTarget.classList.add('active')
 
       await canvasActions.renderCanvas(canvas);
     }
@@ -326,12 +383,12 @@ const handleDbClickPreviewImage = (event, canvas) => {
     if (canvasesStore.selectedPreviewList.has(canvas.path)) {
       if (CanvasManager.getSelectedPath() !== canvas.path) {
         // 更改新的选择元素
-        CanvasManager.setSelectedObject({path: canvas.path, previewElement: event.target})
+        CanvasManager.setSelectedObject({path: canvas.path, previewElement: event.currentTarget})
       }
       // 清空选中元素
       const selectedElements = canvasesStore.selectedPreviewList;
       for (const [path, element] of selectedElements) {
-        if (event.target !== element) {
+        if (event.currentTarget !== element) {
           element.classList.remove('active')
           canvasesStore.selectedPreviewList.delete(path)
         }
@@ -342,7 +399,7 @@ const handleDbClickPreviewImage = (event, canvas) => {
 
 
 const handleSelectPreviewElement = (event, canvas) => {
-  const element = event.target;
+  const element = event.currentTarget;
   if (element.classList.contains('active')) {
     element.classList.remove('active');
     canvasesStore.selectedPreviewList.delete(canvas.path)
@@ -358,7 +415,7 @@ const handleSelectPreviewElement = (event, canvas) => {
 
 const handleSelectMultiplePreviewElements = (event, canvas) => {
   if (canvasesStore.selectedPreviewList.size) {
-    const elements = document.documentElement.querySelectorAll('img.previewItem');
+    const elements = document.documentElement.querySelectorAll('.previewItem');
     let index = -1;
     const beforeElements = [];
     const afterElements = [];
@@ -420,26 +477,28 @@ const handleSelectMultiplePreviewElements = (event, canvas) => {
 
 const handleSelectAllPreviewElements = (event) => {
 
-  const target = event.target;
+  // 按钮点击时 target 为按钮本身，快捷键触发时 target 为当前聚焦元素，
+  // 两者都是 Element；仅在两者都不可用时回落到 currentTarget
+  const target = event.target instanceof Element ? event.target : event.currentTarget;
 
   // 检查是否在输入框/下拉框内
-  if (target.closest('input, textarea, select')) {
+  if (target.closest?.('input, textarea, select')) {
     return;
   }
 
   // 检查是否在富文本编辑器内（利用 isContentEditable 属性）或者用 closest 检查属性，两者皆可
-  if (target.isContentEditable || target.closest('[contenteditable="true"]')) {
+  if (target.isContentEditable || target.closest?.('[contenteditable="true"]')) {
     return;
   }
 
   // 检查是否原生可编辑（比如 Firefox 的 designMode 页面）
-  if (target.closest('[designMode="on"]')) {
+  if (target.closest?.('[designMode="on"]')) {
     return;
   }
 
   if ((event.ctrlKey && event.key === 'a') || event instanceof PointerEvent) {
     event.preventDefault();
-    const previewElements = document.querySelectorAll('img.previewItem');
+    const previewElements = document.querySelectorAll('.previewItem');
     if (previewElements.length) {
       previewElements.forEach(element => {
         // 跳过被筛选隐藏的图片（v-show 隐藏）
@@ -602,6 +661,14 @@ const getZoomPct = () => {
   return canvas && canvas.initZoom ? Math.round(canvas.zoom / canvas.initZoom * 100) : 100;
 };
 
+// 缩放比例标签：100% 显示 1:1，放大显示 n:1，缩小显示 1:n
+const zoomRatioLabel = computed(() => {
+  const pct = getZoomPct();
+  if (!pct || pct === 100) return '1:1';
+  if (pct > 100) return `${Math.round(pct / 100)}:1`;
+  return `1:${Math.round(100 / pct)}`;
+});
+
 const handleZoom = (val) => {
   const canvas = CanvasManager.getCurrentCanvas();
   const editor = canvasesStore.getCanvasEditor();
@@ -627,66 +694,67 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
 
 <style scoped lang="scss">
 
+.preview-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--ui-chrome);
+  overflow: hidden;
+}
+
+/* ---------- 工具条 ---------- */
 .preview-bar {
   width: 100%;
-  height: 40px;
-  background: var(--expand-area-background-color);
+  height: 38px;
+  flex: 0 0 38px;
+  background: var(--ui-chrome);
   display: flex;
-  justify-content: left;
   align-items: center;
-  border-bottom: 1px solid var(--app-toolbar-border);
-  gap: 15px;
-  padding-left: 15px;
+  padding: 0 14px 0 10px;
+  gap: 12px;
 
   .left-preview-bar {
     height: 100%;
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 2px;
 
-    .tab-wrapper {
-      position: relative;
-      height: 70%;
+    .bar-icon {
+      width: 28px;
+      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
+      border: none;
+      border-radius: var(--app-radius-xs);
+      background: transparent;
+      color: var(--ui-text-secondary);
+      cursor: pointer;
+      padding: 0;
+      font-family: inherit;
+      transition: background-color var(--app-transition), color var(--app-transition);
 
-      img {
-        height: 100%;
-        width: auto;
-        transition: opacity 0.4s ease;
+      svg {
+        width: 17px;
+        height: 17px;
       }
 
-      .small-size {
-        padding: 20%;
-      }
-
-      .medium-size {
-        padding: 8%;
-      }
-
-      .inactive {
-        opacity: 1;
-      }
-
-      .active {
-        position: absolute;
-        top: 0;
-        left: 0;
-        opacity: 0;
-      }
-
-      .inactive:hover {
-        opacity: 0;
-      }
-
-      .active:hover {
-        opacity: 1;
+      &:hover {
+        background: var(--ui-control);
+        color: var(--ui-text);
       }
     }
 
+    /* 缩放下拉：不加边框，背景宽度与其他图标一致 */
+    .bar-icon.is-text {
+      width: 28px;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.2px;
+    }
+
     .zoom-dropdown {
-      height: 100%;
       display: flex;
       align-items: center;
     }
@@ -696,11 +764,11 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
     display: flex;
     margin-left: auto;
     align-items: center;
-    gap: 15px;
+    gap: 14px;
 
     .counter {
-      color: var(--app-regular-text);
-      font-size: 14px;
+      color: var(--ui-text-secondary);
+      font-size: 12px;
       display: flex;
     }
 
@@ -709,55 +777,185 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
       align-items: center;
 
       .filter-label {
-        color: var(--app-regular-text);
-        font-size: 14px;
+        color: var(--ui-text-secondary);
+        font-size: 12px;
       }
 
       .filter-select {
         margin-left: 6px;
-        margin-right: 20px;
 
         .el-select {
-          width: 100px !important;
+          width: 84px !important;
+
+          :deep(.el-select__wrapper) {
+            background: var(--ui-elevated);
+            /* 用全局描边规则，这里不再覆盖 */
+            min-height: 26px;
+          }
         }
       }
     }
   }
 }
 
+/* ---------- 胶片列表 ---------- */
 .preview-list {
   box-sizing: border-box;
+  flex: 1 1 auto;
+  height: calc(100% - 64px);
+  min-height: 0;
   width: 100%;
-  height: calc(100% - 40px);
   display: flex;
-  justify-content: start;
-  background: var(--expand-area-background-color);
+  /* 子项拉伸填满容器高度（缩略图高度=可用高度，宽度随图片比例自适应） */
+  align-items: stretch;
+  gap: 10px;
+  padding: 0 14px 10px;
+  background: var(--ui-chrome);
   overflow-x: auto;
+  overflow-y: hidden;
   scroll-behavior: smooth; /* 可选，使滚动更平滑 */
-  white-space: nowrap; /* 防止内容换行 */
   outline: none;
 
-  img {
+  .previewItem {
+    flex: 0 0 auto;
+    position: relative;
     box-sizing: border-box;
-    background: var(--app-thumb-bg);
-    padding: 15px;
-    height: 100%;
-    border-right: 1px solid var(--app-thumb-border);
+    /* 高度由 flex stretch 撑满容器，宽度随图片自身比例自适应（横图更宽、竖图更窄） */
+    border-radius: var(--app-radius-xs);
+    overflow: hidden;
+    background: var(--ui-card);
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    /* 选中描边不做过渡：点击即亮，避免 0.18s 的渐变被感知为延迟 */
+
+    .preview-thumb {
+      height: 100%;
+      width: auto;
+      display: block;
+    }
+
+    .preview-check {
+      position: absolute;
+      /* 对勾放在左上角；矩形圆角样式 */
+      left: 4px;
+      top: 4px;
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: var(--ui-accent);
+      color: var(--ui-accent-contrast);
+
+      svg {
+        width: 9px;
+        height: 9px;
+      }
+    }
+
+    /* 悬浮不加边框 / 阴影，只有选中才出现琥珀描边和对勾 */
+    &.active {
+      border-color: var(--ui-accent);
+    }
+
+    &.active .preview-check {
+      display: flex;
+    }
   }
 
-  img:last-child {
-    border: none;
+  .import-more {
+    flex: 0 0 auto;
+    /* 高度随 stretch 撑满容器，宽度固定 */
+    width: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: var(--app-radius-md);
+    border: 1px solid var(--ui-border);
+    background: transparent;
+    color: var(--ui-text-muted);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color var(--app-transition), border-color var(--app-transition), color var(--app-transition);
+
+    svg {
+      width: 18px;
+      height: 18px;
+      color: var(--ui-accent);
+    }
+
+    &:hover {
+      background: var(--ui-accent-soft);
+      border-color: var(--ui-accent-soft-border);
+      color: var(--ui-accent-soft-text);
+    }
+  }
+}
+
+/* ---------- 状态栏 ---------- */
+.preview-status {
+  flex: 0 0 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  border-top: 1px solid var(--ui-border);
+  background: var(--ui-chrome);
+  font-size: 11.5px;
+  color: var(--ui-text-muted);
+
+  .status-left {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
-  .active {
-    background: var(--app-thumb-active-bg);
-    box-shadow: inset 0 -2px 0 var(--app-thumb-active-line);
+  /* 拍摄时间 / 分辨率 / 文件大小：完整显示不收缩，避免被长路径压成竖排 */
+  .status-item {
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 
-  image:last-child {
-    margin-right: 0;
+  /* 路径自适应占满左侧剩余宽度：完整显示优先，超长时截断兜底（悬浮 title 看全文） */
+  .status-path {
+    min-width: 0;
+    flex-shrink: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ui-success);
+    flex-shrink: 0;
+  }
+
+  .status-separator {
+    color: var(--ui-text-faint);
+  }
+
+  .status-selector {
+    width: 1px;
+    height: 11px;
+    margin: 0 4px;
+    background: var(--ui-border-strong);
+  }
+
+  .status-right {
+    flex-shrink: 0;
+    margin-left: 12px;
+    color: var(--ui-text-faint);
+  }
 }
 
 </style>

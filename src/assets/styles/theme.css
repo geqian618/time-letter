@@ -1,3 +1,9 @@
+/* ==========================================================================
+   时光信笺 · 设计令牌
+   依据《时光信笺 · UI 重设计》亮/暗两套稿重建：
+   中性灰底 + 琥珀强调色，面板接近纯白/纯黑，卡片用极浅灰拉开层次。
+   ========================================================================== */
+
 :root {
 
   color-scheme: light;
@@ -7,51 +13,120 @@
   --page-left-width: 18%;
   --preview-container-width: 60%;
   --page-right-width: 22%;
+  --app-toolbar-height: 44px;
+  /* 弹窗标题栏高度：比主工具栏矮一档，弹窗更紧凑
+     （dialog.scss 与 App.vue 的弹窗规则共用此值，改这里即可） */
+  --app-dialog-header-height: 36px;
 
-  /* 基础表面：净白面板浮于冷灰底色，构建现代卡片层次 */
-  --border-color: #e4e7ec;
-  --expand-area-background-color: #ffffff;
-  --menu-background-color: #f7f8fa;
-  --menu-icon-color: #4d5666;
-  --main-font-color: #2b2f36;
-  --preview-background-color: #ebedf2;
-  --dialog-main-background-color: #ffffff;
+  /* ---------- 基础表面 ---------- */
+  --border-color: #e7e7ec;
+  --expand-area-background-color: #fafafa;
+  --menu-background-color: #f4f4f6;
+  --menu-icon-color: #6b6d78;
+  --main-font-color: #2a2b33;
+  --preview-background-color: #ececef;
+  --dialog-main-background-color: #f7f8fa;
 
-  --app-page-bg: #eef1f5;
-  --app-page-text: #1f2329;
-  --app-accent: #1473e6;
-  --app-accent-light: #5c9cef;
-  --app-hover-accent: #0d66d0;
-  --app-active-bg: #e8f1fe;
-  --app-active-color: #1473e6;
-  --app-hover-bg: #f1f4f8;
-  --app-hover-color: #1f2329;
-  --app-border: #e7e9ee;
-  --app-border-strong: #d9dde4;
-  --app-menu-border: #edeff3;
-  --app-toolbar-border: #e7e9ee;
-  --app-placeholder-bg: #f4f6f9;
-  --app-control-bg: #ffffff;
-  --app-regular-text: #2b2f36;
-  --app-secondary-text: #69707d;
-  --app-text-resource-hover-bg: #e8f1fe;
-  --app-thumb-bg: #ececec;
-  --app-thumb-border: #e2e2e2;
-  --app-thumb-active-bg: #b7b7b7;
-  --app-thumb-active-line: #888888;
-  --app-dialog-header: #f7f8fa;
-  --app-dialog-icon: #69707d;
-  --app-dialog-title: #1f2329;
-  --app-dialog-body-bg: #ffffff;
+  /* ---------- 设计令牌：表面层次 ---------- */
+  --ui-chrome: #fafafa;
+  --ui-panel: #fafafa;
+  --ui-workspace: #ececef;
+  --ui-card: #f4f4f6;
+  --ui-card-hover: #eeeef1;
+  --ui-elevated: #ffffff;
+  --ui-control: #f0f0f2;
+  --ui-control-hover: #e9e9ee;
+  --ui-inset: #f1f1f4;
+  /* 可展开分组标题行：静态底色 + 悬停加深 */
+  --ui-row: #ebebef;
+  --ui-row-hover: #e2e2e8;
+
+  /* ---------- 设计令牌：描边 ---------- */
+  --ui-border: #e7e7ec;
+  --ui-border-soft: #eaeaee;
+  --ui-border-strong: #dcdce2;
+  --ui-divider: #e7e7ec;
+
+  /* ---------- 设计令牌：文字 ---------- */
+  --ui-text: #2a2b33;
+  --ui-text-secondary: #6b6d78;
+  --ui-text-muted: #8a8b8f;
+  --ui-text-faint: #a6a7ac;
+
+  /* ---------- 设计令牌：琥珀强调 ---------- */
+  --ui-accent: #e49421;
+  --ui-accent-hover: #d2871b;
+  --ui-accent-active: #bd7814;
+  --ui-accent-soft: #fdf3e3;
+  --ui-accent-soft-hover: #fbebd3;
+  --ui-accent-soft-border: #f1d2a7;
+  --ui-accent-soft-text: #a9670d;
+  --ui-accent-glow: rgba(228, 148, 33, 0.30);
+  --ui-accent-ring: rgba(228, 148, 33, 0.22);
+  --ui-accent-contrast: #ffffff;
+
+  /* ---------- 设计令牌：状态 ---------- */
+  --ui-success: #23a55a;
+  --ui-track: #dedee3;
+
+  /* ---------- 旧的 app-* 语义令牌（沿用，值已对齐新稿） ---------- */
+  --app-page-bg: #fafafa;
+  --app-page-text: #2a2b33;
+  --app-accent: #e49421;
+  --app-accent-light: #f0b969;
+  --app-hover-accent: #d2871b;
+  --app-active-bg: #fdf3e3;
+  --app-active-color: #a9670d;
+  --app-hover-bg: #f0f0f2;
+  --app-hover-color: #2a2b33;
+  --app-border: #e7e7ec;
+  --app-border-strong: #dcdce2;
+  --app-menu-border: #eaeaee;
+  --app-toolbar-border: #e7e7ec;
+  --app-placeholder-bg: #ececef;
+  --app-control-bg: #f4f4f6;
+  --app-regular-text: #3a3b44;
+  --app-secondary-text: #6b6d78;
+  --app-text-resource-hover-bg: #f4f4f6;
+  --app-thumb-bg: #ececef;
+  --app-thumb-border: #e7e7ec;
+  --app-thumb-active-bg: #fdf3e3;
+  --app-thumb-active-line: #e49421;
+  --app-dialog-header: #fafafa;
+  --app-dialog-icon: #6b6d78;
+  --app-dialog-title: #2a2b33;
+  --app-dialog-body-bg: #f7f8fa;
+  --app-dialog-border: #e7e7ec;
+  /* 弹窗内分隔线（标题栏下沿、分组框描边）与比底色略深/略浅的浅底 */
+  --app-dialog-line: #e7e7ec;
+  --app-dialog-subtle-bg: #f0f0f2;
+  /* 弹窗内的选中底（标签页选中项 / 表格选中行）：中性色，不靠琥珀填充 */
+  --app-dialog-selected-bg: #e8e8ee;
+  /* 弹窗内统一描边色（表格、分组框、标签页框、输入控件、开关等所有带边框的组件） */
+  --app-dialog-line-strong: #d6d6de;
+  /* 弹窗内表格行悬浮底 */
+  --app-dialog-row-hover-bg: #f4f4f7;
+  /* 弹窗内的输入控件：描边式（填充≈弹窗底色 + 1px 描边，聚焦换 2px 琥珀） */
+  --app-dialog-field-bg: #ffffff;
+  --app-dialog-field-border: #d6d6de;
+  --app-dialog-field-border-hover: #bcbcc7;
+  /* 弹窗底部按钮：次按钮中性填充、无描边 */
+  --app-dialog-btn-bg: #f0f0f2;
+  --app-dialog-btn-text: #4a4b52;
+  /* 弹窗关闭按钮悬停底色 */
+  --app-dialog-close-hover-bg: #ececef;
+  --app-dialog-close-hover-text: #2a2b33;
   --app-tabs-active-bg: #ffffff;
-  --app-scrollbar-track: #eef1f5;
-  --app-scrollbar-thumb: #c6cbd4;
-  --app-scrollbar-thumb-hover: #a6acb7;
-  --app-preview-scrollbar-track: #e4e7ed;
-  --app-preview-scrollbar-thumb: #b3b9c4;
-  --app-dialog-shadow: 0 16px 48px rgba(28, 36, 52, 0.16), 0 4px 12px rgba(28, 36, 52, 0.06);
+  --app-scrollbar-track: transparent;
+  --app-scrollbar-thumb: #d3d3da;
+  --app-scrollbar-thumb-hover: #bcbcc5;
+  /* 滚动条宽度：原生 ::-webkit-scrollbar 与 el-scrollbar 覆盖式滑块统一用这一个值 */
+  --app-scrollbar-size: 6px;
+  --app-preview-scrollbar-track: transparent;
+  --app-preview-scrollbar-thumb: #c9c9d1;
+  --app-dialog-shadow: 0 24px 64px rgba(28, 36, 52, 0.18), 0 6px 18px rgba(28, 36, 52, 0.07);
   --app-overlay: rgba(28, 36, 52, 0.42);
-  --app-popper-shadow: 0 8px 28px rgba(28, 36, 52, 0.14), 0 2px 8px rgba(28, 36, 52, 0.06);
+  --app-popper-shadow: 0 10px 32px rgba(28, 36, 52, 0.14), 0 2px 8px rgba(28, 36, 52, 0.06);
 
   /* el-tooltip / el-popper.is-dark 主题令牌 */
   --app-tooltip-bg: var(--el-bg-color-overlay);
@@ -59,143 +134,215 @@
   --app-tooltip-border: var(--el-border-color);
   --app-tooltip-shadow: 0 4px 14px rgba(28, 36, 52, 0.15);
 
-  /* 新增：层次、圆角与动效令牌 */
+  /* 层次、圆角与动效令牌 */
   --app-panel-shadow: 0 1px 2px rgba(28, 36, 52, 0.04);
-  --app-card-shadow: 0 2px 8px rgba(28, 36, 52, 0.07);
+  --app-card-shadow: 0 1px 3px rgba(28, 36, 52, 0.06);
   --app-hover-shadow: 0 6px 18px rgba(28, 36, 52, 0.12);
-  --app-radius-sm: 4px;
+  --app-radius-xs: 4px;
+  --app-radius-sm: 5px;
   --app-radius-md: 6px;
   --app-radius-lg: 8px;
   --app-ease: cubic-bezier(0.4, 0, 0.2, 1);
   --app-transition: 0.18s var(--app-ease);
   --app-preview-grid-color: rgba(20, 115, 230, 0.03);
 
-  --el-color-primary: #1473e6;
-  --el-color-primary-light-3: #5c9cef;
-  --el-color-primary-light-5: #8bb9f4;
-  --el-color-primary-light-7: #b9d6fa;
-  --el-color-primary-light-8: #d1e4fc;
-  --el-color-primary-light-9: #e8f1fe;
-  --el-color-primary-dark-2: #0f5fc2;
+  /* ---------- Element Plus ---------- */
+  --el-color-primary: #e49421;
+  --el-color-primary-light-3: #eaa947;
+  --el-color-primary-light-5: #f0bd6e;
+  --el-color-primary-light-7: #f6d296;
+  --el-color-primary-light-8: #f9dcab;
+  --el-color-primary-light-9: #fdf3e3;
+  --el-color-primary-dark-2: #c97f14;
+  --el-color-success: #23a55a;
 
   --el-bg-color: #ffffff;
-  --el-bg-color-page: #eef1f5;
+  --el-bg-color-page: #fafafa;
   --el-bg-color-overlay: #ffffff;
-  --el-fill-color-blank: #ffffff;
-  --el-fill-color: #eef1f5;
-  --el-fill-color-light: #f4f6f9;
-  --el-fill-color-lighter: #f8fafc;
-  --el-fill-color-extra-light: #fbfcfd;
-  --el-fill-color-dark: #dfe3ea;
-  --el-fill-color-darker: #cdd3dc;
+  --el-fill-color-blank: #f4f4f6;
+  --el-fill-color: #f4f4f6;
+  --el-fill-color-light: #f4f4f6;
+  --el-fill-color-lighter: #f7f7f9;
+  --el-fill-color-extra-light: #fafafa;
+  --el-fill-color-dark: #ececef;
+  --el-fill-color-darker: #e4e4e9;
 
-  --el-text-color-primary: #1f2329;
-  --el-text-color-regular: #434a55;
-  --el-text-color-secondary: #69707d;
-  --el-text-color-placeholder: #9aa1ac;
+  --el-text-color-primary: #2a2b33;
+  --el-text-color-regular: #3a3b44;
+  --el-text-color-secondary: #6b6d78;
+  --el-text-color-placeholder: #a6a7ac;
 
-  --el-border-color: #d9dde4;
-  --el-border-color-light: #e0e3e9;
-  --el-border-color-lighter: #e7e9ee;
-  --el-border-color-extra-light: #edeff3;
+  --el-border-color: #e7e7ec;
+  --el-border-color-light: #eaeaee;
+  --el-border-color-lighter: #eeeef2;
+  --el-border-color-extra-light: #f2f2f5;
+
+  --el-border-radius-base: 5px;
 }
+
 
 :root[dark-theme] {
 
   color-scheme: dark;
 
-  --border-color: #3d3d3d;
-  --expand-area-background-color: #2e2e2e;
-  --menu-background-color: #272727;
-  --menu-icon-color: #c9c9c9;
-  --main-font-color: #d6d6d6;
-  --preview-background-color: #242424;
-  --dialog-main-background-color: #2e2e2e;
+  /* ---------- 基础表面 ---------- */
+  --border-color: #23232a;
+  --expand-area-background-color: #0f0f12;
+  --menu-background-color: #16161c;
+  --menu-icon-color: #9f9fa3;
+  --main-font-color: #f1f1f5;
+  --preview-background-color: #0d0d11;
+  --dialog-main-background-color: #2B2B2B;
 
-  --app-page-bg: #262626;
-  --app-page-text: #ececec;
-  --app-accent: #4d9fff;
-  --app-accent-light: #7fb8ff;
-  --app-hover-accent: #f0f0f0;
-  --app-active-bg: #505050;
-  --app-active-color: #ffffff;
-  --app-hover-bg: #484848;
-  --app-hover-color: #f2f2f2;
-  --app-border: #3f3f3f;
-  --app-border-strong: #484848;
-  --app-menu-border: #3d3d3d;
-  --app-toolbar-border: #4a4a4a;
-  --app-placeholder-bg: #d6d6d6;
-  --app-control-bg: #3f3f3f;
-  --app-regular-text: #d6d6d6;
-  --app-secondary-text: #a3a3a3;
-  --app-text-resource-hover-bg: #d6d6d6;
-  --app-thumb-bg: #3d3d3d;
-  --app-thumb-border: #4d4d4d;
-  --app-thumb-active-bg: #5a5a5a;
-  --app-thumb-active-line: #9a9a9a;
-  --app-dialog-header: #282828;
-  --app-dialog-icon: #c9c9c9;
-  --app-dialog-title: #ececec;
-  --app-dialog-body-bg: #2e2e2e;
-  --app-tabs-active-bg: #3f3f3f;
-  --app-scrollbar-track: #2a2a2a;
-  --app-scrollbar-thumb: #484848;
-  --app-scrollbar-thumb-hover: #5a5a5a;
-  --app-preview-scrollbar-track: #242424;
-  --app-preview-scrollbar-thumb: #3f3f3f;
-  --app-dialog-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
-  --app-overlay: rgba(0, 0, 0, 0.6);
-  --app-popper-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  /* ---------- 设计令牌：表面层次 ---------- */
+  --ui-chrome: #0a0a0d;
+  --ui-panel: #0f0f12;
+  --ui-workspace: #0d0d11;
+  --ui-card: #16161c;
+  --ui-card-hover: #1c1c23;
+  --ui-elevated: #18181f;
+  --ui-control: #181820;
+  --ui-control-hover: #20202a;
+  --ui-inset: #1b1b23;
+  /* 可展开分组标题行：静态底色 + 悬停加深 */
+  --ui-row: #1e1e26;
+  --ui-row-hover: #26262e;
+
+  /* ---------- 设计令牌：描边 ---------- */
+  --ui-border: #23232a;
+  --ui-border-soft: #1e1e25;
+  --ui-border-strong: #2c2c35;
+  --ui-divider: #1e1e25;
+
+  /* ---------- 设计令牌：文字 ---------- */
+  --ui-text: #f1f1f5;
+  --ui-text-secondary: #9f9fa3;
+  --ui-text-muted: #7b7b85;
+  --ui-text-faint: #5c5c67;
+
+  /* ---------- 设计令牌：琥珀强调 ---------- */
+  --ui-accent: #f0a63c;
+  --ui-accent-hover: #f6b552;
+  --ui-accent-active: #ffc069;
+  --ui-accent-soft: #292017;
+  --ui-accent-soft-hover: #332718;
+  --ui-accent-soft-border: #634722;
+  --ui-accent-soft-text: #f0a63c;
+  --ui-accent-glow: rgba(240, 166, 60, 0.28);
+  --ui-accent-ring: rgba(240, 166, 60, 0.24);
+  --ui-accent-contrast: #241703;
+
+  /* ---------- 设计令牌：状态 ---------- */
+  --ui-success: #35c46f;
+  --ui-track: #33333d;
+
+  /* ---------- 旧的 app-* 语义令牌 ---------- */
+  --app-page-bg: #0a0a0d;
+  --app-page-text: #f1f1f5;
+  --app-accent: #f0a63c;
+  --app-accent-light: #f6c274;
+  --app-hover-accent: #f6b552;
+  --app-active-bg: #292017;
+  --app-active-color: #f0a63c;
+  --app-hover-bg: #1c1c23;
+  --app-hover-color: #f1f1f5;
+  --app-border: #23232a;
+  --app-border-strong: #2c2c35;
+  --app-menu-border: #1e1e25;
+  --app-toolbar-border: #23232a;
+  --app-placeholder-bg: #1c1c23;
+  --app-control-bg: #181820;
+  --app-regular-text: #d9d9dd;
+  --app-secondary-text: #9f9fa3;
+  --app-text-resource-hover-bg: #1c1c23;
+  --app-thumb-bg: #1c1c23;
+  --app-thumb-border: #23232a;
+  --app-thumb-active-bg: #292017;
+  --app-thumb-active-line: #f0a63c;
+  --app-dialog-header: #2B2B2B;
+  --app-dialog-icon: #9f9fa3;
+  --app-dialog-title: #f1f1f5;
+  /* 参考图的弹窗底：中性灰单一平面（标题栏与正文同色） */
+  --app-dialog-body-bg: #2B2B2B;
+  /* 参考图弹窗外无描边，靠底色与遮罩分层 */
+  --app-dialog-border: transparent;
+  /* 弹窗内分隔线（标题栏下沿、分组框描边）与浅底 */
+  --app-dialog-line: #3A3A3A;
+  --app-dialog-subtle-bg: #262626;
+  /* 弹窗内的选中底：比弹窗底(#2B2B2B)亮一档，读作「选中/浮起」；
+     琥珀只用于文字与左侧细标，避免低透明度琥珀叠成脏棕 */
+  --app-dialog-selected-bg: #3A3A3A;
+  /* 弹窗内统一描边色：表格、分组框、标签页框、输入控件、开关等所有带边框的组件都用它 */
+  --app-dialog-line-strong: #4A4A4A;
+  /* 弹窗内表格行悬浮底比选中底浅一档 */
+  --app-dialog-row-hover-bg: #343434;
+  /* 弹窗内的输入控件：填充同弹窗底色 + 1px 描边，聚焦换 2px 琥珀 */
+  --app-dialog-field-bg: transparent;
+  --app-dialog-field-border: #4A4A4A;
+  --app-dialog-field-border-hover: #5C5C5C;
+  /* 弹窗底部按钮：主按钮琥珀底深字，次按钮中性填充 */
+  --app-dialog-btn-bg: #333333;
+  --app-dialog-btn-text: #d0d2d6;
+  /* 弹窗关闭按钮悬停底色 */
+  --app-dialog-close-hover-bg: #3a3a3a;
+  --app-dialog-close-hover-text: #f1f1f5;
+
+  --app-tabs-active-bg: #20202a;
+  --app-scrollbar-track: transparent;
+  --app-scrollbar-thumb: #33333d;
+  --app-scrollbar-thumb-hover: #45454f;
+  --app-preview-scrollbar-track: transparent;
+  --app-preview-scrollbar-thumb: #2c2c35;
+  --app-dialog-shadow: 0 24px 64px rgba(0, 0, 0, 0.66), 0 6px 18px rgba(0, 0, 0, 0.4);
+  --app-overlay: rgba(0, 0, 0, 0.62);
+  --app-popper-shadow: 0 10px 32px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35);
 
   /* el-tooltip / el-popper.is-dark 主题令牌 */
-  --app-tooltip-bg: var(--el-fill-color-light);
-  --app-tooltip-text: var(--el-text-color-primary);
-  --app-tooltip-border: var(--el-border-color);
-  --app-tooltip-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  --app-tooltip-bg: #20202a;
+  --app-tooltip-text: #f1f1f5;
+  --app-tooltip-border: #2c2c35;
+  --app-tooltip-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
 
-  /* 深色模式对应层次 / 圆角 / 动效令牌 */
-  --app-panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --app-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  --app-hover-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
-  --app-radius-sm: 4px;
-  --app-radius-md: 6px;
-  --app-radius-lg: 8px;
-  --app-ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --app-transition: 0.18s var(--app-ease);
+  /* 层次、圆角与动效令牌 */
+  --app-panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --app-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --app-hover-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
   --app-preview-grid-color: rgba(255, 255, 255, 0.025);
 
-  --el-color-primary: #4d9fff;
-  --el-color-primary-light-3: #3f84e0;
-  --el-color-primary-light-5: #356fb8;
-  --el-color-primary-light-7: #2b5a94;
-  --el-color-primary-light-8: #265083;
-  --el-color-primary-light-9: #224671;
-  --el-color-primary-dark-2: #79bbff;
+  /* ---------- Element Plus ---------- */
+  --el-color-primary: #f0a63c;
+  --el-color-primary-light-3: #c98c37;
+  --el-color-primary-light-5: #9c6f31;
+  --el-color-primary-light-7: #6f512b;
+  --el-color-primary-light-8: #594226;
+  --el-color-primary-light-9: #292017;
+  --el-color-primary-dark-2: #f6b552;
+  --el-color-success: #35c46f;
 
-  --el-bg-color: #2e2e2e;
-  --el-bg-color-page: #262626;
-  --el-bg-color-overlay: #2e2e2e;
-  --el-fill-color-blank: #313131;
-  --el-fill-color: #353535;
-  --el-fill-color-light: #3b3b3b;
-  --el-fill-color-lighter: #404040;
-  --el-fill-color-extra-light: #454545;
-  --el-fill-color-dark: #282828;
-  --el-fill-color-darker: #242424;
+  --el-bg-color: #16161c;
+  --el-bg-color-page: #0a0a0d;
+  --el-bg-color-overlay: #1f1f27;
+  --el-fill-color-blank: #181820;
+  --el-fill-color: #1c1c23;
+  --el-fill-color-light: #191920;
+  --el-fill-color-lighter: #23232a;
+  --el-fill-color-extra-light: #26262d;
+  --el-fill-color-dark: #131318;
+  --el-fill-color-darker: #0f0f12;
 
-  --el-text-color-primary: #f0f0f0;
-  --el-text-color-regular: #d9d9d9;
-  --el-text-color-secondary: #ababab;
-  --el-text-color-placeholder: #808080;
+  --el-text-color-primary: #f1f1f5;
+  --el-text-color-regular: #d9d9dd;
+  --el-text-color-secondary: #9f9fa3;
+  --el-text-color-placeholder: #6a6a74;
 
-  --el-border-color: #494949;
-  --el-border-color-light: #454545;
-  --el-border-color-lighter: #3e3e3e;
-  --el-border-color-extra-light: #373737;
+  --el-border-color: #2c2c35;
+  --el-border-color-light: #26262d;
+  --el-border-color-lighter: #23232a;
+  --el-border-color-extra-light: #1e1e25;
 }
 
+
 html, body, #app {
-  background-color: var(--app-page-bg);
-  color: var(--app-page-text);
+  background-color: var(--ui-chrome);
+  color: var(--ui-text);
 }

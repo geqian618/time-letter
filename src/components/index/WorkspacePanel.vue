@@ -1,16 +1,63 @@
 <template>
   <div class="canvas-viewport">
-    <div class="uploader" ref="uploaderRef" v-show="canvasesStore.uploadVisible"
+
+    <!-- 空状态：虚线容器 + 托盘上传图标 + 格式说明 + 选择文件按钮 -->
+    <div class="uploader empty-state" ref="uploaderRef" v-show="canvasesStore.uploadVisible"
          @click="requestImportFiles({isDragOver: false})">
-      <img src="/src/assets/icon/upload.svg" alt="上传">
-      <span>{{ $t('workspace.dragUpload') }}</span>
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 15.2 V4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M8.3 8.3 L12 4.6 L15.7 8.3" fill="none" stroke="currentColor" stroke-width="1.6"
+                stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4.6 13.6 v3.4 a2.6 2.6 0 0 0 2.6 2.6 h9.6 a2.6 2.6 0 0 0 2.6 -2.6 v-3.4"
+                fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2 class="empty-title">{{ $t('workspace.dropTitle') }}</h2>
+      <p class="empty-hint">{{ $t('workspace.dropHint') }}</p>
+      <button type="button" class="empty-button">{{ $t('workspace.chooseFile') }}</button>
+      <p class="empty-shortcut">{{ $t('workspace.quickImport') }}</p>
     </div>
+
     <div class="canvas-workspace" id="canvas-workspace" ref="canvasWorkspaceRef" @mousedown="triggerContextMenu">
       <div class="canvas-wrapper" ref="canvasWrapper">
         <canvas id="background-canvas" ref="backgroundElement"></canvas>
         <canvas id="foreground-canvas" ref="canvasElement"></canvas>
       </div>
     </div>
+
+    <!-- 浮动缩放胶囊 -->
+    <div class="zoom-pill" v-if="settingsStore.projectSettings.appearance.enableZoomPill">
+      <el-tooltip :content="$t('preview.zoomOut')" placement="top">
+        <button type="button" class="zoom-button" @click="stepZoom(-1)">
+          <svg viewBox="0 0 16 16"><path d="M4 8 H12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </el-tooltip>
+      <span class="zoom-value">{{ zoomPct }}%</span>
+      <el-tooltip :content="$t('preview.zoomIn')" placement="top">
+        <button type="button" class="zoom-button" @click="stepZoom(1)">
+          <svg viewBox="0 0 16 16">
+            <path d="M8 4 V12 M4 8 H12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </el-tooltip>
+      <span class="zoom-divider"></span>
+      <el-tooltip :content="$t('preview.center')" placement="top">
+        <button type="button" class="zoom-button" @click="fitToView">
+          <svg viewBox="0 0 16 16">
+            <path d="M3 6 V4.2 A1.2 1.2 0 0 1 4.2 3 H6" fill="none" stroke="currentColor" stroke-width="1.5"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 3 H11.8 A1.2 1.2 0 0 1 13 4.2 V6" fill="none" stroke="currentColor" stroke-width="1.5"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M13 10 V11.8 A1.2 1.2 0 0 1 11.8 13 H10" fill="none" stroke="currentColor" stroke-width="1.5"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6 13 H4.2 A1.2 1.2 0 0 1 3 11.8 V10" fill="none" stroke="currentColor" stroke-width="1.5"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </el-tooltip>
+    </div>
+
   </div>
 </template>
 
@@ -35,6 +82,8 @@ import DraggableElementFactory from '@/object/DraggableElementFactory'
 import {canvasActions} from '@/object/canvas-actions'
 
 import {BorderOptions, PhotographOptions} from '@/object/Configuration'
+
+import FontManager from '@/utils/font-manager'
 
 import {useCanvasesStore} from '@/stores/canvases'
 import {useProjectSettingsStore} from '@/stores/project-settings'
@@ -72,6 +121,50 @@ const zoomOptions = {
   minZoom: 0.1,
   maxZoom: 5
 }
+
+// ---------- 浮动缩放胶囊 ----------
+
+// 缩放百分比预设档位（与底部预览栏的下拉预设保持一致）
+const ZOOM_STEPS = [10, 25, 50, 75, 100, 150, 200, 300, 500]
+
+const zoomPct = ref(100)
+
+// 从当前画布读取缩放百分比（相对 initZoom，100% 即适配工作区的尺寸）
+const refreshZoom = () => {
+  const canvas = CanvasManager.getCurrentCanvas()
+  zoomPct.value = canvas && canvas.initZoom && canvas.zoom
+      ? Math.round(canvas.zoom / canvas.initZoom * 100)
+      : 100
+}
+
+// 应用缩放百分比
+const applyZoom = (val) => {
+  const canvas = CanvasManager.getCurrentCanvas()
+  const editor = canvasesStore.getCanvasEditor()
+  const backgroundEditor = canvasesStore.getBackgroundCanvasEditor()
+  if (!canvas || !canvas.initZoom || !editor) return
+  const newZoom = canvas.initZoom * (val / 100)
+  canvas.zoom = newZoom
+  editor.setZoom(newZoom)
+  backgroundEditor?.setZoom(newZoom)
+  reflowWorkspace()
+  refreshZoom()
+}
+
+// 按预设档位步进缩放
+const stepZoom = (direction) => {
+  const current = zoomPct.value
+  if (direction < 0) {
+    const lower = ZOOM_STEPS.filter(value => value < current)
+    applyZoom(lower.length ? lower[lower.length - 1] : ZOOM_STEPS[0])
+  } else {
+    const higher = ZOOM_STEPS.filter(value => value > current)
+    applyZoom(higher.length ? higher[0] : ZOOM_STEPS[ZOOM_STEPS.length - 1])
+  }
+}
+
+// 适配视图：回到 100%（画布按工作区尺寸自适应的大小）
+const fitToView = () => applyZoom(100)
 
 let scrollTimeout = null;
 
@@ -348,7 +441,6 @@ const doRenderCanvas = async (canvas, currentVersion) => {
 
     if (typeof background !== 'string' && typeof background !== 'object') throw new Error('unsupported data type')
 
-    // 批量准备两层 JSON 数据（并发解码图片，期间旧画面保持不动），拿到可在同一同步任务内原子应用全部编辑器的批次句柄
     const batchExecutor = await CanvasEditor.preloadAll([
       {editor: backgroundCanvasEditor, data: background},
       {editor: canvasEditor, data: foreground}
@@ -376,6 +468,9 @@ const doRenderCanvas = async (canvas, currentVersion) => {
       canvas.background = backgroundCanvasEditor.exportToObject()
     }
   }
+
+  // 渲染完成后同步浮动缩放胶囊的百分比
+  refreshZoom()
 }
 
 const renderCanvas = (canvas) => {
@@ -488,6 +583,7 @@ const clearCanvas = () => {
   canvasEditor.clearCanvas();
   backgroundCanvasEditor.clearCanvas()
   CanvasManager.setSelectedObject({path: '', previewElement: null})
+  zoomPct.value = 100
 }
 
 
@@ -795,10 +891,26 @@ function cancelZoomPin() {
   zoomPin = null
 }
 
-// 处理 canvas 缩放（以鼠标位置为锚点，带平滑动画且全程钉住光标）
+// 处理 canvas 缩放：滚轮事件可能 1 帧内触发多次（高刷鼠标尤其明显），
+// 而每次缩放都要双画布重排 backing store + 全量重绘，代价很高。
+// 这里只记录最新的滚轮事件，合并到每帧最多应用一次（rAF 节流），避免渲染风暴。
+let pendingWheelZoom = null
+let wheelZoomScheduled = false
+
 const handleCanvasResize = (event) => {
-  // 阻止默认滚动行为
   event.preventDefault();
+  pendingWheelZoom = event
+  if (wheelZoomScheduled) return
+  wheelZoomScheduled = true
+  requestAnimationFrame(applyWheelZoom)
+}
+
+// 实际执行缩放（以鼠标位置为锚点，带平滑动画且全程钉住光标）
+const applyWheelZoom = () => {
+  wheelZoomScheduled = false
+  const event = pendingWheelZoom
+  pendingWheelZoom = null
+  if (!event) return
   const canvas = CanvasManager.getCurrentCanvas();
   if (!canvas) return
   const workspace = canvasWorkspaceRef.value;
@@ -837,6 +949,8 @@ const handleCanvasResize = (event) => {
   canvas.foreground.zoom = newZoom
   canvasEditor.setZoom(newZoom)
   backgroundCanvasEditor.setZoom(newZoom)
+
+  refreshZoom()
 
   if (zoomRafId == null) zoomRafId = requestAnimationFrame(runZoomPin)
 }
@@ -1040,65 +1154,172 @@ onUnmounted(() => cancelZoomPin())
   width: var(--canvas-workspace-width);
   height: 100%;
   position: relative;
+  background: var(--ui-workspace);
+}
 
-  .uploader {
-    font-weight: bold;
+/* ---------- 空状态：虚线圆角容器，内容居中（底部加宽避开右下角缩放胶囊） ---------- */
+.empty-state {
+  position: absolute;
+  inset: 32px 32px 64px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px dashed var(--ui-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color var(--app-transition), background-color var(--app-transition);
+
+  &:hover {
+    border-color: var(--ui-border-strong);
+  }
+
+  .empty-icon {
+    width: 46px;
+    height: 46px;
     display: flex;
-    flex-direction: column;
-    gap: 5px;
     align-items: center;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%); /* 相对于自身偏移，实现完美居中 */
-    z-index: 999;
+    justify-content: center;
+    color: var(--ui-text-secondary);
+    margin-bottom: 18px;
 
-    img {
-      width: 60px;
-    }
-
-    span {
-      font-size: 14px;
-      color: var(--app-secondary-text);
+    svg {
+      width: 46px;
+      height: 46px;
     }
   }
 
-  .canvas-workspace {
-    background-color: var(--preview-background-color);
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    min-width: 300px;
-    min-height: 100px;
+  .empty-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ui-text);
+    margin-bottom: 8px;
+  }
 
-    .canvas-wrapper {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 0;
+  .empty-hint {
+    font-size: 13px;
+    color: var(--ui-text-secondary);
+    margin-bottom: 26px;
+  }
 
-      #foreground-canvas {
-        position: absolute;
-        background-color: transparent;
-        z-index: 1;
-        will-change: width, height;
-      }
+  .empty-button {
+    height: 40px;
+    padding: 0 22px;
+    border: none;
+    border-radius: 8px;
+    background: var(--ui-accent);
+    color: var(--ui-accent-contrast);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 14px var(--ui-accent-glow);
+    transition: background-color var(--app-transition);
 
-      .scale-animation {
-        transition: width 0.1s, height 0.1s;
-      }
+    &:hover {
+      background: var(--ui-accent-hover);
+    }
+  }
 
-      #background-canvas {
-        position: absolute;
-        will-change: width, height;
-      }
+  .empty-shortcut {
+    margin-top: 16px;
+    font-size: 11.5px;
+    color: var(--ui-text-faint);
+  }
+}
+/* ---------- 浮动缩放胶囊 ---------- */
+.zoom-pill {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: var(--app-radius-md);
+  background: var(--ui-elevated);
+  border: 1px solid var(--ui-border);
+  box-shadow: var(--app-card-shadow);
 
-      #background-canvas,
-      #foreground-canvas {
-        border: none;
-        outline: none;
-        box-shadow: none;
-      }
+  .zoom-button {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: var(--app-radius-xs);
+    background: transparent;
+    color: var(--ui-text-secondary);
+    cursor: pointer;
+    transition: background-color var(--app-transition), color var(--app-transition);
+
+    svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    &:hover {
+      background: var(--ui-control);
+      color: var(--ui-text);
+    }
+  }
+
+  .zoom-value {
+    min-width: 42px;
+    text-align: center;
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text);
+    user-select: none;
+  }
+
+  .zoom-divider {
+    width: 1px;
+    height: 16px;
+    margin: 0 2px;
+    background: var(--ui-border);
+  }
+}
+
+.canvas-workspace {
+  background-color: var(--ui-workspace);
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  min-width: 300px;
+  min-height: 100px;
+
+  .canvas-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 0;
+
+    #foreground-canvas {
+      position: absolute;
+      background-color: transparent;
+      z-index: 1;
+      will-change: width, height;
+    }
+
+    .scale-animation {
+      transition: width 0.1s, height 0.1s;
+    }
+
+    #background-canvas {
+      position: absolute;
+      will-change: width, height;
+    }
+
+    #background-canvas,
+    #foreground-canvas {
+      border: none;
+      outline: none;
+      box-shadow: none;
     }
   }
 }

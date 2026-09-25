@@ -63,11 +63,18 @@ const createMainWindow = () => {
         }
     })
 
+    const isMac = process.platform === 'darwin'
+
     mainWindow = new BrowserWindow({
         ...winState.winOptions,
         icon: APP_ICON_PATH,
         show: false,
-        backgroundColor: isDarkTheme ? '#262626' : '#f5f5f5',
+        // 标题栏 / 菜单栏 / 窗口控制全部由渲染进程自绘的顶部工具栏承担：
+        // Windows / Linux 用无边框窗口；macOS 保留系统红绿灯（hiddenInset），避免失去关闭 / 最小化入口
+        ...(isMac
+            ? {frame: true, titleBarStyle: 'hiddenInset', trafficLightPosition: {x: 14, y: 15}}
+            : {frame: false}),
+        backgroundColor: isDarkTheme ? '#0a0a0d' : '#fafafa',
         webPreferences: {
             sandbox: false,
             webSecurity: true,
@@ -209,6 +216,69 @@ const setupIpcHandlers = () => {
     // 打开模板右键菜单
     ipcMain.on('template-contextMenu:open', () => {
         templateContextMenu?.popup()
+    })
+
+    // ---------- 自绘窗口控制（无边框窗口由渲染进程顶部工具栏驱动） ----------
+
+    // 最小化
+    ipcMain.on('window:minimize', (event) => {
+        BrowserWindow.fromWebContents(event.sender)?.minimize()
+    })
+
+    // 最大化 / 还原
+    ipcMain.on('window:toggle-maximize', (event) => {
+        const target = BrowserWindow.fromWebContents(event.sender)
+        if (!target) return
+        if (target.isMaximized()) {
+            target.unmaximize()
+        } else {
+            target.maximize()
+        }
+    })
+
+    // 关闭
+    ipcMain.on('window:close', (event) => {
+        BrowserWindow.fromWebContents(event.sender)?.close()
+    })
+
+    // 查询最大化状态（供渲染进程同步按钮图标）
+    ipcMain.handle('window:is-maximized', (event) => {
+        return BrowserWindow.fromWebContents(event.sender)?.isMaximized() ?? false
+    })
+
+    // 弹出应用菜单的某个顶级子菜单（渲染进程自绘菜单栏点击后调用，复用原生命令）
+    ipcMain.on('menu:popup', (event, {id, x, y}) => {
+        // 注意：主窗口用 win.setMenu() 挂载菜单，Menu.getApplicationMenu() 在 Windows 上可能为空，
+        // 直接复用 createApplicationMenu 的返回值
+        const item = applicationMenu?.items?.find(entry => entry.id === id)
+        if (item?.submenu) {
+            item.submenu.popup({
+                window: BrowserWindow.fromWebContents(event.sender) ?? undefined,
+                x: Math.round(Number(x) || 0),
+                y: Math.round(Number(y) || 0)
+            })
+        }
+    })
+
+    // 触发原生菜单中的某一项（自绘导出按钮复用「文件 › 导出图片」的原生流程）
+    ipcMain.on('menu:invoke', (event, id) => {
+        const sender = BrowserWindow.fromWebContents(event.sender)
+        const walk = (items) => {
+            for (const item of items ?? []) {
+                if (item.id === id) return item
+                const found = walk(item.submenu?.items)
+                if (found) return found
+            }
+            return null
+        }
+        const target = walk(applicationMenu?.items)
+        if (!target) return
+        if (typeof target.click === 'function') {
+            target.click(target, sender, event)
+        } else if (sender) {
+            // role 型菜单项没有 click 函数，交由主进程按 role 派发
+            target.click?.(target, sender, event)
+        }
     })
 
     // 选择目录
@@ -520,7 +590,7 @@ const registerThumbnailProtocol = () => {
     protocol.registerBufferProtocol('thumb', async (request, callback) => {
 
         try {
-            // 可选高度作为查询参数 thumb:///D:/photos/a.jpg?height=512，缺省 128
+            // 可选高度作为查询参数 thumb:///D:/photos/a.jpg?height=512，缺省 256
             const requestUrl = request.url.replace('thumb:///', '');
 
             // 分离路径与查询参数：路径分段已逐段编码，真实的 ? 即查询分隔符
@@ -528,8 +598,8 @@ const registerThumbnailProtocol = () => {
             const encodedPath = queryIndex === -1 ? requestUrl : requestUrl.slice(0, queryIndex);
             const filePath = decodeURIComponent(encodedPath);
 
-            // 期望高度：缺省 128，?height= 可覆盖；下限 64
-            let thumbHeight = 128;
+            // 期望高度：缺省 256，?height= 可覆盖；下限 64
+            let thumbHeight = 256;
 
             if (queryIndex !== -1) {
                 const height = parseInt(new URLSearchParams(requestUrl.slice(queryIndex + 1)).get('height'), 10);

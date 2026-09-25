@@ -1,5 +1,5 @@
 <template>
-  <div class="dialog-wrapper">
+  <div class="dialog-wrapper is-roomy">
     <el-dialog v-model="templatesStore.saveTemplateDialogVisible" :title="$t('template.saveTitle')" align-center width="350" draggable>
       <el-form :model="templatesStore.newTemplate" class="demo-form-inline" :rules="saveTemplateRules" ref="saveTemplateForm"
                @submit.native.prevent>
@@ -15,7 +15,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="templatesStore.saveTemplateDialogVisible = false">{{ $t('common.cancel') }}</el-button>
-          <el-button type="info" @click="saveTemplates">{{ $t('common.confirm') }}</el-button>
+          <el-button type="primary" @click="saveTemplates">{{ $t('common.confirm') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -113,4 +113,26 @@ const saveTemplates = async () => {
 
 <style scoped lang="scss">
 @use '@/assets/styles/dialog';
+
+/* 仅本弹窗的宽松留白：正文左/右 27px、上 24px（底部维持全局 10px）；
+   footer 左右与正文对齐（末按钮的全局 10px margin-right 在此清零，避免叠加） */
+.dialog-wrapper.is-roomy {
+  :deep(.el-dialog) {
+    $pad-x: 27px;
+    $pad-top: 24px;
+
+    .el-dialog__body {
+      padding: $pad-top $pad-x 10px;
+    }
+
+    .el-dialog__footer {
+      padding-right: $pad-x;
+      padding-left: $pad-x;
+
+      button:last-child {
+        margin-right: 0;
+      }
+    }
+  }
+}
 </style>

@@ -1,59 +1,43 @@
 <template>
   <div>
-    <div class="page-layout" ref="page">
-      <div class="page-main" ref="pageMainRef">
-        <div class="page-left" ref="leftPanelRef" :class="{collapsed: leftCollapsed}">
-          <div class="left-resize" v-show="!leftCollapsed" ref="leftResizeRef"
-               @mousedown="handleLeftSidebarResize"></div>
-          <LeftPanel v-show="!leftCollapsed"/>
-          <el-tooltip :content="leftCollapsed ? $t('panel.expandLeft') : $t('panel.collapseLeft')" placement="right"
+    <div class="page-layout">
+
+      <TopToolbar :left-collapsed="leftCollapsed" :right-collapsed="rightCollapsed"
+                  @toggle-left="toggleLeft" @toggle-right="toggleRight"/>
+
+      <div class="page-body" ref="page">
+
+        <div class="page-main" ref="pageMainRef">
+          <div class="page-left" ref="leftPanelRef" :class="{collapsed: leftCollapsed}">
+            <div class="left-resize" v-show="!leftCollapsed" ref="leftResizeRef"
+                 @mousedown="handleLeftSidebarResize"></div>
+            <LeftPanel v-show="!leftCollapsed"/>
+          </div>
+
+          <WorkspacePanel/>
+
+          <div class="page-right" ref="rightPanelRef" :class="{collapsed: rightCollapsed}">
+            <div class="right-resize" v-show="!rightCollapsed" ref="rightResizeRef"
+                 @mousedown="handleRightSidebarResize"></div>
+            <RightPanel v-show="!rightCollapsed"/>
+          </div>
+        </div>
+
+        <div class="page-bottom" ref="bottomPanelRef" :class="{collapsed: bottomCollapsed}">
+          <div class="bottom-resize" v-show="!bottomCollapsed" ref="bottomResizeRef"
+               @mousedown="handleBottomSidebarResize"></div>
+          <PreviewPanel v-show="!bottomCollapsed" @toggle-bottom="toggleBottom"/>
+          <!-- 收起后底部工具栏随之隐藏，仅保留这个浮动箭头用于展开 -->
+          <el-tooltip v-if="bottomCollapsed" :content="$t('panel.expandBottom')" placement="top"
                       :disabled="tipDisabled">
-            <button class="panel-toggle toggle-left" @click="toggleLeft">
-              <svg v-if="!leftCollapsed" viewBox="0 0 24 24" width="12" height="12">
-                <path d="M14 6 L7 12 L14 18 Z" fill="currentColor"/>
-              </svg>
-              <svg v-else viewBox="0 0 24 24" width="12" height="12">
-                <path d="M10 6 L17 12 L10 18 Z" fill="currentColor"/>
+            <button class="panel-toggle toggle-bottom" @click="toggleBottom">
+              <svg viewBox="0 0 24 24" width="12" height="12">
+                <path d="M6 14 L12 7 L18 14 Z" fill="currentColor"/>
               </svg>
             </button>
           </el-tooltip>
         </div>
 
-        <WorkspacePanel/>
-
-        <div class="page-right" ref="rightPanelRef" :class="{collapsed: rightCollapsed}">
-          <div class="right-resize" v-show="!rightCollapsed" ref="rightResizeRef"
-               @mousedown="handleRightSidebarResize"></div>
-          <RightPanel v-show="!rightCollapsed"/>
-          <el-tooltip :content="rightCollapsed ? $t('panel.expandRight') : $t('panel.collapseRight')" placement="left"
-                      :disabled="tipDisabled">
-            <button class="panel-toggle toggle-right" @click="toggleRight">
-              <svg v-if="!rightCollapsed" viewBox="0 0 24 24" width="12" height="12">
-                <path d="M10 6 L17 12 L10 18 Z" fill="currentColor"/>
-              </svg>
-              <svg v-else viewBox="0 0 24 24" width="12" height="12">
-                <path d="M14 6 L7 12 L14 18 Z" fill="currentColor"/>
-              </svg>
-            </button>
-          </el-tooltip>
-        </div>
-      </div>
-
-      <div class="page-bottom" ref="bottomPanelRef" :class="{collapsed: bottomCollapsed}">
-        <div class="bottom-resize" v-show="!bottomCollapsed" ref="bottomResizeRef"
-             @mousedown="handleBottomSidebarResize"></div>
-        <PreviewPanel v-show="!bottomCollapsed"/>
-        <el-tooltip :content="bottomCollapsed ? $t('panel.expandBottom') : $t('panel.collapseBottom')" placement="top"
-                    :disabled="tipDisabled">
-          <button class="panel-toggle toggle-bottom" @click="toggleBottom">
-            <svg v-if="!bottomCollapsed" viewBox="0 0 24 24" width="12" height="12">
-              <path d="M6 10 L12 17 L18 10 Z" fill="currentColor"/>
-            </svg>
-            <svg v-else viewBox="0 0 24 24" width="12" height="12">
-              <path d="M6 14 L12 7 L18 14 Z" fill="currentColor"/>
-            </svg>
-          </button>
-        </el-tooltip>
       </div>
 
     </div>
@@ -87,6 +71,7 @@ import LeftPanel from '@/components/index/LeftPanel.vue'
 import WorkspacePanel from '@/components/index/WorkspacePanel.vue'
 import RightPanel from '@/components/index/RightPanel.vue'
 import PreviewPanel from '@/components/index/PreviewPanel.vue'
+import TopToolbar from '@/components/index/TopToolbar.vue'
 
 import TextResourceDialog from '@/components/index/dialogs/TextResourceDialog.vue'
 import SaveTemplateDialog from '@/components/index/dialogs/SaveTemplateDialog.vue'
@@ -660,23 +645,33 @@ onMounted(() => {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--ui-chrome);
+}
+
+/* 工具栏之下的主体区域：面板尺寸百分比相对本区域计算 */
+.page-body {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
 
   .page-main {
     width: 100%;
     height: var(--page-main-height);
     display: flex;
     box-sizing: border-box;
-    border-top: 1px solid var(--app-toolbar-border);
 
     .page-left {
       width: var(--page-left-width);
       height: 100%;
-      background: var(--expand-area-background-color);
+      background: var(--ui-panel);
       box-sizing: border-box;
       flex-shrink: 0;
       position: relative;
       min-width: 100px;
-      border-right: 1px solid var(--border-color);
+      border-right: 1px solid var(--ui-border);
 
       .left-resize {
         position: absolute;
@@ -695,10 +690,10 @@ onMounted(() => {
     .page-right {
       width: var(--page-right-width);
       height: 100%;
-      background: var(--expand-area-background-color);
+      background: var(--ui-panel);
       position: relative;
       min-width: 100px;
-      border-left: 1px solid var(--border-color);
+      border-left: 1px solid var(--ui-border);
 
       .right-resize {
         position: absolute;
@@ -719,7 +714,8 @@ onMounted(() => {
   .page-bottom {
     width: 100%;
     height: var(--page-bottom-height);
-    border-top: 1px solid var(--app-toolbar-border);
+    border-top: 1px solid var(--ui-border);
+    background: var(--ui-chrome);
     position: relative;
     min-height: 100px;
 
@@ -733,17 +729,20 @@ onMounted(() => {
     }
 
     .bottom-resize:hover {
-      cursor: ns-resize; /* 左右箭头 */
+      cursor: ns-resize; /* 上下箭头 */
     }
   }
 
   /* 收起态：解除最小尺寸约束（内容已通过 v-show 隐藏） */
   .page-left.collapsed, .page-right.collapsed {
     min-width: 0;
+    border-right-color: transparent;
+    border-left-color: transparent;
   }
 
   .page-bottom.collapsed {
     min-height: 0;
+    border-top-color: transparent;
   }
 
 
@@ -751,36 +750,28 @@ onMounted(() => {
   .panel-toggle {
     position: absolute;
     z-index: 10;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    border: none;
-    background: transparent;
-    color: var(--app-secondary-text);
+    border: 1px solid var(--ui-border);
+    background: var(--ui-elevated);
+    color: var(--ui-text-muted);
     cursor: pointer;
-    border-radius: 3px;
-    transition: background-color var(--app-transition), color var(--app-transition);
+    border-radius: var(--app-radius-xs);
+    box-shadow: var(--app-card-shadow);
+    transition: background-color var(--app-transition), color var(--app-transition), border-color var(--app-transition);
   }
 
   .panel-toggle:hover {
-    background: var(--app-hover-bg);
-    color: var(--app-accent);
+    background: var(--ui-accent-soft);
+    border-color: var(--ui-accent-soft-border);
+    color: var(--ui-accent);
   }
 
-  /* 贴边线、向工作区一侧延伸；收起态(宽/高 0)也能完整落入工作区，不被屏边裁切 */
-  .toggle-left {
-    top: 4px;
-    left: 100%;
-  }
-
-  .toggle-right {
-    top: 4px;
-    right: 100%;
-  }
-
+  /* 贴边线、向工作区一侧延伸；仅收起态使用（展开时入口在顶部/底部工具栏内） */
   .toggle-bottom {
     left: 50%;
     bottom: 100%;

@@ -32,9 +32,11 @@ const createApplicationMenu = (mainWindow) => {
 
     template.push(
         {
+            id: 'file',
             label: t('menu.file'),
             submenu: [
                 {
+                    id: 'import-images',
                     label: t('menu.importImages'),
                     // 无传参
                     click: selectFile,
@@ -42,6 +44,7 @@ const createApplicationMenu = (mainWindow) => {
 
                 },
                 {
+                    id: 'export-images',
                     label: t('menu.exportImages'),
                     click: saveFiles,
                     accelerator: 'CommandOrControl+O'
@@ -49,6 +52,7 @@ const createApplicationMenu = (mainWindow) => {
             ]
         },
         {
+            id: 'settings',
             label: t('menu.settings'),
             submenu: [
                 {
@@ -85,6 +89,7 @@ const createApplicationMenu = (mainWindow) => {
             ]
         },
         {
+            id: 'extensions',
             label: t('menu.extensions'),
             submenu: [
                 {
@@ -137,6 +142,7 @@ const createApplicationMenu = (mainWindow) => {
             ]
         },
         {
+            id: 'tools',
             label: t('menu.tools'),
             submenu: [
                 {
@@ -154,6 +160,7 @@ const createApplicationMenu = (mainWindow) => {
     }
 
     template.push({
+        id: 'help',
         label: t('menu.help'),
         submenu: [
             {
