@@ -1104,16 +1104,16 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
         border-color: transparent;
       }
 
-      /* 元数据分组：与其他分组一样套卡片，只是用开关代替折叠箭头 */
-      .sub-menu.sub-menu-metadata :deep(.el-sub-menu__title .el-sub-menu__icon-arrow) {
-        display: none;
-      }
-
       /* 元数据分组：输入框加宽，收回右侧留白 */
       .options.metadata {
         .option .value :deep(.el-input) {
           width: 100%;
           margin-right: 0;
+        }
+
+        /* 输入文字比 EP small 档（12px）再小两号 */
+        .option .value :deep(.el-input__inner) {
+          font-size: 10px;
         }
       }
 
@@ -1153,11 +1153,6 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
       /* 展开的分组：箭头取琥珀色 */
       .sub-menu.is-opened :deep(.el-sub-menu__title .el-sub-menu__icon-arrow) {
         color: var(--ui-accent);
-      }
-
-      /* 元数据分组：右侧为开关，隐藏折叠箭头 */
-      .sub-menu.no-card :deep(.el-sub-menu__title .el-sub-menu__icon-arrow) {
-        display: none;
       }
 
       /* ---------- 内层容器 ---------- */

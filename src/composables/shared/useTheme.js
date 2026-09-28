@@ -18,6 +18,23 @@ export const useTheme = () => {
     };
 
     /**
+     * 渲染配色主题与分组卡片开关（html data 属性）
+     * 配色：data-ui-theme = default(缺省，琥珀) | indigo | pine | crimson | wisteria
+     * 卡片：data-ui-cards = on(卡片外壳) | off(扁平)
+     */
+    const renderUiStyle = () => {
+        const appearance = settingsStore.projectSettings.appearance || {};
+        const root = document.documentElement;
+        const uiTheme = appearance.uiTheme || 'default';
+        if (uiTheme !== 'default') {
+            root.setAttribute('data-ui-theme', uiTheme);
+        } else {
+            root.removeAttribute('data-ui-theme');
+        }
+        root.setAttribute('data-ui-cards', appearance.showGroupCards === false ? 'off' : 'on');
+    };
+
+    /**
      * 根据解析后的主题设置文档根元素的属性
      */
     const renderTheme = (theme) => {
@@ -27,6 +44,8 @@ export const useTheme = () => {
         } else {
             document.documentElement.removeAttribute('dark-theme');
         }
+        // 亮暗渲染时同步应用配色与卡片设置，保证启动路径（ImageManager 等）一并生效
+        renderUiStyle();
     };
 
     /**
@@ -50,6 +69,7 @@ export const useTheme = () => {
 
     return {
         renderTheme,
+        renderUiStyle,
         applyTheme
     }
 }

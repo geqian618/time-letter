@@ -4,7 +4,9 @@
    中性灰底 + 琥珀强调色，面板接近纯白/纯黑，卡片用极浅灰拉开层次。
    ========================================================================== */
 
-:root {
+/* 双写 :root 提高特异性（0,2,0）：EP 的 index.css 在本文件之后加载，
+   单写 :root 会在亮色下被 EP 默认蓝等 :root 同名令牌覆盖（暗色靠 [dark-theme] 已更高） */
+:root:root {
 
   color-scheme: light;
 
@@ -339,6 +341,416 @@
   --el-border-color-light: #26262d;
   --el-border-color-lighter: #23232a;
   --el-border-color-extra-light: #1e1e25;
+}
+
+
+/* ==========================================================================
+   扩展配色主题：靛青 / 松烟 / 胭脂 / 紫藤
+   - 配色选择：html[data-ui-theme="indigo|pine|crimson|wisteria"]，
+     亮暗仍由 html[dark-theme] 控制 → 4 配色 × 2 模式 = 8 套
+   - 卡片选择：html[data-ui-cards="off"] 去掉分组卡片外壳（扁平），
+     "on" 或缺省保持组件自带卡片 → ×2 = 16 种组合
+   - 仅改颜色与描边：旧 --app-* / --el-* 令牌整体桥接到 --ui-*，
+     与 UI 走查预览所见完全一致；不带 data-ui-theme 时默认琥珀主题不受影响
+   ========================================================================== */
+
+/* 同样压过 EP 的 :root 亮色默认值（dark 组合本身已更高，统一加 :root 前缀） */
+:root[data-ui-theme],
+:root[data-ui-theme][dark-theme] {
+  --border-color: var(--ui-border);
+  --expand-area-background-color: var(--ui-chrome);
+  --menu-background-color: var(--ui-card);
+  --menu-icon-color: var(--ui-text-secondary);
+  --main-font-color: var(--ui-text);
+  --preview-background-color: var(--ui-workspace);
+  --dialog-main-background-color: var(--ui-panel);
+  --app-page-bg: var(--ui-chrome);
+  --app-page-text: var(--ui-text);
+  --app-accent: var(--ui-accent);
+  --app-accent-light: var(--ui-accent-hover);
+  --app-hover-accent: var(--ui-accent-hover);
+  --app-active-bg: var(--ui-accent-soft);
+  --app-active-color: var(--ui-accent-soft-text);
+  --app-hover-bg: var(--ui-control-hover);
+  --app-hover-color: var(--ui-text);
+  --app-border: var(--ui-border);
+  --app-border-strong: var(--ui-border-strong);
+  --app-menu-border: var(--ui-border-soft);
+  --app-toolbar-border: var(--ui-border);
+  --app-placeholder-bg: var(--ui-workspace);
+  --app-control-bg: var(--ui-card);
+  --app-regular-text: var(--ui-text);
+  --app-secondary-text: var(--ui-text-secondary);
+  --app-text-resource-hover-bg: var(--ui-card-hover);
+  --app-thumb-bg: var(--ui-card-hover);
+  --app-thumb-border: var(--ui-border);
+  --app-thumb-active-bg: var(--ui-accent-soft);
+  --app-thumb-active-line: var(--ui-accent);
+  --app-dialog-header: var(--ui-panel);
+  --app-dialog-icon: var(--ui-text-secondary);
+  --app-dialog-title: var(--ui-text);
+  --app-dialog-body-bg: var(--ui-panel);
+  --app-dialog-border: var(--ui-border);
+  --app-dialog-line: var(--ui-border);
+  --app-dialog-subtle-bg: var(--ui-control);
+  --app-dialog-selected-bg: var(--ui-row-hover);
+  --app-dialog-line-strong: var(--ui-border-strong);
+  --app-dialog-row-hover-bg: var(--ui-card-hover);
+  --app-dialog-field-bg: var(--ui-elevated);
+  --app-dialog-field-border: var(--ui-border-strong);
+  --app-dialog-field-border-hover: var(--ui-text-faint);
+  --app-dialog-btn-bg: var(--ui-control);
+  --app-dialog-btn-text: var(--ui-text-secondary);
+  --app-dialog-close-hover-bg: var(--ui-control-hover);
+  --app-dialog-close-hover-text: var(--ui-text);
+  --app-tabs-active-bg: var(--ui-elevated);
+  --app-scrollbar-thumb: var(--ui-track);
+  --app-scrollbar-thumb-hover: var(--ui-border-strong);
+  --app-preview-scrollbar-thumb: var(--ui-border-strong);
+  --app-tooltip-bg: var(--ui-elevated);
+  --app-tooltip-text: var(--ui-text);
+  --app-tooltip-border: var(--ui-border);
+  --el-color-primary: var(--ui-accent);
+  --el-color-primary-light-3: var(--ui-accent-hover);
+  --el-color-primary-light-5: var(--ui-accent-soft-border);
+  --el-color-primary-light-7: var(--ui-accent-soft-hover);
+  --el-color-primary-light-8: var(--ui-accent-soft);
+  --el-color-primary-light-9: var(--ui-accent-soft);
+  --el-color-primary-dark-2: var(--ui-accent-active);
+  --el-color-success: var(--ui-success);
+  --el-bg-color: var(--ui-elevated);
+  --el-bg-color-page: var(--ui-chrome);
+  --el-bg-color-overlay: var(--ui-elevated);
+  --el-fill-color-blank: var(--ui-card);
+  --el-fill-color: var(--ui-card);
+  --el-fill-color-light: var(--ui-card);
+  --el-fill-color-lighter: var(--ui-control);
+  --el-fill-color-extra-light: var(--ui-panel);
+  --el-fill-color-dark: var(--ui-workspace);
+  --el-fill-color-darker: var(--ui-row);
+  --el-text-color-primary: var(--ui-text);
+  --el-text-color-regular: var(--ui-text);
+  --el-text-color-secondary: var(--ui-text-secondary);
+  --el-text-color-placeholder: var(--ui-text-faint);
+  --el-border-color: var(--ui-border);
+  --el-border-color-light: var(--ui-border-soft);
+  --el-border-color-lighter: var(--ui-border-soft);
+  --el-border-color-extra-light: var(--ui-border-soft);
+}
+
+/* ---------- 靛青 Indigo：墨蓝强调 × 冷调灰 ---------- */
+:root[data-ui-theme="indigo"] {
+  color-scheme: light;
+  --ui-chrome: #f7f8fa;
+  --ui-panel: #f7f8fa;
+  --ui-workspace: #e9ebf0;
+  --ui-card: #f0f2f6;
+  --ui-card-hover: #e9ebf1;
+  --ui-elevated: #ffffff;
+  --ui-control: #edeff3;
+  --ui-control-hover: #e5e8ee;
+  --ui-inset: #eef1f6;
+  --ui-row: #e9ebf1;
+  --ui-row-hover: #e0e3ea;
+  --ui-border: #dfe2ea;
+  --ui-border-soft: #e5e8ef;
+  --ui-border-strong: #d2d6e0;
+  --ui-divider: #e5e8ef;
+  --ui-text: #272b36;
+  --ui-text-secondary: #626879;
+  --ui-text-muted: #8a8fa0;
+  --ui-text-faint: #a7abba;
+  --ui-accent: #4a67d6;
+  --ui-accent-hover: #3e58c2;
+  --ui-accent-active: #3449a8;
+  --ui-accent-soft: #eef1fc;
+  --ui-accent-soft-hover: #e3e8f9;
+  --ui-accent-soft-border: #c8d2f0;
+  --ui-accent-soft-text: #3a53b2;
+  --ui-accent-glow: rgba(74, 103, 214, 0.30);
+  --ui-accent-ring: rgba(74, 103, 214, 0.22);
+  --ui-accent-contrast: #ffffff;
+  --ui-success: #23a55a;
+  --ui-track: #dcdfe8;
+}
+
+:root[data-ui-theme="indigo"][dark-theme] {
+  color-scheme: dark;
+  --ui-chrome: #0a0c12;
+  --ui-panel: #0f1118;
+  --ui-workspace: #0c0e14;
+  --ui-card: #151823;
+  --ui-card-hover: #1b1f2c;
+  --ui-elevated: #171b26;
+  --ui-control: #161a25;
+  --ui-control-hover: #1e2330;
+  --ui-inset: #12151f;
+  --ui-row: #1a1e2a;
+  --ui-row-hover: #222735;
+  --ui-border: #232838;
+  --ui-border-soft: #1e222e;
+  --ui-border-strong: #2c3244;
+  --ui-divider: #1e222e;
+  --ui-text: #eceef4;
+  --ui-text-secondary: #9aa1b2;
+  --ui-text-muted: #767d90;
+  --ui-text-faint: #565d70;
+  --ui-accent: #7d93ea;
+  --ui-accent-hover: #8fa3ef;
+  --ui-accent-active: #a1b3f3;
+  --ui-accent-soft: #1a2036;
+  --ui-accent-soft-hover: #212840;
+  --ui-accent-soft-border: #3b4570;
+  --ui-accent-soft-text: #9aacf2;
+  --ui-accent-glow: rgba(125, 147, 234, 0.28);
+  --ui-accent-ring: rgba(125, 147, 234, 0.24);
+  --ui-accent-contrast: #0c1228;
+  --ui-success: #35c46f;
+  --ui-track: #2e3344;
+}
+
+/* ---------- 松烟 Pine：松绿强调 × 微绿纸面 ---------- */
+:root[data-ui-theme="pine"] {
+  color-scheme: light;
+  --ui-chrome: #f8faf9;
+  --ui-panel: #f8faf9;
+  --ui-workspace: #e9efec;
+  --ui-card: #eff4f1;
+  --ui-card-hover: #e7eeea;
+  --ui-elevated: #ffffff;
+  --ui-control: #edf2ef;
+  --ui-control-hover: #e2ebe6;
+  --ui-inset: #eff3f1;
+  --ui-row: #e9efeb;
+  --ui-row-hover: #dfe8e3;
+  --ui-border: #e0e8e3;
+  --ui-border-soft: #e5ede8;
+  --ui-border-strong: #d3ded8;
+  --ui-divider: #e5ede8;
+  --ui-text: #252c29;
+  --ui-text-secondary: #5f6b65;
+  --ui-text-muted: #87928b;
+  --ui-text-faint: #a5b0aa;
+  --ui-accent: #2e8f66;
+  --ui-accent-hover: #27805a;
+  --ui-accent-active: #216f4e;
+  --ui-accent-soft: #e9f5f0;
+  --ui-accent-soft-hover: #dcefe6;
+  --ui-accent-soft-border: #bcdfd0;
+  --ui-accent-soft-text: #1e6b4c;
+  --ui-accent-glow: rgba(46, 143, 102, 0.30);
+  --ui-accent-ring: rgba(46, 143, 102, 0.22);
+  --ui-accent-contrast: #ffffff;
+  --ui-success: #23a55a;
+  --ui-track: #dbe3df;
+}
+
+:root[data-ui-theme="pine"][dark-theme] {
+  color-scheme: dark;
+  --ui-chrome: #0a0e0c;
+  --ui-panel: #0e1311;
+  --ui-workspace: #0c100e;
+  --ui-card: #141c18;
+  --ui-card-hover: #1a231e;
+  --ui-elevated: #161f1a;
+  --ui-control: #151d19;
+  --ui-control-hover: #1c2621;
+  --ui-inset: #111915;
+  --ui-row: #1a231e;
+  --ui-row-hover: #212c26;
+  --ui-border: #222e28;
+  --ui-border-soft: #1d2723;
+  --ui-border-strong: #2b3a32;
+  --ui-divider: #1d2723;
+  --ui-text: #ebf1ee;
+  --ui-text-secondary: #98a5a0;
+  --ui-text-muted: #74807a;
+  --ui-text-faint: #54605a;
+  --ui-accent: #52b98b;
+  --ui-accent-hover: #63c498;
+  --ui-accent-active: #74cfa5;
+  --ui-accent-soft: #16241e;
+  --ui-accent-soft-hover: #1c2d26;
+  --ui-accent-soft-border: #2f4f40;
+  --ui-accent-soft-text: #6fcda2;
+  --ui-accent-glow: rgba(82, 185, 139, 0.28);
+  --ui-accent-ring: rgba(82, 185, 139, 0.24);
+  --ui-accent-contrast: #08130e;
+  --ui-success: #35c46f;
+  --ui-track: #2b3731;
+}
+
+/* ---------- 胭脂 Crimson：绛红强调 × 暖调灰 ---------- */
+:root[data-ui-theme="crimson"] {
+  color-scheme: light;
+  --ui-chrome: #faf9f9;
+  --ui-panel: #faf9f9;
+  --ui-workspace: #f0eceb;
+  --ui-card: #f5f2f1;
+  --ui-card-hover: #efeae8;
+  --ui-elevated: #ffffff;
+  --ui-control: #f1eeed;
+  --ui-control-hover: #e9e3e1;
+  --ui-inset: #f3f0ef;
+  --ui-row: #efeae8;
+  --ui-row-hover: #e7e0dd;
+  --ui-border: #e8e2e0;
+  --ui-border-soft: #ede7e5;
+  --ui-border-strong: #dbd3d0;
+  --ui-divider: #ede7e5;
+  --ui-text: #2f282a;
+  --ui-text-secondary: #6e6467;
+  --ui-text-muted: #93888b;
+  --ui-text-faint: #b0a6a9;
+  --ui-accent: #c8515e;
+  --ui-accent-hover: #b74552;
+  --ui-accent-active: #a03a46;
+  --ui-accent-soft: #fceff0;
+  --ui-accent-soft-hover: #f9e2e4;
+  --ui-accent-soft-border: #efc3c9;
+  --ui-accent-soft-text: #a63b47;
+  --ui-accent-glow: rgba(200, 81, 94, 0.30);
+  --ui-accent-ring: rgba(200, 81, 94, 0.22);
+  --ui-accent-contrast: #ffffff;
+  --ui-success: #23a55a;
+  --ui-track: #e3dcda;
+}
+
+:root[data-ui-theme="crimson"][dark-theme] {
+  color-scheme: dark;
+  --ui-chrome: #100c0d;
+  --ui-panel: #140f10;
+  --ui-workspace: #120d0e;
+  --ui-card: #1d1517;
+  --ui-card-hover: #241a1c;
+  --ui-elevated: #1f1719;
+  --ui-control: #1d1517;
+  --ui-control-hover: #251b1e;
+  --ui-inset: #181114;
+  --ui-row: #241a1c;
+  --ui-row-hover: #2d2124;
+  --ui-border: #2f2326;
+  --ui-border-soft: #281e21;
+  --ui-border-strong: #3d2e32;
+  --ui-divider: #281e21;
+  --ui-text: #f2edef;
+  --ui-text-secondary: #a79aa0;
+  --ui-text-muted: #827479;
+  --ui-text-faint: #5f5257;
+  --ui-accent: #e07c88;
+  --ui-accent-hover: #e68d98;
+  --ui-accent-active: #ec9ea8;
+  --ui-accent-soft: #28191c;
+  --ui-accent-soft-hover: #311f23;
+  --ui-accent-soft-border: #52333a;
+  --ui-accent-soft-text: #eb9aa4;
+  --ui-accent-glow: rgba(224, 124, 136, 0.28);
+  --ui-accent-ring: rgba(224, 124, 136, 0.24);
+  --ui-accent-contrast: #260a0e;
+  --ui-success: #35c46f;
+  --ui-track: #382c2f;
+}
+
+/* ---------- 紫藤 Wisteria：紫罗兰强调 × 微紫灰面 ---------- */
+:root[data-ui-theme="wisteria"] {
+  color-scheme: light;
+  --ui-chrome: #faf9fc;
+  --ui-panel: #faf9fc;
+  --ui-workspace: #f0ebf5;
+  --ui-card: #f4eff8;
+  --ui-card-hover: #ede7f2;
+  --ui-elevated: #ffffff;
+  --ui-control: #f1ecf5;
+  --ui-control-hover: #e9e2ee;
+  --ui-inset: #f2edf6;
+  --ui-row: #ede7f2;
+  --ui-row-hover: #e4dcea;
+  --ui-border: #e6dfee;
+  --ui-border-soft: #ebe4f1;
+  --ui-border-strong: #d8cde2;
+  --ui-divider: #ebe4f1;
+  --ui-text: #2d2836;
+  --ui-text-secondary: #675e72;
+  --ui-text-muted: #8d8496;
+  --ui-text-faint: #aba2b2;
+  --ui-accent: #8b5fc9;
+  --ui-accent-hover: #7d51ba;
+  --ui-accent-active: #6e46a6;
+  --ui-accent-soft: #f4eefc;
+  --ui-accent-soft-hover: #ece1f8;
+  --ui-accent-soft-border: #d9c6f0;
+  --ui-accent-soft-text: #6c46a0;
+  --ui-accent-glow: rgba(139, 95, 201, 0.30);
+  --ui-accent-ring: rgba(139, 95, 201, 0.22);
+  --ui-accent-contrast: #ffffff;
+  --ui-success: #23a55a;
+  --ui-track: #e2daea;
+}
+
+:root[data-ui-theme="wisteria"][dark-theme] {
+  color-scheme: dark;
+  --ui-chrome: #0e0b12;
+  --ui-panel: #110d15;
+  --ui-workspace: #0f0c13;
+  --ui-card: #191320;
+  --ui-card-hover: #201828;
+  --ui-elevated: #1b1523;
+  --ui-control: #1a1421;
+  --ui-control-hover: #221a2a;
+  --ui-inset: #150f1c;
+  --ui-row: #201828;
+  --ui-row-hover: #282031;
+  --ui-border: #2a2133;
+  --ui-border-soft: #251d2d;
+  --ui-border-strong: #372c43;
+  --ui-divider: #251d2d;
+  --ui-text: #efeaf4;
+  --ui-text-secondary: #a29ab0;
+  --ui-text-muted: #7d7489;
+  --ui-text-faint: #5c5468;
+  --ui-accent: #a988d9;
+  --ui-accent-hover: #b499e0;
+  --ui-accent-active: #bfa9e7;
+  --ui-accent-soft: #201830;
+  --ui-accent-soft-hover: #271e3b;
+  --ui-accent-soft-border: #3f3055;
+  --ui-accent-soft-text: #bda4e6;
+  --ui-accent-glow: rgba(169, 136, 217, 0.28);
+  --ui-accent-ring: rgba(169, 136, 217, 0.24);
+  --ui-accent-contrast: #150a26;
+  --ui-success: #35c46f;
+  --ui-track: #322a3e;
+}
+
+/* ---------- 扁平模式：去掉左右面板分组卡片外壳（边框线级改动，不动尺寸）
+   !important 用于压过 RightPanel.vue 中 .el-menu > .sub-menu 的同权重 scoped 样式 ---------- */
+:root[data-ui-cards="off"] .section-card {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+:root[data-ui-cards="off"] .section-header {
+  background: transparent !important;
+}
+
+:root[data-ui-cards="off"] .section-header:hover {
+  background: var(--ui-row-hover) !important;
+}
+
+:root[data-ui-cards="off"] .el-menu .sub-menu {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+:root[data-ui-cards="off"] .el-menu .sub-menu .el-sub-menu__title {
+  background: transparent !important;
+}
+
+:root[data-ui-cards="off"] .el-menu .sub-menu .el-sub-menu__title:hover {
+  background: var(--ui-row-hover) !important;
 }
 
 

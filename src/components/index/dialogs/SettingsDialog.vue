@@ -133,7 +133,7 @@
         <el-tab-pane :label="$t('settings.tabs.appearance')">
           <div class="border-box">
             <span class="border-label">{{ $t('settings.themeGroup') }}</span>
-            <div class="options">
+            <div class="options theme-options">
               <div class="option">
                 <span class="label">{{ $t('settings.themeMode') }}</span>
                 <el-radio-group
@@ -143,6 +143,24 @@
                   <el-radio-button value="light">{{ $t('settings.themeLight') }}</el-radio-button>
                   <el-radio-button value="system">{{ $t('settings.themeSystem') }}</el-radio-button>
                 </el-radio-group>
+              </div>
+              <div class="option">
+                <span class="label">{{ $t('settings.uiTheme') }}</span>
+                <el-select
+                    class="value"
+                    :model-value="uiThemePreset"
+                    @change="handleUiThemeChange">
+                  <el-option-group
+                      v-for="group in uiThemeGroups"
+                      :key="group.labelKey"
+                      :label="$t(`settings.${group.labelKey}`)">
+                    <el-option
+                        v-for="opt in group.options"
+                        :key="opt.value"
+                        :value="opt.value"
+                        :label="$t(`settings.${opt.accentKey}`)"/>
+                  </el-option-group>
+                </el-select>
               </div>
             </div>
           </div>
@@ -459,7 +477,42 @@ const settingsDialogVisible = ref(false)
 
 const confirmRef = ref(null)
 
-const {applyTheme} = useTheme();
+const {applyTheme, renderUiStyle} = useTheme();
+
+// 主题单选切换后应用主题
+const handleThemeChange = () => {
+  const theme = ['light', 'dark', 'system'].includes(settingsStore.projectSettings.appearance?.theme)
+      ? settingsStore.projectSettings.appearance.theme
+      : 'system'
+  applyTheme(theme)
+}
+
+/* 界面配色预设：5 配色（默认琥珀/靛青/松烟/胭脂/紫藤）× 卡片/扁平，值编码 "<accent>-<card|flat>" */
+const uiThemeOptions = ['default', 'indigo', 'pine', 'crimson', 'wisteria'].flatMap(accent => [true, false].map(cards => ({
+    value: `${accent}-${cards ? 'card' : 'flat'}`,
+    accentKey: accent === 'default' ? 'themeDefault' : `theme${accent.charAt(0).toUpperCase()}${accent.slice(1)}`,
+    cards
+})));
+
+// 下拉按「扁平 / 卡片」分成两组，选项 label 只显示配色名
+const uiThemeGroups = computed(() => ([
+    {labelKey: 'themeGroupFlat', options: uiThemeOptions.filter(o => !o.cards)},
+    {labelKey: 'themeGroupCards', options: uiThemeOptions.filter(o => o.cards)},
+]));
+
+const uiThemePreset = computed(() => {
+    const appearance = settingsStore.projectSettings.appearance;
+    const accent = appearance.uiTheme || 'default';
+    return `${accent}-${appearance.showGroupCards === false ? 'flat' : 'card'}`;
+});
+
+const handleUiThemeChange = (val) => {
+    const appearance = settingsStore.projectSettings.appearance;
+    const idx = val.lastIndexOf('-');
+    appearance.uiTheme = val.slice(0, idx);
+    appearance.showGroupCards = val.slice(idx + 1) === 'card';
+    renderUiStyle();
+};
 
 // 应用菜单"偏好设置"的 IPC 监听
 window.electronAPI.openSettingsDialog(() => {
@@ -675,14 +728,6 @@ watchProjectSettings()
 // 初始化布局 CSS 变量（项目设置已在页面 setup 中加载完成）
 initAreaResize()
 
-// 主题单选切换后应用主题
-const handleThemeChange = () => {
-  const theme = ['light', 'dark', 'system'].includes(settingsStore.projectSettings.appearance?.theme)
-      ? settingsStore.projectSettings.appearance.theme
-      : 'system'
-  applyTheme(theme)
-}
-
 // 重置元数据格式并重新格式化画布元数据
 const resetMetadataSettings = () => {
   settingsStore.projectSettings.metadata = _.cloneDeep(defaultProjectSettings.metadata)
@@ -805,6 +850,16 @@ const handleStopActivateInput = (row, column) => {
         column-gap: 8px;
         // 各行的 .label 与控件直接参与本网格，由这里统一垂直居中
         align-items: center;
+
+        // 外观-主题框：第二列宽度由主题模式单选组的自然宽度撑起，
+        // 界面配色下拉拉伸至同宽，使下拉框右缘与单选组右缘对齐（而非贴到对话框右缘）
+        &.theme-options {
+          grid-template-columns: max-content max-content;
+
+          .option .el-select.value {
+            width: 100%;
+          }
+        }
 
         .option {
           font-size: 13px;
