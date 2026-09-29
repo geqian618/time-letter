@@ -770,6 +770,7 @@ Object.assign(canvasActions, {
   clearCanvas,
   centerCanvasScrollBar,
   reflowWorkspace,
+  refreshZoom,
   permanentlyRemoveSelectedCanvas,
   useTemplate,
 })

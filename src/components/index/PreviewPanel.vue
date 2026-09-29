@@ -679,6 +679,8 @@ const handleZoom = (val) => {
   editor?.setZoom(newZoom);
   bgEditor?.setZoom(newZoom);
   canvasActions.reflowWorkspace?.();
+  // 同步右下角浮动缩放胶囊的百分比显示
+  canvasActions.refreshZoom?.();
 };
 
 
