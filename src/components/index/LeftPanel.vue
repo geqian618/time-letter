@@ -7,7 +7,7 @@
         <circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.5"/>
         <path d="M10.6 10.6 L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
-      <input class="search-input" type="text" :placeholder="$t('left.searchPlaceholder')" spellcheck="false">
+      <input class="search-input" type="text" v-model="presetKeyword" :placeholder="$t('left.searchPlaceholder')" spellcheck="false">
     </label>
 
     <!-- 覆盖式滚动条：不占布局宽度，展开 / 收起都不会把卡片挤窄 -->
@@ -18,7 +18,7 @@
         <div class="section-card" :class="{'is-collapsed': !opened.templates}">
           <header class="section-header" @click="toggleSection('templates')">
             <span class="section-title">{{ $t('left.allPresets') }}</span>
-            <span class="section-meta">{{ $t('left.countUnit', {count: presetList.length}) }}</span>
+            <span class="section-meta">{{ $t('left.countUnit', {count: filteredPresetList.length}) }}</span>
             <svg class="section-chevron" :class="{collapsed: !opened.templates}" viewBox="0 0 16 16">
               <path d="M4 10 L8 6 L12 10" fill="none" stroke="currentColor" stroke-width="1.6"
                     stroke-linecap="round" stroke-linejoin="round"/>
@@ -29,7 +29,7 @@
             <div class="section-body" v-show="opened.templates">
             <div class="preset-list" ref="templateListRef" v-drag-sort="handleTemplateSorting">
               <div
-                  v-for="preset in presetList"
+                    v-for="preset in filteredPresetList"
                   :key="preset.templateId"
                   class="template preset-card"
                   :class="{'is-active': preset.templateId === activeTemplateId}"
@@ -43,7 +43,9 @@
               </div>
             </div>
 
-            <p v-if="!presetList.length" class="section-empty">{{ $t('left.emptyPresets') }}</p>
+            <p v-if="!filteredPresetList.length" class="section-empty">
+              {{ presetKeyword ? $t('left.noMatchPresets') : $t('left.emptyPresets') }}
+            </p>
             </div>
           </Transition>
         </div>
@@ -254,6 +256,15 @@ const presetList = computed(() => templatesStore.templates.map((template, index)
   layers: countLayers(template),
   gradient: PRESET_GRADIENTS[index % PRESET_GRADIENTS.length],
 })))
+
+// 顶部搜索框：按预设名称筛选
+const presetKeyword = ref('')
+
+const filteredPresetList = computed(() => {
+  const keyword = presetKeyword.value.trim().toLowerCase()
+  if (!keyword) return presetList.value
+  return presetList.value.filter(preset => preset.templateName.toLowerCase().includes(keyword))
+})
 
 // 模板右键菜单：记录目标模板并打开主进程菜单
 const triggerTemplateContextMenu = ({templateId, templateName}) => {
@@ -586,7 +597,8 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 10px;
+    /* 内边距收窄，把空间让给 logo 本身，卡片尺寸不变 */
+    padding: 4px 5px;
     border-radius: var(--app-radius-sm);
     /* 品牌标多为彩色 logo，底色固定用白，暗色下也能看清 */
     background: #ffffff;
@@ -599,10 +611,9 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
     }
 
     .image-resource {
-      max-width: 100%;
-      max-height: 100%;
-      width: auto;
-      height: auto;
+      /* 强制填满内容区，小图等比放大，logo 占比更高 */
+      width: 100%;
+      height: 100%;
       object-fit: contain;
       display: block;
       cursor: move;
@@ -614,8 +625,8 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 /* ---------- 文本库芯片 ---------- */
 .text-grid {
   display: grid;
-  /* 方形小格子：列宽与芯片同宽（38px），从左往右排列 */
-  grid-template-columns: repeat(3, 38px);
+  /* 方形小格子：列宽固定 38px，列数随容器宽度自适应，放不下才换行 */
+  grid-template-columns: repeat(auto-fill, 38px);
   justify-content: start;
   gap: 8px;
 

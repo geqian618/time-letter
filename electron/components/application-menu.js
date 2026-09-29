@@ -56,6 +56,7 @@ const createApplicationMenu = (mainWindow) => {
             label: t('menu.settings'),
             submenu: [
                 {
+                    id: 'preferences',
                     label: t('menu.preferences'),
                     click: openSettingsDialog,
                     accelerator: 'CommandOrControl+Alt+S',
@@ -64,10 +65,12 @@ const createApplicationMenu = (mainWindow) => {
                     label: t('menu.templatePresets'),
                     submenu: [
                         {
+                            id: 'import-templates',
                             label: t('menu.importFile'),
                             click: importTemplates
                         },
                         {
+                            id: 'export-templates',
                             label: t('menu.exportFile'),
                             click: exportTemplates
                         }
@@ -77,10 +80,12 @@ const createApplicationMenu = (mainWindow) => {
                     label: t('menu.globalSettings'),
                     submenu: [
                         {
+                            id: 'import-settings',
                             label: t('menu.importFile'),
                             click: importSettings
                         },
                         {
+                            id: 'export-settings',
                             label: t('menu.exportFile'),
                             click: exportSettings
                         }
@@ -96,10 +101,12 @@ const createApplicationMenu = (mainWindow) => {
                     label: t('menu.textLibrary'),
                     submenu: [
                         {
+                            id: 'add-text',
                             label: t('menu.addText'),
                             click: addTextResource
                         },
                         {
+                            id: 'manage-text',
                             label: t('menu.manageText'),
                             click: () => {
                                 window.webContents.send('resources:watch-change', {type: 3})
@@ -111,10 +118,12 @@ const createApplicationMenu = (mainWindow) => {
                     label: t('menu.imageLibrary'),
                     submenu: [
                         {
+                            id: 'import-image-resources',
                             label: t('menu.importImages'),
                             click: selectImageResources
                         },
                         {
+                            id: 'open-image-resources',
                             label: t('menu.openResources'),
                             click: () => {
                                 // 尝试打开文件夹
@@ -127,10 +136,12 @@ const createApplicationMenu = (mainWindow) => {
                     label: t('menu.fontLibrary'),
                     submenu: [
                         {
+                            id: 'import-fonts',
                             label: t('menu.importFonts'),
                             click: selectFonts
                         },
                         {
+                            id: 'open-font-resources',
                             label: t('menu.openResources'),
                             click: () => {
                                 // 尝试打开文件夹
@@ -146,6 +157,7 @@ const createApplicationMenu = (mainWindow) => {
             label: t('menu.tools'),
             submenu: [
                 {
+                    id: 'image-manager',
                     label: t('menu.imageManager'),
                     click: openImageManagerWindow
                 },
@@ -171,6 +183,7 @@ const createApplicationMenu = (mainWindow) => {
                 }
             },
             {
+                id: 'about',
                 label: t('menu.about'),
                 click: openAboutDialog
             }

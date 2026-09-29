@@ -51,6 +51,7 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SaveTemplateDialog: typeof import('./src/components/index/dialogs/SaveTemplateDialog.vue')['default']
+    SearchDropdown: typeof import('./src/components/index/SearchDropdown.vue')['default']
     SettingsDialog: typeof import('./src/components/index/dialogs/SettingsDialog.vue')['default']
     TextResourceDialog: typeof import('./src/components/index/dialogs/TextResourceDialog.vue')['default']
     TextResourceManagerDialog: typeof import('./src/components/index/dialogs/TextResourceManagerDialog.vue')['default']

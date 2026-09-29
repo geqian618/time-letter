@@ -3,7 +3,7 @@
     <div class="page-layout">
 
       <TopToolbar :left-collapsed="leftCollapsed" :right-collapsed="rightCollapsed"
-                  @toggle-left="toggleLeft" @toggle-right="toggleRight"/>
+                  @toggle-left="toggleLeft" @toggle-right="toggleRight" @toggle-bottom="toggleBottom"/>
 
       <div class="page-body" ref="page">
 

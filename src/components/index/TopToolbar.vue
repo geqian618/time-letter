@@ -34,14 +34,8 @@
 
     <!-- 右侧操作区 -->
     <div class="toolbar-actions">
-      <label class="search-box">
-        <svg class="search-icon" viewBox="0 0 16 16" aria-hidden="true">
-          <circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M10.6 10.6 L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-        <input class="search-input" type="text" :placeholder="$t('toolbar.searchPlaceholder')" spellcheck="false">
-        <span class="search-shortcut">Ctrl K</span>
-      </label>
+      <SearchDropdown @toggle-left="$emit('toggle-left')" @toggle-right="$emit('toggle-right')"
+                      @toggle-bottom="$emit('toggle-bottom')"/>
 
       <button type="button" class="export-button" @click="handleExport">
         <svg viewBox="0 0 16 16" aria-hidden="true">
@@ -116,6 +110,8 @@ import {ElMessage} from 'element-plus'
 
 import appLogo from '@resources/favicon.png'
 
+import SearchDropdown from '@/components/index/SearchDropdown.vue'
+
 const {t} = useI18n()
 
 // 面板伸缩状态由父组件（Index.vue）持有，这里只转发切换事件并按状态提示文案
@@ -124,7 +120,7 @@ const props = defineProps({
   rightCollapsed: {type: Boolean, default: false},
 })
 
-defineEmits(['toggle-left', 'toggle-right'])
+defineEmits(['toggle-left', 'toggle-right', 'toggle-bottom'])
 
 // 顶级菜单：有原生菜单的走主进程弹出原生命令
 const menus = [
@@ -308,66 +304,6 @@ onUnmounted(() => {
   align-items: center;
   gap: 10px;
   -webkit-app-region: no-drag;
-}
-
-.search-box {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  width: 262px;
-  height: 30px;
-  padding: 0 8px 0 10px;
-  border-radius: var(--app-radius-sm);
-  background: var(--ui-control);
-  border: 1px solid var(--ui-border);
-  cursor: text;
-  transition: border-color var(--app-transition), background-color var(--app-transition);
-
-  &:hover {
-    border-color: var(--ui-border-strong);
-  }
-
-  &:focus-within {
-    border-color: var(--ui-accent);
-    box-shadow: 0 0 0 3px var(--ui-accent-ring);
-  }
-
-  .search-icon {
-    width: 13px;
-    height: 13px;
-    flex-shrink: 0;
-    color: var(--ui-text-muted);
-  }
-
-  .search-input {
-    flex: 1;
-    min-width: 0;
-    height: 100%;
-    border: none;
-    outline: none;
-    background: transparent;
-    font-family: inherit;
-    font-size: 12.5px;
-    color: var(--ui-text);
-
-    &::placeholder {
-      color: var(--ui-text-faint);
-    }
-  }
-
-  .search-shortcut {
-    flex-shrink: 0;
-    height: 18px;
-    padding: 0 6px;
-    display: inline-flex;
-    align-items: center;
-    border-radius: 3px;
-    background: var(--ui-elevated);
-    border: 1px solid var(--ui-border);
-    font-size: 10px;
-    letter-spacing: 0.3px;
-    color: var(--ui-text-muted);
-  }
 }
 
 .export-button {
