@@ -202,6 +202,14 @@ body .el-scrollbar__bar.is-vertical {
   width: var(--app-scrollbar-size);
 }
 
+/* el-scrollbar 滑块与原生 ::-webkit-scrollbar 滑块同形：1px 透明内边，
+   可见主体同为 4px，左右面板与底部面板的滚动条粗细观感一致 */
+body .el-scrollbar__thumb {
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  border-radius: 4px;
+}
+
 body .el-collapse-transition-enter-active,
 body .el-collapse-transition-leave-active {
   /* 右侧属性面板分组的展开 / 收起更干脆 */
