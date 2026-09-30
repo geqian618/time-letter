@@ -88,6 +88,8 @@ export default {
         languageGroup: '语言',
         interfaceLanguage: '界面语言',
         languageSystem: '跟随系统',
+        languageZh: '中文',
+        languageEn: '英语',
         personalization: '个性化',
         optionAnchor: '属性锚点',
         deleteTips: '删除提示',

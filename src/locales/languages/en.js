@@ -88,6 +88,8 @@ export default {
         languageGroup: 'Language',
         interfaceLanguage: 'Language',
         languageSystem: 'System',
+        languageZh: 'Chinese',
+        languageEn: 'English',
         personalization: 'Personalization',
         optionAnchor: 'Property Anchor',
         deleteTips: 'Delete Prompt',

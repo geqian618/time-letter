@@ -340,7 +340,7 @@
                   <el-option
                       v-for="item in languageOptions"
                       :key="item.value"
-                      :label="item.labelKey ? $t(item.labelKey) : item.label"
+                      :label="$t(item.labelKey)"
                       :value="item.value"/>
                 </el-select>
               </div>
