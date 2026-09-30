@@ -90,6 +90,84 @@
 
 
       <div class="right-preview-bar">
+        <!-- 对齐 / 分布：描边图标，分组与元素位置参考 PS 选项栏 -->
+        <!-- 分组：[水平对齐族（竖参考线）] │ [垂直对齐族（横参考线）] │ [分布] -->
+        <div class="align-group">
+          <el-tooltip :content="$t('preview.alignLeft')" placement="top">
+            <button type="button" class="bar-icon" @click="handleAlign('left')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+                <path d="M2.8 2.5 V13.5"/>
+                <rect x="2.8" y="4" width="5.5" height="3" rx="0.8"/>
+                <rect x="2.8" y="9" width="8.5" height="3" rx="0.8"/>
+              </svg>
+            </button>
+          </el-tooltip>
+          <el-tooltip :content="$t('preview.alignCenterH')" placement="top">
+            <button type="button" class="bar-icon" @click="handleAlign('center-h')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+                <path d="M8 2.5 V13.5"/>
+                <rect x="5.75" y="4" width="4.5" height="3" rx="0.8"/>
+                <rect x="4" y="9" width="8" height="3" rx="0.8"/>
+              </svg>
+            </button>
+          </el-tooltip>
+          <el-tooltip :content="$t('preview.alignRight')" placement="top">
+            <button type="button" class="bar-icon" @click="handleAlign('right')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+                <path d="M13.2 2.5 V13.5"/>
+                <rect x="7.7" y="4" width="5.5" height="3" rx="0.8"/>
+                <rect x="4.7" y="9" width="8.5" height="3" rx="0.8"/>
+              </svg>
+            </button>
+          </el-tooltip>
+          <span class="align-divider"/>
+          <el-tooltip :content="$t('preview.alignTop')" placement="top">
+            <button type="button" class="bar-icon" @click="handleAlign('top')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+                <path d="M2.5 2.8 H13.5"/>
+                <rect x="4" y="2.8" width="3" height="7.6" rx="0.8"/>
+                <rect x="9" y="2.8" width="3" height="5" rx="0.8"/>
+              </svg>
+            </button>
+          </el-tooltip>
+          <el-tooltip :content="$t('preview.alignCenterV')" placement="top">
+            <button type="button" class="bar-icon" @click="handleAlign('center-v')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+                <path d="M2.5 8 H13.5"/>
+                <rect x="4" y="3" width="3" height="10" rx="0.8"/>
+                <rect x="9" y="5" width="3" height="6" rx="0.8"/>
+              </svg>
+            </button>
+          </el-tooltip>
+          <el-tooltip :content="$t('preview.alignBottom')" placement="top">
+            <button type="button" class="bar-icon" @click="handleAlign('bottom')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+                <path d="M2.5 13.2 H13.5"/>
+                <rect x="4" y="5.6" width="3" height="7.6" rx="0.8"/>
+                <rect x="9" y="8.2" width="3" height="5" rx="0.8"/>
+              </svg>
+            </button>
+          </el-tooltip>
+          <span class="align-divider"/>
+          <el-tooltip :content="$t('preview.distributeH')" placement="top">
+            <button type="button" class="bar-icon" @click="handleDistribute('horizontal')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+                <rect x="2" y="4" width="2.4" height="8" rx="0.8"/>
+                <rect x="6.8" y="4" width="2.4" height="8" rx="0.8"/>
+                <rect x="11.6" y="4" width="2.4" height="8" rx="0.8"/>
+              </svg>
+            </button>
+          </el-tooltip>
+          <el-tooltip :content="$t('preview.distributeV')" placement="top">
+            <button type="button" class="bar-icon" @click="handleDistribute('vertical')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+                <rect x="4" y="2" width="8" height="2.4" rx="0.8"/>
+                <rect x="4" y="6.8" width="8" height="2.4" rx="0.8"/>
+                <rect x="4" y="11.6" width="8" height="2.4" rx="0.8"/>
+              </svg>
+            </button>
+          </el-tooltip>
+        </div>
         <div class="counter">{{
             $t('preview.counter', {
               selected: canvasesStore.selectedPreviewList.size,
@@ -684,6 +762,18 @@ const handleZoom = (val) => {
 };
 
 
+// 对齐选中元素：多选以选区联合包围盒为基准，单选以画布为基准（逻辑在 CanvasEditor.alignElements）
+const handleAlign = (mode) => {
+  canvasesStore.getCanvasEditor()?.alignElements(mode);
+};
+
+
+// 分布选中元素：以首尾为基准，中间元素中心点等距排布（逻辑在 CanvasEditor.distributeElements）
+const handleDistribute = (mode) => {
+  canvasesStore.getCanvasEditor()?.distributeElements(mode);
+};
+
+
 const handleVisibleChange = (visible) => {
   tooltipDisabled.value = visible
 }
@@ -716,45 +806,45 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
   padding: 0 14px 0 10px;
   gap: 12px;
 
+  .bar-icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: var(--app-radius-xs);
+    background: transparent;
+    color: var(--ui-text-secondary);
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+    transition: background-color var(--app-transition), color var(--app-transition);
+
+    svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    &:hover {
+      background: var(--ui-control);
+      color: var(--ui-text);
+    }
+  }
+
+  /* 缩放下拉：不加边框，背景宽度与其他图标一致 */
+  .bar-icon.is-text {
+    width: 28px;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.2px;
+  }
+
   .left-preview-bar {
     height: 100%;
     display: flex;
     align-items: center;
     gap: 2px;
-
-    .bar-icon {
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: none;
-      border-radius: var(--app-radius-xs);
-      background: transparent;
-      color: var(--ui-text-secondary);
-      cursor: pointer;
-      padding: 0;
-      font-family: inherit;
-      transition: background-color var(--app-transition), color var(--app-transition);
-
-      svg {
-        width: 17px;
-        height: 17px;
-      }
-
-      &:hover {
-        background: var(--ui-control);
-        color: var(--ui-text);
-      }
-    }
-
-    /* 缩放下拉：不加边框，背景宽度与其他图标一致 */
-    .bar-icon.is-text {
-      width: 28px;
-      font-size: 12px;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -0.2px;
-    }
 
     .zoom-dropdown {
       display: flex;
@@ -767,6 +857,21 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
     margin-left: auto;
     align-items: center;
     gap: 14px;
+
+    /* 对齐 / 分布按钮组：与左侧工具栏同款图标按钮 + 分隔线 */
+    .align-group {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+
+      .align-divider {
+        flex: 0 0 auto;
+        width: 1px;
+        height: 16px;
+        margin: 0 7px;
+        background: var(--ui-border);
+      }
+    }
 
     .counter {
       color: var(--ui-text-secondary);

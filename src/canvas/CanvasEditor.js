@@ -449,6 +449,86 @@ class CanvasEditor {
     }
 
     /**
+     * 对齐选中元素：多选时以选区联合包围盒为基准，单选时以画布为基准
+     * @param {'left'|'center-h'|'right'|'top'|'center-v'|'bottom'} mode - 对齐模式
+     */
+    alignElements(mode) {
+        const targets = this.activeElements;
+        if (!targets || targets.length === 0) return;
+        // 参考边界：多选取所有选中元素的联合包围盒，单选对齐整张画布
+        let refBounds;
+        if (targets.length === 1) {
+            refBounds = {x: 0, y: 0, w: this.width, h: this.height};
+        } else {
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            for (const el of targets) {
+                const b = el.getSelectionBounds();
+                minX = Math.min(minX, b.x);
+                minY = Math.min(minY, b.y);
+                maxX = Math.max(maxX, b.x + b.w);
+                maxY = Math.max(maxY, b.y + b.h);
+            }
+            refBounds = {x: minX, y: minY, w: maxX - minX, h: maxY - minY};
+        }
+        for (const el of targets) {
+            const b = el.getSelectionBounds();
+            let dx = 0, dy = 0;
+            if (mode === 'left') dx = refBounds.x - b.x;
+            else if (mode === 'center-h') dx = refBounds.x + refBounds.w / 2 - (b.x + b.w / 2);
+            else if (mode === 'right') dx = refBounds.x + refBounds.w - (b.x + b.w);
+            else if (mode === 'top') dy = refBounds.y - b.y;
+            else if (mode === 'center-v') dy = refBounds.y + refBounds.h / 2 - (b.y + b.h / 2);
+            else if (mode === 'bottom') dy = refBounds.y + refBounds.h - (b.y + b.h);
+            else return;
+            if (!dx && !dy) continue;
+            // 位移同步作用到 x/y 与旋转基准 centerX/centerY（与拖拽移动保持一致）
+            el.x += dx;
+            el.y += dy;
+            el.centerX += dx;
+            el.centerY += dy;
+        }
+        this.renderAll();
+    }
+
+    /**
+     * 分布选中元素：以首尾元素为基准，中间元素沿分布方向按中心点等距排布（参考 PS 分布）
+     * @param {'horizontal'|'vertical'} mode - 分布方向
+     */
+    distributeElements(mode) {
+        const targets = this.activeElements;
+        if (!targets || targets.length < 3) return;
+        const horizontal = mode === 'horizontal';
+        // 按分布方向上的中心点排序，确定首尾基准
+        const sorted = [...targets].sort((a, b) => {
+            const ba = a.getSelectionBounds();
+            const bb = b.getSelectionBounds();
+            return horizontal
+                ? (ba.x + ba.w / 2) - (bb.x + bb.w / 2)
+                : (ba.y + ba.h / 2) - (bb.y + bb.h / 2);
+        });
+        const first = sorted[0].getSelectionBounds();
+        const last = sorted[sorted.length - 1].getSelectionBounds();
+        const start = horizontal ? first.x + first.w / 2 : first.y + first.h / 2;
+        const end = horizontal ? last.x + last.w / 2 : last.y + last.h / 2;
+        if (start === end) return;
+        const step = (end - start) / (sorted.length - 1);
+        for (let i = 1; i < sorted.length - 1; i++) {
+            const el = sorted[i];
+            const b = el.getSelectionBounds();
+            let dx = 0, dy = 0;
+            if (horizontal) dx = start + step * i - (b.x + b.w / 2);
+            else dy = start + step * i - (b.y + b.h / 2);
+            if (!dx && !dy) continue;
+            // 位移同步作用到 x/y 与旋转基准 centerX/centerY（与拖拽移动保持一致）
+            el.x += dx;
+            el.y += dy;
+            el.centerX += dx;
+            el.centerY += dy;
+        }
+        this.renderAll();
+    }
+
+    /**
      * 清理画布
      */
     clearCanvas() {
