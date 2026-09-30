@@ -255,7 +255,7 @@ export default {
         alignBottom: '底对齐',
         distributeH: '水平分布',
         distributeV: '垂直分布',
-        counter: '已选 {selected} / 共{total}张',
+        counter: '已选 {selected} / 共 {total} 张',
         filter: '筛选：',
         filterNone: '无',
         filterLandscape: '横图',

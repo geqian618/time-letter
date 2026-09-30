@@ -23,7 +23,7 @@
         </el-tooltip>
         <el-tooltip :content="$t('preview.next')" placement="top">
           <button type="button" class="bar-icon" @click="switchNextPreviewElement">
-              <SvgIcon name="step-next"/>
+            <SvgIcon name="step-next"/>
           </button>
         </el-tooltip>
         <el-tooltip :content="$t('preview.last')" placement="top">
@@ -381,7 +381,10 @@ const switchPreviewImage = async (event, canvas) => {
     // 没有预览元素或前一次预览元素与当前预览元素不同时显示，多次点击预览同一元素不重复渲染
     if (!currentPath || currentPath !== targetPath) {
       // 更改新的选择元素
-      CanvasManager.setSelectedObject({path: event.currentTarget.getAttribute('path'), previewElement: event.currentTarget})
+      CanvasManager.setSelectedObject({
+        path: event.currentTarget.getAttribute('path'),
+        previewElement: event.currentTarget
+      })
       // 添加当前选中元素到选中列表中
       canvasesStore.selectedPreviewList.set(targetPath, event.currentTarget)
       // 设置选择样式
