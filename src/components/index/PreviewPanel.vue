@@ -7,28 +7,28 @@
         <!-- 底部面板伸缩 -->
         <el-tooltip :content="$t('panel.collapseBottom')" placement="top">
           <button type="button" class="bar-icon" @click="$emit('toggle-bottom')">
-            <Icon name="panel-collapse-bottom"/>
+            <SvgIcon name="panel-collapse-bottom"/>
           </button>
         </el-tooltip>
 
         <el-tooltip :content="$t('preview.first')" placement="top">
           <button type="button" class="bar-icon" @click="switchFirstPreviewElement">
-            <Icon name="step-first"/>
+            <SvgIcon name="step-first"/>
           </button>
         </el-tooltip>
         <el-tooltip :content="$t('preview.prev')" placement="top">
           <button type="button" class="bar-icon" @click="switchPrevPreviewElement">
-            <Icon name="step-prev"/>
+            <SvgIcon name="step-prev"/>
           </button>
         </el-tooltip>
         <el-tooltip :content="$t('preview.next')" placement="top">
           <button type="button" class="bar-icon" @click="switchNextPreviewElement">
-              <Icon name="step-next"/>
+              <SvgIcon name="step-next"/>
           </button>
         </el-tooltip>
         <el-tooltip :content="$t('preview.last')" placement="top">
           <button type="button" class="bar-icon" @click="switchLastPreviewElement">
-            <Icon name="step-last"/>
+            <SvgIcon name="step-last"/>
           </button>
         </el-tooltip>
 
@@ -52,12 +52,12 @@
 
         <el-tooltip :content="$t('preview.selectAll')" placement="top">
           <button type="button" class="bar-icon" @click="handleSelectAllPreviewElements">
-            <Icon name="select-all"/>
+            <SvgIcon name="select-all"/>
           </button>
         </el-tooltip>
         <el-tooltip :content="$t('preview.center')" placement="top">
           <button type="button" class="bar-icon" @click="canvasActions.centerCanvasScrollBar()">
-            <Icon name="center-canvas"/>
+            <SvgIcon name="center-canvas"/>
           </button>
         </el-tooltip>
       </div>
@@ -69,44 +69,44 @@
         <div class="align-group">
           <el-tooltip :content="$t('preview.alignLeft')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('left')">
-              <Icon name="align-left"/>
+              <SvgIcon name="align-left"/>
             </button>
           </el-tooltip>
           <el-tooltip :content="$t('preview.alignCenterH')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('center-h')">
-              <Icon name="align-center-h"/>
+              <SvgIcon name="align-center-h"/>
             </button>
           </el-tooltip>
           <el-tooltip :content="$t('preview.alignRight')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('right')">
-              <Icon name="align-right"/>
+              <SvgIcon name="align-right"/>
             </button>
           </el-tooltip>
           <span class="align-divider"/>
           <el-tooltip :content="$t('preview.alignTop')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('top')">
-              <Icon name="align-top"/>
+              <SvgIcon name="align-top"/>
             </button>
           </el-tooltip>
           <el-tooltip :content="$t('preview.alignCenterV')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('center-v')">
-              <Icon name="align-center-v"/>
+              <SvgIcon name="align-center-v"/>
             </button>
           </el-tooltip>
           <el-tooltip :content="$t('preview.alignBottom')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('bottom')">
-              <Icon name="align-bottom"/>
+              <SvgIcon name="align-bottom"/>
             </button>
           </el-tooltip>
           <span class="align-divider"/>
           <el-tooltip :content="$t('preview.distributeH')" placement="top">
             <button type="button" class="bar-icon" @click="handleDistribute('horizontal')">
-              <Icon name="distribute-h"/>
+              <SvgIcon name="distribute-h"/>
             </button>
           </el-tooltip>
           <el-tooltip :content="$t('preview.distributeV')" placement="top">
             <button type="button" class="bar-icon" @click="handleDistribute('vertical')">
-              <Icon name="distribute-v"/>
+              <SvgIcon name="distribute-v"/>
             </button>
           </el-tooltip>
         </div>
@@ -163,7 +163,7 @@
                  @dblclick="handleDbClickPreviewImage($event,canvas)">
               <img class="preview-thumb" v-lazy="canvas.thumbUrl || canvas.url" draggable="false" alt="">
               <span class="preview-check">
-                <Icon name="check"/>
+                <SvgIcon name="check"/>
               </span>
             </div>
           </template>
@@ -171,7 +171,7 @@
       </template>
 
       <button type="button" class="import-more" @click="requestImportFiles">
-        <Icon name="plus"/>
+        <SvgIcon name="plus"/>
         <span>{{ $t('preview.importMore') }}</span>
       </button>
     </div>

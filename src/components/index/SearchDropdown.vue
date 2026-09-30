@@ -1,7 +1,7 @@
 <template>
   <div class="search-dropdown" ref="rootRef">
     <label class="search-box">
-      <Icon name="search" class="search-icon"/>
+      <SvgIcon name="search" class="search-icon"/>
       <input ref="inputRef" class="search-input" type="text" v-model="query" :placeholder="$t('toolbar.searchPlaceholder')"
              spellcheck="false" autocomplete="off"
              @focus="open = true"
@@ -17,7 +17,7 @@
                 :class="{'is-active': item.flatIndex === active}"
                 @click="runItem(item)"
                 @mousemove="active = item.flatIndex">
-          <Icon :name="item.icon" class="command-icon"/>
+          <SvgIcon :name="item.icon" class="command-icon"/>
           <span class="command-label" v-html="highlight(item.label)"></span>
         </button>
       </template>
@@ -97,7 +97,7 @@ const commandGroups = [
   },
 ]
 
-// ---------- 命令图标：统一通过 <Icon name="cmd-*"/> 使用（注册表见 src/components/Icon.vue） ----------
+// ---------- 命令图标：统一通过 <SvgIcon name="cmd-*"/> 使用（注册表见 src/components/SvgIcon.vue） ----------
 
 // ---------- 状态 ----------
 const rootRef = ref(null)

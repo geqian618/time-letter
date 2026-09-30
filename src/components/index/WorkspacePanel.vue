@@ -5,7 +5,7 @@
     <div class="uploader empty-state" ref="uploaderRef" v-show="canvasesStore.uploadVisible"
          @click="requestImportFiles({isDragOver: false})">
       <div class="empty-icon">
-        <Icon name="empty-upload"/>
+        <SvgIcon name="empty-upload"/>
       </div>
       <h2 class="empty-title">{{ $t('workspace.dropTitle') }}</h2>
       <p class="empty-hint">{{ $t('workspace.dropHint') }}</p>
@@ -24,19 +24,19 @@
     <div class="zoom-pill" v-if="settingsStore.projectSettings.appearance.enableZoomPill">
       <el-tooltip :content="$t('preview.zoomOut')" placement="top">
         <button type="button" class="zoom-button" @click="stepZoom(-1)">
-          <Icon name="zoom-minus"/>
+          <SvgIcon name="zoom-minus"/>
         </button>
       </el-tooltip>
       <span class="zoom-value">{{ zoomPct }}%</span>
       <el-tooltip :content="$t('preview.zoomIn')" placement="top">
         <button type="button" class="zoom-button" @click="stepZoom(1)">
-          <Icon name="zoom-plus"/>
+          <SvgIcon name="zoom-plus"/>
         </button>
       </el-tooltip>
       <span class="zoom-divider"></span>
       <el-tooltip :content="$t('preview.center')" placement="top">
         <button type="button" class="zoom-button" @click="fitToView">
-          <Icon name="fit-view"/>
+          <SvgIcon name="fit-view"/>
         </button>
       </el-tooltip>
     </div>

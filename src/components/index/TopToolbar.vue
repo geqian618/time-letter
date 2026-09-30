@@ -13,7 +13,7 @@
       <!-- 左侧面板伸缩 -->
       <el-tooltip :content="leftCollapsed ? $t('panel.expandLeft') : $t('panel.collapseLeft')" placement="bottom">
         <button type="button" class="panel-toggle" @click="$emit('toggle-left')">
-          <Icon name="panel-collapse-left"/>
+          <SvgIcon name="panel-collapse-left"/>
         </button>
       </el-tooltip>
 
@@ -34,14 +34,14 @@
                       @toggle-bottom="$emit('toggle-bottom')"/>
 
       <button type="button" class="export-button" @click="handleExport">
-        <Icon name="export"/>
+        <SvgIcon name="export"/>
         <span>{{ $t('toolbar.export') }}</span>
       </button>
 
       <!-- 检查更新：完整升级逻辑留待后续接入，当前仅提示 -->
       <el-tooltip :content="$t('toolbar.checkUpdate')" placement="bottom">
         <button type="button" class="check-update-button" @click="handleCheckUpdate">
-          <Icon name="refresh"/>
+          <SvgIcon name="refresh"/>
         </button>
       </el-tooltip>
 
@@ -49,24 +49,24 @@
         <!-- 右侧面板伸缩 -->
         <el-tooltip :content="rightCollapsed ? $t('panel.expandRight') : $t('panel.collapseRight')" placement="bottom">
           <button type="button" class="panel-toggle" @click="$emit('toggle-right')">
-            <Icon name="panel-collapse-right"/>
+            <SvgIcon name="panel-collapse-right"/>
           </button>
         </el-tooltip>
 
         <el-tooltip :content="$t('toolbar.minimize')" placement="bottom">
           <button type="button" class="window-button" @click="handleMinimize">
-            <Icon name="win-minimize"/>
+            <SvgIcon name="win-minimize"/>
           </button>
         </el-tooltip>
         <el-tooltip :content="$t('toolbar.maximize')" placement="bottom">
           <button type="button" class="window-button" @click="handleToggleMaximize">
-            <Icon v-if="isMaximized" name="win-restore"/>
-            <Icon v-else name="win-maximize"/>
+            <SvgIcon v-if="isMaximized" name="win-restore"/>
+            <SvgIcon v-else name="win-maximize"/>
           </button>
         </el-tooltip>
         <el-tooltip :content="$t('toolbar.close')" placement="bottom">
           <button type="button" class="window-button is-close" @click="handleClose">
-            <Icon name="win-close"/>
+            <SvgIcon name="win-close"/>
           </button>
         </el-tooltip>
       </div>

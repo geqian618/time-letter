@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="js">
-// 统一图标组件：全部 SVG 由 vite-svg-loader 编译为组件后集中注册，模板中直接 <Icon name="xxx"/>
+// 统一图标组件：全部 SVG 由 vite-svg-loader 编译为组件后集中注册，模板中直接 <SvgIcon name="xxx"/>
 // - name 为 src/assets/icon/ 下的文件名（不含扩展名）
 // - class / style / width 等属性透传到 svg 根元素；尺寸沿用各处已有的 CSS 规则
 // - 本文件位于 unplugin-vue-components 扫描目录内，使用处无需 import
@@ -122,7 +122,7 @@ const props = defineProps({
 const icon = computed(() => {
   const resolved = registry[props.name]
   if (!resolved && import.meta.env.DEV) {
-    console.warn(`[Icon] 未注册的图标名: "${props.name}"`)
+    console.warn(`[SvgIcon] 未注册的图标名: "${props.name}"`)
   }
   return resolved
 })

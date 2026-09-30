@@ -3,7 +3,7 @@
 
     <!-- 搜索 -->
     <label class="panel-search">
-      <Icon name="search" class="search-icon"/>
+      <SvgIcon name="search" class="search-icon"/>
       <input class="search-input" type="text" v-model="presetKeyword" :placeholder="$t('left.searchPlaceholder')" spellcheck="false">
     </label>
 
@@ -16,7 +16,7 @@
           <header class="section-header" @click="toggleSection('templates')">
             <span class="section-title">{{ $t('left.allPresets') }}</span>
             <span class="section-meta">{{ $t('left.countUnit', {count: filteredPresetList.length}) }}</span>
-            <Icon name="chevron-up" class="section-chevron" :class="{collapsed: !opened.templates}"/>
+            <SvgIcon name="chevron-up" class="section-chevron" :class="{collapsed: !opened.templates}"/>
           </header>
 
           <Transition name="collapse" v-bind="collapseTransition">
@@ -51,7 +51,7 @@
           <header class="section-header" @click="toggleSection('images')">
             <span class="section-title">{{ $t('left.imageLibrary') }}</span>
             <span class="section-meta">{{ $t('left.imageUnit', {count: canvasesStore.imageResources.size}) }}</span>
-            <Icon name="chevron-up" class="section-chevron" :class="{collapsed: !opened.images}"/>
+            <SvgIcon name="chevron-up" class="section-chevron" :class="{collapsed: !opened.images}"/>
           </header>
 
           <Transition name="collapse" v-bind="collapseTransition">
@@ -76,7 +76,7 @@
           <header class="section-header" @click="toggleSection('texts')">
             <span class="section-title">{{ $t('left.textLibrary') }}</span>
             <span class="section-meta">{{ $t('left.groupUnit', {count: 3 + textResourcesStore.textResources.length}) }}</span>
-            <Icon name="chevron-up" class="section-chevron" :class="{collapsed: !opened.texts}"/>
+            <SvgIcon name="chevron-up" class="section-chevron" :class="{collapsed: !opened.texts}"/>
           </header>
 
           <Transition name="collapse" v-bind="collapseTransition">
@@ -84,17 +84,17 @@
               <div class="text-grid" ref="textResourceRef">
                 <el-tooltip :content="$t('left.text')" placement="top">
                   <div class="text-chip text-resource" draggable="true" text="文本" type="text">
-                    <span class="chip-icon"><Icon name="text"/></span>
+                    <span class="chip-icon"><SvgIcon name="text"/></span>
                   </div>
                 </el-tooltip>
                 <el-tooltip :content="$t('left.date')" placement="top">
                   <div class="text-chip text-resource" draggable="true" type="date">
-                    <span class="chip-icon"><Icon name="date"/></span>
+                    <span class="chip-icon"><SvgIcon name="date"/></span>
                   </div>
                 </el-tooltip>
                 <el-tooltip :content="$t('left.datetime')" placement="top">
                   <div class="text-chip text-resource" draggable="true" type="datetime">
-                    <span class="chip-icon"><Icon name="datetime"/></span>
+                    <span class="chip-icon"><SvgIcon name="datetime"/></span>
                   </div>
                 </el-tooltip>
                 <el-tooltip v-for="text in textResourcesStore.textResources" :key="text.id"
@@ -106,7 +106,7 @@
                       :text="text.content"
                       :expression="text.script"
                       :type="text.type === 'text' ? 'text' : 'script'">
-                    <span class="chip-icon"><Icon name="custom"/></span>
+                    <span class="chip-icon"><SvgIcon name="custom"/></span>
                   </div>
                 </el-tooltip>
               </div>
@@ -119,7 +119,7 @@
 
     <!-- 新建预设 -->
     <button type="button" class="new-preset-button" @click="handleCreatePreset">
-      <Icon name="plus"/>
+      <SvgIcon name="plus"/>
       <span>{{ $t('left.newPreset') }}</span>
     </button>
 
