@@ -44,6 +44,7 @@ declare module 'vue' {
     ElTabs: typeof import('element-plus/es')['ElTabs']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     EnableTemplateDialog: typeof import('./src/components/index/dialogs/EnableTemplateDialog.vue')['default']
+    Icon: typeof import('./src/components/Icon.vue')['default']
     LeftPanel: typeof import('./src/components/index/LeftPanel.vue')['default']
     PreviewPanel: typeof import('./src/components/index/PreviewPanel.vue')['default']
     RenameTemplateDialog: typeof import('./src/components/index/dialogs/RenameTemplateDialog.vue')['default']

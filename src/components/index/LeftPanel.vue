@@ -3,10 +3,7 @@
 
     <!-- 搜索 -->
     <label class="panel-search">
-      <svg class="search-icon" viewBox="0 0 16 16" aria-hidden="true">
-        <circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M10.6 10.6 L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
+      <Icon name="search" class="search-icon"/>
       <input class="search-input" type="text" v-model="presetKeyword" :placeholder="$t('left.searchPlaceholder')" spellcheck="false">
     </label>
 
@@ -19,10 +16,7 @@
           <header class="section-header" @click="toggleSection('templates')">
             <span class="section-title">{{ $t('left.allPresets') }}</span>
             <span class="section-meta">{{ $t('left.countUnit', {count: filteredPresetList.length}) }}</span>
-            <svg class="section-chevron" :class="{collapsed: !opened.templates}" viewBox="0 0 16 16">
-              <path d="M4 10 L8 6 L12 10" fill="none" stroke="currentColor" stroke-width="1.6"
-                    stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <Icon name="chevron-up" class="section-chevron" :class="{collapsed: !opened.templates}"/>
           </header>
 
           <Transition name="collapse" v-bind="collapseTransition">
@@ -57,10 +51,7 @@
           <header class="section-header" @click="toggleSection('images')">
             <span class="section-title">{{ $t('left.imageLibrary') }}</span>
             <span class="section-meta">{{ $t('left.imageUnit', {count: canvasesStore.imageResources.size}) }}</span>
-            <svg class="section-chevron" :class="{collapsed: !opened.images}" viewBox="0 0 16 16">
-              <path d="M4 10 L8 6 L12 10" fill="none" stroke="currentColor" stroke-width="1.6"
-                    stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <Icon name="chevron-up" class="section-chevron" :class="{collapsed: !opened.images}"/>
           </header>
 
           <Transition name="collapse" v-bind="collapseTransition">
@@ -85,10 +76,7 @@
           <header class="section-header" @click="toggleSection('texts')">
             <span class="section-title">{{ $t('left.textLibrary') }}</span>
             <span class="section-meta">{{ $t('left.groupUnit', {count: 3 + textResourcesStore.textResources.length}) }}</span>
-            <svg class="section-chevron" :class="{collapsed: !opened.texts}" viewBox="0 0 16 16">
-              <path d="M4 10 L8 6 L12 10" fill="none" stroke="currentColor" stroke-width="1.6"
-                    stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <Icon name="chevron-up" class="section-chevron" :class="{collapsed: !opened.texts}"/>
           </header>
 
           <Transition name="collapse" v-bind="collapseTransition">
@@ -96,17 +84,17 @@
               <div class="text-grid" ref="textResourceRef">
                 <el-tooltip :content="$t('left.text')" placement="top">
                   <div class="text-chip text-resource" draggable="true" text="文本" type="text">
-                    <span class="chip-icon" v-html="textIconSvg"></span>
+                    <span class="chip-icon"><Icon name="text"/></span>
                   </div>
                 </el-tooltip>
                 <el-tooltip :content="$t('left.date')" placement="top">
                   <div class="text-chip text-resource" draggable="true" type="date">
-                    <span class="chip-icon" v-html="dateIconSvg"></span>
+                    <span class="chip-icon"><Icon name="date"/></span>
                   </div>
                 </el-tooltip>
                 <el-tooltip :content="$t('left.datetime')" placement="top">
                   <div class="text-chip text-resource" draggable="true" type="datetime">
-                    <span class="chip-icon" v-html="datetimeIconSvg"></span>
+                    <span class="chip-icon"><Icon name="datetime"/></span>
                   </div>
                 </el-tooltip>
                 <el-tooltip v-for="text in textResourcesStore.textResources" :key="text.id"
@@ -118,7 +106,7 @@
                       :text="text.content"
                       :expression="text.script"
                       :type="text.type === 'text' ? 'text' : 'script'">
-                    <span class="chip-icon" v-html="customIconSvg"></span>
+                    <span class="chip-icon"><Icon name="custom"/></span>
                   </div>
                 </el-tooltip>
               </div>
@@ -131,9 +119,7 @@
 
     <!-- 新建预设 -->
     <button type="button" class="new-preset-button" @click="handleCreatePreset">
-      <svg viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M8 3.2 V12.8 M3.2 8 H12.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-      </svg>
+      <Icon name="plus"/>
       <span>{{ $t('left.newPreset') }}</span>
     </button>
 
@@ -142,13 +128,7 @@
 
 <script setup lang="js">
 
-import {ref, reactive, computed} from 'vue'
-
-// 文本库芯片图标：内联注入（?raw），SVG fill 用 currentColor 跟随主题文字色
-import textIconSvg from '@/assets/icon/text.svg?raw'
-import dateIconSvg from '@/assets/icon/date.svg?raw'
-import datetimeIconSvg from '@/assets/icon/datetime.svg?raw'
-import customIconSvg from '@/assets/icon/custom.svg?raw'
+import {Plus, Notification} from '@element-plus/icons-vue'
 
 import useEventListener from '@/composables/common/useEventListener'
 

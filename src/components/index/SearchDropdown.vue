@@ -1,10 +1,7 @@
 <template>
   <div class="search-dropdown" ref="rootRef">
     <label class="search-box">
-      <svg class="search-icon" viewBox="0 0 16 16" aria-hidden="true">
-        <circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M10.6 10.6 L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
+      <Icon name="search" class="search-icon"/>
       <input ref="inputRef" class="search-input" type="text" v-model="query" :placeholder="$t('toolbar.searchPlaceholder')"
              spellcheck="false" autocomplete="off"
              @focus="open = true"
@@ -20,7 +17,7 @@
                 :class="{'is-active': item.flatIndex === active}"
                 @click="runItem(item)"
                 @mousemove="active = item.flatIndex">
-          <svg class="command-icon" viewBox="0 0 16 16" aria-hidden="true" v-html="icons[item.icon]"></svg>
+          <Icon :name="item.icon" class="command-icon"/>
           <span class="command-label" v-html="highlight(item.label)"></span>
         </button>
       </template>
@@ -51,73 +48,56 @@ const commandGroups = [
   {
     key: 'file', labelKey: 'menu.file',
     items: [
-      {id: 'import-images', icon: 'import', labelKey: 'searchCommand.importImages', keywords: 'import image 导入 图片'},
-      {id: 'export-images', icon: 'export', labelKey: 'searchCommand.exportImages', keywords: 'export 导出'},
+      {id: 'import-images', icon: 'cmd-import', labelKey: 'searchCommand.importImages', keywords: 'import image 导入 图片'},
+      {id: 'export-images', icon: 'cmd-export', labelKey: 'searchCommand.exportImages', keywords: 'export 导出'},
     ],
   },
   {
     key: 'settings', labelKey: 'menu.settings',
     items: [
-      {id: 'preferences', icon: 'sliders', labelKey: 'searchCommand.preferences', keywords: 'settings preference 偏好 设置'},
-      {id: 'import-templates', icon: 'docIn', labelKey: 'searchCommand.importTemplates', keywords: 'template import 模板 预设 导入'},
-      {id: 'export-templates', icon: 'docOut', labelKey: 'searchCommand.exportTemplates', keywords: 'template export 模板 预设 导出'},
-      {id: 'import-settings', icon: 'import', labelKey: 'searchCommand.importSettings', keywords: 'settings import 全局 设置 导入'},
-      {id: 'export-settings', icon: 'export', labelKey: 'searchCommand.exportSettings', keywords: 'settings export 全局 设置 导出'},
+      {id: 'preferences', icon: 'cmd-sliders', labelKey: 'searchCommand.preferences', keywords: 'settings preference 偏好 设置'},
+      {id: 'import-templates', icon: 'cmd-doc-in', labelKey: 'searchCommand.importTemplates', keywords: 'template import 模板 预设 导入'},
+      {id: 'export-templates', icon: 'cmd-doc-out', labelKey: 'searchCommand.exportTemplates', keywords: 'template export 模板 预设 导出'},
+      {id: 'import-settings', icon: 'cmd-import', labelKey: 'searchCommand.importSettings', keywords: 'settings import 全局 设置 导入'},
+      {id: 'export-settings', icon: 'cmd-export', labelKey: 'searchCommand.exportSettings', keywords: 'settings export 全局 设置 导出'},
     ],
   },
   {
     key: 'extensions', labelKey: 'menu.extensions',
     items: [
-      {id: 'add-text', icon: 'textT', labelKey: 'searchCommand.addText', keywords: 'text add 文本 添加'},
-      {id: 'manage-text', icon: 'docLines', labelKey: 'searchCommand.manageText', keywords: 'text manage 文本库 管理'},
-      {id: 'import-image-resources', icon: 'import', labelKey: 'searchCommand.importImageResources', keywords: 'image resource import 图片 资源 导入'},
-      {id: 'open-image-resources', icon: 'folder', labelKey: 'searchCommand.openImageResources', keywords: 'image folder open 图片 资源 目录 打开'},
-      {id: 'import-fonts', icon: 'import', labelKey: 'searchCommand.importFonts', keywords: 'font import 字体 导入'},
-      {id: 'open-font-resources', icon: 'folder', labelKey: 'searchCommand.openFontResources', keywords: 'font folder open 字体 目录 打开'},
+      {id: 'add-text', icon: 'cmd-text', labelKey: 'searchCommand.addText', keywords: 'text add 文本 添加'},
+      {id: 'manage-text', icon: 'cmd-doc-lines', labelKey: 'searchCommand.manageText', keywords: 'text manage 文本库 管理'},
+      {id: 'import-image-resources', icon: 'cmd-import', labelKey: 'searchCommand.importImageResources', keywords: 'image resource import 图片 资源 导入'},
+      {id: 'open-image-resources', icon: 'cmd-folder', labelKey: 'searchCommand.openImageResources', keywords: 'image folder open 图片 资源 目录 打开'},
+      {id: 'import-fonts', icon: 'cmd-import', labelKey: 'searchCommand.importFonts', keywords: 'font import 字体 导入'},
+      {id: 'open-font-resources', icon: 'cmd-folder', labelKey: 'searchCommand.openFontResources', keywords: 'font folder open 字体 目录 打开'},
     ],
   },
   {
     key: 'tools', labelKey: 'menu.tools',
     items: [
-      {id: 'image-manager', icon: 'grid', labelKey: 'searchCommand.imageManager', keywords: 'image manager 图片 管理器'},
+      {id: 'image-manager', icon: 'cmd-grid', labelKey: 'searchCommand.imageManager', keywords: 'image manager 图片 管理器'},
     ],
   },
   {
     key: 'help', labelKey: 'menu.help',
     items: [
-      {id: 'about', icon: 'info', labelKey: 'searchCommand.about', keywords: 'about 关于'},
+      {id: 'about', icon: 'cmd-info', labelKey: 'searchCommand.about', keywords: 'about 关于'},
     ],
   },
   {
     key: 'interface', labelKey: 'searchGroup.interface',
     items: [
-      {id: 'toggle-dark-mode', icon: 'moon', labelKey: 'searchCommand.toggleDarkMode', keywords: 'theme dark light 主题 亮 暗 模式'},
-      {id: 'toggle-accent', icon: 'droplet', labelKey: 'searchCommand.toggleAccent', keywords: 'accent color 配色 颜色 主题'},
-      {id: 'toggle-left-panel', icon: 'panelL', labelKey: 'searchCommand.toggleLeftPanel', keywords: 'panel left collapse 面板 左 折叠'},
-      {id: 'toggle-right-panel', icon: 'panelR', labelKey: 'searchCommand.toggleRightPanel', keywords: 'panel right collapse 面板 右 折叠'},
-      {id: 'toggle-bottom-panel', icon: 'panelB', labelKey: 'searchCommand.toggleBottomPanel', keywords: 'panel bottom collapse 面板 底 折叠 预览'},
+      {id: 'toggle-dark-mode', icon: 'cmd-moon', labelKey: 'searchCommand.toggleDarkMode', keywords: 'theme dark light 主题 亮 暗 模式'},
+      {id: 'toggle-accent', icon: 'cmd-droplet', labelKey: 'searchCommand.toggleAccent', keywords: 'accent color 配色 颜色 主题'},
+      {id: 'toggle-left-panel', icon: 'cmd-panel-l', labelKey: 'searchCommand.toggleLeftPanel', keywords: 'panel left collapse 面板 左 折叠'},
+      {id: 'toggle-right-panel', icon: 'cmd-panel-r', labelKey: 'searchCommand.toggleRightPanel', keywords: 'panel right collapse 面板 右 折叠'},
+      {id: 'toggle-bottom-panel', icon: 'cmd-panel-b', labelKey: 'searchCommand.toggleBottomPanel', keywords: 'panel bottom collapse 面板 底 折叠 预览'},
     ],
   },
 ]
 
-// ---------- 命令图标（16x16 线性风格，stroke: currentColor） ----------
-const icons = {
-  import: '<path d="M8 2.5 V9.5 M5.2 7 L8 9.8 L10.8 7 M2.8 10.6 V12.2 A1.2 1.2 0 0 0 4 13.4 H12 A1.2 1.2 0 0 0 13.2 12.2 V10.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
-  export: '<path d="M8 9.5 V2.7 M5.2 5.2 L8 2.4 L10.8 5.2 M2.8 10.6 V12.2 A1.2 1.2 0 0 0 4 13.4 H12 A1.2 1.2 0 0 0 13.2 12.2 V10.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
-  sliders: '<path d="M3 5.2 H13 M3 10.8 H13" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="6.2" cy="5.2" r="1.7" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="10" cy="10.8" r="1.7" fill="none" stroke="currentColor" stroke-width="1.4"/>',
-  docIn: '<rect x="3.6" y="2.6" width="8.8" height="10.8" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 5.6 V10 M6.4 8.6 L8 10.2 L9.6 8.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
-  docOut: '<rect x="3.6" y="2.6" width="8.8" height="10.8" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 10 V5.6 M6.4 7 L8 5.4 L9.6 7" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
-  textT: '<path d="M4.2 4.4 H11.8 M8 4.4 V11.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
-  docLines: '<rect x="3.6" y="2.6" width="8.8" height="10.8" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5.8 6 H10.2 M5.8 8.3 H10.2 M5.8 10.6 H8.4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
-  folder: '<path d="M2.8 12.6 V4.7 A1.1 1.1 0 0 1 3.9 3.6 H6.4 L7.8 5.1 H12.1 A1.1 1.1 0 0 1 13.2 6.2 V12.6 Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>',
-  grid: '<rect x="2.9" y="2.9" width="10.2" height="10.2" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M2.9 8 H13.1 M8 2.9 V13.1" fill="none" stroke="currentColor" stroke-width="1.4"/>',
-  info: '<circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 7.4 V11" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="5.2" r="0.9" fill="currentColor"/>',
-  moon: '<path d="M12.9 9.7 A5.5 5.5 0 1 1 6.3 3.1 A4.3 4.3 0 0 0 12.9 9.7 Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>',
-  droplet: '<path d="M8 2.7 C10.5 5.5 11.8 7.5 11.8 9.3 A3.8 3.8 0 0 1 4.2 9.3 C4.2 7.5 5.5 5.5 8 2.7 Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>',
-  panelL: '<rect x="2.8" y="3" width="10.4" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6.6 3 V13" fill="none" stroke="currentColor" stroke-width="1.4"/>',
-  panelR: '<rect x="2.8" y="3" width="10.4" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M9.4 3 V13" fill="none" stroke="currentColor" stroke-width="1.4"/>',
-  panelB: '<rect x="2.8" y="3" width="10.4" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M2.8 9.6 H13.2" fill="none" stroke="currentColor" stroke-width="1.4"/>',
-}
+// ---------- 命令图标：统一通过 <Icon name="cmd-*"/> 使用（注册表见 src/components/Icon.vue） ----------
 
 // ---------- 状态 ----------
 const rootRef = ref(null)

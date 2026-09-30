@@ -13,11 +13,7 @@
       <!-- 左侧面板伸缩 -->
       <el-tooltip :content="leftCollapsed ? $t('panel.expandLeft') : $t('panel.collapseLeft')" placement="bottom">
         <button type="button" class="panel-toggle" @click="$emit('toggle-left')">
-          <svg viewBox="0 0 16 16" aria-hidden="true">
-            <rect x="2.75" y="2.75" width="10.5" height="10.5" rx="2.6" fill="none" stroke="currentColor"
-                  stroke-width="1.4"/>
-            <path d="M6.2 2.9 V13.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-          </svg>
+          <Icon name="panel-collapse-left"/>
         </button>
       </el-tooltip>
 
@@ -38,25 +34,14 @@
                       @toggle-bottom="$emit('toggle-bottom')"/>
 
       <button type="button" class="export-button" @click="handleExport">
-        <svg viewBox="0 0 16 16" aria-hidden="true">
-          <path d="M8 11.2 V2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          <path d="M5.1 5.4 L8 2.5 L10.9 5.4" fill="none" stroke="currentColor" stroke-width="1.6"
-                stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M3 9.6 V12.4 A1.2 1.2 0 0 0 4.2 13.6 H11.8 A1.2 1.2 0 0 0 13 12.4 V9.6"
-                fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        </svg>
+        <Icon name="export"/>
         <span>{{ $t('toolbar.export') }}</span>
       </button>
 
       <!-- 检查更新：完整升级逻辑留待后续接入，当前仅提示 -->
       <el-tooltip :content="$t('toolbar.checkUpdate')" placement="bottom">
         <button type="button" class="check-update-button" @click="handleCheckUpdate">
-          <svg viewBox="0 0 16 16" aria-hidden="true">
-            <path d="M14 8a6 6 0 1 1-6-6c1.68 0 3.29 0.67 4.49 1.83L14 5.33"
-                  fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M14 2v3.33h-3.33"
-                  fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <Icon name="refresh"/>
         </button>
       </el-tooltip>
 
@@ -64,36 +49,24 @@
         <!-- 右侧面板伸缩 -->
         <el-tooltip :content="rightCollapsed ? $t('panel.expandRight') : $t('panel.collapseRight')" placement="bottom">
           <button type="button" class="panel-toggle" @click="$emit('toggle-right')">
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <rect x="2.75" y="2.75" width="10.5" height="10.5" rx="2.6" fill="none" stroke="currentColor"
-                    stroke-width="1.4"/>
-              <path d="M9.8 2.9 V13.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-            </svg>
+            <Icon name="panel-collapse-right"/>
           </button>
         </el-tooltip>
 
         <el-tooltip :content="$t('toolbar.minimize')" placement="bottom">
           <button type="button" class="window-button" @click="handleMinimize">
-            <svg viewBox="0 0 12 12"><path d="M2.4 6 H9.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            <Icon name="win-minimize"/>
           </button>
         </el-tooltip>
         <el-tooltip :content="$t('toolbar.maximize')" placement="bottom">
           <button type="button" class="window-button" @click="handleToggleMaximize">
-            <svg v-if="isMaximized" viewBox="0 0 12 12">
-              <rect x="2.1" y="4.1" width="5.6" height="5.6" rx="1.1" fill="none" stroke="currentColor" stroke-width="1.3"/>
-              <path d="M4.4 4.1 V3.2 A1.1 1.1 0 0 1 5.5 2.1 H8.8 A1.1 1.1 0 0 1 9.9 3.2 V6.5 A1.1 1.1 0 0 1 8.8 7.6 H7.9"
-                    fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-            </svg>
-            <svg v-else viewBox="0 0 12 12">
-              <rect x="2.4" y="2.4" width="7.2" height="7.2" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.3"/>
-            </svg>
+            <Icon v-if="isMaximized" name="win-restore"/>
+            <Icon v-else name="win-maximize"/>
           </button>
         </el-tooltip>
         <el-tooltip :content="$t('toolbar.close')" placement="bottom">
           <button type="button" class="window-button is-close" @click="handleClose">
-            <svg viewBox="0 0 12 12">
-              <path d="M3.2 3.2 L8.8 8.8 M8.8 3.2 L3.2 8.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-            </svg>
+            <Icon name="win-close"/>
           </button>
         </el-tooltip>
       </div>

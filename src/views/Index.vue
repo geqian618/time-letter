@@ -31,9 +31,7 @@
           <el-tooltip v-if="bottomCollapsed" :content="$t('panel.expandBottom')" placement="top"
                       :disabled="tipDisabled">
             <button class="panel-toggle toggle-bottom" @click="toggleBottom">
-              <svg viewBox="0 0 24 24" width="12" height="12">
-                <path d="M6 14 L12 7 L18 14 Z" fill="currentColor"/>
-              </svg>
+              <Icon name="expand-bottom" width="12" height="12"/>
             </button>
           </el-tooltip>
         </div>
@@ -58,6 +56,8 @@
 <script setup lang="js">
 
 import {ref, watch, onMounted} from "vue";
+
+// 面板展开箭头：统一通过 <Icon name="expand-bottom"/> 使用（注册表见 src/components/Icon.vue）
 
 import _ from 'lodash';
 

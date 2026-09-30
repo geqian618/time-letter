@@ -7,44 +7,28 @@
         <!-- 底部面板伸缩 -->
         <el-tooltip :content="$t('panel.collapseBottom')" placement="top">
           <button type="button" class="bar-icon" @click="$emit('toggle-bottom')">
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <rect x="2.75" y="2.75" width="10.5" height="10.5" rx="2.6" fill="none" stroke="currentColor"
-                    stroke-width="1.4"/>
-              <path d="M2.9 10.7 H13.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            </svg>
+            <Icon name="panel-collapse-bottom"/>
           </button>
         </el-tooltip>
 
         <el-tooltip :content="$t('preview.first')" placement="top">
           <button type="button" class="bar-icon" @click="switchFirstPreviewElement">
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M3.4 3.4 V12.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-              <path d="M12.4 3.8 L6.6 8 L12.4 12.2 Z" fill="currentColor"/>
-            </svg>
+            <Icon name="step-first"/>
           </button>
         </el-tooltip>
         <el-tooltip :content="$t('preview.prev')" placement="top">
           <button type="button" class="bar-icon" @click="switchPrevPreviewElement">
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M10.4 3.4 L5.2 8 L10.4 12.6" fill="none" stroke="currentColor" stroke-width="1.7"
-                    stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <Icon name="step-prev"/>
           </button>
         </el-tooltip>
         <el-tooltip :content="$t('preview.next')" placement="top">
           <button type="button" class="bar-icon" @click="switchNextPreviewElement">
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M5.6 3.4 L10.8 8 L5.6 12.6" fill="none" stroke="currentColor" stroke-width="1.7"
-                    stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+              <Icon name="step-next"/>
           </button>
         </el-tooltip>
         <el-tooltip :content="$t('preview.last')" placement="top">
           <button type="button" class="bar-icon" @click="switchLastPreviewElement">
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M12.6 3.4 V12.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-              <path d="M3.6 3.8 L9.4 8 L3.6 12.2 Z" fill="currentColor"/>
-            </svg>
+            <Icon name="step-last"/>
           </button>
         </el-tooltip>
 
@@ -68,22 +52,12 @@
 
         <el-tooltip :content="$t('preview.selectAll')" placement="top">
           <button type="button" class="bar-icon" @click="handleSelectAllPreviewElements">
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2.6" fill="none" stroke="currentColor"
-                    stroke-width="1.5"/>
-              <path d="M5.6 8.2 L7.3 9.9 L10.6 6.4" fill="none" stroke="currentColor" stroke-width="1.5"
-                    stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <Icon name="select-all"/>
           </button>
         </el-tooltip>
         <el-tooltip :content="$t('preview.center')" placement="top">
           <button type="button" class="bar-icon" @click="canvasActions.centerCanvasScrollBar()">
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M2.4 5.2 V3.4 A1 1 0 0 1 3.4 2.4 H5.2 M10.8 2.4 H12.6 A1 1 0 0 1 13.6 3.4 V5.2
-                       M13.6 10.8 V12.6 A1 1 0 0 1 12.6 13.6 H10.8 M5.2 13.6 H3.4 A1 1 0 0 1 2.4 12.6 V10.8"
-                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              <circle cx="8" cy="8" r="1.7" fill="currentColor"/>
-            </svg>
+            <Icon name="center-canvas"/>
           </button>
         </el-tooltip>
       </div>
@@ -95,76 +69,44 @@
         <div class="align-group">
           <el-tooltip :content="$t('preview.alignLeft')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('left')">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
-                <path d="M2.8 2.5 V13.5"/>
-                <rect x="2.8" y="4" width="5.5" height="3" rx="0.8"/>
-                <rect x="2.8" y="9" width="8.5" height="3" rx="0.8"/>
-              </svg>
+              <Icon name="align-left"/>
             </button>
           </el-tooltip>
           <el-tooltip :content="$t('preview.alignCenterH')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('center-h')">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
-                <path d="M8 2.5 V13.5"/>
-                <rect x="5.75" y="4" width="4.5" height="3" rx="0.8"/>
-                <rect x="4" y="9" width="8" height="3" rx="0.8"/>
-              </svg>
+              <Icon name="align-center-h"/>
             </button>
           </el-tooltip>
           <el-tooltip :content="$t('preview.alignRight')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('right')">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
-                <path d="M13.2 2.5 V13.5"/>
-                <rect x="7.7" y="4" width="5.5" height="3" rx="0.8"/>
-                <rect x="4.7" y="9" width="8.5" height="3" rx="0.8"/>
-              </svg>
+              <Icon name="align-right"/>
             </button>
           </el-tooltip>
           <span class="align-divider"/>
           <el-tooltip :content="$t('preview.alignTop')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('top')">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
-                <path d="M2.5 2.8 H13.5"/>
-                <rect x="4" y="2.8" width="3" height="7.6" rx="0.8"/>
-                <rect x="9" y="2.8" width="3" height="5" rx="0.8"/>
-              </svg>
+              <Icon name="align-top"/>
             </button>
           </el-tooltip>
           <el-tooltip :content="$t('preview.alignCenterV')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('center-v')">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
-                <path d="M2.5 8 H13.5"/>
-                <rect x="4" y="3" width="3" height="10" rx="0.8"/>
-                <rect x="9" y="5" width="3" height="6" rx="0.8"/>
-              </svg>
+              <Icon name="align-center-v"/>
             </button>
           </el-tooltip>
           <el-tooltip :content="$t('preview.alignBottom')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('bottom')">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
-                <path d="M2.5 13.2 H13.5"/>
-                <rect x="4" y="5.6" width="3" height="7.6" rx="0.8"/>
-                <rect x="9" y="8.2" width="3" height="5" rx="0.8"/>
-              </svg>
+              <Icon name="align-bottom"/>
             </button>
           </el-tooltip>
           <span class="align-divider"/>
           <el-tooltip :content="$t('preview.distributeH')" placement="top">
             <button type="button" class="bar-icon" @click="handleDistribute('horizontal')">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
-                <rect x="2" y="4" width="2.4" height="8" rx="0.8"/>
-                <rect x="6.8" y="4" width="2.4" height="8" rx="0.8"/>
-                <rect x="11.6" y="4" width="2.4" height="8" rx="0.8"/>
-              </svg>
+              <Icon name="distribute-h"/>
             </button>
           </el-tooltip>
           <el-tooltip :content="$t('preview.distributeV')" placement="top">
             <button type="button" class="bar-icon" @click="handleDistribute('vertical')">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
-                <rect x="4" y="2" width="8" height="2.4" rx="0.8"/>
-                <rect x="4" y="6.8" width="8" height="2.4" rx="0.8"/>
-                <rect x="4" y="11.6" width="8" height="2.4" rx="0.8"/>
-              </svg>
+              <Icon name="distribute-v"/>
             </button>
           </el-tooltip>
         </div>
@@ -221,10 +163,7 @@
                  @dblclick="handleDbClickPreviewImage($event,canvas)">
               <img class="preview-thumb" v-lazy="canvas.thumbUrl || canvas.url" draggable="false" alt="">
               <span class="preview-check">
-                <svg viewBox="0 0 12 12" aria-hidden="true">
-                  <path d="M2.7 6.3 L4.9 8.5 L9.3 4.1" fill="none" stroke="currentColor" stroke-width="1.8"
-                        stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <Icon name="check"/>
               </span>
             </div>
           </template>
@@ -232,9 +171,7 @@
       </template>
 
       <button type="button" class="import-more" @click="requestImportFiles">
-        <svg viewBox="0 0 16 16" aria-hidden="true">
-          <path d="M8 3.4 V12.6 M3.4 8 H12.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        </svg>
+        <Icon name="plus"/>
         <span>{{ $t('preview.importMore') }}</span>
       </button>
     </div>

@@ -5,13 +5,7 @@
     <div class="uploader empty-state" ref="uploaderRef" v-show="canvasesStore.uploadVisible"
          @click="requestImportFiles({isDragOver: false})">
       <div class="empty-icon">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 15.2 V4.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          <path d="M8.3 8.3 L12 4.6 L15.7 8.3" fill="none" stroke="currentColor" stroke-width="1.6"
-                stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M4.6 13.6 v3.4 a2.6 2.6 0 0 0 2.6 2.6 h9.6 a2.6 2.6 0 0 0 2.6 -2.6 v-3.4"
-                fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <Icon name="empty-upload"/>
       </div>
       <h2 class="empty-title">{{ $t('workspace.dropTitle') }}</h2>
       <p class="empty-hint">{{ $t('workspace.dropHint') }}</p>
@@ -30,30 +24,19 @@
     <div class="zoom-pill" v-if="settingsStore.projectSettings.appearance.enableZoomPill">
       <el-tooltip :content="$t('preview.zoomOut')" placement="top">
         <button type="button" class="zoom-button" @click="stepZoom(-1)">
-          <svg viewBox="0 0 16 16"><path d="M4 8 H12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <Icon name="zoom-minus"/>
         </button>
       </el-tooltip>
       <span class="zoom-value">{{ zoomPct }}%</span>
       <el-tooltip :content="$t('preview.zoomIn')" placement="top">
         <button type="button" class="zoom-button" @click="stepZoom(1)">
-          <svg viewBox="0 0 16 16">
-            <path d="M8 4 V12 M4 8 H12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
+          <Icon name="zoom-plus"/>
         </button>
       </el-tooltip>
       <span class="zoom-divider"></span>
       <el-tooltip :content="$t('preview.center')" placement="top">
         <button type="button" class="zoom-button" @click="fitToView">
-          <svg viewBox="0 0 16 16">
-            <path d="M3 6 V4.2 A1.2 1.2 0 0 1 4.2 3 H6" fill="none" stroke="currentColor" stroke-width="1.5"
-                  stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M10 3 H11.8 A1.2 1.2 0 0 1 13 4.2 V6" fill="none" stroke="currentColor" stroke-width="1.5"
-                  stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M13 10 V11.8 A1.2 1.2 0 0 1 11.8 13 H10" fill="none" stroke="currentColor" stroke-width="1.5"
-                  stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M6 13 H4.2 A1.2 1.2 0 0 1 3 11.8 V10" fill="none" stroke="currentColor" stroke-width="1.5"
-                  stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <Icon name="fit-view"/>
         </button>
       </el-tooltip>
     </div>
