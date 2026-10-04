@@ -188,7 +188,11 @@
           </template>
         </template>
       </div>
-      <div class="status-right">{{ $t('preview.statusRight') }}</div>
+      <div class="status-right">
+        <span v-if="systemMetricsText">{{ $t('preview.statusSystemGroup', {value: systemMetricsText}) }}</span>
+        <span class="status-divider" v-if="systemMetricsText">|</span>
+        <span>{{ $t('preview.statusAppGroup', {value: appMetricsText}) }}</span>
+      </div>
     </div>
 
   </div>
@@ -244,10 +248,79 @@ const statusItems = computed(() => {
   if (!metadata) return []
   const items = []
   if (canvas.path) items.push({text: t('preview.filePath') + canvas.path, title: canvas.path})
-  if (metadata.shootingTime) items.push({text: t('preview.shootingTime') + metadata.shootingTime})
   if (metadata.resolution) items.push({text: t('preview.resolution') + metadata.resolution})
   if (metadata.fileSize) items.push({text: t('preview.size') + metadata.fileSize})
   return items
+})
+
+// 状态栏右侧：性能指标按「系统 | 应用」分组（系统=整机，应用=本应用全部进程），指标每 4 秒轮询，FPS 由 rAF 逐帧采样
+const perfMetrics = ref(null)
+const fps = ref(0)
+
+// 数值固定占位（宽度不足时在数值尾部用「图形空格」U+2007 补齐——宽度与数字完全等宽且不折行，
+// 宽度不变的前提下让标签与数值保持紧贴；配合 tabular-nums 使位数变化时指标块总宽度精确恒定）
+const padValue = (value, width) => String(value).padEnd(width, '\u2007')
+
+// 系统组：整机内存 / CPU（首帧系统 CPU 无历史快照，用 -- 占位保持宽度稳定）
+const systemMetricsText = computed(() => {
+  const metrics = perfMetrics.value
+  if (!metrics) return ''
+  const items = [
+    t('preview.statusMemory', {
+      value: padValue(metrics.systemMemoryPercent != null ? `${metrics.systemMemoryPercent}%` : '--', 4)
+    }),
+    t('preview.statusCpu', {
+      value: padValue(metrics.systemCpuPercent != null ? `${metrics.systemCpuPercent}%` : '--', 4)
+    }),
+  ]
+  return items.join(' ')
+})
+
+// 应用组：本应用全部进程的内存 / CPU，以及 FPS、GPU 加速状态
+const appMetricsText = computed(() => {
+  const metrics = perfMetrics.value
+  if (!metrics) return ''
+  // 统一用 MB 显示（不切换 GB）：单位混排时小数点与数字宽度差会造成轻微位移
+  // 槽位 8 字符：覆盖 3~5 位数的 MB 值（到 99999 MB），位数在该范围内变化不引起位移
+  const memory = `${Math.round(metrics.memoryKB / 1024)} MB`
+  const items = [
+    t('preview.statusMemory', {value: padValue(memory, 8)}),
+    // 槽位 6 字符：按 100.0% 上限预留（覆盖到 999.9%，常规范围内位数变化不位移）
+    t('preview.statusCpu', {value: padValue(`${metrics.cpuPercent.toFixed(1)}%`, 6)}),
+    t('preview.statusFps', {value: padValue(fps.value > 0 ? fps.value : '--', 3)}),
+  ]
+  if (metrics.gpuAccelerated != null) {
+    items.push(t(metrics.gpuAccelerated ? 'preview.statusGpuOn' : 'preview.statusGpuOff'))
+  }
+  return items.join(' ')
+})
+
+const refreshPerformanceMetrics = async () => {
+  perfMetrics.value = await window.electronAPI.getPerformanceMetrics()
+}
+
+refreshPerformanceMetrics()
+const perfTimer = setInterval(refreshPerformanceMetrics, 4000)
+
+// FPS：逐帧计数、每秒结算一次。页面隐藏（窗口被遮挡/最小化）时 Chromium 会把 rAF 节流到低频，
+// 此时的帧率不代表渲染性能——不结算、保持上一次可见时的值，窗口重新露出后自动恢复刷新
+let fpsFrames = 0
+let fpsLastTime = performance.now()
+let fpsRafId = requestAnimationFrame(function sampleFps(now) {
+  fpsFrames++
+  if (now - fpsLastTime >= 1000) {
+    if (document.visibilityState === 'visible') {
+      fps.value = Math.round(fpsFrames * 1000 / (now - fpsLastTime))
+    }
+    fpsFrames = 0
+    fpsLastTime = now
+  }
+  fpsRafId = requestAnimationFrame(sampleFps)
+})
+
+onUnmounted(() => {
+  clearInterval(perfTimer)
+  cancelAnimationFrame(fpsRafId)
 })
 
 // 导入更多图片：复用工作区的导入流程
@@ -950,10 +1023,13 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 14px;
+  /* 左右留白一致：文件路径左侧与性能参数右侧同为 4px */
+  padding: 0 4px;
   border-top: 1px solid var(--ui-border);
   background: var(--ui-chrome);
   font-size: 11.5px;
+  /* 等宽数字：配合数值固定占位，刷新时指标块宽度恒定 */
+  font-variant-numeric: tabular-nums;
   color: var(--ui-text-muted);
 
   .status-left {
@@ -1000,8 +1076,16 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
 
   .status-right {
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
     margin-left: 12px;
     color: var(--ui-text-faint);
+  }
+
+  /* 系统 / 应用 两组之间的竖线分隔符：两侧留白 + 颜色调浅（不抢指标文字） */
+  .status-divider {
+    margin: 0 8px;
+    opacity: 0.6;
   }
 }
 

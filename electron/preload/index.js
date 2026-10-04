@@ -43,6 +43,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     toggleMaximizeWindow: () => ipcRenderer.send('window:toggle-maximize'),
     closeWindow: () => ipcRenderer.send('window:close'),
     isWindowMaximized: () => ipcRenderer.invoke('window:is-maximized'),
+    // 应用性能指标（全部进程内存 / CPU 占用，供右下角状态栏展示）
+    getPerformanceMetrics: () => ipcRenderer.invoke('performance:get-metrics'),
     // 弹出原生应用菜单的顶级子菜单（自绘菜单栏复用原生命令）
     popupAppMenu: (args) => ipcRenderer.send('menu:popup', args),
     // 触发原生菜单中的某一项（自绘导出按钮复用「文件 › 导出图片」）

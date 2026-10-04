@@ -12,6 +12,7 @@ const imageExportProcessor = require('./thread/image-export-processor')
 const resourcesLoader = require('./utils/resources-loader')
 const {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl} = require('./utils/path-helper')
 const {getSystemFonts, getCustomFonts} = require('./utils/font-manager')
+const performanceMetrics = require('./utils/performance-metrics')
 const ImageMetadataHelper = require("./utils/ImageMetadataHelper");
 
 
@@ -245,6 +246,9 @@ const setupIpcHandlers = () => {
     ipcMain.handle('window:is-maximized', (event) => {
         return BrowserWindow.fromWebContents(event.sender)?.isMaximized() ?? false
     })
+
+    // 应用性能指标（渲染进程右下角状态栏轮询展示；实现见 utils/performance-metrics.js）
+    ipcMain.handle('performance:get-metrics', () => performanceMetrics.getMetrics())
 
     // 弹出应用菜单的某个顶级子菜单（渲染进程自绘菜单栏点击后调用，复用原生命令）
     ipcMain.on('menu:popup', (event, {id, x, y}) => {
