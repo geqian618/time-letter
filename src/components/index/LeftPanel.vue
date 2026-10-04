@@ -357,13 +357,13 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   padding: 0 10px;
   border-radius: var(--app-radius-sm);
   background: var(--ui-control);
-  border: 1px solid transparent;
+  border: 1px solid var(--ui-border);
   cursor: text;
   flex-shrink: 0;
-  transition: border-color var(--app-transition), box-shadow var(--app-transition);
+  transition: border-color var(--app-transition), background-color var(--app-transition), box-shadow var(--app-transition);
 
   &:hover {
-    border-color: var(--ui-border);
+    border-color: var(--ui-border-strong);
   }
 
   &:focus-within {
