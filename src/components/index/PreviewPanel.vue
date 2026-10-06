@@ -922,7 +922,7 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
 .preview-list {
   box-sizing: border-box;
   flex: 1 1 auto;
-  height: calc(100% - 64px);
+  height: calc(100% - 58px);
   min-height: 0;
   width: 100%;
   display: flex;
@@ -1018,8 +1018,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
 
 /* ---------- 状态栏 ---------- */
 .preview-status {
-  flex: 0 0 26px;
-  height: 26px;
+  flex: 0 0 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1027,7 +1027,7 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
   padding: 0 4px;
   border-top: 1px solid var(--ui-border);
   background: var(--ui-chrome);
-  font-size: 11.5px;
+  font-size: 9.5px;
   /* 等宽数字：配合数值固定占位，刷新时指标块宽度恒定 */
   font-variant-numeric: tabular-nums;
   color: var(--ui-text-muted);
