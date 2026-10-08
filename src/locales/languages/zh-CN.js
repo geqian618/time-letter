@@ -19,6 +19,7 @@ export default {
         },
         resetAll: '重置全部设置',
         resetMetadata: '恢复默认值',
+        resetGroup: '重置',
         resetNav: '重置设置',
         searchPlaceholder: '搜索设置...',
         searchNoResults: '未找到匹配的设置',

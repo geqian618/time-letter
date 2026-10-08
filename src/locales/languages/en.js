@@ -19,6 +19,7 @@ export default {
         },
         resetAll: 'Reset All Settings',
         resetMetadata: 'Restore Defaults',
+        resetGroup: 'Reset',
         resetNav: 'Reset',
         searchPlaceholder: 'Search settings...',
         searchNoResults: 'No matching settings',

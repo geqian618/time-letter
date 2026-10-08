@@ -162,7 +162,7 @@
                     <div class="row-label">{{ $t('settings.prefix') }}</div>
                     <div class="row-desc">{{ $t('settings.desc.prefix') }}</div>
                   </div>
-                  <div class="row-control w-input">
+                  <div class="row-control w-select">
                     <el-input spellcheck="false"
                               v-model="settingsStore.projectSettings.outputSettings.fileNaming.prefix"/>
                   </div>
@@ -172,7 +172,7 @@
                     <div class="row-label">{{ $t('settings.suffix') }}</div>
                     <div class="row-desc">{{ $t('settings.desc.suffix') }}</div>
                   </div>
-                  <div class="row-control w-input">
+                  <div class="row-control w-select">
                     <el-input spellcheck="false"
                               v-model="settingsStore.projectSettings.outputSettings.fileNaming.suffix"/>
                   </div>
@@ -276,7 +276,7 @@
           <template v-else-if="activePage === 'metadata'">
             <div class="settings-section">
               <div class="section-title">{{ $t('settings.formatting') }}</div>
-              <div class="settings-card">
+              <div class="settings-card compact-rows">
                 <div class="setting-row">
                   <div class="row-info"><div class="row-label">{{ $t('settings.cameraBrand') }}</div></div>
                   <div class="row-control w-input">
@@ -357,6 +357,13 @@
                               v-model="settingsStore.projectSettings.metadata.formats.filename"/>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- 重置：独立于格式化项的恢复操作，避免与设置项混淆 -->
+            <div class="settings-section">
+              <div class="section-title">{{ $t('settings.resetGroup') }}</div>
+              <div class="settings-card">
                 <div class="setting-row">
                   <div class="row-info">
                     <div class="row-label">{{ $t('settings.resetMetadata') }}</div>
@@ -599,6 +606,7 @@ const navItems = [
     key: 'metadata', icon: 'cmd-doc-lines', labelKey: 'settings.tabs.metadata',
     search: ['formatting', 'cameraBrand', 'cameraModel', 'lensModel', 'focalLength', 'iso',
       'shutter', 'aperture', 'shootingDate', 'dateFormat', 'filename',
+      'resetGroup', 'resetMetadata', 'desc.resetMetadata',
       'focalConversion', 'equivFocal', 'cropFactor', 'desc.equivFocal', 'desc.cropFactor']
   },
   {
@@ -1113,6 +1121,11 @@ const resetAllSettings = async () => {
   padding: 9px 0;
 }
 
+/* 格式化组行数较多，收紧行距让整组更紧凑（仅该卡片生效） */
+.settings-card.compact-rows .setting-row {
+  padding: 5px 0;
+}
+
 .row-info {
   flex: 1 1 auto;
   min-width: 0;
@@ -1139,11 +1152,13 @@ const resetAllSettings = async () => {
   justify-content: flex-end;
 
   // 控件宽度档位：下拉 / 输入 / 数值 / 滑块 / 宽输入区
-  &.w-select .el-select {
+  &.w-select .el-select,
+  &.w-select .el-input {
     width: 180px;
   }
 
-  &.w-input .el-input {
+  &.w-input .el-input,
+  &.w-input .el-select {
     width: 240px;
   }
 
@@ -1152,13 +1167,30 @@ const resetAllSettings = async () => {
   }
 
   &.w-slider .el-slider {
-    width: 300px;
+    width: 240px;
 
     --el-slider-button-size: 13px;
     --el-slider-height: 6px;
 
-    .el-slider__input {
-      width: 90px;
+    /* 滑块与计数器的间距：EP 默认给滑轨留 30px 右边距，收紧到 8px */
+    :deep(.el-slider__runway.show-input) {
+      margin-right: 8px;
+    }
+
+    /* 计数器：EP 默认 130px。收窄的同时同步缩小两侧步进按钮（32px→24px）
+       与输入区内边距（42px→26px），否则数字会被裁切 */
+    :deep(.el-slider__input) {
+      width: 96px;
+
+      .el-input-number__decrease,
+      .el-input-number__increase {
+        width: 24px;
+      }
+
+      .el-input__wrapper {
+        padding-left: 26px;
+        padding-right: 26px;
+      }
     }
   }
 }
