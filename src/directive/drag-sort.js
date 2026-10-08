@@ -1,217 +1,185 @@
-// 优化后的拖拽排序指令
+// 拖拽排序指令（容器级事件委托版）
+//
+// 旧实现把 dragover / dragenter / drop / dragend 监听器逐个挂在子元素上，
+// 而 drop 回调里同步更新 store 会触发 Vue 重渲染，令指令的 updated 钩子
+// 抢在 dragend 之前把这些监听器摘掉，导致 dragend 的样式清理永远不执行，
+// 「over / dragging」样式残留在卡片上。
+//
+// 现在所有监听器只挂在容器上（事件委托），Vue 重渲染不会移除它们；
+// 同时在拖拽结束后短暂拦截 click，避免落点卡片被误触发选中态。
+const CLICK_MOVE_THRESHOLD = 5
+
 const dragSort = {
     mounted(el, binding) {
         initDragSort(el, binding);
     },
     updated(el, binding) {
         initDragSort(el, binding);
+    },
+    unmounted(el) {
+        destroyDragSort(el);
     }
 };
 
-// 初始化拖拽排序
-const initDragSort = (el, binding) => {
-    // 清除现有事件监听器
-    removeEventListeners(el);
+// 向上找到 target 所属的直接子元素（不在容器内则返回 null）
+const findChild = (el, node) => {
+    while (node && node.parentElement !== el) {
+        node = node.parentElement;
+    }
+    return node;
+};
 
-    // 获取子元素
-    const children = Array.from(el.children);
-
-    // 为每个项目添加拖拽属性
-    children.forEach((child, index) => {
-        // 添加可拖拽属性
-        child.setAttribute('draggable', 'true');
-        child.setAttribute('data-index', index);
-
-        // 只添加 dragstart 事件
-        child.addEventListener('dragstart', handleDragStart);
-    });
-
-    // 存储事件处理函数以便后续移除
-    el._dragSortHandlers = {
-        dragstart: handleDragStart
-    };
-
-    // 调用回调函数（如果提供）
-    if (binding.value && typeof binding.value === 'function') {
-        el._dragSortCallback = binding.value;
+const clearOver = (el) => {
+    if (el._overElement) {
+        el._overElement.classList.remove('over');
+        el._overElement = null;
     }
 };
 
-// 移除事件监听器
-const removeEventListeners = (el) => {
-
-    if (!el._dragSortHandlers) return;
-
-    const children = Array.from(el.children);
-    const handlers = el._dragSortHandlers;
-
-    children.forEach(child => {
-
-        child.removeEventListener('dragstart', handlers.dragstart);
-
-        // 同时移除可能在拖拽过程中添加的事件
-        if (handlers.dragend) {
-            child.removeEventListener('dragend', handlers.dragend);
-        }
-        if (handlers.dragover) {
-            child.removeEventListener('dragover', handlers.dragover);
-        }
-        if (handlers.dragenter) {
-            child.removeEventListener('dragenter', handlers.dragenter);
-        }
-        if (handlers.dragleave) {
-            child.removeEventListener('dragleave', handlers.dragleave);
-        }
-        if (handlers.drop) {
-            child.removeEventListener('drop', handlers.drop);
-        }
-    });
-
-    delete el._dragSortHandlers;
-};
-
-// 拖拽开始处理
-const handleDragStart = function (e) {
-    const el = this.parentElement;
-    // 设置拖拽效果
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', this.getAttribute('data-index'));
-
-    // 存储拖拽元素
-    el._dragElement = this;
-
-    // 添加拖拽过程中需要的事件监听器
-    addDragEventListeners(el);
-
-    // 添加拖拽样式
-    setTimeout(() => this.classList.add('dragging'), 0);
-};
-
-// 添加拖拽过程中的事件监听器
-const addDragEventListeners = (el) => {
-
-    const children = Array.from(el.children);
-
-    // 定义事件处理函数
-    const dragendHandler = handleDragEnd;
-    const dragoverHandler = handleDragOver;
-    const dragenterHandler = handleDragEnter;
-    const dragleaveHandler = handleDragLeave;
-    const dropHandler = handleDrop;
-
-    children.forEach(child => {
-        child.addEventListener('dragend', dragendHandler);
-        child.addEventListener('dragover', dragoverHandler);
-        child.addEventListener('dragenter', dragenterHandler);
-        child.addEventListener('dragleave', dragleaveHandler);
-        child.addEventListener('drop', dropHandler);
-    });
-
-    // 存储这些处理函数以便后续移除
-    el._dragSortHandlers.dragend = dragendHandler;
-    el._dragSortHandlers.dragover = dragoverHandler;
-    el._dragSortHandlers.dragenter = dragenterHandler;
-    el._dragSortHandlers.dragleave = dragleaveHandler;
-    el._dragSortHandlers.drop = dropHandler;
-};
-
-// 拖拽结束处理
-const handleDragEnd = function () {
-    const el = this.parentElement;
-    const children = Array.from(el.children);
-
-    // 移除所有样式
-    children.forEach(child => {
+const clearDragging = (el) => {
+    Array.from(el.children).forEach(child => {
         child.classList.remove('dragging');
         child.classList.remove('over');
     });
-
-    // 移除拖拽过程中添加的事件监听器
-    removeDragEventListeners(el);
-
-    // 清除拖拽元素引用
-    delete el._dragElement;
 };
 
-// 移除拖拽过程中的事件监听器
-const removeDragEventListeners = (el) => {
-    const children = Array.from(el.children);
-    const handlers = el._dragSortHandlers;
+const initDragSort = (el, binding) => {
+    // 回调可能随渲染更新，每次同步
+    if (typeof binding.value === 'function') {
+        el._dragSortCallback = binding.value;
+    }
 
-    if (!handlers) return;
-
-    children.forEach(child => {
-        if (handlers.dragend) {
-            child.removeEventListener('dragend', handlers.dragend);
-        }
-        if (handlers.dragover) {
-            child.removeEventListener('dragover', handlers.dragover);
-        }
-        if (handlers.dragenter) {
-            child.removeEventListener('dragenter', handlers.dragenter);
-        }
-        if (handlers.dragleave) {
-            child.removeEventListener('dragleave', handlers.dragleave);
-        }
-        if (handlers.drop) {
-            child.removeEventListener('drop', handlers.drop);
-        }
+    // 新增的子元素也要可拖拽（其余监听器都走容器委托，无需逐个绑定）
+    Array.from(el.children).forEach(child => {
+        child.setAttribute('draggable', 'true');
     });
 
-    // 只保留 dragstart 事件处理函数
+    if (el._dragSortBound) return;
+    el._dragSortBound = true;
+
     el._dragSortHandlers = {
-        dragstart: handlers.dragstart
+        // 捕获阶段拦截：拖拽刚结束时抑制落点卡片上的 click（选中框误触发）
+        mousedown: handleMouseDown,
+        click: handleClick,
+        dragstart: handleDragStart,
+        dragover: handleDragOver,
+        dragleave: handleDragLeave,
+        drop: handleDrop,
+        dragend: handleDragEnd
     };
+
+    // 全部用捕获阶段：click / mousedown 需要抢在卡片自身监听器之前，其余事件在捕获阶段同样可用
+    Object.entries(el._dragSortHandlers).forEach(([type, handler]) => {
+        el.addEventListener(type, handler, true);
+    });
 };
 
-// 其余事件处理函数保持不变
+const destroyDragSort = (el) => {
+    if (!el._dragSortHandlers) return;
+    Object.entries(el._dragSortHandlers).forEach(([type, handler]) => {
+        el.removeEventListener(type, handler, true);
+    });
+    delete el._dragSortHandlers;
+    delete el._dragSortCallback;
+    delete el._dragSortBound;
+    delete el._dragElement;
+    delete el._overElement;
+    delete el._dragActive;
+    delete el._mouseDownInfo;
+};
+
+// 记录按下位置，用于判断 click 前指针是否发生过明显位移（即拖拽意图）
+const handleMouseDown = function (e) {
+    this._mouseDownInfo = { x: e.clientX, y: e.clientY };
+    // 上一次拖拽的标记在这里作废，保证后续正常点击不受影响
+    this._dragActive = false;
+};
+
+const handleClick = function (e) {
+    const down = this._mouseDownInfo;
+    const movedFar = down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > CLICK_MOVE_THRESHOLD;
+    // 拖拽刚结束（click 紧跟在 dragend 之后）或指针位移明显：视为拖拽副产物，不当作点击
+    if (!this._dragActive && !movedFar) return;
+    e.preventDefault();
+    e.stopPropagation();
+};
+
+const handleDragStart = function (e) {
+    const child = findChild(this, e.target);
+    if (!child) return;
+
+    this._dragElement = child;
+    this._dragActive = true;
+    clearOver(this);
+
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+
+    // 异步加样式，避免 dragging 态被画进拖拽预览图
+    setTimeout(() => child.classList.add('dragging'), 0);
+};
+
 const handleDragOver = function (e) {
+    if (!this._dragElement) return;
+    const child = findChild(this, e.target);
+    if (!child) return;
+
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    return false;
-};
 
-const handleDragEnter = function (e) {
-    e.preventDefault();
-    this.classList.add('over');
-    return false;
+    if (this._overElement !== child) {
+        clearOver(this);
+        this._overElement = child;
+        child.classList.add('over');
+    }
 };
 
 const handleDragLeave = function (e) {
-    e.preventDefault();
-    this.classList.remove('over');
-    return false;
+    if (!this._dragElement) return;
+    // 只在真正离开容器（relatedTarget 已不在容器内）时清掉悬浮高亮
+    if (!this.contains(e.relatedTarget)) {
+        clearOver(this);
+    }
 };
 
 const handleDrop = function (e) {
+    const dragElement = this._dragElement;
+    if (!dragElement) return;
 
     e.preventDefault();
 
-    const el = this.parentElement;
-    const dragElement = el._dragElement;
+    const target = findChild(this, e.target);
+    if (!target || target === dragElement) return;
 
-    if (!dragElement || this === dragElement) return;
-
-    // 获取所有子元素
-    const children = Array.from(el.children);
-
-    // 获取拖拽元素和目标元素的索引
+    const children = Array.from(this.children);
     const draggedIndex = children.indexOf(dragElement);
-    const targetIndex = children.indexOf(this);
+    const targetIndex = children.indexOf(target);
 
-    // 确定插入位置
     if (draggedIndex < targetIndex) {
-        el.insertBefore(dragElement, this.nextElementSibling);
+        this.insertBefore(dragElement, target.nextElementSibling);
     } else {
-        el.insertBefore(dragElement, this);
+        this.insertBefore(dragElement, target);
     }
 
-    // 调用回调函数传递索引信息
-    if (el._dragSortCallback && typeof el._dragSortCallback === 'function') {
-        el._dragSortCallback(el, dragElement, this);
+    // 拖拽排序结束后按 DOM 顺序通知外部重排数据
+    if (typeof this._dragSortCallback === 'function') {
+        this._dragSortCallback(this, dragElement, target);
     }
+};
 
-    return false;
+const handleDragEnd = function () {
+    if (!this._dragElement) return;
+
+    clearDragging(this);
+    clearOver(this);
+    delete this._dragElement;
+    delete this._overElement;
+
+    // click 若在 dragend 之后立即触发，_dragActive 仍为 true，会被 handleClick 拦下；
+    // 之后由下一次 mousedown 或这个兜底定时器复位
+    setTimeout(() => {
+        this._dragActive = false;
+    }, 0);
 };
 
 export default dragSort;
