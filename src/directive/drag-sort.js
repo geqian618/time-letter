@@ -43,6 +43,19 @@ const clearDragging = (el) => {
     });
 };
 
+// 拖拽结束的统一收尾：清样式、清状态、复位点击拦截标记
+const finishDrag = (el) => {
+    clearDragging(el);
+    clearOver(el);
+    delete el._dragElement;
+    delete el._overElement;
+    // click 若紧跟在拖拽结束后触发，_dragActive 仍为 true，会被 handleClick 拦下；
+    // 之后由下一次 mousedown 或这个兜底定时器复位
+    setTimeout(() => {
+        el._dragActive = false;
+    }, 0);
+};
+
 const initDragSort = (el, binding) => {
     // 回调可能随渲染更新，每次同步
     if (typeof binding.value === 'function') {
@@ -149,37 +162,32 @@ const handleDrop = function (e) {
     e.preventDefault();
 
     const target = findChild(this, e.target);
-    if (!target || target === dragElement) return;
+    if (target && target !== dragElement) {
+        const children = Array.from(this.children);
+        const draggedIndex = children.indexOf(dragElement);
+        const targetIndex = children.indexOf(target);
 
-    const children = Array.from(this.children);
-    const draggedIndex = children.indexOf(dragElement);
-    const targetIndex = children.indexOf(target);
+        if (draggedIndex < targetIndex) {
+            this.insertBefore(dragElement, target.nextElementSibling);
+        } else {
+            this.insertBefore(dragElement, target);
+        }
 
-    if (draggedIndex < targetIndex) {
-        this.insertBefore(dragElement, target.nextElementSibling);
-    } else {
-        this.insertBefore(dragElement, target);
+        // 拖拽排序结束后按 DOM 顺序通知外部重排数据
+        if (typeof this._dragSortCallback === 'function') {
+            this._dragSortCallback(this, dragElement, target);
+        }
     }
 
-    // 拖拽排序结束后按 DOM 顺序通知外部重排数据
-    if (typeof this._dragSortCallback === 'function') {
-        this._dragSortCallback(this, dragElement, target);
-    }
+    // 关键：drop 里移动了源节点（insertBefore + Vue 重渲染）时，部分环境下
+    // dragend 不会触发，导致 dragging / over 样式残留、点击拦截标记不复位。
+    // 所以清理必须在 drop 内完成，dragend 只兜底「未 drop 的取消拖拽」。
+    finishDrag(this);
 };
 
 const handleDragEnd = function () {
     if (!this._dragElement) return;
-
-    clearDragging(this);
-    clearOver(this);
-    delete this._dragElement;
-    delete this._overElement;
-
-    // click 若在 dragend 之后立即触发，_dragActive 仍为 true，会被 handleClick 拦下；
-    // 之后由下一次 mousedown 或这个兜底定时器复位
-    setTimeout(() => {
-        this._dragActive = false;
-    }, 0);
+    finishDrag(this);
 };
 
 export default dragSort;
