@@ -44,8 +44,6 @@ const defaultProjectSettings = {
         theme: 'system',
         // 配色主题：default(琥珀) | indigo | pine | crimson | wisteria
         uiTheme: 'default',
-        // 分组卡片：true 显示卡片外壳，false 扁平化（去外壳）
-        showGroupCards: true,
         enableScrollbar: true,
         enableZoomPill: true
     },
@@ -74,8 +72,7 @@ const defaultProjectSettings = {
             width: "100%",
             height: "20%"
         }
-    },
-    availableFonts: null
+    }
 }
 
 export {defaultProjectSettings}

@@ -1,9 +1,3 @@
-/* ==========================================================================
-   时光信笺 · 设计令牌
-   依据《时光信笺 · UI 重设计》亮/暗两套稿重建：
-   中性灰底 + 琥珀强调色，面板接近纯白/纯黑，卡片用极浅灰拉开层次。
-   ========================================================================== */
-
 /* 双写 :root 提高特异性（0,2,0）：EP 的 index.css 在本文件之后加载，
    单写 :root 会在亮色下被 EP 默认蓝等 :root 同名令牌覆盖（暗色靠 [dark-theme] 已更高） */
 :root:root {
@@ -111,6 +105,9 @@
   /* 弹窗内的输入控件：描边式（填充≈弹窗底色 + 1px 描边，聚焦换 2px 琥珀） */
   --app-dialog-field-bg: #ffffff;
   --app-dialog-field-border: #d6d6de;
+  /* 偏好设置卡片：纯白卡片浮于浅灰弹窗底上 */
+  --app-settings-card-bg: #ffffff;
+  --app-settings-card-border: #e7e7ec;
   --app-dialog-field-border-hover: #bcbcc7;
   /* 弹窗底部按钮：次按钮中性填充、无描边 */
   --app-dialog-btn-bg: #f0f0f2;
@@ -269,24 +266,27 @@
   /* 参考图弹窗外无描边，靠底色与遮罩分层 */
   --app-dialog-border: transparent;
   /* 弹窗内分隔线（标题栏下沿、分组框描边）与浅底 */
-  --app-dialog-line: #3A3A3A;
+  --app-dialog-line: #404046;
   --app-dialog-subtle-bg: #262626;
-  /* 弹窗内的选中底：比弹窗底(#2B2B2B)亮一档，读作「选中/浮起」；
+  /* 弹窗内的选中底：比弹窗底(#2B2B2B)亮两档，读作「选中/浮起」；
      琥珀只用于文字与左侧细标，避免低透明度琥珀叠成脏棕 */
-  --app-dialog-selected-bg: #3A3A3A;
+  --app-dialog-selected-bg: #41414a;
   /* 弹窗内统一描边色：表格、分组框、标签页框、输入控件、开关等所有带边框的组件都用它 */
   --app-dialog-line-strong: #4A4A4A;
   /* 弹窗内表格行悬浮底比选中底浅一档 */
-  --app-dialog-row-hover-bg: #343434;
+  --app-dialog-row-hover-bg: #3d3d44;
   /* 弹窗内的输入控件：填充同弹窗底色 + 1px 描边，聚焦换 2px 琥珀 */
   --app-dialog-field-bg: transparent;
   --app-dialog-field-border: #4A4A4A;
+  /* 偏好设置卡片：比弹窗底(#2B2B2B)亮一档的浮起卡片（field-bg 在深色下是 transparent，不能复用） */
+  --app-settings-card-bg: #333333;
+  --app-settings-card-border: #424242;
   --app-dialog-field-border-hover: #5C5C5C;
-  /* 弹窗底部按钮：主按钮琥珀底深字，次按钮中性填充 */
-  --app-dialog-btn-bg: #333333;
+  /* 弹窗底部按钮：主按钮琥珀底深字，次按钮中性填充（比卡片底亮一档，否则与卡片融为一体） */
+  --app-dialog-btn-bg: #41414a;
   --app-dialog-btn-text: #d0d2d6;
   /* 弹窗关闭按钮悬停底色 */
-  --app-dialog-close-hover-bg: #3a3a3a;
+  --app-dialog-close-hover-bg: #404046;
   --app-dialog-close-hover-text: #f1f1f5;
 
   --app-tabs-active-bg: #20202a;
@@ -302,7 +302,7 @@
   /* el-tooltip / el-popper.is-dark 主题令牌 */
   --app-tooltip-bg: #20202a;
   --app-tooltip-text: #f1f1f5;
-  --app-tooltip-border: #2c2c35;
+  --app-tooltip-border: #3f3f48;
   --app-tooltip-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
 
   /* 层次、圆角与动效令牌 */
@@ -337,22 +337,15 @@
   --el-text-color-secondary: #9f9fa3;
   --el-text-color-placeholder: #6a6a74;
 
-  --el-border-color: #2c2c35;
+  --el-border-color: #3f3f48;
   --el-border-color-light: #26262d;
   --el-border-color-lighter: #23232a;
   --el-border-color-extra-light: #1e1e25;
 }
 
 
-/* ==========================================================================
-   扩展配色主题：靛青 / 松烟 / 胭脂 / 紫藤
-   - 配色选择：html[data-ui-theme="indigo|pine|crimson|wisteria"]，
-     亮暗仍由 html[dark-theme] 控制 → 4 配色 × 2 模式 = 8 套
-   - 卡片选择：html[data-ui-cards="off"] 去掉分组卡片外壳（扁平），
-     "on" 或缺省保持组件自带卡片 → ×2 = 16 种组合
-   - 仅改颜色与描边：旧 --app-* / --el-* 令牌整体桥接到 --ui-*，
-     与 UI 走查预览所见完全一致；不带 data-ui-theme 时默认琥珀主题不受影响
-   ========================================================================== */
+/* 扩展配色主题（靛青/松烟/胭脂/紫藤）：html[data-ui-theme] 选择配色、[dark-theme] 控制亮暗；
+   旧 --app-* / --el-* 令牌整体桥接到 --ui-*，不带 data-ui-theme 时默认琥珀主题不受影响 */
 
 /* 同样压过 EP 的 :root 亮色默认值（dark 组合本身已更高，统一加 :root 前缀） */
 :root[data-ui-theme],
@@ -395,11 +388,14 @@
   --app-dialog-subtle-bg: var(--ui-control);
   --app-dialog-selected-bg: var(--ui-row-hover);
   --app-dialog-line-strong: var(--ui-border-strong);
-  --app-dialog-row-hover-bg: var(--ui-card-hover);
+  --app-dialog-row-hover-bg: var(--ui-row-hover);
   --app-dialog-field-bg: var(--ui-elevated);
   --app-dialog-field-border: var(--ui-border-strong);
+  --app-settings-card-bg: var(--ui-elevated);
+  --app-settings-card-border: var(--ui-border);
   --app-dialog-field-border-hover: var(--ui-text-faint);
-  --app-dialog-btn-bg: var(--ui-control);
+  /* 次按钮底色用 row-hover：control 在暗色下与卡片(elevated)几乎同色，按钮会隐形 */
+  --app-dialog-btn-bg: var(--ui-row-hover);
   --app-dialog-btn-text: var(--ui-text-secondary);
   --app-dialog-close-hover-bg: var(--ui-control-hover);
   --app-dialog-close-hover-text: var(--ui-text);
@@ -432,7 +428,8 @@
   --el-text-color-regular: var(--ui-text);
   --el-text-color-secondary: var(--ui-text-secondary);
   --el-text-color-placeholder: var(--ui-text-faint);
-  --el-border-color: var(--ui-border);
+  /* el-border-color 提到 strong 档：复选框/开关等组件边框在暗色卡片上才可见 */
+  --el-border-color: var(--ui-border-strong);
   --el-border-color-light: var(--ui-border-soft);
   --el-border-color-lighter: var(--ui-border-soft);
   --el-border-color-extra-light: var(--ui-border-soft);
@@ -722,39 +719,60 @@
   --ui-track: #322a3e;
 }
 
-/* ---------- 扁平模式：去掉左右面板分组卡片外壳（边框线级改动，不动尺寸）
+html, body, #app {
+  background-color: var(--ui-chrome);
+  color: var(--ui-text);
+}
+
+/* ---------- 主界面面板扁平化（永久样式）：原「卡片/扁平」选项已移除，面板固定无卡片外壳。
+   仅作用于主界面面板的 .section-card / .section-header / 右键菜单分组；
+   设置弹窗卡片使用独立的 .settings-card 类名，不受影响。
    !important 用于压过 RightPanel.vue 中 .el-menu > .sub-menu 的同权重 scoped 样式 ---------- */
-:root[data-ui-cards="off"] .section-card {
+.section-card {
   background: transparent !important;
   border: 0 !important;
   border-radius: 0 !important;
 }
 
-:root[data-ui-cards="off"] .section-header {
+.section-header {
   background: transparent !important;
 }
 
-:root[data-ui-cards="off"] .section-header:hover {
+.section-header:hover {
   background: var(--ui-row-hover) !important;
 }
 
-:root[data-ui-cards="off"] .el-menu .sub-menu {
+.el-menu .sub-menu {
   background: transparent !important;
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
 
-:root[data-ui-cards="off"] .el-menu .sub-menu .el-sub-menu__title {
+.el-menu .sub-menu .el-sub-menu__title {
   background: transparent !important;
 }
 
-:root[data-ui-cards="off"] .el-menu .sub-menu .el-sub-menu__title:hover {
+.el-menu .sub-menu .el-sub-menu__title:hover {
   background: var(--ui-row-hover) !important;
 }
 
-
-html, body, #app {
-  background-color: var(--ui-chrome);
-  color: var(--ui-text);
+/* 滑轨与开关关闭态：EP 把这两个变量声明在 .el-slider / .el-switch 元素自身，
+   :root 层设置会被覆盖而无效，必须在暗色下直接命中组件元素提亮
+   （border-color-light/-color 在暗色下与卡片底色几乎同色，滑轨/开关会隐形） */
+:root[dark-theme] .el-slider {
+  --el-slider-runway-bg-color: #4a4a52;
 }
+
+:root[dark-theme] .el-switch {
+  --el-switch-off-color: #4a4a52;
+}
+
+:root[data-ui-theme][dark-theme] .el-slider {
+  --el-slider-runway-bg-color: var(--ui-track);
+}
+
+:root[data-ui-theme][dark-theme] .el-switch {
+  --el-switch-off-color: var(--ui-track);
+}
+

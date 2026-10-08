@@ -338,7 +338,7 @@ const triggerContextMenu = (e) => {
 }
 
 // 导入图片：解析元数据并按格式化设置生成画布数据
-const watchImportImagess = () => {
+const watchImportImages = () => {
   window.electronAPI.watchImportImages(async (event, data) => {
     if (data) {
       const shootingTimeFormat = settingsStore.projectSettings.metadata.others.shootingTimeFormat;
@@ -373,7 +373,7 @@ const watchImportImagess = () => {
 }
 
 // 图片导入监听
-watchImportImagess()
+watchImportImages()
 
 
 // ---------- 预览元素选中状态 ----------

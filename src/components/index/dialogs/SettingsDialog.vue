@@ -1,421 +1,525 @@
 <template>
   <div class="dialog-wrapper">
-    <el-dialog v-model="settingsDialogVisible" :title="$t('settings.title')" top="10vh" width="750">
-      <el-tabs type="border-card" class="demo-tabs">
-        <el-tab-pane :label="$t('settings.tabs.export')">
-          <div class="border-box">
-            <span class="border-label">{{ $t('settings.imageSize') }}</span>
-            <div class="options">
-              <div class="option">
-                <span class="label">{{ $t('settings.adjustMode') }}</span>
-                <el-select v-model="settingsStore.projectSettings.outputSettings.outputSize.type"
-                           :placeholder="$t('common.select')"
-                           class="value"
-                           size="small">
-                  <el-option
-                      v-for="item in outputSizeOptions"
-                      :key="item.value"
-                      :label="item.label"
-                      :value="item.value"/>
-                </el-select>
-              </div>
-              <div class="option" v-show="settingsStore.projectSettings.outputSettings.outputSize.type===1">
-                <span class="label">{{ $t('settings.width') }}</span>
-                <div class="input-unit">
-                  <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.width"
-                            size="small"
-                            class="value"
-                            :placeholder="$t('settings.widthPlaceholder')"/>
-                  <span>&nbsp;px</span>
-                </div>
-              </div>
-              <div class="option" v-show="settingsStore.projectSettings.outputSettings.outputSize.type ===2">
-                <span class="label">{{ $t('settings.height') }}</span>
-                <div class="input-unit">
-                  <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.height"
-                            size="small"
-                            class="value"
-                            :placeholder="$t('settings.heightPlaceholder')"/>
-                  <span>&nbsp;px</span>
-                </div>
-              </div>
+    <el-dialog v-model="settingsDialogVisible" :title="$t('settings.title')" align-center width="920"
+               class="settings-dialog">
+      <div class="settings-layout">
+        <!-- 左侧：导航栏（参考样式：顶部搜索框 + 平铺导航项） -->
+        <aside class="settings-nav">
+          <div class="nav-search">
+            <SvgIcon name="search" class="nav-search-icon"/>
+            <input v-model="navQuery" :placeholder="$t('settings.searchPlaceholder')" spellcheck="false"/>
+          </div>
+          <button v-for="item in filteredNavItems" :key="item.key"
+                  type="button"
+                  class="nav-item"
+                  :class="{ 'is-active': activePage === item.key }"
+                  @click="activePage = item.key">
+            <SvgIcon :name="item.icon" class="nav-icon"/>
+            <span class="nav-label">{{ $t(item.labelKey) }}</span>
+          </button>
+          <div v-if="!filteredNavItems.length" class="nav-empty">{{ $t('settings.searchNoResults') }}</div>
+        </aside>
 
-              <div class="option" v-show="settingsStore.projectSettings.outputSettings.outputSize.type===3">
-                <span class="label">{{ $t('settings.maxWidth') }}</span>
-                <div class="input-unit">
-                  <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.maxWidth"
-                            size="small"
-                            class="value"
-                            :placeholder="$t('settings.maxWidthPlaceholder')"/>
-                  <span>&nbsp;px</span>
-                </div>
-              </div>
+        <!-- 右侧：设置内容区（大标题 + 分节卡片，每行「标签 + 描述」在左、控件在右） -->
+        <section class="settings-page">
+          <h2 class="page-title">{{ $t(currentNavItem.labelKey) }}</h2>
 
-              <div class="option" v-show="settingsStore.projectSettings.outputSettings.outputSize.type===3">
-                <span class="label">{{ $t('settings.maxHeight') }}</span>
-                <div class="input-unit">
-                  <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.maxHeight"
-                            size="small"
-                            class="value"
-                            :placeholder="$t('settings.maxHeightPlaceholder')"/>
-                  <span>&nbsp;px</span>
+          <!-- 导出 -->
+          <template v-if="activePage === 'export'">
+            <div class="settings-section">
+              <div class="section-title">{{ $t('settings.imageSize') }}</div>
+              <div class="settings-card">
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.adjustMode') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.adjustMode') }}</div>
+                  </div>
+                  <div class="row-control w-select">
+                    <el-select v-model="settingsStore.projectSettings.outputSettings.outputSize.type"
+                               :placeholder="$t('common.select')">
+                      <el-option
+                          v-for="item in outputSizeOptions"
+                          :key="item.value"
+                          :label="item.label"
+                          :value="item.value"/>
+                    </el-select>
+                  </div>
+                </div>
+                <div class="setting-row" v-show="settingsStore.projectSettings.outputSettings.outputSize.type===1">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.width') }}</div>
+                  </div>
+                  <div class="row-control w-num">
+                    <div class="input-unit">
+                      <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.width"
+                                :placeholder="$t('settings.widthPlaceholder')"/>
+                      <span class="unit">&nbsp;px</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="setting-row" v-show="settingsStore.projectSettings.outputSettings.outputSize.type ===2">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.height') }}</div>
+                  </div>
+                  <div class="row-control w-num">
+                    <div class="input-unit">
+                      <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.height"
+                                :placeholder="$t('settings.heightPlaceholder')"/>
+                      <span class="unit">&nbsp;px</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="setting-row" v-show="settingsStore.projectSettings.outputSettings.outputSize.type===3">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.maxWidth') }}</div>
+                  </div>
+                  <div class="row-control w-num">
+                    <div class="input-unit">
+                      <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.maxWidth"
+                                :placeholder="$t('settings.maxWidthPlaceholder')"/>
+                      <span class="unit">&nbsp;px</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="setting-row" v-show="settingsStore.projectSettings.outputSettings.outputSize.type===3">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.maxHeight') }}</div>
+                  </div>
+                  <div class="row-control w-num">
+                    <div class="input-unit">
+                      <el-input v-model.number="settingsStore.projectSettings.outputSettings.outputSize.maxHeight"
+                                :placeholder="$t('settings.maxHeightPlaceholder')"/>
+                      <span class="unit">&nbsp;px</span>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
 
-            </div>
-          </div>
-          <div class="border-box">
-            <span class="border-label">{{ $t('settings.imageSettings') }}</span>
-            <div class="options">
-              <div class="option">
-                <span class="label">{{ $t('settings.outputFormat') }}</span>
-                <el-select class="value" v-model="settingsStore.projectSettings.outputSettings.extname" size="small">
-                  <el-option
-                      v-for="item in [{label:$t('settings.formatOriginal'), value: 0}, {label:'JPEG', value:1}, {label:'PNG', value: 2}, {label:'WEBP', value: 3}, {label:'AVIF', value: 4}, {label:'GIF', value: 5}]"
-                      :key="item.value"
-                      :label="item.label"
-                      :value="item.value"/>
-                </el-select>
-              </div>
-              <div class="option" v-show="[1,3,4].includes(settingsStore.projectSettings.outputSettings.extname) ">
-                <span class="label">{{ $t('settings.imageQuality') }}</span>
-                <div class="slider-demo-block">
-                  <el-slider
-                      v-model="settingsStore.projectSettings.outputSettings.quality"
-                      class="value"
-                      :min="1"
-                      :max="100"
-                      size="small"
-                      show-input/>
+            <div class="settings-section">
+              <div class="section-title">{{ $t('settings.imageSettings') }}</div>
+              <div class="settings-card">
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.outputFormat') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.outputFormat') }}</div>
+                  </div>
+                  <div class="row-control w-select">
+                    <el-select v-model="settingsStore.projectSettings.outputSettings.extname">
+                      <el-option
+                          v-for="item in [{label:$t('settings.formatOriginal'), value: 0}, {label:'JPEG', value:1}, {label:'PNG', value: 2}, {label:'WEBP', value: 3}, {label:'AVIF', value: 4}, {label:'GIF', value: 5}]"
+                          :key="item.value"
+                          :label="item.label"
+                          :value="item.value"/>
+                    </el-select>
+                  </div>
+                </div>
+                <div class="setting-row" v-show="[1,3,4].includes(settingsStore.projectSettings.outputSettings.extname)">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.imageQuality') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.imageQuality') }}</div>
+                  </div>
+                  <div class="row-control w-slider">
+                    <el-slider
+                        v-model="settingsStore.projectSettings.outputSettings.quality"
+                        :min="1"
+                        :max="100"
+                        show-input/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.syncMetadata') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.syncMetadata') }}</div>
+                  </div>
+                  <div class="row-control">
+                    <el-switch v-model="settingsStore.projectSettings.outputSettings.isSynchronizeMetadata"/>
+                  </div>
                 </div>
               </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.syncMetadata') }}</span>
-                <el-switch
-                    v-model="settingsStore.projectSettings.outputSettings.isSynchronizeMetadata"
-                    class="value"/>
-              </div>
             </div>
-          </div>
-          <div class="border-box">
-            <span class="border-label">{{ $t('settings.fileNaming') }}</span>
-            <div class="options">
-              <div class="option">
-                <span class="label">{{ $t('settings.namingMode') }}</span>
-                <el-select class="value" v-model="settingsStore.projectSettings.outputSettings.fileNaming.basename"
-                           size="small">
-                  <el-option
-                      v-for="item in [{label:$t('settings.nameOriginal'), value: 0}, {label:$t('settings.nameIndex'), value: 1}, {label:$t('settings.nameRandom'), value: 2}]"
-                      :key="item.value"
-                      :label="item.label"
-                      :value="item.value"/>
-                </el-select>
-              </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.prefix') }}</span>
-                <el-input class="value"
-                          spellcheck="false"
-                          v-model="settingsStore.projectSettings.outputSettings.fileNaming.prefix"
-                          size="small">
-                </el-input>
-              </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.suffix') }}</span>
-                <el-input class="value"
-                          spellcheck="false"
-                          v-model="settingsStore.projectSettings.outputSettings.fileNaming.suffix"
-                          size="small">
-                </el-input>
-              </div>
-            </div>
-          </div>
-        </el-tab-pane>
-        <el-tab-pane :label="$t('settings.tabs.appearance')">
-          <div class="border-box">
-            <span class="border-label">{{ $t('settings.themeGroup') }}</span>
-            <div class="options theme-options">
-              <div class="option">
-                <span class="label">{{ $t('settings.themeMode') }}</span>
-                <el-radio-group
-                    v-model="settingsStore.projectSettings.appearance.theme"
-                    @change="handleThemeChange">
-                  <el-radio-button value="dark">{{ $t('settings.themeDark') }}</el-radio-button>
-                  <el-radio-button value="light">{{ $t('settings.themeLight') }}</el-radio-button>
-                  <el-radio-button value="system">{{ $t('settings.themeSystem') }}</el-radio-button>
-                </el-radio-group>
-              </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.uiTheme') }}</span>
-                <el-select
-                    class="value"
-                    :model-value="uiThemePreset"
-                    @change="handleUiThemeChange">
-                  <el-option-group
-                      v-for="group in uiThemeGroups"
-                      :key="group.labelKey"
-                      :label="$t(`settings.${group.labelKey}`)">
-                    <el-option
-                        v-for="opt in group.options"
-                        :key="opt.value"
-                        :value="opt.value"
-                        :label="$t(`settings.${opt.accentKey}`)"/>
-                  </el-option-group>
-                </el-select>
-              </div>
-            </div>
-          </div>
-          <div class="border-box">
-            <span class="border-label">{{ $t('settings.canvasViewport') }}</span>
-            <div class="options">
-              <div class="option">
-                <span class="label">{{ $t('settings.scrollbar') }}</span>
-                <el-switch
-                    @change="renderCanvasScrollbar"
-                    v-model="settingsStore.projectSettings.appearance.enableScrollbar"
-                    class="value"/>
-              </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.zoomPill') }}</span>
-                <el-switch
-                    v-model="settingsStore.projectSettings.appearance.enableZoomPill"
-                    class="value"/>
-              </div>
-            </div>
-          </div>
-        </el-tab-pane>
-        <el-tab-pane :label="$t('settings.tabs.metadata')">
-          <div class="border-box">
-            <span class="border-label">{{ $t('settings.formatting') }}</span>
-            <div class="options">
-              <div class="option">
-                <span class="label">{{ $t('settings.cameraBrand') }}</span>
-                <el-input spellcheck="false"
-                          class="metadata-input"
-                          @change="handleUpdateMetadata"
-                          v-model="settingsStore.projectSettings.metadata.formats.cameraBrand">
-                </el-input>
-              </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.cameraModel') }}</span>
-                <el-input spellcheck="false"
-                          class="metadata-input"
-                          @change="handleUpdateMetadata"
-                          v-model="settingsStore.projectSettings.metadata.formats.cameraModel">
-                </el-input>
-              </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.lensModel') }}</span>
-                <el-input spellcheck="false"
-                          class="metadata-input"
-                          @change="handleUpdateMetadata"
-                          v-model="settingsStore.projectSettings.metadata.formats.lensModel">
-                </el-input>
-              </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.focalLength') }}</span>
-                <el-input spellcheck="false"
-                          class="metadata-input"
-                          @change="handleUpdateMetadata"
-                          v-model="settingsStore.projectSettings.metadata.formats.focalLength">
-                </el-input>
-              </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.iso') }}</span>
-                <el-input spellcheck="false"
-                          class="metadata-input"
-                          @change="handleUpdateMetadata"
-                          v-model="settingsStore.projectSettings.metadata.formats.iso">
-                </el-input>
-              </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.shutter') }}</span>
-                <el-input spellcheck="false"
-                          class="metadata-input"
-                          @change="handleUpdateMetadata"
-                          v-model="settingsStore.projectSettings.metadata.formats.shutter">
-                </el-input>
-              </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.aperture') }}</span>
-                <el-input spellcheck="false"
-                          class="metadata-input"
-                          @change="handleUpdateMetadata"
-                          v-model="settingsStore.projectSettings.metadata.formats.aperture">
-                </el-input>
-              </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.shootingDate') }}</span>
-                <div class="date-format-group">
-                  <el-input spellcheck="false"
-                            class="metadata-input shooting-time"
-                            @change="handleUpdateMetadata"
-                            v-model="settingsStore.projectSettings.metadata.formats.shootingTime">
-                  </el-input>
-                  <span class="label shooting-time-label">{{ $t('settings.dateFormat') }}</span>
-                  <el-input spellcheck="false"
-                            class="metadata-input shooting-time"
-                            @change="handleUpdateMetadata"
-                            v-model="settingsStore.projectSettings.metadata.others.shootingTimeFormat">
-                  </el-input>
-                </div>
-              </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.filename') }}</span>
-                <el-input spellcheck="false"
-                          class="metadata-input"
-                          @change="handleUpdateMetadata"
-                          v-model="settingsStore.projectSettings.metadata.formats.filename">
-                </el-input>
-              </div>
-            </div>
-          </div>
 
-          <div class="border-box">
-            <span class="border-label">{{ $t('settings.focalConversion') }}</span>
-            <div class="options">
-              <div class="option">
-                <span class="label">{{ $t('settings.equivFocal') }}</span>
-                <el-switch
-                    @change="handleFocalLength(0)"
-                    v-model="settingsStore.projectSettings.metadata.others.enableEquivalentFocalSegment"
-                    class="value"/>
-              </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.cropFactor') }}</span>
-                <el-input class="value"
-                          spellcheck="false"
-                          @change="handleFocalLength(1)"
-                          v-model="settingsStore.projectSettings.metadata.others.conversionMultiple">
-                </el-input>
-              </div>
-            </div>
-          </div>
-          <div class="operation">
-            <el-button type="info" @click="resetMetadataSettings">{{ $t('settings.resetMetadata') }}</el-button>
-          </div>
-        </el-tab-pane>
-        <el-tab-pane :label="$t('settings.tabs.performance')">
-          <div class="border-box">
-            <span class="border-label">{{ $t('settings.download') }}</span>
-            <div class="options">
-              <div class="option">
-                <span class="label">{{ $t('settings.threads') }}</span>
-                <el-select class="value" v-model="settingsStore.projectSettings.performance.downloadThreads"
-                           size="small">
-                  <el-option
-                      v-for="item in downloadThreadsOptions"
-                      :key="item.value"
-                      :label="item.label"
-                      :value="item.value"/>
-                </el-select>
-              </div>
-            </div>
-          </div>
-        </el-tab-pane>
-        <el-tab-pane :label="$t('settings.tabs.fonts')">
-          <el-table size="small" height="400" highlight-current-row :data="settingsStore.availableFonts" border
-                    @cell-dblclick="handleActivateInput">
-            <el-table-column fixed prop="family" :label="$t('settings.fontFamilyCol')" show-overflow-tooltip/>
-            <el-table-column prop="familyAlias" :label="$t('settings.fontAliasCol')" show-overflow-tooltip>
-              <template #default="scope">
-                <input type="text"
-                       spellcheck="false"
-                       @focusout="handleStopActivateInput(scope.row)"
-                       v-show="scope.row.editable"
-                       style="height: 100%;user-select: none;width: fit-content;background-color: transparent;outline: none;border: none"
-                       v-model="scope.row.familyAlias">
-                <div v-show="!scope.row.editable">{{ scope.row.familyAlias }}</div>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-tab-pane>
-        <el-tab-pane :label="$t('settings.tabs.language')">
-          <div class="border-box">
-            <span class="border-label">{{ $t('settings.languageGroup') }}</span>
-            <div class="options">
-              <div class="option">
-                <span class="label">{{ $t('settings.interfaceLanguage') }}</span>
-                <el-select v-model="settingsStore.projectSettings.locale.language" @change="applyLanguage" class="value"
-                           size="small">
-                  <el-option
-                      v-for="item in languageOptions"
-                      :key="item.value"
-                      :label="$t(item.labelKey)"
-                      :value="item.value"/>
-                </el-select>
-              </div>
-            </div>
-          </div>
-        </el-tab-pane>
-        <el-tab-pane :label="$t('settings.tabs.others')">
-          <div class="border-box">
-            <span class="border-label">{{ $t('settings.personalization') }}</span>
-            <div class="options">
-              <div class="option">
-                <span class="label">{{ $t('settings.optionAnchor') }}</span>
-                <el-switch
-                    v-model="settingsStore.projectSettings.others.optionAnchorPoint"
-                    class="value"/>
-              </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.deleteTips') }}</span>
-                <el-switch
-                    v-model="settingsStore.projectSettings.others.deleteTipVisible"
-                    class="value"/>
-              </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.autoCenter') }}</span>
-                <el-switch
-                    v-model="settingsStore.projectSettings.others.autoCenterOnToggle"
-                    class="value"/>
-              </div>
-            </div>
-          </div>
-          <div class="border-box">
-            <span class="border-label">{{ $t('settings.canvasGroup') }}</span>
-            <div class="options">
-              <div class="option">
-                <span class="label">{{ $t('settings.moveStep') }}</span>
-                <div class="slider-demo-block">
-                  <el-slider
-                      v-model="settingsStore.projectSettings.others.movingStepSize"
-                      class="value"
-                      :min="1"
-                      :max="100"
-                      size="small"
-                      show-input/>
+            <div class="settings-section">
+              <div class="section-title">{{ $t('settings.fileNaming') }}</div>
+              <div class="settings-card">
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.namingMode') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.namingMode') }}</div>
+                  </div>
+                  <div class="row-control w-select">
+                    <el-select v-model="settingsStore.projectSettings.outputSettings.fileNaming.basename">
+                      <el-option
+                          v-for="item in [{label:$t('settings.nameOriginal'), value: 0}, {label:$t('settings.nameIndex'), value: 1}, {label:$t('settings.nameRandom'), value: 2}]"
+                          :key="item.value"
+                          :label="item.label"
+                          :value="item.value"/>
+                    </el-select>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.prefix') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.prefix') }}</div>
+                  </div>
+                  <div class="row-control w-input">
+                    <el-input spellcheck="false"
+                              v-model="settingsStore.projectSettings.outputSettings.fileNaming.prefix"/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.suffix') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.suffix') }}</div>
+                  </div>
+                  <div class="row-control w-input">
+                    <el-input spellcheck="false"
+                              v-model="settingsStore.projectSettings.outputSettings.fileNaming.suffix"/>
+                  </div>
                 </div>
               </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.defaultScale') }}</span>
-                <div class="slider-demo-block">
-                  <el-slider
-                      @change="handleCanvasScale"
-                      v-model="settingsStore.projectSettings.others.defaultCanvasScale"
-                      class="value"
-                      :min="0.05"
-                      :max="1"
-                      :step="0.05"
-                      size="small"
-                      show-input/>
+            </div>
+          </template>
+
+          <!-- 外观 -->
+          <template v-else-if="activePage === 'appearance'">
+            <div class="settings-section">
+              <div class="section-title">{{ $t('settings.themeGroup') }}</div>
+              <div class="settings-card">
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.themeMode') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.themeMode') }}</div>
+                  </div>
+                  <div class="row-control">
+                    <el-radio-group
+                        v-model="settingsStore.projectSettings.appearance.theme"
+                        @change="handleThemeChange">
+                      <el-radio-button value="dark">{{ $t('settings.themeDark') }}</el-radio-button>
+                      <el-radio-button value="light">{{ $t('settings.themeLight') }}</el-radio-button>
+                      <el-radio-button value="system">{{ $t('settings.themeSystem') }}</el-radio-button>
+                    </el-radio-group>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.uiTheme') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.uiTheme') }}</div>
+                  </div>
+                  <div class="row-control w-select">
+                    <el-select
+                        :model-value="uiTheme"
+                        @change="handleUiThemeChange">
+                      <el-option
+                          v-for="opt in uiThemeOptions"
+                          :key="opt.value"
+                          :value="opt.value"
+                          :label="$t(`settings.${opt.labelKey}`)"/>
+                    </el-select>
+                  </div>
                 </div>
               </div>
-              <div class="option">
-                <span class="label">{{ $t('settings.focalZoom') }}</span>
-                <el-switch
-                    v-model="settingsStore.projectSettings.others.focalZoom"
-                    class="value"/>
+            </div>
+
+            <div class="settings-section">
+              <div class="section-title">{{ $t('settings.canvasViewport') }}</div>
+              <div class="settings-card">
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.scrollbar') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.scrollbar') }}</div>
+                  </div>
+                  <div class="row-control">
+                    <el-switch
+                        @change="renderCanvasScrollbar"
+                        v-model="settingsStore.projectSettings.appearance.enableScrollbar"/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.zoomPill') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.zoomPill') }}</div>
+                  </div>
+                  <div class="row-control">
+                    <el-switch v-model="settingsStore.projectSettings.appearance.enableZoomPill"/>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </el-tab-pane>
-        <!--        <el-tab-pane label="图片"></el-tab-pane>-->
-      </el-tabs>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button type="danger" @click="resetAllSettings">{{ $t('settings.resetAll') }}</el-button>
-        </div>
-      </template>
+          </template>
+
+          <!-- 语言 -->
+          <template v-else-if="activePage === 'language'">
+            <div class="settings-section">
+              <div class="section-title">{{ $t('settings.languageGroup') }}</div>
+              <div class="settings-card">
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.interfaceLanguage') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.interfaceLanguage') }}</div>
+                  </div>
+                  <div class="row-control w-select">
+                    <el-select v-model="settingsStore.projectSettings.locale.language" @change="applyLanguage">
+                      <el-option
+                          v-for="item in languageOptions"
+                          :key="item.value"
+                          :label="$t(item.labelKey)"
+                          :value="item.value"/>
+                    </el-select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- 元数据 -->
+          <template v-else-if="activePage === 'metadata'">
+            <div class="settings-section">
+              <div class="section-title">{{ $t('settings.formatting') }}</div>
+              <div class="settings-card">
+                <div class="setting-row">
+                  <div class="row-info"><div class="row-label">{{ $t('settings.cameraBrand') }}</div></div>
+                  <div class="row-control w-input">
+                    <el-input spellcheck="false"
+                              @change="handleUpdateMetadata"
+                              v-model="settingsStore.projectSettings.metadata.formats.cameraBrand"/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info"><div class="row-label">{{ $t('settings.cameraModel') }}</div></div>
+                  <div class="row-control w-input">
+                    <el-input spellcheck="false"
+                              @change="handleUpdateMetadata"
+                              v-model="settingsStore.projectSettings.metadata.formats.cameraModel"/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info"><div class="row-label">{{ $t('settings.lensModel') }}</div></div>
+                  <div class="row-control w-input">
+                    <el-input spellcheck="false"
+                              @change="handleUpdateMetadata"
+                              v-model="settingsStore.projectSettings.metadata.formats.lensModel"/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info"><div class="row-label">{{ $t('settings.focalLength') }}</div></div>
+                  <div class="row-control w-input">
+                    <el-input spellcheck="false"
+                              @change="handleUpdateMetadata"
+                              v-model="settingsStore.projectSettings.metadata.formats.focalLength"/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info"><div class="row-label">{{ $t('settings.iso') }}</div></div>
+                  <div class="row-control w-input">
+                    <el-input spellcheck="false"
+                              @change="handleUpdateMetadata"
+                              v-model="settingsStore.projectSettings.metadata.formats.iso"/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info"><div class="row-label">{{ $t('settings.shutter') }}</div></div>
+                  <div class="row-control w-input">
+                    <el-input spellcheck="false"
+                              @change="handleUpdateMetadata"
+                              v-model="settingsStore.projectSettings.metadata.formats.shutter"/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info"><div class="row-label">{{ $t('settings.aperture') }}</div></div>
+                  <div class="row-control w-input">
+                    <el-input spellcheck="false"
+                              @change="handleUpdateMetadata"
+                              v-model="settingsStore.projectSettings.metadata.formats.aperture"/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info"><div class="row-label">{{ $t('settings.shootingDate') }}</div></div>
+                  <div class="row-control w-input">
+                    <el-input spellcheck="false"
+                              @change="handleUpdateMetadata"
+                              v-model="settingsStore.projectSettings.metadata.formats.shootingTime"/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info"><div class="row-label">{{ $t('settings.dateFormat') }}</div></div>
+                  <div class="row-control w-input">
+                    <el-input spellcheck="false"
+                              @change="handleUpdateMetadata"
+                              v-model="settingsStore.projectSettings.metadata.others.shootingTimeFormat"/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info"><div class="row-label">{{ $t('settings.filename') }}</div></div>
+                  <div class="row-control w-input">
+                    <el-input spellcheck="false"
+                              @change="handleUpdateMetadata"
+                              v-model="settingsStore.projectSettings.metadata.formats.filename"/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.resetMetadata') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.resetMetadata') }}</div>
+                  </div>
+                  <div class="row-control">
+                    <el-button @click="resetMetadataSettings">{{ $t('settings.resetMetadata') }}</el-button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <div class="section-title">{{ $t('settings.focalConversion') }}</div>
+              <div class="settings-card">
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.equivFocal') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.equivFocal') }}</div>
+                  </div>
+                  <div class="row-control">
+                    <el-switch
+                        @change="handleFocalLength(0)"
+                        v-model="settingsStore.projectSettings.metadata.others.enableEquivalentFocalSegment"/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.cropFactor') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.cropFactor') }}</div>
+                  </div>
+                  <div class="row-control w-num">
+                    <el-input class="w-num-input"
+                              spellcheck="false"
+                              @change="handleFocalLength(1)"
+                              v-model="settingsStore.projectSettings.metadata.others.conversionMultiple"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- 性能 -->
+          <template v-else-if="activePage === 'performance'">
+            <div class="settings-section">
+              <div class="section-title">{{ $t('settings.download') }}</div>
+              <div class="settings-card">
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.threads') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.threads') }}</div>
+                  </div>
+                  <div class="row-control w-select">
+                    <el-select v-model="settingsStore.projectSettings.performance.downloadThreads">
+                      <el-option
+                          v-for="item in downloadThreadsOptions"
+                          :key="item.value"
+                          :label="item.label"
+                          :value="item.value"/>
+                    </el-select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- 其他 -->
+          <template v-else-if="activePage === 'others'">
+            <div class="settings-section">
+              <div class="section-title">{{ $t('settings.personalization') }}</div>
+              <div class="settings-card">
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.optionAnchor') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.optionAnchor') }}</div>
+                  </div>
+                  <div class="row-control">
+                    <el-switch v-model="settingsStore.projectSettings.others.optionAnchorPoint"/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.deleteTips') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.deleteTips') }}</div>
+                  </div>
+                  <div class="row-control">
+                    <el-switch v-model="settingsStore.projectSettings.others.deleteTipVisible"/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.autoCenter') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.autoCenter') }}</div>
+                  </div>
+                  <div class="row-control">
+                    <el-switch v-model="settingsStore.projectSettings.others.autoCenterOnToggle"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <div class="section-title">{{ $t('settings.canvasGroup') }}</div>
+              <div class="settings-card">
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.moveStep') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.moveStep') }}</div>
+                  </div>
+                  <div class="row-control w-slider">
+                    <el-slider
+                        v-model="settingsStore.projectSettings.others.movingStepSize"
+                        :min="1"
+                        :max="100"
+                        show-input/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.defaultScale') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.defaultScale') }}</div>
+                  </div>
+                  <div class="row-control w-slider">
+                    <el-slider
+                        @change="handleCanvasScale"
+                        v-model="settingsStore.projectSettings.others.defaultCanvasScale"
+                        :min="0.05"
+                        :max="1"
+                        :step="0.05"
+                        show-input/>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.focalZoom') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.focalZoom') }}</div>
+                  </div>
+                  <div class="row-control">
+                    <el-switch v-model="settingsStore.projectSettings.others.focalZoom"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+          <!-- 重置设置 -->
+          <template v-else-if="activePage === 'reset'">
+            <div class="settings-section">
+              <div class="section-title">{{ $t('settings.resetNav') }}</div>
+              <div class="settings-card">
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.resetConfirm.title') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.reset') }}</div>
+                  </div>
+                  <div class="row-control">
+                    <el-button type="danger" @click="resetAllSettings">{{ $t('settings.resetConfirm.confirm') }}</el-button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </section>
+      </div>
     </el-dialog>
     <ConfirmDialog ref="confirmRef"/>
   </div>
@@ -423,7 +527,7 @@
 
 <script setup lang="js">
 
-import {ref, nextTick, computed} from 'vue'
+import {ref, computed, watch} from 'vue'
 
 import _ from 'lodash'
 
@@ -469,6 +573,73 @@ const downloadThreadsOptions = computed(() => [
   {label: '32', value: 32}
 ])
 
+// 左侧导航项：key 对应右侧内容区页面；search 为该页各设置项的 i18n 键（供搜索匹配）
+const navItems = [
+  {
+    key: 'export', icon: 'cmd-export', labelKey: 'settings.tabs.export',
+    search: ['imageSize', 'adjustMode', 'width', 'height', 'maxWidth', 'maxHeight',
+      'imageSettings', 'outputFormat', 'formatOriginal', 'imageQuality', 'syncMetadata',
+      'fileNaming', 'namingMode', 'nameOriginal', 'nameIndex', 'nameRandom', 'prefix', 'suffix',
+      'desc.adjustMode', 'desc.outputFormat', 'desc.imageQuality', 'desc.syncMetadata',
+      'desc.namingMode', 'desc.prefix', 'desc.suffix']
+  },
+  {
+    key: 'appearance', icon: 'cmd-moon', labelKey: 'settings.tabs.appearance',
+    search: ['themeGroup', 'themeMode', 'themeDark', 'themeLight', 'themeSystem', 'uiTheme',
+      'themeDefault', 'themeIndigo', 'themePine', 'themeCrimson', 'themeWisteria',
+      'canvasViewport', 'scrollbar', 'zoomPill',
+      'desc.themeMode', 'desc.uiTheme', 'desc.scrollbar', 'desc.zoomPill']
+  },
+  {
+    key: 'language', icon: 'set-language', labelKey: 'settings.tabs.language',
+    search: ['languageGroup', 'interfaceLanguage', 'languageSystem', 'languageZh', 'languageEn',
+      'desc.interfaceLanguage']
+  },
+  {
+    key: 'metadata', icon: 'cmd-doc-lines', labelKey: 'settings.tabs.metadata',
+    search: ['formatting', 'cameraBrand', 'cameraModel', 'lensModel', 'focalLength', 'iso',
+      'shutter', 'aperture', 'shootingDate', 'dateFormat', 'filename',
+      'focalConversion', 'equivFocal', 'cropFactor', 'desc.equivFocal', 'desc.cropFactor']
+  },
+  {
+    key: 'performance', icon: 'cmd-sliders', labelKey: 'settings.tabs.performance',
+    search: ['download', 'threads', 'desc.threads']
+  },
+  {
+    key: 'others', icon: 'set-others', labelKey: 'settings.tabs.others',
+    search: ['personalization', 'optionAnchor', 'deleteTips', 'autoCenter', 'canvasGroup',
+      'moveStep', 'defaultScale', 'focalZoom',
+      'desc.optionAnchor', 'desc.deleteTips', 'desc.autoCenter', 'desc.moveStep',
+      'desc.defaultScale', 'desc.focalZoom']
+  },
+  {
+    key: 'reset', icon: 'refresh', labelKey: 'settings.resetNav',
+    search: ['resetAll', 'resetConfirm.title', 'desc.reset']
+  },
+]
+
+const activePage = ref('export')
+
+// 侧边栏搜索：按页面名称与各设置项标签 / 描述过滤导航项
+const navQuery = ref('')
+
+const filteredNavItems = computed(() => {
+  const query = navQuery.value.trim().toLowerCase()
+  if (!query) return navItems
+  return navItems.filter(item =>
+      t(item.labelKey).toLowerCase().includes(query)
+      || (item.search || []).some(key => t(`settings.${key}`).toLowerCase().includes(query)))
+})
+
+// 搜索后若当前页不在结果中，自动切换到第一个匹配页
+watch(filteredNavItems, (list) => {
+  if (list.length && !list.some(item => item.key === activePage.value)) {
+    activePage.value = list[0].key
+  }
+})
+
+const currentNavItem = computed(() => navItems.find(item => item.key === activePage.value) || navItems[0])
+
 const settingsStore = useProjectSettingsStore()
 
 const canvasesStore = useCanvasesStore()
@@ -487,31 +658,20 @@ const handleThemeChange = () => {
   applyTheme(theme)
 }
 
-/* 界面配色预设：5 配色（默认琥珀/靛青/松烟/胭脂/紫藤）× 卡片/扁平，值编码 "<accent>-<card|flat>" */
-const uiThemeOptions = ['default', 'indigo', 'pine', 'crimson', 'wisteria'].flatMap(accent => [true, false].map(cards => ({
-    value: `${accent}-${cards ? 'card' : 'flat'}`,
-    accentKey: accent === 'default' ? 'themeDefault' : `theme${accent.charAt(0).toUpperCase()}${accent.slice(1)}`,
-    cards
-})));
+/* 界面配色预设：默认琥珀/靛青/松烟/胭脂/紫藤 */
+const uiThemeOptions = [
+  {value: 'default', labelKey: 'themeDefault'},
+  {value: 'indigo', labelKey: 'themeIndigo'},
+  {value: 'pine', labelKey: 'themePine'},
+  {value: 'crimson', labelKey: 'themeCrimson'},
+  {value: 'wisteria', labelKey: 'themeWisteria'},
+];
 
-// 下拉按「扁平 / 卡片」分成两组，选项 label 只显示配色名
-const uiThemeGroups = computed(() => ([
-    {labelKey: 'themeGroupFlat', options: uiThemeOptions.filter(o => !o.cards)},
-    {labelKey: 'themeGroupCards', options: uiThemeOptions.filter(o => o.cards)},
-]));
-
-const uiThemePreset = computed(() => {
-    const appearance = settingsStore.projectSettings.appearance;
-    const accent = appearance.uiTheme || 'default';
-    return `${accent}-${appearance.showGroupCards === false ? 'flat' : 'card'}`;
-});
+const uiTheme = computed(() => settingsStore.projectSettings.appearance.uiTheme || 'default');
 
 const handleUiThemeChange = (val) => {
-    const appearance = settingsStore.projectSettings.appearance;
-    const idx = val.lastIndexOf('-');
-    appearance.uiTheme = val.slice(0, idx);
-    appearance.showGroupCards = val.slice(idx + 1) === 'card';
-    renderUiStyle();
+  settingsStore.projectSettings.appearance.uiTheme = val;
+  renderUiStyle();
 };
 
 // 应用菜单"偏好设置"的 IPC 监听
@@ -621,14 +781,11 @@ const handleCanvasScale = () => {
   })
 }
 
-// 字体导入 / 移除监听：加载字体并维护可用字体列表
+// 字体导入 / 移除监听：加载字体并维护运行时字体缓存（不持久化，启动时由主进程推送重建）
 const watchImportFonts = () => {
   window.electronAPI.watchImportFonts(async (event, {type, data}) => {
     if (data) {
       if (type === 0 || type === -1) {
-        if (type === -1) {
-          removeExpiredFonts(settingsStore.projectSettings.availableFonts, data)
-        }
         for (let [family, font] of data) {
           if (!font.isSystem && font.url) {
             try {
@@ -653,28 +810,21 @@ const watchImportFonts = () => {
               continue
             }
           }
-          if (!settingsStore.projectSettings.availableFonts.has(family)) {
+          if (!settingsStore.availableFontsMap.has(family)) {
             const fontSettings = new FontSettings();
             fontSettings.family = family
             fontSettings.familyAlias = family
-            settingsStore.projectSettings.availableFonts.set(family, {...fontSettings, ...font});
+            settingsStore.availableFontsMap.set(family, {...fontSettings, ...font});
           }
         }
       } else if (type === 1) {
         const family = data.family;
-        settingsStore.projectSettings.availableFonts.delete(family)
+        settingsStore.availableFontsMap.delete(family)
       }
     }
   })
 }
 
-const removeExpiredFonts = (cacheFonts, availableFonts) => {
-  cacheFonts.forEach((font, family) => {
-    if (!availableFonts.has(family)) {
-      cacheFonts.delete(family);
-    }
-  });
-}
 
 // 设置导入（type0）：合并设置并按差异联动画布 / 主题 / 布局；设置导出（type1）
 const watchProjectSettings = () => {
@@ -713,7 +863,6 @@ const watchProjectSettings = () => {
       applyLanguage(newUserSettings.locale?.language || 'system')
     } else if (type === 1) {
       const userSettings = _.cloneDeep(settingsStore.projectSettings);
-      delete userSettings.availableFonts;
       window.electronAPI.exportSettings({filePath, settings: userSettings});
     }
   })
@@ -728,13 +877,17 @@ watchProjectSettings()
 // 初始化布局 CSS 变量（项目设置已在页面 setup 中加载完成）
 initAreaResize()
 
-// 重置元数据格式并重新格式化画布元数据
+// 恢复元数据格式为默认值（仅「格式化」项：字段模板 + 日期格式，不影响焦距转换），并重新格式化画布元数据
 const resetMetadataSettings = () => {
-  settingsStore.projectSettings.metadata = _.cloneDeep(defaultProjectSettings.metadata)
-  handleUpdateMetadata()
+  const metadata = settingsStore.projectSettings.metadata;
+  metadata.formats = _.cloneDeep(defaultProjectSettings.metadata.formats);
+  metadata.others.shootingTimeFormat = defaultProjectSettings.metadata.others.shootingTimeFormat;
+  handleUpdateMetadata();
+  // 焦段显示 = 格式模板 × 焦距转换：格式恢复后按当前转换状态重算一次焦段
+  handleFocalLength(metadata.others.enableEquivalentFocalSegment ? 1 : 0);
 }
 
-// 恢复全部设置为工厂默认（保留可用字体），并重新联动生效主题 / 布局 / 画布缩放 / 滚动条 / 元数据 / 焦距
+// 恢复全部设置为工厂默认，并重新联动生效主题 / 布局 / 画布缩放 / 滚动条 / 元数据 / 焦距
 const resetAllSettings = async () => {
   const ok = await confirmRef.value?.confirm({
     title: t('settings.resetConfirm.title'),
@@ -757,203 +910,267 @@ const resetAllSettings = async () => {
   Notification.success(t('settings.allReset'), t('common.notice'));
 };
 
-// 双击单元格进入字体别名编辑
-const handleActivateInput = async (row, column, cell) => {
-  row.editable = true;
-  const input = cell.querySelector('input');
-  if (input) {
-    await nextTick()
-    input.focus()
-  }
-}
-
-// 失焦结束字体别名编辑
-const handleStopActivateInput = (row, column) => {
-  row.editable = false;
-}
-
 </script>
 
 <style scoped lang="scss">
 @use '@/assets/styles/dialog';
 
-/* 切换设置项的标签条：仅调整 Element Plus 默认高度（40px），其余保持组件默认样式 */
-:deep(.el-tabs) {
-  --el-tabs-header-height: 36px;
-}
-
-/* 弹窗整体限高 65vh：header/footer 不被压缩，标签页区域弹性伸缩、内容区内部滚动
-   （原先 .el-tabs 的 max-height: 70vh 由该限高接管） */
-.dialog-wrapper :deep(.el-dialog) {
-  max-height: 65vh;
+/* 弹窗固定高度 72vh（原最大高度值）并默认居中：header/footer 不被压缩，
+   设置区弹性伸缩、内容不足时右侧留白，内部滚动。
+   高度规则用 .settings-dialog 限定：确认框（ConfirmDialog）也嵌套渲染在本组件
+   .dialog-wrapper 内，不带限定会被 :deep 命中、被强加 72vh 高度而撑成巨框。
+   padding 清零（覆盖 dialog.scss 的 1px 内衬与 10px 底部留白）：标题栏分隔线与
+   侧栏分隔线都通到弹窗边缘；圆角与 Electron 默认窗口圆角（Win11 8px）一致 */
+.dialog-wrapper :deep(.el-dialog.settings-dialog) {
+  height: 72vh;
   display: flex;
   flex-direction: column;
-}
-
-.dialog-wrapper :deep(.el-dialog__header),
-.dialog-wrapper :deep(.el-dialog__footer) {
-  flex-shrink: 0;
-}
-
-.dialog-wrapper :deep(.el-dialog__body) {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+  padding: 0;
+  border-radius: 8px;
   overflow: hidden;
 }
 
-.el-tabs {
-  width: 100%;
+.dialog-wrapper :deep(.el-dialog.settings-dialog > .el-dialog__header),
+.dialog-wrapper :deep(.el-dialog.settings-dialog > .el-dialog__footer) {
+  flex-shrink: 0;
+}
+
+.dialog-wrapper :deep(.el-dialog.settings-dialog > .el-dialog__body) {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
-  flex-direction: column;
-  font-size: 12px;
+  overflow: hidden;
+  /* 内边距清零：侧栏分隔线要通到弹窗上下边缘，间距由布局内部自己控制 */
+  padding: 0;
+}
 
-  .operation {
-    height: 40px;
-    display: flex;
-    justify-content: right;
-    align-items: end;
+/* 关闭按钮的 top 在 dialog.scss 里带 +1px 补偿（弹窗旧 1px 顶部内衬）；
+   本弹窗内衬已清零，去掉补偿才是垂直居中 */
+.dialog-wrapper :deep(.el-dialog.settings-dialog > .el-dialog__header .el-dialog__headerbtn) {
+  top: calc((var(--app-dialog-header-height) - 24px) / 2);
+}
+
+/* ---------- 整体布局：左导航 + 右内容 ---------- */
+.settings-layout {
+  width: 100%;
+  display: flex;
+  gap: 12px;
+  min-height: 0;
+}
+
+/* 左侧导航栏 */
+.settings-nav {
+  width: 188px;
+  flex-shrink: 0;
+  min-height: 0;
+  overflow-y: auto;
+  // 左右留白对称：搜索框与导航项同宽、两侧边距一致；上下 10px 与右侧内容区对齐
+  padding: 10px;
+  border-right: 1px solid var(--app-dialog-line);
+}
+
+/* 顶部搜索框：浅灰圆角填充 + 内嵌放大镜图标 */
+.nav-search {
+  position: relative;
+  margin: 4px 0 10px;
+
+  .nav-search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    transform: translateY(-50%);
+    color: var(--app-secondary-text);
+    pointer-events: none;
   }
 
-  :deep(.el-tabs__content) {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    background-color: var(--app-dialog-body-bg);
-    /* 基础样式 */
-    .border-box {
-      position: relative;
-      border: 1px solid var(--app-dialog-line);
-      border-radius: 2px;
-      padding: 15px 10px;
-      margin: 25px 0;
+  input {
+    width: 100%;
+    height: 32px;
+    box-sizing: border-box;
+    border: none;
+    outline: none;
+    border-radius: var(--app-radius-lg);
+    background: var(--app-dialog-subtle-bg);
+    padding: 0 10px 0 30px;
+    font-size: 12.5px;
+    font-family: inherit;
+    color: var(--ui-text);
+    transition: box-shadow var(--app-transition);
 
-      .border-label {
-        position: absolute;
-        top: -7px;
-        left: 15px;
-        background-color: var(--app-dialog-body-bg);
-        padding: 0 12px;
-        font-size: 13px;
-        color: var(--app-secondary-text);
-      }
-
-      .options {
-        width: 100%;
-        // 标签列宽度取组内最长标签（max-content）并右对齐，控件列左缘对齐：
-        // 中英文标签长短不同均可自适应，不换行、也不留大片空白
-        display: grid;
-        grid-template-columns: max-content 1fr;
-        column-gap: 8px;
-        // 各行的 .label 与控件直接参与本网格，由这里统一垂直居中
-        align-items: center;
-
-        // 外观-主题框：第二列宽度由主题模式单选组的自然宽度撑起，
-        // 界面配色下拉拉伸至同宽，使下拉框右缘与单选组右缘对齐（而非贴到对话框右缘）
-        &.theme-options {
-          grid-template-columns: max-content max-content;
-
-          .option .el-select.value {
-            width: 100%;
-          }
-        }
-
-        .option {
-          font-size: 13px;
-          // Electron 22（Chromium 108）不支持 subgrid，改用兼容性更好的 display: contents：
-          // 行盒子自身不再生成，.label 与控件直接落入父级两列网格，所有行仍共享同一标签列
-          display: contents;
-
-          // 行高保持原值（原先由 .option 的 min-height 提供，现由标签撑起）；
-          // 标签内部垂直居中，控件保持自然高度、由 .options 的 align-items 统一居中
-          > .label {
-            min-height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-          }
-
-          .label {
-            font-size: 13px;
-            text-align: right;
-            white-space: nowrap;
-          }
-
-          .shooting-time-label {
-            // 合并行中与前一输入框拉开间隔，区分“拍摄日期”“日期格式”两项（8px 间隙 + 12px = 20px）
-            margin-left: 12px;
-          }
-
-          .value {
-            width: 150px;
-          }
-
-          // 数值输入 + 单位（px）的组合，占满标签右侧剩余宽度
-          .input-unit {
-            display: flex;
-            align-items: center;
-            column-gap: 8px;
-          }
-
-
-          .metadata-input {
-            width: 100%;
-          }
-
-          // 拍摄日期 + 日期格式合并为一行：首个标签仍落在公共标签列，
-          // 右侧组合内部用 flex 排布，两个输入框平分剩余宽度
-          .date-format-group {
-            display: flex;
-            align-items: center;
-            // 与 .options 的 column-gap 保持一致，保证各处“标签-组件”间距统一
-            column-gap: 8px;
-            min-width: 0;
-
-            .metadata-input.shooting-time {
-              width: auto;
-              flex: 1;
-              min-width: 0;
-            }
-          }
-
-          .el-select {
-            .el-select__wrapper {
-              height: 28px;
-            }
-          }
-
-          .el-input {
-            height: 28px;
-          }
-
-          .el-slider {
-            --el-slider-button-size: 13px;
-            --el-slider-height: 6px;
-            width: 220px;
-
-            .show-input {
-              margin-right: 10px;
-            }
-
-            .el-slider__input {
-              width: 90px;
-            }
-          }
-        }
-      }
-
+    &::placeholder {
+      color: var(--app-secondary-text);
     }
 
-    .border-box:first-child {
-      margin-top: 10px;
+    &:focus {
+      box-shadow: 0 0 0 1px var(--ui-accent) inset;
     }
+  }
+}
 
-    .border-box:last-child {
-      margin-bottom: 0;
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  margin-bottom: 2px;
+  border: none;
+  border-radius: var(--app-radius-lg);
+  background: transparent;
+  color: var(--ui-text);
+  font-size: 13px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--app-transition), color var(--app-transition);
+
+  &:hover {
+    background: var(--app-dialog-row-hover-bg);
+  }
+
+  &.is-active {
+    background: var(--app-dialog-selected-bg);
+    font-weight: 600;
+  }
+
+  .nav-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--app-secondary-text);
+    transition: color var(--app-transition);
+  }
+
+  &.is-active .nav-icon {
+    color: var(--ui-accent);
+  }
+
+  .nav-label {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+.nav-empty {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--app-secondary-text);
+}
+
+/* 右侧内容区 */
+.settings-page {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px 18px 12px 22px;
+}
+
+/* 页面大标题（参考样式中的「常规」一级标题） */
+.page-title {
+  margin: 4px 0 18px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--app-dialog-title);
+  user-select: none;
+}
+
+.settings-section {
+  margin-bottom: 26px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--app-dialog-title);
+  padding: 0 2px 10px;
+  user-select: none;
+}
+
+/* 卡片类名用专属的 settings-card，避免与其他弹窗 / 全局样式撞名 */
+.settings-card {
+  background: var(--app-settings-card-bg);
+  border: 1px solid var(--app-settings-card-border);
+  border-radius: 10px;
+  padding: 4px 18px;
+}
+
+/* 设置行：左「标签 + 描述」、右控件（参考样式：行间留白分隔，不画分隔线） */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 9px 0;
+}
+
+.row-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.row-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ui-text);
+  line-height: 1.4;
+}
+
+.row-desc {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--app-secondary-text);
+  line-height: 1.5;
+}
+
+.row-control {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  // 控件宽度档位：下拉 / 输入 / 数值 / 滑块 / 宽输入区
+  &.w-select .el-select {
+    width: 180px;
+  }
+
+  &.w-input .el-input {
+    width: 240px;
+  }
+
+  &.w-num .el-input {
+    width: 150px;
+  }
+
+  &.w-slider .el-slider {
+    width: 300px;
+
+    --el-slider-button-size: 13px;
+    --el-slider-height: 6px;
+
+    .el-slider__input {
+      width: 90px;
     }
+  }
+}
+
+/* 数值输入 + 单位（px）组合 */
+.input-unit {
+  display: flex;
+  align-items: center;
+
+  .unit {
+    color: var(--app-secondary-text);
+    font-size: 12px;
   }
 }
 </style>

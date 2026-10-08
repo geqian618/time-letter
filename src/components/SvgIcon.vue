@@ -49,6 +49,8 @@ import PlusIcon from '@/assets/icon/plus.svg'
 import RefreshIcon from '@/assets/icon/refresh.svg'
 import SearchIcon from '@/assets/icon/search.svg'
 import SelectAllIcon from '@/assets/icon/select-all.svg'
+import SetLanguageIcon from '@/assets/icon/set-language.svg'
+import SetOthersIcon from '@/assets/icon/set-others.svg'
 import StepFirstIcon from '@/assets/icon/step-first.svg'
 import StepLastIcon from '@/assets/icon/step-last.svg'
 import StepNextIcon from '@/assets/icon/step-next.svg'
@@ -102,6 +104,8 @@ const registry = {
   'refresh': RefreshIcon,
   'search': SearchIcon,
   'select-all': SelectAllIcon,
+  'set-language': SetLanguageIcon,
+  'set-others': SetOthersIcon,
   'step-first': StepFirstIcon,
   'step-last': StepLastIcon,
   'step-next': StepNextIcon,

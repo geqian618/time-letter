@@ -18,9 +18,8 @@ export const useTheme = () => {
     };
 
     /**
-     * 渲染配色主题与分组卡片开关（html data 属性）
+     * 渲染配色主题（html data 属性）
      * 配色：data-ui-theme = default(缺省，琥珀) | indigo | pine | crimson | wisteria
-     * 卡片：data-ui-cards = on(卡片外壳) | off(扁平)
      */
     const renderUiStyle = () => {
         const appearance = settingsStore.projectSettings.appearance || {};
@@ -31,7 +30,6 @@ export const useTheme = () => {
         } else {
             root.removeAttribute('data-ui-theme');
         }
-        root.setAttribute('data-ui-cards', appearance.showGroupCards === false ? 'off' : 'on');
     };
 
     /**
@@ -44,7 +42,7 @@ export const useTheme = () => {
         } else {
             document.documentElement.removeAttribute('dark-theme');
         }
-        // 亮暗渲染时同步应用配色与卡片设置，保证启动路径（ImageManager 等）一并生效
+        // 亮暗渲染时同步应用配色，保证启动路径（ImageManager 等）一并生效
         renderUiStyle();
     };
 
