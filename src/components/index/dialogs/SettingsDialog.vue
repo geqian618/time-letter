@@ -206,16 +206,11 @@
                     <div class="row-label">{{ $t('settings.uiTheme') }}</div>
                     <div class="row-desc">{{ $t('settings.desc.uiTheme') }}</div>
                   </div>
-                  <div class="row-control w-select">
-                    <el-select
-                        :model-value="uiTheme"
-                        @change="handleUiThemeChange">
-                      <el-option
-                          v-for="opt in uiThemeOptions"
-                          :key="opt.value"
-                          :value="opt.value"
-                          :label="$t(`settings.${opt.labelKey}`)"/>
-                    </el-select>
+                  <div class="row-control">
+                    <el-color-picker
+                        v-model="uiAccent"
+                        :predefine="uiAccentPresets"
+                        @change="handleUiAccentChange"/>
                   </div>
                 </div>
               </div>
@@ -593,7 +588,6 @@ const navItems = [
   {
     key: 'appearance', icon: 'cmd-moon', labelKey: 'settings.tabs.appearance',
     search: ['themeGroup', 'themeMode', 'themeDark', 'themeLight', 'themeSystem', 'uiTheme',
-      'themeDefault', 'themeIndigo', 'themePine', 'themeCrimson', 'themeWisteria',
       'canvasViewport', 'scrollbar', 'zoomPill',
       'desc.themeMode', 'desc.uiTheme', 'desc.scrollbar', 'desc.zoomPill']
   },
@@ -666,19 +660,25 @@ const handleThemeChange = () => {
   applyTheme(theme)
 }
 
-/* 界面配色预设：默认琥珀/靛青/松烟/胭脂/紫藤 */
-const uiThemeOptions = [
-  {value: 'default', labelKey: 'themeDefault'},
-  {value: 'indigo', labelKey: 'themeIndigo'},
-  {value: 'pine', labelKey: 'themePine'},
-  {value: 'crimson', labelKey: 'themeCrimson'},
-  {value: 'wisteria', labelKey: 'themeWisteria'},
+/* 界面配色：颜色选择器自定义强调色，默认靛青（设计稿色值） */
+const DEFAULT_UI_ACCENT = '#3E63DD';
+
+// 预置快捷色板（含默认靛青）
+const uiAccentPresets = [
+  '#3E63DD', '#5B8CFF', '#2E8F66', '#C8515E', '#8B5FC9',
+  '#E49421', '#0EA5A5', '#D64545', '#7A756A', '#26231E',
 ];
 
-const uiTheme = computed(() => settingsStore.projectSettings.appearance.uiTheme || 'default');
+const uiAccent = computed({
+  get: () => settingsStore.projectSettings.appearance.uiAccent || DEFAULT_UI_ACCENT,
+  set: (val) => {
+    settingsStore.projectSettings.appearance.uiAccent = val || DEFAULT_UI_ACCENT;
+  }
+});
 
-const handleUiThemeChange = (val) => {
-  settingsStore.projectSettings.appearance.uiTheme = val;
+// 选色后立即派生并应用配色；清空时回落默认靛青
+const handleUiAccentChange = (val) => {
+  settingsStore.projectSettings.appearance.uiAccent = val || DEFAULT_UI_ACCENT;
   renderUiStyle();
 };
 
@@ -974,6 +974,8 @@ const resetAllSettings = async () => {
   overflow-y: auto;
   // 左右留白对称：搜索框与导航项同宽、两侧边距一致；上下 10px 与右侧内容区对齐
   padding: 10px;
+  // 设计稿：侧栏底色比弹窗主体略深一档（亮 #FBFBFC / 暗 #131316）
+  background: var(--app-dialog-nav-bg);
   border-right: 1px solid var(--app-dialog-line);
 }
 

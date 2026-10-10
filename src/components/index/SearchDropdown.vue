@@ -39,7 +39,7 @@ const emit = defineEmits(['toggle-left', 'toggle-right', 'toggle-bottom'])
 const {t} = useI18n()
 
 const settingsStore = useProjectSettingsStore()
-const {applyTheme, renderUiStyle} = useTheme()
+const {applyTheme} = useTheme()
 
 // ---------- 命令清单 ----------
 // IPC 命令：id 对应原生菜单项（electron/components/application-menu.js），执行时 invokeAppMenu(id)
@@ -89,7 +89,6 @@ const commandGroups = [
     key: 'interface', labelKey: 'searchGroup.interface',
     items: [
       {id: 'toggle-dark-mode', icon: 'cmd-moon', labelKey: 'searchCommand.toggleDarkMode', keywords: 'theme dark light 主题 亮 暗 模式'},
-      {id: 'toggle-accent', icon: 'cmd-droplet', labelKey: 'searchCommand.toggleAccent', keywords: 'accent color 配色 颜色 主题'},
       {id: 'toggle-left-panel', icon: 'cmd-panel-l', labelKey: 'searchCommand.toggleLeftPanel', keywords: 'panel left collapse 面板 左 折叠'},
       {id: 'toggle-right-panel', icon: 'cmd-panel-r', labelKey: 'searchCommand.toggleRightPanel', keywords: 'panel right collapse 面板 右 折叠'},
       {id: 'toggle-bottom-panel', icon: 'cmd-panel-b', labelKey: 'searchCommand.toggleBottomPanel', keywords: 'panel bottom collapse 面板 底 折叠 预览'},
@@ -166,15 +165,6 @@ const runItem = (item) => {
       const next = effectiveDark ? 'light' : 'dark'
       appearance.theme = next
       applyTheme(next)
-      break
-    }
-    // 强调配色：default → indigo → pine → crimson → wisteria 循环
-    case 'toggle-accent': {
-      const accents = ['default', 'indigo', 'pine', 'crimson', 'wisteria']
-      const appearance = settingsStore.projectSettings.appearance
-      const idx = accents.indexOf(appearance.uiTheme || 'default')
-      appearance.uiTheme = accents[(idx + 1) % accents.length]
-      renderUiStyle()
       break
     }
     case 'toggle-left-panel':

@@ -42,8 +42,8 @@ const defaultProjectSettings = {
     },
     appearance: {
         theme: 'system',
-        // 配色主题：default(琥珀) | indigo | pine | crimson | wisteria
-        uiTheme: 'default',
+        // 界面强调色（颜色选择器自定义值）：运行时派生亮/暗两套令牌，默认靛青
+        uiAccent: '#3E63DD',
         enableScrollbar: true,
         enableZoomPill: true
     },

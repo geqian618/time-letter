@@ -26,8 +26,12 @@ export const useProjectSettingsStore = defineStore('projectSettings', () => {
 
 
     // 合并导入的设置（返回合并后的完整设置对象）；剔除历史版本残留的字体列表字段
+    // 与旧版多配色预设字段（uiTheme 已被自定义强调色 uiAccent 取代）
     const mergeProjectSettings = (userSettings) => {
         delete userSettings.availableFonts
+        if (userSettings.appearance) {
+            delete userSettings.appearance.uiTheme
+        }
         const newUserSettings = _.merge({}, projectSettings.value, userSettings);
         projectSettings.value = newUserSettings
         return newUserSettings
@@ -63,6 +67,12 @@ export const useProjectSettingsStore = defineStore('projectSettings', () => {
         serializer: {
             serialize: (state) => JSON.stringify(state.projectSettings),
             deserialize: (json) => ({projectSettings: JSON.parse(json)})
+        },
+        // 恢复持久化数据后清理历史残留：旧版多配色预设字段（uiTheme 已被 uiAccent 取代）
+        afterHydrate: (ctx) => {
+            if (ctx.store?.projectSettings?.appearance) {
+                delete ctx.store.projectSettings.appearance.uiTheme
+            }
         }
     }
 })

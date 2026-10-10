@@ -1,5 +1,12 @@
 /* 双写 :root 提高特异性（0,2,0）：EP 的 index.css 在本文件之后加载，
-   单写 :root 会在亮色下被 EP 默认蓝等 :root 同名令牌覆盖（暗色靠 [dark-theme] 已更高） */
+   单写 :root 会在亮色下被 EP 默认蓝等 :root 同名令牌覆盖（暗色靠 [dark-theme] 已更高）
+
+   配色体系（严格对齐 design/ 设计稿）：
+   - 中性表面：亮色 = 锌灰阶（#FBFBFB 顶/底栏 · #FFFFFF 面板 · #F0F0F2 画布 · #FAFAFA 卡片）
+              暗色 = 炭灰阶（#131315 顶/底栏 · #171719 面板 · #0A0A0A 画布 · #1C1C20 卡片）
+   - 强调色：由用户在偏好设置中自定义（颜色选择器），运行时经 useTheme.js 派生为
+     --acc-l-*（亮色套）/ --acc-d-*（暗色套）注入根元素，下方两个主题块分别引用；
+     变量缺失时的回退值即默认靛青（亮 #3E63DD / 暗 #6284FF） */
 :root:root {
 
   color-scheme: light;
@@ -15,114 +22,115 @@
   --app-dialog-header-height: 36px;
 
   /* ---------- 基础表面 ---------- */
-  --border-color: #e7e7ec;
-  --expand-area-background-color: #fafafa;
-  --menu-background-color: #f4f4f6;
-  --menu-icon-color: #6b6d78;
-  --main-font-color: #2a2b33;
-  --preview-background-color: #ececef;
-  --dialog-main-background-color: #f7f8fa;
+  --border-color: #E4E4E7;
+  --expand-area-background-color: #FBFBFB;
+  --menu-background-color: #FFFFFF;
+  --menu-icon-color: #71717A;
+  --main-font-color: #27272A;
+  --preview-background-color: #F0F0F2;
+  --dialog-main-background-color: #FFFFFF;
 
   /* ---------- 设计令牌：表面层次 ---------- */
-  --ui-chrome: #fafafa;
-  --ui-panel: #fafafa;
-  --ui-workspace: #ececef;
-  --ui-card: #f4f4f6;
-  --ui-card-hover: #eeeef1;
-  --ui-elevated: #ffffff;
-  --ui-control: #f0f0f2;
-  --ui-control-hover: #e9e9ee;
-  --ui-inset: #f1f1f4;
+  --ui-chrome: #FBFBFB;
+  --ui-panel: #FFFFFF;
+  --ui-workspace: #F0F0F2;
+  --ui-card: #FAFAFA;
+  --ui-card-hover: #F4F4F5;
+  --ui-elevated: #FFFFFF;
+  --ui-control: #F4F4F5;
+  --ui-control-hover: #EBEBEF;
+  --ui-inset: #F4F4F5;
   /* 可展开分组标题行：静态底色 + 悬停加深 */
-  --ui-row: #ebebef;
-  --ui-row-hover: #e2e2e8;
+  --ui-row: #F4F4F5;
+  --ui-row-hover: #EBEBEF;
 
   /* ---------- 设计令牌：描边 ---------- */
-  --ui-border: #e7e7ec;
-  --ui-border-soft: #eaeaee;
-  --ui-border-strong: #dcdce2;
-  --ui-divider: #e7e7ec;
+  --ui-border: #E4E4E7;
+  --ui-border-soft: #EBEBEF;
+  --ui-border-strong: #D4D4D8;
+  --ui-divider: #E4E4E7;
 
   /* ---------- 设计令牌：文字 ---------- */
-  --ui-text: #2a2b33;
-  --ui-text-secondary: #6b6d78;
-  --ui-text-muted: #8a8b8f;
-  --ui-text-faint: #a6a7ac;
+  --ui-text: #27272A;
+  --ui-text-secondary: #71717A;
+  --ui-text-muted: #A1A1AA;
+  --ui-text-faint: #C4C4CC;
 
-  /* ---------- 设计令牌：琥珀强调 ---------- */
-  --ui-accent: #e49421;
-  --ui-accent-hover: #d2871b;
-  --ui-accent-active: #bd7814;
-  --ui-accent-soft: #fdf3e3;
-  --ui-accent-soft-hover: #fbebd3;
-  --ui-accent-soft-border: #f1d2a7;
-  --ui-accent-soft-text: #a9670d;
-  --ui-accent-glow: rgba(228, 148, 33, 0.30);
-  --ui-accent-ring: rgba(228, 148, 33, 0.22);
-  --ui-accent-contrast: #ffffff;
+  /* ---------- 设计令牌：强调（引用运行时注入的自定义配色，回退 = 默认靛青） ---------- */
+  --ui-accent: var(--acc-l-base, #3E63DD);
+  --ui-accent-hover: var(--acc-l-hover, #395BCB);
+  --ui-accent-active: var(--acc-l-active, #3554BC);
+  --ui-accent-soft: var(--acc-l-soft, #EBF0FE);
+  --ui-accent-soft-hover: var(--acc-l-soft-hover, #DCE4FC);
+  --ui-accent-soft-border: var(--acc-l-soft-border, #A9BDF4);
+  --ui-accent-soft-text: var(--acc-l-soft-text, #3859C7);
+  --ui-accent-glow: var(--acc-l-glow, rgba(62, 99, 221, 0.30));
+  --ui-accent-ring: var(--acc-l-ring, rgba(62, 99, 221, 0.22));
+  --ui-accent-contrast: var(--acc-l-contrast, #FFFFFF);
 
   /* ---------- 设计令牌：状态 ---------- */
-  --ui-success: #23a55a;
-  --ui-track: #dedee3;
+  --ui-success: #23A55A;
+  --ui-track: #E4E4E7;
 
-  /* ---------- 旧的 app-* 语义令牌（沿用，值已对齐新稿） ---------- */
-  --app-page-bg: #fafafa;
-  --app-page-text: #2a2b33;
-  --app-accent: #e49421;
-  --app-accent-light: #f0b969;
-  --app-hover-accent: #d2871b;
-  --app-active-bg: #fdf3e3;
-  --app-active-color: #a9670d;
-  --app-hover-bg: #f0f0f2;
-  --app-hover-color: #2a2b33;
-  --app-border: #e7e7ec;
-  --app-border-strong: #dcdce2;
-  --app-menu-border: #eaeaee;
-  --app-toolbar-border: #e7e7ec;
-  --app-placeholder-bg: #ececef;
-  --app-control-bg: #f4f4f6;
-  --app-regular-text: #3a3b44;
-  --app-secondary-text: #6b6d78;
-  --app-text-resource-hover-bg: #f4f4f6;
-  --app-thumb-bg: #ececef;
-  --app-thumb-border: #e7e7ec;
-  --app-thumb-active-bg: #fdf3e3;
-  --app-thumb-active-line: #e49421;
-  --app-dialog-header: #fafafa;
-  --app-dialog-icon: #6b6d78;
-  --app-dialog-title: #2a2b33;
-  --app-dialog-body-bg: #f7f8fa;
-  --app-dialog-border: #e7e7ec;
-  /* 弹窗内分隔线（标题栏下沿、分组框描边）与比底色略深/略浅的浅底 */
-  --app-dialog-line: #e7e7ec;
-  --app-dialog-subtle-bg: #f0f0f2;
-  /* 弹窗内的选中底（标签页选中项 / 表格选中行）：中性色，不靠琥珀填充 */
-  --app-dialog-selected-bg: #e8e8ee;
+  /* ---------- 旧的 app-* 语义令牌（沿用，值已对齐设计稿） ---------- */
+  --app-page-bg: #FBFBFB;
+  --app-page-text: #27272A;
+  --app-accent: var(--ui-accent);
+  --app-accent-light: var(--ui-accent-hover);
+  --app-hover-accent: var(--ui-accent-hover);
+  --app-active-bg: var(--ui-accent-soft);
+  --app-active-color: var(--ui-accent-soft-text);
+  --app-hover-bg: #F4F4F5;
+  --app-hover-color: #27272A;
+  --app-border: #E4E4E7;
+  --app-border-strong: #D4D4D8;
+  --app-menu-border: #EBEBEF;
+  --app-toolbar-border: #E4E4E7;
+  --app-placeholder-bg: #F0F0F2;
+  --app-control-bg: #FAFAFA;
+  --app-regular-text: #3F3F46;
+  --app-secondary-text: #71717A;
+  --app-text-resource-hover-bg: #F4F4F5;
+  --app-thumb-bg: #F4F4F5;
+  --app-thumb-border: #E4E4E7;
+  --app-thumb-active-bg: var(--ui-accent-soft);
+  --app-thumb-active-line: var(--ui-accent);
+  --app-dialog-header: #FFFFFF;
+  --app-dialog-icon: #71717A;
+  --app-dialog-title: #27272A;
+  --app-dialog-body-bg: #FFFFFF;
+  --app-dialog-border: #E4E4E7;
+  /* 弹窗内分隔线（标题栏下沿、分组框描边）与略深的浅底 */
+  --app-dialog-line: #E4E4E7;
+  --app-dialog-subtle-bg: #F4F4F5;
+  /* 弹窗内的选中底（标签页选中项 / 表格选中行 / 设置导航选中项）：强调色软底 */
+  --app-dialog-selected-bg: var(--ui-accent-soft);
   /* 弹窗内统一描边色（表格、分组框、标签页框、输入控件、开关等所有带边框的组件） */
-  --app-dialog-line-strong: #d6d6de;
+  --app-dialog-line-strong: #D4D4D8;
   /* 弹窗内表格行悬浮底 */
-  --app-dialog-row-hover-bg: #f4f4f7;
-  /* 弹窗内的输入控件：描边式（填充≈弹窗底色 + 1px 描边，聚焦换 2px 琥珀） */
-  --app-dialog-field-bg: #ffffff;
-  --app-dialog-field-border: #d6d6de;
-  /* 偏好设置卡片：纯白卡片浮于浅灰弹窗底上 */
-  --app-settings-card-bg: #ffffff;
-  --app-settings-card-border: #e7e7ec;
-  --app-dialog-field-border-hover: #bcbcc7;
+  --app-dialog-row-hover-bg: #F7F7F8;
+  /* 弹窗内的输入控件：描边式（填充≈弹窗底色 + 1px 描边，聚焦换强调色描边） */
+  --app-dialog-field-bg: #FFFFFF;
+  --app-dialog-field-border: #D4D4D8;
+  /* 偏好设置卡片与侧栏导航（设计稿：白弹窗 + #FAFAFA 卡片 + #FBFBFC 侧栏） */
+  --app-settings-card-bg: #FAFAFA;
+  --app-settings-card-border: #E4E4E7;
+  --app-dialog-nav-bg: #FBFBFC;
+  --app-dialog-field-border-hover: #A1A1AA;
   /* 弹窗底部按钮：次按钮中性填充、无描边 */
-  --app-dialog-btn-bg: #f0f0f2;
-  --app-dialog-btn-text: #4a4b52;
+  --app-dialog-btn-bg: #F4F4F5;
+  --app-dialog-btn-text: #52525B;
   /* 弹窗关闭按钮悬停底色 */
-  --app-dialog-close-hover-bg: #ececef;
-  --app-dialog-close-hover-text: #2a2b33;
-  --app-tabs-active-bg: #ffffff;
+  --app-dialog-close-hover-bg: #F4F4F5;
+  --app-dialog-close-hover-text: #27272A;
+  --app-tabs-active-bg: #FFFFFF;
   --app-scrollbar-track: transparent;
-  --app-scrollbar-thumb: #d3d3da;
-  --app-scrollbar-thumb-hover: #bcbcc5;
+  --app-scrollbar-thumb: #D4D4D8;
+  --app-scrollbar-thumb-hover: #A1A1AA;
   /* 滚动条宽度：原生 ::-webkit-scrollbar 与 el-scrollbar 覆盖式滑块统一用这一个值 */
   --app-scrollbar-size: 6px;
   --app-preview-scrollbar-track: transparent;
-  --app-preview-scrollbar-thumb: #c9c9d1;
+  --app-preview-scrollbar-thumb: #D4D4D8;
   --app-dialog-shadow: 0 24px 64px rgba(28, 36, 52, 0.18), 0 6px 18px rgba(28, 36, 52, 0.07);
   --app-overlay: rgba(28, 36, 52, 0.42);
   --app-popper-shadow: 0 10px 32px rgba(28, 36, 52, 0.14), 0 2px 8px rgba(28, 36, 52, 0.06);
@@ -146,35 +154,35 @@
   --app-preview-grid-color: rgba(20, 115, 230, 0.03);
 
   /* ---------- Element Plus ---------- */
-  --el-color-primary: #e49421;
-  --el-color-primary-light-3: #eaa947;
-  --el-color-primary-light-5: #f0bd6e;
-  --el-color-primary-light-7: #f6d296;
-  --el-color-primary-light-8: #f9dcab;
-  --el-color-primary-light-9: #fdf3e3;
-  --el-color-primary-dark-2: #c97f14;
-  --el-color-success: #23a55a;
+  --el-color-primary: var(--ui-accent);
+  --el-color-primary-light-3: var(--acc-l-el-light-3, #6B84E6);
+  --el-color-primary-light-5: var(--acc-l-el-light-5, #8FA2EC);
+  --el-color-primary-light-7: var(--acc-l-el-light-7, #B2C0F2);
+  --el-color-primary-light-8: var(--acc-l-el-light-8, #C4CFEF);
+  --el-color-primary-light-9: var(--acc-l-el-light-9, #F0F2FD);
+  --el-color-primary-dark-2: var(--acc-l-el-dark-2, #324FB1);
+  --el-color-success: #23A55A;
 
-  --el-bg-color: #ffffff;
-  --el-bg-color-page: #fafafa;
-  --el-bg-color-overlay: #ffffff;
-  --el-fill-color-blank: #f4f4f6;
-  --el-fill-color: #f4f4f6;
-  --el-fill-color-light: #f4f4f6;
-  --el-fill-color-lighter: #f7f7f9;
-  --el-fill-color-extra-light: #fafafa;
-  --el-fill-color-dark: #ececef;
-  --el-fill-color-darker: #e4e4e9;
+  --el-bg-color: #FFFFFF;
+  --el-bg-color-page: #FBFBFB;
+  --el-bg-color-overlay: #FFFFFF;
+  --el-fill-color-blank: #FFFFFF;
+  --el-fill-color: #F4F4F5;
+  --el-fill-color-light: #F4F4F5;
+  --el-fill-color-lighter: #F7F7F8;
+  --el-fill-color-extra-light: #FBFBFB;
+  --el-fill-color-dark: #EBEBEF;
+  --el-fill-color-darker: #E4E4E7;
 
-  --el-text-color-primary: #2a2b33;
-  --el-text-color-regular: #3a3b44;
-  --el-text-color-secondary: #6b6d78;
-  --el-text-color-placeholder: #a6a7ac;
+  --el-text-color-primary: #27272A;
+  --el-text-color-regular: #3F3F46;
+  --el-text-color-secondary: #71717A;
+  --el-text-color-placeholder: #A1A1AA;
 
-  --el-border-color: #e7e7ec;
-  --el-border-color-light: #eaeaee;
-  --el-border-color-lighter: #eeeef2;
-  --el-border-color-extra-light: #f2f2f5;
+  --el-border-color: #E4E4E7;
+  --el-border-color-light: #EBEBEF;
+  --el-border-color-lighter: #EEEEF1;
+  --el-border-color-extra-light: #F4F4F5;
 
   --el-border-radius-base: 5px;
 }
@@ -185,124 +193,124 @@
   color-scheme: dark;
 
   /* ---------- 基础表面 ---------- */
-  --border-color: #23232a;
-  --expand-area-background-color: #0f0f12;
-  --menu-background-color: #16161c;
-  --menu-icon-color: #9f9fa3;
-  --main-font-color: #f1f1f5;
-  --preview-background-color: #0d0d11;
-  --dialog-main-background-color: #2B2B2B;
+  --border-color: #26262B;
+  --expand-area-background-color: #131315;
+  --menu-background-color: #1C1C20;
+  --menu-icon-color: #9C9CA3;
+  --main-font-color: #ECECEE;
+  --preview-background-color: #0A0A0A;
+  --dialog-main-background-color: #17171A;
 
   /* ---------- 设计令牌：表面层次 ---------- */
-  --ui-chrome: #0a0a0d;
-  --ui-panel: #0f0f12;
-  --ui-workspace: #0d0d11;
-  --ui-card: #16161c;
-  --ui-card-hover: #1c1c23;
-  --ui-elevated: #18181f;
-  --ui-control: #181820;
-  --ui-control-hover: #20202a;
-  --ui-inset: #1b1b23;
+  --ui-chrome: #131315;
+  --ui-panel: #171719;
+  --ui-workspace: #0A0A0A;
+  --ui-card: #1C1C20;
+  --ui-card-hover: #222227;
+  --ui-elevated: #1E1E23;
+  --ui-control: #1F1F24;
+  --ui-control-hover: #26262B;
+  --ui-inset: #17171A;
   /* 可展开分组标题行：静态底色 + 悬停加深 */
-  --ui-row: #1e1e26;
-  --ui-row-hover: #26262e;
+  --ui-row: #1F1F24;
+  --ui-row-hover: #26262B;
 
   /* ---------- 设计令牌：描边 ---------- */
-  --ui-border: #23232a;
-  --ui-border-soft: #1e1e25;
-  --ui-border-strong: #2c2c35;
-  --ui-divider: #1e1e25;
+  --ui-border: #26262B;
+  --ui-border-soft: #1F1F24;
+  --ui-border-strong: #33333A;
+  --ui-divider: #1F1F24;
 
   /* ---------- 设计令牌：文字 ---------- */
-  --ui-text: #f1f1f5;
-  --ui-text-secondary: #9f9fa3;
-  --ui-text-muted: #7b7b85;
-  --ui-text-faint: #5c5c67;
+  --ui-text: #ECECEE;
+  --ui-text-secondary: #9C9CA3;
+  --ui-text-muted: #74747C;
+  --ui-text-faint: #55555C;
 
-  /* ---------- 设计令牌：琥珀强调 ---------- */
-  --ui-accent: #f0a63c;
-  --ui-accent-hover: #f6b552;
-  --ui-accent-active: #ffc069;
-  --ui-accent-soft: #292017;
-  --ui-accent-soft-hover: #332718;
-  --ui-accent-soft-border: #634722;
-  --ui-accent-soft-text: #f0a63c;
-  --ui-accent-glow: rgba(240, 166, 60, 0.28);
-  --ui-accent-ring: rgba(240, 166, 60, 0.24);
-  --ui-accent-contrast: #241703;
+  /* ---------- 设计令牌：强调（引用运行时注入的自定义配色，回退 = 默认靛青暗色档） ---------- */
+  --ui-accent: var(--acc-d-base, #6284FF);
+  --ui-accent-hover: var(--acc-d-hover, #7B98FF);
+  --ui-accent-active: var(--acc-d-active, #93ABFF);
+  --ui-accent-soft: var(--acc-d-soft, #29304E);
+  --ui-accent-soft-hover: var(--acc-d-soft-hover, #303863);
+  --ui-accent-soft-border: var(--acc-d-soft-border, #4A5580);
+  --ui-accent-soft-text: var(--acc-d-soft-text, #9DB0FF);
+  --ui-accent-glow: var(--acc-d-glow, rgba(98, 132, 255, 0.28));
+  --ui-accent-ring: var(--acc-d-ring, rgba(98, 132, 255, 0.24));
+  --ui-accent-contrast: var(--acc-d-contrast, #FFFFFF);
 
   /* ---------- 设计令牌：状态 ---------- */
-  --ui-success: #35c46f;
-  --ui-track: #33333d;
+  --ui-success: #35C46F;
+  --ui-track: #33333A;
 
   /* ---------- 旧的 app-* 语义令牌 ---------- */
-  --app-page-bg: #0a0a0d;
-  --app-page-text: #f1f1f5;
-  --app-accent: #f0a63c;
-  --app-accent-light: #f6c274;
-  --app-hover-accent: #f6b552;
-  --app-active-bg: #292017;
-  --app-active-color: #f0a63c;
-  --app-hover-bg: #1c1c23;
-  --app-hover-color: #f1f1f5;
-  --app-border: #23232a;
-  --app-border-strong: #2c2c35;
-  --app-menu-border: #1e1e25;
-  --app-toolbar-border: #23232a;
-  --app-placeholder-bg: #1c1c23;
-  --app-control-bg: #181820;
-  --app-regular-text: #d9d9dd;
-  --app-secondary-text: #9f9fa3;
-  --app-text-resource-hover-bg: #1c1c23;
-  --app-thumb-bg: #1c1c23;
-  --app-thumb-border: #23232a;
-  --app-thumb-active-bg: #292017;
-  --app-thumb-active-line: #f0a63c;
-  --app-dialog-header: #2B2B2B;
-  --app-dialog-icon: #9f9fa3;
-  --app-dialog-title: #f1f1f5;
-  /* 参考图的弹窗底：中性灰单一平面（标题栏与正文同色） */
-  --app-dialog-body-bg: #2B2B2B;
-  /* 参考图弹窗外无描边，靠底色与遮罩分层 */
+  --app-page-bg: #131315;
+  --app-page-text: #ECECEE;
+  --app-accent: var(--ui-accent);
+  --app-accent-light: var(--ui-accent-hover);
+  --app-hover-accent: var(--ui-accent-hover);
+  --app-active-bg: var(--ui-accent-soft);
+  --app-active-color: var(--ui-accent-soft-text);
+  --app-hover-bg: #222227;
+  --app-hover-color: #ECECEE;
+  --app-border: #26262B;
+  --app-border-strong: #33333A;
+  --app-menu-border: #1F1F24;
+  --app-toolbar-border: #26262B;
+  --app-placeholder-bg: #17171A;
+  --app-control-bg: #1C1C20;
+  --app-regular-text: #D9D9DC;
+  --app-secondary-text: #9C9CA3;
+  --app-text-resource-hover-bg: #222227;
+  --app-thumb-bg: #222227;
+  --app-thumb-border: #26262B;
+  --app-thumb-active-bg: var(--ui-accent-soft);
+  --app-thumb-active-line: var(--ui-accent);
+  --app-dialog-header: #17171A;
+  --app-dialog-icon: #9C9CA3;
+  --app-dialog-title: #ECECEE;
+  /* 设计稿弹窗底：中性炭灰单一平面（标题栏与正文同色） */
+  --app-dialog-body-bg: #17171A;
+  /* 设计稿弹窗外无描边，靠底色与遮罩分层 */
   --app-dialog-border: transparent;
-  /* 弹窗内分隔线（标题栏下沿、分组框描边）与浅底 */
-  --app-dialog-line: #404046;
-  --app-dialog-subtle-bg: #262626;
-  /* 弹窗内的选中底：比弹窗底(#2B2B2B)亮两档，读作「选中/浮起」；
-     琥珀只用于文字与左侧细标，避免低透明度琥珀叠成脏棕 */
-  --app-dialog-selected-bg: #41414a;
+  /* 弹窗内分隔线（标题栏下沿、分组框描边） */
+  --app-dialog-line: #26262B;
+  --app-dialog-subtle-bg: #1F1F24;
+  /* 弹窗内的选中底（标签页选中项 / 表格选中行 / 设置导航选中项）：强调色软底 */
+  --app-dialog-selected-bg: var(--ui-accent-soft);
   /* 弹窗内统一描边色：表格、分组框、标签页框、输入控件、开关等所有带边框的组件都用它 */
-  --app-dialog-line-strong: #4A4A4A;
-  /* 弹窗内表格行悬浮底比选中底浅一档 */
-  --app-dialog-row-hover-bg: #3d3d44;
-  /* 弹窗内的输入控件：填充同弹窗底色 + 1px 描边，聚焦换 2px 琥珀 */
+  --app-dialog-line-strong: #33333A;
+  /* 弹窗内表格行悬浮底 */
+  --app-dialog-row-hover-bg: #26262B;
+  /* 弹窗内的输入控件：填充同弹窗底色 + 1px 描边 */
   --app-dialog-field-bg: transparent;
-  --app-dialog-field-border: #4A4A4A;
-  /* 偏好设置卡片：比弹窗底(#2B2B2B)亮一档的浮起卡片（field-bg 在深色下是 transparent，不能复用） */
-  --app-settings-card-bg: #333333;
-  --app-settings-card-border: #424242;
-  --app-dialog-field-border-hover: #5C5C5C;
-  /* 弹窗底部按钮：主按钮琥珀底深字，次按钮中性填充（比卡片底亮一档，否则与卡片融为一体） */
-  --app-dialog-btn-bg: #41414a;
-  --app-dialog-btn-text: #d0d2d6;
+  --app-dialog-field-border: #33333A;
+  /* 偏好设置卡片与侧栏导航（设计稿：#17171A 弹窗 + #1C1C20 卡片 + #131316 侧栏） */
+  --app-settings-card-bg: #1C1C20;
+  --app-settings-card-border: #26262B;
+  --app-dialog-nav-bg: #131316;
+  --app-dialog-field-border-hover: #55555C;
+  /* 弹窗底部按钮：主按钮强调色底，次按钮中性填充（比卡片底亮一档，否则与卡片融为一体） */
+  --app-dialog-btn-bg: #26262B;
+  --app-dialog-btn-text: #C6C6CB;
   /* 弹窗关闭按钮悬停底色 */
-  --app-dialog-close-hover-bg: #404046;
-  --app-dialog-close-hover-text: #f1f1f5;
+  --app-dialog-close-hover-bg: #26262B;
+  --app-dialog-close-hover-text: #ECECEE;
 
-  --app-tabs-active-bg: #20202a;
+  --app-tabs-active-bg: #222227;
   --app-scrollbar-track: transparent;
-  --app-scrollbar-thumb: #33333d;
-  --app-scrollbar-thumb-hover: #45454f;
+  --app-scrollbar-thumb: #33333A;
+  --app-scrollbar-thumb-hover: #45454D;
   --app-preview-scrollbar-track: transparent;
-  --app-preview-scrollbar-thumb: #2c2c35;
+  --app-preview-scrollbar-thumb: #2C2C33;
   --app-dialog-shadow: 0 24px 64px rgba(0, 0, 0, 0.66), 0 6px 18px rgba(0, 0, 0, 0.4);
   --app-overlay: rgba(0, 0, 0, 0.62);
   --app-popper-shadow: 0 10px 32px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35);
 
   /* el-tooltip / el-popper.is-dark 主题令牌 */
-  --app-tooltip-bg: #20202a;
-  --app-tooltip-text: #f1f1f5;
-  --app-tooltip-border: #3f3f48;
+  --app-tooltip-bg: #222227;
+  --app-tooltip-text: #ECECEE;
+  --app-tooltip-border: #33333A;
   --app-tooltip-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
 
   /* 层次、圆角与动效令牌 */
@@ -312,412 +320,37 @@
   --app-preview-grid-color: rgba(255, 255, 255, 0.025);
 
   /* ---------- Element Plus ---------- */
-  --el-color-primary: #f0a63c;
-  --el-color-primary-light-3: #c98c37;
-  --el-color-primary-light-5: #9c6f31;
-  --el-color-primary-light-7: #6f512b;
-  --el-color-primary-light-8: #594226;
-  --el-color-primary-light-9: #292017;
-  --el-color-primary-dark-2: #f6b552;
-  --el-color-success: #35c46f;
-
-  --el-bg-color: #16161c;
-  --el-bg-color-page: #0a0a0d;
-  --el-bg-color-overlay: #1f1f27;
-  --el-fill-color-blank: #181820;
-  --el-fill-color: #1c1c23;
-  --el-fill-color-light: #191920;
-  --el-fill-color-lighter: #23232a;
-  --el-fill-color-extra-light: #26262d;
-  --el-fill-color-dark: #131318;
-  --el-fill-color-darker: #0f0f12;
-
-  --el-text-color-primary: #f1f1f5;
-  --el-text-color-regular: #d9d9dd;
-  --el-text-color-secondary: #9f9fa3;
-  --el-text-color-placeholder: #6a6a74;
-
-  --el-border-color: #3f3f48;
-  --el-border-color-light: #26262d;
-  --el-border-color-lighter: #23232a;
-  --el-border-color-extra-light: #1e1e25;
-}
-
-
-/* 扩展配色主题（靛青/松烟/胭脂/紫藤）：html[data-ui-theme] 选择配色、[dark-theme] 控制亮暗；
-   旧 --app-* / --el-* 令牌整体桥接到 --ui-*，不带 data-ui-theme 时默认琥珀主题不受影响 */
-
-/* 同样压过 EP 的 :root 亮色默认值（dark 组合本身已更高，统一加 :root 前缀） */
-:root[data-ui-theme],
-:root[data-ui-theme][dark-theme] {
-  --border-color: var(--ui-border);
-  --expand-area-background-color: var(--ui-chrome);
-  --menu-background-color: var(--ui-card);
-  --menu-icon-color: var(--ui-text-secondary);
-  --main-font-color: var(--ui-text);
-  --preview-background-color: var(--ui-workspace);
-  --dialog-main-background-color: var(--ui-panel);
-  --app-page-bg: var(--ui-chrome);
-  --app-page-text: var(--ui-text);
-  --app-accent: var(--ui-accent);
-  --app-accent-light: var(--ui-accent-hover);
-  --app-hover-accent: var(--ui-accent-hover);
-  --app-active-bg: var(--ui-accent-soft);
-  --app-active-color: var(--ui-accent-soft-text);
-  --app-hover-bg: var(--ui-control-hover);
-  --app-hover-color: var(--ui-text);
-  --app-border: var(--ui-border);
-  --app-border-strong: var(--ui-border-strong);
-  --app-menu-border: var(--ui-border-soft);
-  --app-toolbar-border: var(--ui-border);
-  --app-placeholder-bg: var(--ui-workspace);
-  --app-control-bg: var(--ui-card);
-  --app-regular-text: var(--ui-text);
-  --app-secondary-text: var(--ui-text-secondary);
-  --app-text-resource-hover-bg: var(--ui-card-hover);
-  --app-thumb-bg: var(--ui-card-hover);
-  --app-thumb-border: var(--ui-border);
-  --app-thumb-active-bg: var(--ui-accent-soft);
-  --app-thumb-active-line: var(--ui-accent);
-  --app-dialog-header: var(--ui-panel);
-  --app-dialog-icon: var(--ui-text-secondary);
-  --app-dialog-title: var(--ui-text);
-  --app-dialog-body-bg: var(--ui-panel);
-  --app-dialog-border: var(--ui-border);
-  --app-dialog-line: var(--ui-border);
-  --app-dialog-subtle-bg: var(--ui-control);
-  --app-dialog-selected-bg: var(--ui-row-hover);
-  --app-dialog-line-strong: var(--ui-border-strong);
-  --app-dialog-row-hover-bg: var(--ui-row-hover);
-  --app-dialog-field-bg: var(--ui-elevated);
-  --app-dialog-field-border: var(--ui-border-strong);
-  --app-settings-card-bg: var(--ui-elevated);
-  --app-settings-card-border: var(--ui-border);
-  --app-dialog-field-border-hover: var(--ui-text-faint);
-  /* 次按钮底色用 row-hover：control 在暗色下与卡片(elevated)几乎同色，按钮会隐形 */
-  --app-dialog-btn-bg: var(--ui-row-hover);
-  --app-dialog-btn-text: var(--ui-text-secondary);
-  --app-dialog-close-hover-bg: var(--ui-control-hover);
-  --app-dialog-close-hover-text: var(--ui-text);
-  --app-tabs-active-bg: var(--ui-elevated);
-  --app-scrollbar-thumb: var(--ui-track);
-  --app-scrollbar-thumb-hover: var(--ui-border-strong);
-  --app-preview-scrollbar-thumb: var(--ui-border-strong);
-  --app-tooltip-bg: var(--ui-elevated);
-  --app-tooltip-text: var(--ui-text);
-  --app-tooltip-border: var(--ui-border);
   --el-color-primary: var(--ui-accent);
-  --el-color-primary-light-3: var(--ui-accent-hover);
-  --el-color-primary-light-5: var(--ui-accent-soft-border);
-  --el-color-primary-light-7: var(--ui-accent-soft-hover);
-  --el-color-primary-light-8: var(--ui-accent-soft);
-  --el-color-primary-light-9: var(--ui-accent-soft);
-  --el-color-primary-dark-2: var(--ui-accent-active);
-  --el-color-success: var(--ui-success);
-  --el-bg-color: var(--ui-elevated);
-  --el-bg-color-page: var(--ui-chrome);
-  --el-bg-color-overlay: var(--ui-elevated);
-  --el-fill-color-blank: var(--ui-card);
-  --el-fill-color: var(--ui-card);
-  --el-fill-color-light: var(--ui-card);
-  --el-fill-color-lighter: var(--ui-control);
-  --el-fill-color-extra-light: var(--ui-panel);
-  --el-fill-color-dark: var(--ui-workspace);
-  --el-fill-color-darker: var(--ui-row);
-  --el-text-color-primary: var(--ui-text);
-  --el-text-color-regular: var(--ui-text);
-  --el-text-color-secondary: var(--ui-text-secondary);
-  --el-text-color-placeholder: var(--ui-text-faint);
-  /* el-border-color 提到 strong 档：复选框/开关等组件边框在暗色卡片上才可见 */
-  --el-border-color: var(--ui-border-strong);
-  --el-border-color-light: var(--ui-border-soft);
-  --el-border-color-lighter: var(--ui-border-soft);
-  --el-border-color-extra-light: var(--ui-border-soft);
+  --el-color-primary-light-3: var(--acc-d-el-light-3, #4A62B9);
+  --el-color-primary-light-5: var(--acc-d-el-light-5, #3A4B8A);
+  --el-color-primary-light-7: var(--acc-d-el-light-7, #2C3760);
+  --el-color-primary-light-8: var(--acc-d-el-light-8, #262E4E);
+  --el-color-primary-light-9: var(--acc-d-el-light-9, #21263A);
+  --el-color-primary-dark-2: var(--acc-d-el-dark-2, #7B98FF);
+  --el-color-success: #35C46F;
+
+  --el-bg-color: #1C1C20;
+  --el-bg-color-page: #131315;
+  --el-bg-color-overlay: #222227;
+  --el-fill-color-blank: #1C1C20;
+  --el-fill-color: #1F1F24;
+  --el-fill-color-light: #1F1F24;
+  --el-fill-color-lighter: #26262B;
+  --el-fill-color-extra-light: #2A2A31;
+  --el-fill-color-dark: #17171A;
+  --el-fill-color-darker: #131315;
+
+  --el-text-color-primary: #ECECEE;
+  --el-text-color-regular: #D9D9DC;
+  --el-text-color-secondary: #9C9CA3;
+  --el-text-color-placeholder: #6E6E76;
+
+  --el-border-color: #33333A;
+  --el-border-color-light: #26262B;
+  --el-border-color-lighter: #222227;
+  --el-border-color-extra-light: #1F1F24;
 }
 
-/* ---------- 靛青 Indigo：墨蓝强调 × 冷调灰 ---------- */
-:root[data-ui-theme="indigo"] {
-  color-scheme: light;
-  --ui-chrome: #f7f8fa;
-  --ui-panel: #f7f8fa;
-  --ui-workspace: #e9ebf0;
-  --ui-card: #f0f2f6;
-  --ui-card-hover: #e9ebf1;
-  --ui-elevated: #ffffff;
-  --ui-control: #edeff3;
-  --ui-control-hover: #e5e8ee;
-  --ui-inset: #eef1f6;
-  --ui-row: #e9ebf1;
-  --ui-row-hover: #e0e3ea;
-  --ui-border: #dfe2ea;
-  --ui-border-soft: #e5e8ef;
-  --ui-border-strong: #d2d6e0;
-  --ui-divider: #e5e8ef;
-  --ui-text: #272b36;
-  --ui-text-secondary: #626879;
-  --ui-text-muted: #8a8fa0;
-  --ui-text-faint: #a7abba;
-  --ui-accent: #4a67d6;
-  --ui-accent-hover: #3e58c2;
-  --ui-accent-active: #3449a8;
-  --ui-accent-soft: #eef1fc;
-  --ui-accent-soft-hover: #e3e8f9;
-  --ui-accent-soft-border: #c8d2f0;
-  --ui-accent-soft-text: #3a53b2;
-  --ui-accent-glow: rgba(74, 103, 214, 0.30);
-  --ui-accent-ring: rgba(74, 103, 214, 0.22);
-  --ui-accent-contrast: #ffffff;
-  --ui-success: #23a55a;
-  --ui-track: #dcdfe8;
-}
-
-:root[data-ui-theme="indigo"][dark-theme] {
-  color-scheme: dark;
-  --ui-chrome: #0a0c12;
-  --ui-panel: #0f1118;
-  --ui-workspace: #0c0e14;
-  --ui-card: #151823;
-  --ui-card-hover: #1b1f2c;
-  --ui-elevated: #171b26;
-  --ui-control: #161a25;
-  --ui-control-hover: #1e2330;
-  --ui-inset: #12151f;
-  --ui-row: #1a1e2a;
-  --ui-row-hover: #222735;
-  --ui-border: #232838;
-  --ui-border-soft: #1e222e;
-  --ui-border-strong: #2c3244;
-  --ui-divider: #1e222e;
-  --ui-text: #eceef4;
-  --ui-text-secondary: #9aa1b2;
-  --ui-text-muted: #767d90;
-  --ui-text-faint: #565d70;
-  --ui-accent: #7d93ea;
-  --ui-accent-hover: #8fa3ef;
-  --ui-accent-active: #a1b3f3;
-  --ui-accent-soft: #1a2036;
-  --ui-accent-soft-hover: #212840;
-  --ui-accent-soft-border: #3b4570;
-  --ui-accent-soft-text: #9aacf2;
-  --ui-accent-glow: rgba(125, 147, 234, 0.28);
-  --ui-accent-ring: rgba(125, 147, 234, 0.24);
-  --ui-accent-contrast: #0c1228;
-  --ui-success: #35c46f;
-  --ui-track: #2e3344;
-}
-
-/* ---------- 松烟 Pine：松绿强调 × 微绿纸面 ---------- */
-:root[data-ui-theme="pine"] {
-  color-scheme: light;
-  --ui-chrome: #f8faf9;
-  --ui-panel: #f8faf9;
-  --ui-workspace: #e9efec;
-  --ui-card: #eff4f1;
-  --ui-card-hover: #e7eeea;
-  --ui-elevated: #ffffff;
-  --ui-control: #edf2ef;
-  --ui-control-hover: #e2ebe6;
-  --ui-inset: #eff3f1;
-  --ui-row: #e9efeb;
-  --ui-row-hover: #dfe8e3;
-  --ui-border: #e0e8e3;
-  --ui-border-soft: #e5ede8;
-  --ui-border-strong: #d3ded8;
-  --ui-divider: #e5ede8;
-  --ui-text: #252c29;
-  --ui-text-secondary: #5f6b65;
-  --ui-text-muted: #87928b;
-  --ui-text-faint: #a5b0aa;
-  --ui-accent: #2e8f66;
-  --ui-accent-hover: #27805a;
-  --ui-accent-active: #216f4e;
-  --ui-accent-soft: #e9f5f0;
-  --ui-accent-soft-hover: #dcefe6;
-  --ui-accent-soft-border: #bcdfd0;
-  --ui-accent-soft-text: #1e6b4c;
-  --ui-accent-glow: rgba(46, 143, 102, 0.30);
-  --ui-accent-ring: rgba(46, 143, 102, 0.22);
-  --ui-accent-contrast: #ffffff;
-  --ui-success: #23a55a;
-  --ui-track: #dbe3df;
-}
-
-:root[data-ui-theme="pine"][dark-theme] {
-  color-scheme: dark;
-  --ui-chrome: #0a0e0c;
-  --ui-panel: #0e1311;
-  --ui-workspace: #0c100e;
-  --ui-card: #141c18;
-  --ui-card-hover: #1a231e;
-  --ui-elevated: #161f1a;
-  --ui-control: #151d19;
-  --ui-control-hover: #1c2621;
-  --ui-inset: #111915;
-  --ui-row: #1a231e;
-  --ui-row-hover: #212c26;
-  --ui-border: #222e28;
-  --ui-border-soft: #1d2723;
-  --ui-border-strong: #2b3a32;
-  --ui-divider: #1d2723;
-  --ui-text: #ebf1ee;
-  --ui-text-secondary: #98a5a0;
-  --ui-text-muted: #74807a;
-  --ui-text-faint: #54605a;
-  --ui-accent: #52b98b;
-  --ui-accent-hover: #63c498;
-  --ui-accent-active: #74cfa5;
-  --ui-accent-soft: #16241e;
-  --ui-accent-soft-hover: #1c2d26;
-  --ui-accent-soft-border: #2f4f40;
-  --ui-accent-soft-text: #6fcda2;
-  --ui-accent-glow: rgba(82, 185, 139, 0.28);
-  --ui-accent-ring: rgba(82, 185, 139, 0.24);
-  --ui-accent-contrast: #08130e;
-  --ui-success: #35c46f;
-  --ui-track: #2b3731;
-}
-
-/* ---------- 胭脂 Crimson：绛红强调 × 暖调灰 ---------- */
-:root[data-ui-theme="crimson"] {
-  color-scheme: light;
-  --ui-chrome: #faf9f9;
-  --ui-panel: #faf9f9;
-  --ui-workspace: #f0eceb;
-  --ui-card: #f5f2f1;
-  --ui-card-hover: #efeae8;
-  --ui-elevated: #ffffff;
-  --ui-control: #f1eeed;
-  --ui-control-hover: #e9e3e1;
-  --ui-inset: #f3f0ef;
-  --ui-row: #efeae8;
-  --ui-row-hover: #e7e0dd;
-  --ui-border: #e8e2e0;
-  --ui-border-soft: #ede7e5;
-  --ui-border-strong: #dbd3d0;
-  --ui-divider: #ede7e5;
-  --ui-text: #2f282a;
-  --ui-text-secondary: #6e6467;
-  --ui-text-muted: #93888b;
-  --ui-text-faint: #b0a6a9;
-  --ui-accent: #c8515e;
-  --ui-accent-hover: #b74552;
-  --ui-accent-active: #a03a46;
-  --ui-accent-soft: #fceff0;
-  --ui-accent-soft-hover: #f9e2e4;
-  --ui-accent-soft-border: #efc3c9;
-  --ui-accent-soft-text: #a63b47;
-  --ui-accent-glow: rgba(200, 81, 94, 0.30);
-  --ui-accent-ring: rgba(200, 81, 94, 0.22);
-  --ui-accent-contrast: #ffffff;
-  --ui-success: #23a55a;
-  --ui-track: #e3dcda;
-}
-
-:root[data-ui-theme="crimson"][dark-theme] {
-  color-scheme: dark;
-  --ui-chrome: #100c0d;
-  --ui-panel: #140f10;
-  --ui-workspace: #120d0e;
-  --ui-card: #1d1517;
-  --ui-card-hover: #241a1c;
-  --ui-elevated: #1f1719;
-  --ui-control: #1d1517;
-  --ui-control-hover: #251b1e;
-  --ui-inset: #181114;
-  --ui-row: #241a1c;
-  --ui-row-hover: #2d2124;
-  --ui-border: #2f2326;
-  --ui-border-soft: #281e21;
-  --ui-border-strong: #3d2e32;
-  --ui-divider: #281e21;
-  --ui-text: #f2edef;
-  --ui-text-secondary: #a79aa0;
-  --ui-text-muted: #827479;
-  --ui-text-faint: #5f5257;
-  --ui-accent: #e07c88;
-  --ui-accent-hover: #e68d98;
-  --ui-accent-active: #ec9ea8;
-  --ui-accent-soft: #28191c;
-  --ui-accent-soft-hover: #311f23;
-  --ui-accent-soft-border: #52333a;
-  --ui-accent-soft-text: #eb9aa4;
-  --ui-accent-glow: rgba(224, 124, 136, 0.28);
-  --ui-accent-ring: rgba(224, 124, 136, 0.24);
-  --ui-accent-contrast: #260a0e;
-  --ui-success: #35c46f;
-  --ui-track: #382c2f;
-}
-
-/* ---------- 紫藤 Wisteria：紫罗兰强调 × 微紫灰面 ---------- */
-:root[data-ui-theme="wisteria"] {
-  color-scheme: light;
-  --ui-chrome: #faf9fc;
-  --ui-panel: #faf9fc;
-  --ui-workspace: #f0ebf5;
-  --ui-card: #f4eff8;
-  --ui-card-hover: #ede7f2;
-  --ui-elevated: #ffffff;
-  --ui-control: #f1ecf5;
-  --ui-control-hover: #e9e2ee;
-  --ui-inset: #f2edf6;
-  --ui-row: #ede7f2;
-  --ui-row-hover: #e4dcea;
-  --ui-border: #e6dfee;
-  --ui-border-soft: #ebe4f1;
-  --ui-border-strong: #d8cde2;
-  --ui-divider: #ebe4f1;
-  --ui-text: #2d2836;
-  --ui-text-secondary: #675e72;
-  --ui-text-muted: #8d8496;
-  --ui-text-faint: #aba2b2;
-  --ui-accent: #8b5fc9;
-  --ui-accent-hover: #7d51ba;
-  --ui-accent-active: #6e46a6;
-  --ui-accent-soft: #f4eefc;
-  --ui-accent-soft-hover: #ece1f8;
-  --ui-accent-soft-border: #d9c6f0;
-  --ui-accent-soft-text: #6c46a0;
-  --ui-accent-glow: rgba(139, 95, 201, 0.30);
-  --ui-accent-ring: rgba(139, 95, 201, 0.22);
-  --ui-accent-contrast: #ffffff;
-  --ui-success: #23a55a;
-  --ui-track: #e2daea;
-}
-
-:root[data-ui-theme="wisteria"][dark-theme] {
-  color-scheme: dark;
-  --ui-chrome: #0e0b12;
-  --ui-panel: #110d15;
-  --ui-workspace: #0f0c13;
-  --ui-card: #191320;
-  --ui-card-hover: #201828;
-  --ui-elevated: #1b1523;
-  --ui-control: #1a1421;
-  --ui-control-hover: #221a2a;
-  --ui-inset: #150f1c;
-  --ui-row: #201828;
-  --ui-row-hover: #282031;
-  --ui-border: #2a2133;
-  --ui-border-soft: #251d2d;
-  --ui-border-strong: #372c43;
-  --ui-divider: #251d2d;
-  --ui-text: #efeaf4;
-  --ui-text-secondary: #a29ab0;
-  --ui-text-muted: #7d7489;
-  --ui-text-faint: #5c5468;
-  --ui-accent: #a988d9;
-  --ui-accent-hover: #b499e0;
-  --ui-accent-active: #bfa9e7;
-  --ui-accent-soft: #201830;
-  --ui-accent-soft-hover: #271e3b;
-  --ui-accent-soft-border: #3f3055;
-  --ui-accent-soft-text: #bda4e6;
-  --ui-accent-glow: rgba(169, 136, 217, 0.28);
-  --ui-accent-ring: rgba(169, 136, 217, 0.24);
-  --ui-accent-contrast: #150a26;
-  --ui-success: #35c46f;
-  --ui-track: #322a3e;
-}
 
 html, body, #app {
   background-color: var(--ui-chrome);
@@ -761,18 +394,9 @@ html, body, #app {
    :root 层设置会被覆盖而无效，必须在暗色下直接命中组件元素提亮
    （border-color-light/-color 在暗色下与卡片底色几乎同色，滑轨/开关会隐形） */
 :root[dark-theme] .el-slider {
-  --el-slider-runway-bg-color: #4a4a52;
-}
-
-:root[dark-theme] .el-switch {
-  --el-switch-off-color: #4a4a52;
-}
-
-:root[data-ui-theme][dark-theme] .el-slider {
   --el-slider-runway-bg-color: var(--ui-track);
 }
 
-:root[data-ui-theme][dark-theme] .el-switch {
+:root[dark-theme] .el-switch {
   --el-switch-off-color: var(--ui-track);
 }
-

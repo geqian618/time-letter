@@ -15,9 +15,9 @@ import {useProjectSettingsStore} from '@/stores/project-settings'
 // 语言组合式函数：语言应用 / 主进程同步 / 跟随系统与广播跟随（含 Element Plus 组件库 locale）；
 const {elementLocale} = useLanguage()
 
-// 主题组合式函数：启动时应用持久化的主题模式与界面配色（renderTheme 内部同步调用 renderUiStyle），
+// 主题组合式函数：启动时应用持久化的主题模式与界面配色（renderTheme 内部同步派生强调色令牌），
 // 补齐启动应用路径——此前仅 ImageManager 广播回调与设置弹窗交互会触发渲染，
-// 主窗口重启后 data-ui-theme 属性从未设置，界面配色回落默认琥珀
+// 主窗口重启后自定义界面配色不会生效
 const settingsStore = useProjectSettingsStore()
 const {renderTheme} = useTheme()
 renderTheme(settingsStore.projectSettings.appearance?.theme || 'system')
