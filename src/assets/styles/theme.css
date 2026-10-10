@@ -16,8 +16,8 @@
   --page-left-width: 18%;
   --preview-container-width: 60%;
   --page-right-width: 22%;
-  /* 设计稿实测（1920 宽）：工具栏 64px ≈ 3.3% 窗口宽，取 40px 兼顾小窗可用性 */
-  --app-toolbar-height: 40px;
+  /* 设计稿实测（1920 宽）：工具栏 84 物理px；用户屏 200% DPI → 42 CSS px */
+  --app-toolbar-height: 42px;
   /* 弹窗标题栏高度：比主工具栏矮一档，弹窗更紧凑
      （dialog.scss 与 App.vue 的弹窗规则共用此值，改这里即可） */
   --app-dialog-header-height: 36px;

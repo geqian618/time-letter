@@ -351,8 +351,8 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 .panel-search {
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 28px;
+  gap: 7px;
+  height: 30px;
   margin: 10px 12px 6px;
   padding: 0 10px;
   border-radius: var(--app-radius-sm);
@@ -373,8 +373,8 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   }
 
   .search-icon {
-    width: 12px;
-    height: 12px;
+    width: 11px;
+    height: 11px;
     flex-shrink: 0;
     color: var(--ui-text-muted);
   }
@@ -387,7 +387,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
     outline: none;
     background: transparent;
     font-family: inherit;
-    font-size: 12px;
+    font-size: 9.5px;
     color: var(--ui-text);
 
     &::placeholder {
@@ -408,7 +408,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 }
 
 .panel-section {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .panel-section:last-child {
@@ -436,8 +436,8 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 .section-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 30px;
+  gap: 7px;
+  height: 24px;
   padding: 0 6px 0 8px;
   border-radius: var(--app-radius-sm);
   background: var(--ui-row);
@@ -450,7 +450,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   }
 
   .section-title {
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 600;
     color: var(--ui-text);
     letter-spacing: 0.2px;
@@ -461,7 +461,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 
   .section-meta {
     margin-left: auto;
-    font-size: 11px;
+    font-size: 9px;
     color: var(--ui-text-muted);
     flex-shrink: 0;
     font-variant-numeric: tabular-nums;
@@ -469,8 +469,8 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 
   /* 展开箭头朝下（设计稿），收起后旋转回朝上并回到灰色 */
   .section-chevron {
-    width: 12px;
-    height: 12px;
+    width: 11px;
+    height: 11px;
     flex-shrink: 0;
     color: var(--ui-accent);
     transform: rotate(180deg);
@@ -484,7 +484,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 }
 
 .section-body {
-  padding: 8px;
+  padding: 3px 6px 5px;
 }
 
 /* 折叠 / 展开过渡：max-height + 上下内边距一起补间，收起时高度平滑归零 */
@@ -494,7 +494,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 }
 
 .section-empty {
-  font-size: 11.5px;
+  font-size: 9.5px;
   color: var(--ui-text-faint);
   padding: 2px 2px 2px 2px;
 }
@@ -509,7 +509,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 .preset-card {
   display: flex;
   align-items: center;
-  padding: 6px 8px;
+  padding: 4px 8px;
   border-radius: var(--app-radius-sm);
   border: 1px solid transparent;
   background: transparent;
@@ -553,7 +553,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   }
 
   .preset-name {
-    font-size: 12px;
+    font-size: 9.5px;
     font-weight: 500;
     color: var(--ui-text);
     white-space: nowrap;
@@ -562,7 +562,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   }
 
   .preset-meta {
-    font-size: 11px;
+    font-size: 9px;
     color: var(--ui-text-muted);
     white-space: nowrap;
     overflow: hidden;
@@ -574,16 +574,15 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 .brand-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 
   .brand-chip {
-    /* 宽高比 5:4：宽度由三列栅格决定，高度随之而来 */
-    aspect-ratio: 5 / 4;
+    /* 宽高比 4:3（设计稿实测缩略图比例） */
+    aspect-ratio: 4 / 3;
     display: flex;
     align-items: center;
     justify-content: center;
-    /* 内边距收窄，把空间让给 logo 本身，卡片尺寸不变 */
-    padding: 4px 5px;
+    padding: 3px 4px;
     border-radius: var(--app-radius-sm);
     /* 品牌标多为彩色 logo，底色固定用白，暗色下也能看清 */
     background: #ffffff;
@@ -610,10 +609,10 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 /* ---------- 文本库芯片 ---------- */
 .text-grid {
   display: grid;
-  /* 方形小格子：列宽固定 38px，列数随容器宽度自适应，放不下才换行 */
-  grid-template-columns: repeat(auto-fill, 38px);
+  /* 方形小格子：列宽固定 30px，列数随容器宽度自适应，放不下才换行 */
+  grid-template-columns: repeat(auto-fill, 30px);
   justify-content: start;
-  gap: 8px;
+  gap: 6px;
 
   .text-chip {
     display: flex;
@@ -621,8 +620,8 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
     align-items: center;
     justify-content: center;
     /* 去掉文字后芯片只放图标，尺寸收到刚好包住图标 */
-    height: 38px;
-    padding: 4px;
+    height: 30px;
+    padding: 3px;
     border-radius: var(--app-radius-sm);
     background: var(--ui-elevated);
     border: 1px solid var(--ui-border);
@@ -639,8 +638,8 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 
       /* v-html 注入的 SVG 不带 scoped 属性，必须用 :deep 才能命中 */
       :deep(svg) {
-        width: 20px;
-        height: 20px;
+        width: 16px;
+        height: 16px;
       }
     }
 
@@ -660,21 +659,21 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 28px;
-  margin: 8px 12px 12px;
+  height: 26px;
+  margin: 6px 12px 10px;
   border-radius: var(--app-radius-md);
   border: 1px solid var(--ui-border-strong);
   background: var(--ui-elevated);
   color: var(--ui-accent);
   font-family: inherit;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
   cursor: pointer;
   transition: background-color var(--app-transition), border-color var(--app-transition), color var(--app-transition);
 
   svg {
-    width: 13px;
-    height: 13px;
+    width: 11px;
+    height: 11px;
   }
 
   &:hover {

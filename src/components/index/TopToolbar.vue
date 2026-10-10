@@ -188,8 +188,8 @@ onUnmounted(() => {
   flex-shrink: 0;
 
   .brand-mark {
-    width: 20px;
-    height: 20px;
+    width: 13px;
+    height: 13px;
     display: block;
     object-fit: contain;
     flex-shrink: 0;
@@ -198,7 +198,7 @@ onUnmounted(() => {
   }
 
   .brand-name {
-    font-size: 13px;
+    font-size: 10.5px;
     font-weight: 600;
     letter-spacing: 0.3px;
     color: var(--ui-text);
@@ -208,15 +208,15 @@ onUnmounted(() => {
 
 .brand-divider {
   width: 1px;
-  height: 16px;
+  height: 14px;
   background: var(--ui-border-strong);
   flex-shrink: 0;
 }
 
 /* 面板伸缩按钮：与菜单项同风格的无底色图标钮 */
 .panel-toggle {
-  width: 28px;
-  height: 26px;
+  width: 24px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -229,8 +229,8 @@ onUnmounted(() => {
   transition: background-color var(--app-transition), color var(--app-transition);
 
   svg {
-    width: 17px;
-    height: 17px;
+    width: 13px;
+    height: 13px;
   }
 
   &:hover {
@@ -246,14 +246,14 @@ onUnmounted(() => {
   -webkit-app-region: no-drag;
 
   .menu-item {
-    height: 26px;
-    padding: 0 10px;
+    height: 22px;
+    padding: 0 8px;
     border: none;
     background: transparent;
     border-radius: var(--app-radius-xs);
-    font-size: 12.5px;
+    font-size: 9.5px;
     font-family: inherit;
-    line-height: 26px;
+    line-height: 22px;
     color: var(--ui-text-secondary);
     cursor: pointer;
     white-space: nowrap;
@@ -282,23 +282,23 @@ onUnmounted(() => {
 .export-button {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   height: 26px;
-  padding: 0 12px;
+  padding: 0 10px;
   border: none;
   border-radius: var(--app-radius-sm);
   background: var(--ui-accent);
   color: var(--ui-accent-contrast);
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 2px 10px var(--ui-accent-glow);
   transition: background-color var(--app-transition), box-shadow var(--app-transition);
 
   svg {
-    width: 13px;
-    height: 13px;
+    width: 11px;
+    height: 11px;
   }
 
   &:hover {
@@ -313,8 +313,8 @@ onUnmounted(() => {
 
 /* 检查更新：纯图标钮（无底色无描边），仅与窗口控制按钮对齐高度 */
 .check-update-button {
-  width: 28px;
-  height: 24px;
+  width: 24px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -327,8 +327,8 @@ onUnmounted(() => {
   transition: background-color var(--app-transition), color var(--app-transition);
 
   svg {
-    width: 15px;
-    height: 15px;
+    width: 12px;
+    height: 12px;
   }
 
   &:hover {
@@ -340,12 +340,12 @@ onUnmounted(() => {
 .window-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   margin-left: 2px;
 
   .window-button {
-    width: 30px;
-    height: 24px;
+    width: 26px;
+    height: 22px;
     display: flex;
     align-items: center;
     justify-content: center;

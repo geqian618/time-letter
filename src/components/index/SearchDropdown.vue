@@ -244,10 +244,10 @@ onUnmounted(() => {
 .search-box {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   width: var(--search-width);
-  height: 28px;
-  padding: 0 8px 0 10px;
+  height: 26px;
+  padding: 0 8px 0 9px;
   border-radius: var(--app-radius-sm);
   background: var(--ui-control);
   border: 1px solid var(--ui-border);
@@ -264,8 +264,8 @@ onUnmounted(() => {
   }
 
   .search-icon {
-    width: 13px;
-    height: 13px;
+    width: 11px;
+    height: 11px;
     flex-shrink: 0;
     color: var(--ui-text-muted);
   }
@@ -278,7 +278,7 @@ onUnmounted(() => {
     outline: none;
     background: transparent;
     font-family: inherit;
-    font-size: 12.5px;
+    font-size: 9.5px;
     color: var(--ui-text);
 
     &::placeholder {
@@ -321,7 +321,7 @@ onUnmounted(() => {
 
 .group-label {
   padding: 6px 8px 4px;
-  font-size: 11px;
+  font-size: 9px;
   letter-spacing: 0.3px;
   color: var(--ui-text-faint);
   user-select: none;
@@ -329,7 +329,7 @@ onUnmounted(() => {
 
 .command-item {
   width: 100%;
-  height: 30px;
+  height: 26px;
   padding: 0 8px;
   display: flex;
   align-items: center;
@@ -339,14 +339,14 @@ onUnmounted(() => {
   background: transparent;
   color: var(--ui-text);
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 10px;
   text-align: left;
   cursor: pointer;
   transition: background-color var(--app-transition);
 
   .command-icon {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     flex-shrink: 0;
     color: var(--ui-text-muted);
   }
@@ -373,7 +373,7 @@ onUnmounted(() => {
 
 .search-empty {
   padding: 12px 8px;
-  font-size: 12px;
+  font-size: 10px;
   color: var(--ui-text-muted);
   text-align: center;
   user-select: none;

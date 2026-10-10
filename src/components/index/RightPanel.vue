@@ -1106,14 +1106,14 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
     .el-menu {
       border-right: none;
       background-color: var(--ui-panel);
-      padding: 10px 12px 16px;
+      padding: 8px 10px 12px;
 
       /* ---------- 分组卡片 ---------- */
       .sub-menu {
         background-color: var(--ui-card);
         border: 1px solid var(--ui-border);
         border-radius: var(--app-radius-lg);
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         /* 标题行与卡片边框齐平：无内边距，用 overflow 裁出顶部圆角 */
         padding: 0;
         overflow: hidden;
@@ -1133,20 +1133,20 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
           margin-right: 0;
         }
 
-        /* 输入文字比 EP small 档（12px）再小两号 */
+        /* 输入文字比控件标准字号再小一档 */
         .option .value :deep(.el-input__inner) {
-          font-size: 10px;
+          font-size: 8.5px;
         }
       }
 
       /* ---------- 分组标题行（设计稿：无底色填充，箭头在左、项数在右） ---------- */
       :deep(.el-sub-menu__title) {
-        height: 30px;
-        line-height: 30px;
+        height: 28px;
+        line-height: 28px;
         padding: 0 6px;
         border-radius: var(--app-radius-sm);
         background-color: transparent;
-        font-size: 13px;
+        font-size: 10px;
         font-weight: 600;
         color: var(--ui-text);
         transition: background-color var(--app-transition);
@@ -1168,7 +1168,7 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
         .title-count {
           flex-shrink: 0;
           margin-left: 8px;
-          font-size: 11px;
+          font-size: 8.5px;
           font-weight: 400;
           color: var(--ui-text-muted);
           font-variant-numeric: tabular-nums;
@@ -1180,7 +1180,7 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
           order: -1;
           margin: 0 6px 0 0;
           color: var(--ui-text-muted);
-          font-size: 12px;
+          font-size: 10px;
           transform: rotate(-90deg);
           transition: color var(--app-transition), transform var(--app-transition);
         }
@@ -1208,10 +1208,10 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
 
       /* 子组标题（设计稿：左对齐 + 强调色竖条） */
       .group-title {
-        margin: 6px 0 2px;
+        margin: 5px 0 2px;
         padding: 0;
-        height: 18px;
-        font-size: 12px;
+        height: 16px;
+        font-size: 9.5px;
         font-weight: 600;
         color: var(--ui-text);
         background-color: transparent;
@@ -1225,10 +1225,10 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
           content: '';
           flex-shrink: 0;
           width: 3px;
-          height: 12px;
+          height: 10px;
           border-radius: 2px;
           background-color: var(--ui-accent);
-          margin-right: 6px;
+          margin-right: 5px;
         }
       }
 
@@ -1248,12 +1248,13 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
       .options {
         width: 100%;
         list-style: none;
-        padding: 4px 6px 4px 0;
+        padding: 2px 6px 4px 0;
         background-color: transparent;
         /* 标签列宽度取组内最长标签（max-content）并右对齐，控件列左缘对齐 */
         display: grid;
         grid-template-columns: max-content 1fr;
         column-gap: 10px;
+        row-gap: 2px;
         /* 各行的 .label 与 .value 直接参与本网格，由这里统一垂直居中 */
         align-items: center;
 
@@ -1263,7 +1264,7 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
           display: contents;
 
           > * {
-            min-height: 30px;
+            min-height: 26px;
           }
 
           .label {
@@ -1271,7 +1272,7 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
             align-items: center;
             justify-content: end;
             padding-left: 6px;
-            font-size: 11.5px;
+            font-size: 8.5px;
             color: var(--ui-text-secondary);
             white-space: nowrap;
 
@@ -1293,11 +1294,11 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
 
           .number-input {
             /* 缩窄数字框让滑块更宽；右缘贴齐父容器 */
-            flex: 0 0 40px;
-            width: 40px;
+            flex: 0 0 34px;
+            width: 34px;
             margin-left: 0;
             margin-right: 0;
-              font-size: 11.5px;
+              font-size: 9px;
               font-variant-numeric: tabular-nums;
               text-align: right;
               outline: none;
@@ -1313,9 +1314,9 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
             :deep(.el-input) {
               width: calc(100% - 5px);
               margin-right: 16px;
-              font-size: 12px;
-              /* 输入框对齐下拉框的高度（26px） */
-              height: 26px;
+              font-size: 9.5px;
+              /* 输入框对齐下拉框的高度（22px） */
+              height: 22px;
 
               .el-input__wrapper {
                 height: 100%;
@@ -1323,7 +1324,7 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
                 background: var(--ui-elevated);
                 box-shadow: 0 0 0 1px var(--ui-border) inset;
                 border-radius: var(--app-radius-xs);
-                padding: 0 10px;
+                padding: 0 8px;
                 transition: box-shadow var(--app-transition), background-color var(--app-transition);
               }
 
@@ -1347,7 +1348,7 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
               align-items: center;
               gap: 6px;
               width: calc(100% - 5px);
-              height: 26px;
+              height: 22px;
               margin-right: 16px;
               padding: 0 8px 0 4px;
               box-sizing: border-box;
@@ -1364,11 +1365,11 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
                 flex-shrink: 0;
 
                 .el-color-picker__trigger {
-                  width: 18px;
-                  height: 18px;
+                  width: 14px;
+                  height: 14px;
                   padding: 0;
                   border: none;
-                  border-radius: 4px;
+                  border-radius: 3px;
                   overflow: hidden;
                 }
               }
@@ -1376,7 +1377,7 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
               .color-hex {
                 flex: 1;
                 min-width: 0;
-                font-size: 11.5px;
+                font-size: 8.5px;
                 font-variant-numeric: tabular-nums;
                 color: var(--ui-text-secondary);
                 white-space: nowrap;
@@ -1402,8 +1403,9 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
                 box-shadow: 0 0 0 1px var(--ui-border) inset;
                 border-radius: var(--app-radius-xs);
                 /* 与 .el-input 保持一致 */
-                min-height: 26px;
-                padding: 0 10px;
+                min-height: 22px;
+                padding: 0 8px;
+                font-size: 9.5px;
               }
 
               span {
@@ -1412,11 +1414,12 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
             }
 
             :deep(.el-button) {
-              height: 30px;
+              height: 24px;
               border-radius: var(--app-radius-xs);
               background: var(--ui-card);
               border: 1px solid var(--ui-border);
               color: var(--ui-text);
+              font-size: 9.5px;
 
               span {
                 color: inherit;
@@ -1434,11 +1437,11 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
               flex: 1 1 auto;
               min-width: 0;
               margin: 0 2px 0 0;
-              --el-slider-button-size: 12px;
-              --el-slider-height: 4px;
-              /* 滑块在滑轨上垂直居中：offset = (滑轨高 - 手柄容器高) / 2 = (4 - 36) / 2 */
-              --el-slider-button-wrapper-size: 36px;
-              --el-slider-button-wrapper-offset: -16px;
+              --el-slider-button-size: 10px;
+              --el-slider-height: 3px;
+              /* 滑块在滑轨上垂直居中：offset = (滑轨高 - 手柄容器高) / 2 = (3 - 24) / 2 */
+              --el-slider-button-wrapper-size: 24px;
+              --el-slider-button-wrapper-offset: -10.5px;
               --el-slider-main-bg-color: var(--ui-accent);
               --el-slider-runway-bg-color: var(--ui-track);
 
@@ -1463,17 +1466,17 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
         grid-auto-flow: column;
         grid-auto-columns: 1fr;
         gap: 6px;
-        margin: 4px 0 6px;
+        margin: 3px 0 5px;
 
         .segment {
-          height: 30px;
+          height: 24px;
           padding: 0 8px;
           border-radius: var(--app-radius-xs);
           background: var(--ui-elevated);
           border: 1px solid var(--ui-border);
           color: var(--ui-text-secondary);
           font-family: inherit;
-          font-size: 12.5px;
+          font-size: 9.5px;
           cursor: pointer;
           white-space: nowrap;
           overflow: hidden;

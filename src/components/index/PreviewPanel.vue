@@ -811,8 +811,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
 /* ---------- 工具条 ---------- */
 .preview-bar {
   width: 100%;
-  height: 34px;
-  flex: 0 0 34px;
+  height: 30px;
+  flex: 0 0 30px;
   background: var(--ui-chrome);
   display: flex;
   align-items: center;
@@ -820,8 +820,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
   gap: 12px;
 
   .bar-icon {
-    width: 26px;
-    height: 26px;
+    width: 22px;
+    height: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -835,8 +835,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
     transition: background-color var(--app-transition), color var(--app-transition);
 
     svg {
-      width: 15px;
-      height: 15px;
+      width: 13px;
+      height: 13px;
     }
 
     &:hover {
@@ -847,8 +847,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
 
   /* 缩放下拉：不加边框，背景宽度与其他图标一致 */
   .bar-icon.is-text {
-    width: 26px;
-    font-size: 11.5px;
+    width: 24px;
+    font-size: 9.5px;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.2px;
   }
@@ -928,8 +928,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
   display: flex;
   /* 子项拉伸填满容器高度（缩略图高度=可用高度，宽度随图片比例自适应） */
   align-items: stretch;
-  gap: 10px;
-  padding: 0 14px 10px;
+  gap: 8px;
+  padding: 0 10px 8px;
   background: var(--ui-chrome);
   overflow-x: auto;
   overflow-y: hidden;
@@ -957,10 +957,10 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
     .preview-check {
       position: absolute;
       /* 对勾放在左上角；矩形圆角样式 */
-      left: 4px;
-      top: 4px;
-      width: 16px;
-      height: 16px;
+      left: 3px;
+      top: 3px;
+      width: 13px;
+      height: 13px;
       border-radius: 3px;
       display: none;
       align-items: center;
@@ -969,8 +969,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
       color: var(--ui-accent-contrast);
 
       svg {
-        width: 9px;
-        height: 9px;
+        width: 8px;
+        height: 8px;
       }
     }
 
@@ -987,24 +987,24 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
   .import-more {
     flex: 0 0 auto;
     /* 高度随 stretch 撑满容器，宽度固定 */
-    width: 110px;
+    width: 88px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 4px;
     border-radius: var(--app-radius-md);
     border: 1px solid var(--ui-border);
     background: transparent;
     color: var(--ui-text-muted);
     font-family: inherit;
-    font-size: 12px;
+    font-size: 9.5px;
     cursor: pointer;
     transition: background-color var(--app-transition), border-color var(--app-transition), color var(--app-transition);
 
     svg {
-      width: 18px;
-      height: 18px;
+      width: 13px;
+      height: 13px;
       color: var(--ui-accent);
     }
 
@@ -1018,8 +1018,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
 
 /* ---------- 状态栏 ---------- */
 .preview-status {
-  flex: 0 0 20px;
-  height: 20px;
+  flex: 0 0 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1027,7 +1027,7 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
   padding: 0 4px;
   border-top: 1px solid var(--ui-border);
   background: var(--ui-chrome);
-  font-size: 9.5px;
+  font-size: 8px;
   /* 等宽数字：配合数值固定占位，刷新时指标块宽度恒定 */
   font-variant-numeric: tabular-nums;
   color: var(--ui-text-muted);
