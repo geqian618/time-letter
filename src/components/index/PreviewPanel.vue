@@ -910,7 +910,11 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
           :deep(.el-select__wrapper) {
             background: var(--ui-elevated);
             /* 用全局描边规则，这里不再覆盖 */
-            min-height: 26px;
+            min-height: 22px;
+          }
+
+          :deep(.el-select__suffix .el-icon) {
+            font-size: 10px;
           }
         }
       }

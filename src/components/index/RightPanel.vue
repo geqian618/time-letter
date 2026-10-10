@@ -762,9 +762,15 @@ const formatSliderTooltip = (val) => {
   return Math.floor(val);
 };
 
-// 颜色组合框的文本：显示当前色值，空值回落默认（设计图样式：色块 + HEX 文本）
+// 颜色组合框的文本：统一转为 HEX 显示（rgba 透明度为 1 时省略），空值回落默认
 const formatColor = (value, fallback) => {
-  return (value || fallback).toUpperCase()
+  let v = value || fallback
+  const m = /^rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)(?:[,\s]+([\d.]+))?\)$/i.exec(String(v).trim())
+  if (m) {
+    const hex = [m[1], m[2], m[3]].map(n => Number(n).toString(16).padStart(2, '0')).join('').toUpperCase()
+    v = '#' + hex + (m[4] !== undefined && Number(m[4]) !== 1 ? Math.round(Number(m[4]) * 255).toString(16).padStart(2, '0').toUpperCase() : '')
+  }
+  return String(v).toUpperCase()
 };
 
 const requestImportBorderImage = () => {
@@ -1406,6 +1412,12 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
                 min-height: 22px;
                 padding: 0 8px;
                 font-size: 9.5px;
+              }
+
+              /* 下拉箭头：统一缩小（:options 属性写法渲染的图标不受 small 档约束） */
+              .el-select__suffix .el-icon,
+              .el-select__caret {
+                font-size: 10px;
               }
 
               span {
