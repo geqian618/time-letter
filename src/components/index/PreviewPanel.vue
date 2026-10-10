@@ -811,8 +811,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
 /* ---------- 工具条 ---------- */
 .preview-bar {
   width: 100%;
-  height: 30px;
-  flex: 0 0 30px;
+  height: 34px;
+  flex: 0 0 34px;
   background: var(--ui-chrome);
   display: flex;
   align-items: center;
@@ -820,8 +820,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
   gap: 12px;
 
   .bar-icon {
-    width: 22px;
-    height: 22px;
+    width: 26px;
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -835,8 +835,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
     transition: background-color var(--app-transition), color var(--app-transition);
 
     svg {
-      width: 13px;
-      height: 13px;
+      width: 16px;
+      height: 16px;
     }
 
     &:hover {
@@ -847,8 +847,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
 
   /* 缩放下拉：不加边框，背景宽度与其他图标一致 */
   .bar-icon.is-text {
-    width: 24px;
-    font-size: 9.5px;
+    width: 28px;
+    font-size: 10.5px;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.2px;
   }
@@ -880,7 +880,7 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
       .align-divider {
         flex: 0 0 auto;
         width: 1px;
-        height: 16px;
+        height: 20px;
         margin: 0 7px;
         background: var(--ui-border);
       }
@@ -902,7 +902,7 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
       }
 
       .filter-select {
-        margin-left: 6px;
+        margin-left: 0;
 
         .el-select {
           width: 84px !important;
@@ -911,6 +911,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
             background: var(--ui-elevated);
             /* 用全局描边规则，这里不再覆盖 */
             min-height: 22px;
+            /* 对齐全局 10px 字号体系（element-overrides 未覆盖新版 select wrapper） */
+            font-size: 10px;
           }
 
           :deep(.el-select__suffix .el-icon) {

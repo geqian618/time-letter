@@ -53,6 +53,9 @@
           </button>
         </el-tooltip>
 
+        <!-- 分割线：隔开面板切换与窗口控制按钮 -->
+        <span class="action-divider"/>
+
         <el-tooltip :content="$t('toolbar.minimize')" placement="bottom">
           <button type="button" class="window-button" @click="handleMinimize">
             <SvgIcon name="win-minimize"/>
@@ -280,6 +283,15 @@ onUnmounted(() => {
   -webkit-app-region: no-drag;
 }
 
+/* 操作区与面板/窗口控件组之间的竖分割线 */
+.action-divider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 16px;
+  margin: 0 3px;
+  background: var(--ui-border);
+}
+
 .export-button {
   display: inline-flex;
   align-items: center;
@@ -342,7 +354,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-left: 2px;
 
   .window-button {
     width: 26px;
