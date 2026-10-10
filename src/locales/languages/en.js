@@ -198,6 +198,7 @@ export default {
     },
     right: {
         metadata: 'Metadata',
+        itemUnit: '{n} items',
         cameraBrand: 'Camera Make',
         cameraModel: 'Camera Model',
         lensModel: 'Lens Model',

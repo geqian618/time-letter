@@ -198,6 +198,7 @@ export default {
     },
     right: {
         metadata: '元数据',
+        itemUnit: '{n} 项',
         cameraBrand: '相机品牌',
         cameraModel: '相机型号',
         lensModel: '镜头型号',

@@ -55,22 +55,23 @@ const defaultProjectSettings = {
         autoCenterOnToggle: true,
         focalZoom: false
     },
+    /* 面板默认比例（设计稿实测：左右面板各 ≈16.3%，底部区 ≈16%） */
     resize: {
         leftSidebar: {
-            width: "17%",
+            width: "16%",
             height: "80%"
         },
         canvasWorkspace: {
-            width: "63%",
+            width: "67%",
             height: "80%"
         },
         rightSidebar: {
-            width: "20%",
+            width: "17%",
             height: "80%"
         },
         bottomSidebar: {
             width: "100%",
-            height: "20%"
+            height: "17%"
         }
     }
 }

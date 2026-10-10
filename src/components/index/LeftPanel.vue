@@ -437,9 +437,9 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 34px;
-  padding: 0 8px 0 10px;
-  border-radius: 0;
+  height: 30px;
+  padding: 0 6px 0 8px;
+  border-radius: var(--app-radius-sm);
   background: var(--ui-row);
   cursor: pointer;
   user-select: none;
@@ -450,7 +450,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   }
 
   .section-title {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
     color: var(--ui-text);
     letter-spacing: 0.2px;
@@ -461,9 +461,10 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 
   .section-meta {
     margin-left: auto;
-    font-size: 11.5px;
+    font-size: 11px;
     color: var(--ui-text-muted);
     flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
   }
 
   /* 展开时箭头取琥珀色，收起后回到灰色 */
@@ -501,18 +502,18 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 .preset-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .preset-card {
   display: flex;
   align-items: center;
-  padding: 8px 10px;
-  border-radius: var(--app-radius-md);
+  padding: 6px 8px;
+  border-radius: var(--app-radius-sm);
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
-  transition: background-color var(--app-transition), border-color var(--app-transition);
+  transition: background-color var(--app-transition), border-color var(--app-transition), box-shadow var(--app-transition);
 
   &:hover {
     background: var(--ui-control-hover);
@@ -526,12 +527,15 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
     opacity: 0.5;
   }
 
+  /* 选中态（设计稿）：白底浮起卡片 + 强调色描边 + 轻阴影 */
   &.is-active {
-    background: var(--ui-accent-soft);
+    background: var(--ui-elevated);
     border-color: var(--ui-accent);
+    box-shadow: 0 1px 4px var(--ui-accent-ring);
 
     .preset-name {
       color: var(--ui-accent-soft-text);
+      font-weight: 600;
     }
 
     .preset-meta {
@@ -548,7 +552,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   }
 
   .preset-name {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 500;
     color: var(--ui-text);
     white-space: nowrap;
@@ -655,17 +659,17 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 36px;
+  height: 32px;
   margin: 8px 12px 12px;
-  border-radius: var(--app-radius-sm);
-  border: 1px solid var(--ui-accent-soft-border);
-  background: transparent;
-  color: var(--ui-accent-soft-text);
+  border-radius: var(--app-radius-md);
+  border: 1px solid var(--ui-border-strong);
+  background: var(--ui-elevated);
+  color: var(--ui-accent);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color var(--app-transition), border-color var(--app-transition);
+  transition: background-color var(--app-transition), border-color var(--app-transition), color var(--app-transition);
 
   svg {
     width: 13px;

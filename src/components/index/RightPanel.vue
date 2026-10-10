@@ -6,6 +6,7 @@
           <el-sub-menu index="1" class="sub-menu sub-menu-metadata" :class="{'is-active': activeSection === '1'}">
             <template #title>
               <span class="title-text" @click="setActiveSection('1')">{{ $t('right.metadata') }}</span>
+              <span class="title-count">{{ $t('right.itemUnit', {n: 9}) }}</span>
             </template>
             <ul class="options metadata" ref="metadataRef">
               <li class="option">
@@ -91,6 +92,7 @@
           <el-sub-menu index="5" class="sub-menu" :class="{'is-active': activeSection === '5'}">
             <template #title>
               <span class="title-text" @click="setActiveSection('5')">{{ $t('right.photo') }}</span>
+              <span class="title-count">{{ $t('right.itemUnit', {n: 5}) }}</span>
             </template>
             <ul class="options">
               <li class="option">
@@ -180,6 +182,7 @@
           <el-sub-menu index="2" class="sub-menu" :class="{'is-active': activeSection === '2'}">
             <template #title>
               <span class="title-text" @click="setActiveSection('2')">{{ $t('right.border') }}</span>
+              <span class="title-count">{{ $t('right.itemUnit', {n: 7}) }}</span>
             </template>
 
             <!-- 边框类型：分段控件（绑定同一 borderType 字段，替换原下拉框） -->
@@ -315,12 +318,15 @@
               <li class="option" v-show="canvasesStore.borderOptions.borderType === 0">
                 <div class="label">{{ $t('right.borderColor') }}</div>
                 <div class="value">
-                  <el-color-picker
-                      size="small"
-                      @change="handleUpdateBorders"
-                      v-model="canvasesStore.borderOptions.borderColor"
-                      show-alpha
-                      :predefine="predefineColors"/>
+                  <div class="color-field">
+                    <el-color-picker
+                        size="small"
+                        @change="handleUpdateBorders"
+                        v-model="canvasesStore.borderOptions.borderColor"
+                        show-alpha
+                        :predefine="predefineColors"/>
+                    <span class="color-hex">{{ formatColor(canvasesStore.borderOptions.borderColor, '#000000') }}</span>
+                  </div>
                 </div>
               </li>
             </ul>
@@ -328,6 +334,7 @@
           <el-sub-menu index="3" id="text-options" class="sub-menu" :class="{'is-active': activeSection === '3'}">
             <template #title>
               <span class="title-text" @click="setActiveSection('3')">{{ $t('right.text') }}</span>
+              <span class="title-count">{{ $t('right.itemUnit', {n: 14}) }}</span>
             </template>
             <div class="group-title">{{ $t('right.basicProps') }}</div>
             <ul class="options">
@@ -471,11 +478,14 @@
               <li class="option">
                 <div class="label">{{ $t('right.fontColor') }}</div>
                 <div class="value">
-                  <el-color-picker
-                      v-model="canvasesStore.textOptions.fontColor"
-                      show-alpha
-                      size="small"
-                      :predefine="predefineColors"/>
+                  <div class="color-field">
+                    <el-color-picker
+                        v-model="canvasesStore.textOptions.fontColor"
+                        show-alpha
+                        size="small"
+                        :predefine="predefineColors"/>
+                    <span class="color-hex">{{ formatColor(canvasesStore.textOptions.fontColor, '#FFFFFF') }}</span>
+                  </div>
                 </div>
               </li>
             </ul>
@@ -523,11 +533,14 @@
               <li class="option">
                 <div class="label">{{ $t('right.shadowColor') }}</div>
                 <div class="value">
-                  <el-color-picker
-                      v-model="canvasesStore.textOptions.shadow.color"
-                      show-alpha
-                      size="small"
-                      :predefine="predefineColors"/>
+                  <div class="color-field">
+                    <el-color-picker
+                        v-model="canvasesStore.textOptions.shadow.color"
+                        show-alpha
+                        size="small"
+                        :predefine="predefineColors"/>
+                    <span class="color-hex">{{ formatColor(canvasesStore.textOptions.shadow.color, '#1E1E1E') }}</span>
+                  </div>
                 </div>
               </li>
             </ul>
@@ -535,6 +548,7 @@
           <el-sub-menu index="4" id="image-options" class="sub-menu" :class="{'is-active': activeSection === '4'}">
             <template #title>
               <span class="title-text" @click="setActiveSection('4')">{{ $t('right.image') }}</span>
+              <span class="title-count">{{ $t('right.itemUnit', {n: 8}) }}</span>
             </template>
             <div class="group-title">{{ $t('right.basicProps') }}</div>
             <ul class="options">
@@ -640,11 +654,14 @@
               <li class="option">
                 <div class="label">{{ $t('right.shadowColor') }}</div>
                 <div class="value">
-                  <el-color-picker
-                      v-model="canvasesStore.imageOptions.shadow.color"
-                      show-alpha
-                      size="small"
-                      :predefine="predefineColors"/>
+                  <div class="color-field">
+                    <el-color-picker
+                        v-model="canvasesStore.imageOptions.shadow.color"
+                        show-alpha
+                        size="small"
+                        :predefine="predefineColors"/>
+                    <span class="color-hex">{{ formatColor(canvasesStore.imageOptions.shadow.color, '#1E1E1E') }}</span>
+                  </div>
                 </div>
               </li>
             </ul>
@@ -743,6 +760,11 @@ const handleFilterFonts = (search) => {
 
 const formatSliderTooltip = (val) => {
   return Math.floor(val);
+};
+
+// 颜色组合框的文本：显示当前色值，空值回落默认（设计图样式：色块 + HEX 文本）
+const formatColor = (value, fallback) => {
+  return (value || fallback).toUpperCase()
 };
 
 const requestImportBorderImage = () => {
@@ -1117,14 +1139,14 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
         }
       }
 
+      /* ---------- 分组标题行（设计稿：无底色填充，箭头在左、项数在右） ---------- */
       :deep(.el-sub-menu__title) {
-        height: 34px;
-        line-height: 34px;
-        padding: 0 8px 0 10px;
-        /* 顶部与卡片边框重合，左右撑满，圆角交给卡片裁切 */
-        border-radius: 0;
-        background-color: var(--ui-row);
-        font-size: 13.5px;
+        height: 30px;
+        line-height: 30px;
+        padding: 0 6px;
+        border-radius: var(--app-radius-sm);
+        background-color: transparent;
+        font-size: 13px;
         font-weight: 600;
         color: var(--ui-text);
         transition: background-color var(--app-transition);
@@ -1143,16 +1165,31 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
           text-overflow: ellipsis;
         }
 
+        .title-count {
+          flex-shrink: 0;
+          margin-left: 8px;
+          font-size: 11px;
+          font-weight: 400;
+          color: var(--ui-text-muted);
+          font-variant-numeric: tabular-nums;
+        }
+
+        /* 箭头移到标题左侧（EP 默认绝对定位在右侧），收起指右、展开指下 */
         .el-sub-menu__icon-arrow {
+          position: static;
+          order: -1;
+          margin: 0 6px 0 0;
           color: var(--ui-text-muted);
           font-size: 12px;
-          transition: color var(--app-transition);
+          transform: rotate(-90deg);
+          transition: color var(--app-transition), transform var(--app-transition);
         }
       }
 
-      /* 展开的分组：箭头取琥珀色 */
+      /* 展开的分组：箭头转正指下并取强调色 */
       .sub-menu.is-opened :deep(.el-sub-menu__title .el-sub-menu__icon-arrow) {
         color: var(--ui-accent);
+        transform: rotate(0deg);
       }
 
       /* ---------- 内层容器 ---------- */
@@ -1165,20 +1202,30 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
         margin-bottom: 0;
       }
 
+      /* 子组标题（设计稿：左对齐 + 强调色竖条） */
       .group-title {
-        margin: 4px 0 0;
-        padding: 6px 0 2px;
-        height: auto;
-        font-size: 11.5px;
+        margin: 6px 0 2px;
+        padding: 0;
+        height: 18px;
+        font-size: 12px;
         font-weight: 600;
-        color: var(--ui-text-secondary);
-        /* 不再用白色子卡片包住分组，只留居中标题，与照片分组保持一致 */
+        color: var(--ui-text);
         background-color: transparent;
         border: none;
         border-radius: 0;
         display: flex;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: center;
+
+        &::before {
+          content: '';
+          flex-shrink: 0;
+          width: 3px;
+          height: 12px;
+          border-radius: 2px;
+          background-color: var(--ui-accent);
+          margin-right: 6px;
+        }
       }
 
       .group-title + .options {
@@ -1212,7 +1259,7 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
           display: contents;
 
           > * {
-            min-height: 34px;
+            min-height: 30px;
           }
 
           .label {
@@ -1263,8 +1310,8 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
               width: calc(100% - 5px);
               margin-right: 16px;
               font-size: 12px;
-              /* 输入框对齐下拉框的高度（28px） */
-              height: 28px;
+              /* 输入框对齐下拉框的高度（26px） */
+              height: 26px;
 
               .el-input__wrapper {
                 height: 100%;
@@ -1290,6 +1337,50 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
               }
             }
 
+            /* 颜色组合框（设计稿：描边输入框内嵌色块 + HEX 文本） */
+            .color-field {
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              width: calc(100% - 5px);
+              height: 26px;
+              margin-right: 16px;
+              padding: 0 8px 0 4px;
+              box-sizing: border-box;
+              background: var(--ui-elevated);
+              border-radius: var(--app-radius-xs);
+              box-shadow: 0 0 0 1px var(--ui-border) inset;
+              transition: box-shadow var(--app-transition);
+
+              &:hover {
+                box-shadow: 0 0 0 1px var(--ui-border-strong) inset;
+              }
+
+              :deep(.el-color-picker) {
+                flex-shrink: 0;
+
+                .el-color-picker__trigger {
+                  width: 18px;
+                  height: 18px;
+                  padding: 0;
+                  border: none;
+                  border-radius: 4px;
+                  overflow: hidden;
+                }
+              }
+
+              .color-hex {
+                flex: 1;
+                min-width: 0;
+                font-size: 11.5px;
+                font-variant-numeric: tabular-nums;
+                color: var(--ui-text-secondary);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              }
+            }
+
             :deep(.el-color-picker) {
               .el-icon {
                 font-size: 12px;
@@ -1307,7 +1398,7 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
                 box-shadow: 0 0 0 1px var(--ui-border) inset;
                 border-radius: var(--app-radius-xs);
                 /* 与 .el-input 保持一致 */
-                min-height: 28px;
+                min-height: 26px;
                 padding: 0 10px;
               }
 
