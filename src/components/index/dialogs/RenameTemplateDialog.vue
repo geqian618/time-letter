@@ -71,4 +71,10 @@ const renameTemplate = () => {
 
 <style scoped lang="scss">
 @use '@/assets/styles/dialog';
+
+/* 重命名弹窗：标题栏与内容之间留出间距（仅本弹窗，共用样式约定不动尺寸）
+   用 .dialog-wrapper 前缀抬高优先级，确保压过 dialog.scss 的 body padding */
+.dialog-wrapper :deep(.el-dialog > .el-dialog__body) {
+  padding-top: 20px;
+}
 </style>

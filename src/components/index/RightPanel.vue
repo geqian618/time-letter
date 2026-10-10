@@ -185,22 +185,27 @@
               <span class="title-count">{{ $t('right.itemUnit', {n: 7}) }}</span>
             </template>
 
-            <!-- 边框类型：分段控件（绑定同一 borderType 字段，替换原下拉框） -->
-            <div class="segmented-control">
-              <button
-                  v-for="item in [
-                    {value: 0, label: $t('right.borderTypeOptions.general')},
-                    {value: 1, label: $t('right.borderTypeOptions.blur')},
-                    {value: 2, label: $t('right.borderTypeOptions.custom')}
-                  ]"
-                  :key="item.value"
-                  type="button"
-                  class="segment"
-                  :class="{'is-active': canvasesStore.borderOptions.borderType === item.value}"
-                  @click="handleBorderTypeChange(item.value)">
-                {{ item.label }}
-              </button>
-            </div>
+            <!-- 边框类型：下拉选择（原三分段按钮改为下拉框） -->
+            <ul class="options">
+              <li class="option">
+                <div class="label">{{ $t('right.borderType') }}</div>
+                <div class="value">
+                  <el-select
+                      :model-value="canvasesStore.borderOptions.borderType"
+                      @change="handleBorderTypeChange">
+                    <el-option
+                        v-for="item in [
+                          {value: 0, label: $t('right.borderTypeOptions.general')},
+                          {value: 1, label: $t('right.borderTypeOptions.blur')},
+                          {value: 2, label: $t('right.borderTypeOptions.custom')}
+                        ]"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"/>
+                  </el-select>
+                </div>
+              </li>
+            </ul>
 
             <ul class="options">
               <li class="option" v-show="canvasesStore.borderOptions.borderType === 2">
@@ -709,7 +714,7 @@ const setActiveSection = (index) => {
   activeSection.value = index
 }
 
-// 分段控件切换边框类型：与原生下拉框行为一致
+// 下拉框切换边框类型：选中后立即重建边框
 const handleBorderTypeChange = (value) => {
   canvasesStore.borderOptions.borderType = value
   handleCreateBorders()
@@ -1129,7 +1134,7 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
         padding: 0 6px;
         border-radius: var(--app-radius-sm);
         background-color: transparent;
-        font-size: 10px;
+        font-size: 11px;
         font-weight: 600;
         color: var(--ui-text);
         transition: background-color var(--app-transition);
@@ -1151,7 +1156,7 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
         .title-count {
           flex-shrink: 0;
           margin-left: 8px;
-          font-size: 8.5px;
+          font-size: 9.5px;
           font-weight: 400;
           color: var(--ui-text-muted);
           font-variant-numeric: tabular-nums;
@@ -1194,7 +1199,7 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
         margin: 5px 0 2px;
         padding: 0;
         height: 16px;
-        font-size: 9.5px;
+        font-size: 10.5px;
         font-weight: 600;
         color: var(--ui-text);
         background-color: transparent;
@@ -1255,7 +1260,8 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
             align-items: center;
             justify-content: end;
             padding-left: 6px;
-            font-size: 8.5px;
+            font-size: 9.5px;
+            font-weight: 700;
             color: var(--ui-text-secondary);
             white-space: nowrap;
 
@@ -1281,7 +1287,7 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
             width: 34px;
             margin-left: 0;
             margin-right: 0;
-              font-size: 9px;
+              font-size: 10px;
               font-variant-numeric: tabular-nums;
               text-align: right;
               outline: none;
@@ -1353,6 +1359,12 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
                 font-size: 10px;
               }
 
+              /* 箭头贴齐控件右缘：suffix 顶到最右，抵消视觉上的偏左 */
+              .el-select__suffix {
+                margin-left: auto;
+                margin-right: -5px;
+              }
+
               span {
                 color: var(--ui-text);
               }
@@ -1393,8 +1405,13 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
                 border-radius: 2px;
               }
 
-              /* 钉死手柄几何：不依赖 EP 变量组合，保证与 3px 滑轨垂直居中 */
+              /* 钉死手柄几何：wrapper 改 flex 居中（EP 用 inline-block+vertical-align:middle，
+                 依赖文字基线度量——字体栈更换后基线变化会导致手柄偏离滑轨中心），
+                 与字体度量彻底解耦，保证与 3px 滑轨垂直居中 */
               .el-slider__button-wrapper {
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 width: 24px;
                 height: 24px;
                 top: -10.5px;
@@ -1413,42 +1430,6 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
         }
       }
 
-      /* ---------- 分段控件 ---------- */
-      .segmented-control {
-        display: grid;
-        grid-auto-flow: column;
-        grid-auto-columns: 1fr;
-        gap: 6px;
-        margin: 3px 0 5px;
-
-        .segment {
-          height: 24px;
-          padding: 0 8px;
-          border-radius: var(--app-radius-xs);
-          background: var(--ui-elevated);
-          border: 1px solid var(--ui-border);
-          color: var(--ui-text-secondary);
-          font-family: inherit;
-          font-size: 9.5px;
-          cursor: pointer;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          transition: background-color var(--app-transition), border-color var(--app-transition), color var(--app-transition);
-        }
-
-        .segment:hover {
-          border-color: var(--ui-border-strong);
-          color: var(--ui-text);
-        }
-
-        .segment.is-active {
-          background: var(--ui-accent-soft);
-          border-color: var(--ui-accent);
-          color: var(--ui-accent-soft-text);
-          font-weight: 600;
-        }
-      }
     }
   }
 }

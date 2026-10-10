@@ -251,7 +251,8 @@ onUnmounted(() => {
     border: none;
     background: transparent;
     border-radius: var(--app-radius-xs);
-    font-size: 9.5px;
+    font-size: 12px;
+    font-weight: 600;
     font-family: inherit;
     line-height: 22px;
     color: var(--ui-text-secondary);

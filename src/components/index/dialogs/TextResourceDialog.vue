@@ -5,7 +5,7 @@
                label-width="auto"
                @submit.native.prevent>
         <el-form-item :label="$t('textResource.textType')" prop="type">
-          <el-select v-model="textResourcesStore.textResource.type" :placeholder="$t('textResource.textType')">
+          <el-select v-model="textResourcesStore.textResource.type" :placeholder="$t('textResource.textType')" popper-class="dialog-popper">
             <el-option
                 v-for="(item,index) in [{label:$t('textResource.typePlain'), value:'text'}, {label:$t('textResource.typeScript'), value:'script'}]"
                 :key="index"

@@ -14,6 +14,7 @@ import ElementPlus from 'element-plus'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import 'element-plus/dist/index.css'
 import './assets/styles/element-overrides.css'
+import './assets/styles/element-dialog-overrides.css'
 
 import VueLazyload from 'vue3-lazyload'
 

@@ -1,0 +1,27 @@
+/* 弹窗内控件字号统一为 EP 默认（14px，跟随组件默认 size）
+   作用域仅限 .el-dialog 内部与弹窗内下拉浮层（dialog-popper），
+   不影响主界面，也不改动 element-overrides.css 的全局 10px 体系。
+   本文件在 element-overrides.css 之后引入，同优先级下覆盖其 10px 规则。 */
+
+.el-dialog .el-input__inner,
+.el-dialog .el-textarea__inner,
+.el-dialog .el-select__selected-item,
+.el-dialog .el-select__placeholder,
+.el-dialog .el-button,
+.el-dialog .el-radio-button__inner,
+.el-dialog .el-radio__label,
+.el-dialog .el-checkbox__label,
+.el-dialog .el-form-item__label {
+  font-size: 14px;
+}
+
+/* 弹窗内表格的操作按钮（编辑/删除等 link 按钮）跟随表格字号，
+   不使用弹窗默认的 14px */
+.el-dialog .el-table .el-button {
+  font-size: 10px;
+}
+
+/* 下拉浮层 teleport 到 body，需给弹窗内的 el-select 加 popper-class="dialog-popper" */
+.dialog-popper .el-select-dropdown__item {
+  font-size: 14px;
+}

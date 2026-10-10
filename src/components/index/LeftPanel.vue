@@ -387,7 +387,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
     outline: none;
     background: transparent;
     font-family: inherit;
-    font-size: 9.5px;
+    font-size: 10.5px;
     color: var(--ui-text);
 
     &::placeholder {
@@ -450,8 +450,8 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   }
 
   .section-title {
-    font-size: 10px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
     color: var(--ui-text);
     letter-spacing: 0.2px;
     white-space: nowrap;
@@ -461,7 +461,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 
   .section-meta {
     margin-left: auto;
-    font-size: 9px;
+    font-size: 10px;
     color: var(--ui-text-muted);
     flex-shrink: 0;
     font-variant-numeric: tabular-nums;
@@ -494,7 +494,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 }
 
 .section-empty {
-  font-size: 9.5px;
+  font-size: 10.5px;
   color: var(--ui-text-faint);
   padding: 2px 2px 2px 2px;
 }
@@ -556,16 +556,16 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   }
 
   .preset-name {
-    font-size: 10px;
-    font-weight: 400;
-    color: var(--ui-text);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ui-text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .preset-meta {
-    font-size: 9px;
+    font-size: 10px;
     color: var(--ui-text-muted);
     white-space: nowrap;
     overflow: hidden;
@@ -575,6 +575,8 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 
 /* ---------- 图片库芯片 ---------- */
 .brand-grid {
+  /* 顶部与分组标题之间留一点间距（与文本库一致） */
+  margin-top: 4px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
@@ -612,6 +614,8 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 /* ---------- 文本库芯片 ---------- */
 .text-grid {
   display: grid;
+  /* 顶部与分组标题之间留一点间距 */
+  margin-top: 4px;
   /* 方形小格子：列宽固定 30px，列数随容器宽度自适应，放不下才换行 */
   grid-template-columns: repeat(auto-fill, 30px);
   justify-content: start;
@@ -662,15 +666,15 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 26px;
+  height: 30px;
   margin: 6px 12px 10px;
-  border-radius: var(--app-radius-md);
+  border-radius: var(--app-radius-sm);
   border: 1px solid var(--ui-border-strong);
   background: var(--ui-elevated);
   color: var(--ui-accent);
   font-family: inherit;
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
   transition: background-color var(--app-transition), border-color var(--app-transition), color var(--app-transition);
 

@@ -1166,14 +1166,14 @@ onUnmounted(() => cancelZoomPin())
   }
 
   .empty-title {
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--ui-text);
     margin-bottom: 8px;
   }
 
   .empty-hint {
-    font-size: 13px;
+    font-size: 11.5px;
     color: var(--ui-text-secondary);
     margin-bottom: 26px;
   }
@@ -1186,7 +1186,7 @@ onUnmounted(() => cancelZoomPin())
     background: var(--ui-accent);
     color: var(--ui-accent-contrast);
     font-family: inherit;
-    font-size: 14px;
+    font-size: 12.5px;
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 4px 14px var(--ui-accent-glow);
@@ -1199,7 +1199,7 @@ onUnmounted(() => cancelZoomPin())
 
   .empty-shortcut {
     margin-top: 16px;
-    font-size: 11.5px;
+    font-size: 10.5px;
     color: var(--ui-text-faint);
   }
 }

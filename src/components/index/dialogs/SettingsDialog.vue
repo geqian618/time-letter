@@ -36,7 +36,7 @@
                   </div>
                   <div class="row-control w-select">
                     <el-select v-model="settingsStore.projectSettings.outputSettings.outputSize.type"
-                               :placeholder="$t('common.select')">
+                               :placeholder="$t('common.select')" popper-class="settings-popper">
                       <el-option
                           v-for="item in outputSizeOptions"
                           :key="item.value"
@@ -105,7 +105,7 @@
                     <div class="row-desc">{{ $t('settings.desc.outputFormat') }}</div>
                   </div>
                   <div class="row-control w-select">
-                    <el-select v-model="settingsStore.projectSettings.outputSettings.extname">
+                    <el-select v-model="settingsStore.projectSettings.outputSettings.extname" popper-class="settings-popper">
                       <el-option
                           v-for="item in [{label:$t('settings.formatOriginal'), value: 0}, {label:'JPEG', value:1}, {label:'PNG', value: 2}, {label:'WEBP', value: 3}, {label:'AVIF', value: 4}, {label:'GIF', value: 5}]"
                           :key="item.value"
@@ -148,7 +148,7 @@
                     <div class="row-desc">{{ $t('settings.desc.namingMode') }}</div>
                   </div>
                   <div class="row-control w-select">
-                    <el-select v-model="settingsStore.projectSettings.outputSettings.fileNaming.basename">
+                    <el-select v-model="settingsStore.projectSettings.outputSettings.fileNaming.basename" popper-class="settings-popper">
                       <el-option
                           v-for="item in [{label:$t('settings.nameOriginal'), value: 0}, {label:$t('settings.nameIndex'), value: 1}, {label:$t('settings.nameRandom'), value: 2}]"
                           :key="item.value"
@@ -254,7 +254,7 @@
                     <div class="row-desc">{{ $t('settings.desc.interfaceLanguage') }}</div>
                   </div>
                   <div class="row-control w-select">
-                    <el-select v-model="settingsStore.projectSettings.locale.language" @change="applyLanguage">
+                    <el-select v-model="settingsStore.projectSettings.locale.language" @change="applyLanguage" popper-class="settings-popper">
                       <el-option
                           v-for="item in languageOptions"
                           :key="item.value"
@@ -412,7 +412,7 @@
                     <div class="row-desc">{{ $t('settings.desc.threads') }}</div>
                   </div>
                   <div class="row-control w-select">
-                    <el-select v-model="settingsStore.projectSettings.performance.downloadThreads">
+                    <el-select v-model="settingsStore.projectSettings.performance.downloadThreads" popper-class="settings-popper">
                       <el-option
                           v-for="item in downloadThreadsOptions"
                           :key="item.value"
@@ -1128,6 +1128,13 @@ const resetAllSettings = async () => {
   padding: 5px 0;
 }
 
+/* 格式化组：标签调小（仅该卡片生效）；输入框文字使用默认字号，不在此缩小 */
+.settings-card.compact-rows {
+  :deep(.row-label) {
+    font-size: 12.5px;
+  }
+}
+
 .row-info {
   flex: 1 1 auto;
   min-width: 0;
@@ -1206,5 +1213,24 @@ const resetAllSettings = async () => {
     color: var(--app-secondary-text);
     font-size: 12px;
   }
+}
+
+/* 弹窗内控件文字使用 EP 默认字号（14px），不参与全局 10px 字号体系（仅本弹窗生效） */
+:deep(.el-button),
+:deep(.el-input__inner),
+:deep(.el-textarea__inner),
+:deep(.el-select__selected-item),
+:deep(.el-select__placeholder),
+:deep(.el-radio-button__inner),
+:deep(.el-radio__label),
+:deep(.el-checkbox__label) {
+  font-size: 14px;
+}
+</style>
+
+<style lang="scss">
+/* 设置弹窗的下拉浮层 teleport 到 body，需按 popper-class 定点覆盖：选项文字同样使用默认字号 */
+.settings-popper .el-select-dropdown__item {
+  font-size: 14px;
 }
 </style>
