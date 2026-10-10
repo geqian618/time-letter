@@ -1,4 +1,6 @@
 import 'normalize.css'
+/* 内置思源黑体（Noto Sans SC 可变字重）：跨平台与设计稿字体观感一致 */
+import './assets/fonts/noto-sans-sc/noto-sans-sc-variable.css'
 import {createApp} from 'vue'
 import {createPinia} from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'

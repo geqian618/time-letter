@@ -2,9 +2,9 @@
    目标：全应用文字处于同一比例体系（主界面正文 10px，按 200% DPI 渲染与设计稿一致）。
    仅改字号与字体族，不动布局尺寸。 */
 
-/* 字体族对齐应用全局字体栈（EP 默认栈缺 Segoe UI，拉丁字符与界面不一致） */
+/* 字体族对齐应用全局字体栈（内置思源黑体优先于系统雅黑/苹方，跨平台渲染一致） */
 :root {
-  --el-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --el-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Noto Sans SC Variable", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
 }
 
 /* 下拉浮层（teleport 到 body，scoped 覆盖不到） */

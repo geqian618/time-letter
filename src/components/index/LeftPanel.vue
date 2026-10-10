@@ -531,9 +531,9 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
     opacity: 0.5;
   }
 
-  /* 选中态（设计稿）：白底浮起卡片 + 强调色描边 + 轻阴影 */
+  /* 选中态（设计稿）：强调色淡底 + 强调色描边 + 轻阴影 */
   &.is-active {
-    background: var(--ui-elevated);
+    background: var(--ui-accent-soft);
     border-color: var(--ui-accent);
     box-shadow: 0 1px 4px var(--ui-accent-ring);
 
