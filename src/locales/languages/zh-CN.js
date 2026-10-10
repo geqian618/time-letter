@@ -289,7 +289,7 @@ export default {
         photoUnit: '{count} 张照片',
         draft: '草稿',
         autoSaved: '已自动保存 {time}',
-        importMore: '导入更多图片',
+        importMore: '导入图片',
         statusMemory: '内存 {value}',
         statusCpu: 'CPU {value}',
         statusFps: 'FPS {value}',

@@ -6,7 +6,6 @@
              spellcheck="false" autocomplete="off"
              @focus="open = true"
              @keydown="handleKeydown">
-      <span class="search-shortcut">Ctrl K</span>
     </label>
 
     <div class="search-panel" v-if="open" ref="panelRef">
@@ -238,8 +237,8 @@ onUnmounted(() => {
   position: relative;
   flex-shrink: 0;
   /* 输入框与下拉面板统一宽度 */
-  /* 设计稿比例：搜索框占窗口宽约 27%，小窗口收窄到 240px 下限 */
-  --search-width: clamp(240px, 27vw, 520px);
+  /* 设计稿实测：搜索框宽 174px@1920（≈9% 窗宽），随窗口小幅伸缩 */
+  --search-width: clamp(120px, 9.2vw, 180px);
 }
 
 .search-box {
@@ -247,7 +246,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 7px;
   width: var(--search-width);
-  height: 30px;
+  height: 28px;
   padding: 0 8px 0 10px;
   border-radius: var(--app-radius-sm);
   background: var(--ui-control);
@@ -285,20 +284,6 @@ onUnmounted(() => {
     &::placeholder {
       color: var(--ui-text-faint);
     }
-  }
-
-  .search-shortcut {
-    flex-shrink: 0;
-    height: 18px;
-    padding: 0 6px;
-    display: inline-flex;
-    align-items: center;
-    border-radius: 3px;
-    background: var(--ui-elevated);
-    border: 1px solid var(--ui-border);
-    font-size: 10px;
-    letter-spacing: 0.3px;
-    color: var(--ui-text-muted);
   }
 }
 

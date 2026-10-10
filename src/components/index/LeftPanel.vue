@@ -352,8 +352,8 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 34px;
-  margin: 12px 12px 6px;
+  height: 28px;
+  margin: 10px 12px 6px;
   padding: 0 10px;
   border-radius: var(--app-radius-sm);
   background: var(--ui-control);
@@ -373,8 +373,8 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   }
 
   .search-icon {
-    width: 13px;
-    height: 13px;
+    width: 12px;
+    height: 12px;
     flex-shrink: 0;
     color: var(--ui-text-muted);
   }
@@ -387,7 +387,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
     outline: none;
     background: transparent;
     font-family: inherit;
-    font-size: 12.5px;
+    font-size: 12px;
     color: var(--ui-text);
 
     &::placeholder {
@@ -450,7 +450,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   }
 
   .section-title {
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--ui-text);
     letter-spacing: 0.2px;
@@ -467,17 +467,18 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
     font-variant-numeric: tabular-nums;
   }
 
-  /* 展开时箭头取琥珀色，收起后回到灰色 */
+  /* 展开箭头朝下（设计稿），收起后旋转回朝上并回到灰色 */
   .section-chevron {
-    width: 13px;
-    height: 13px;
+    width: 12px;
+    height: 12px;
     flex-shrink: 0;
     color: var(--ui-accent);
+    transform: rotate(180deg);
     transition: transform var(--app-transition), color var(--app-transition);
   }
 
   .section-chevron.collapsed {
-    transform: rotate(180deg);
+    transform: rotate(0deg);
     color: var(--ui-text-muted);
   }
 }
@@ -552,7 +553,7 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   }
 
   .preset-name {
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--ui-text);
     white-space: nowrap;
@@ -659,14 +660,14 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 32px;
+  height: 28px;
   margin: 8px 12px 12px;
   border-radius: var(--app-radius-md);
   border: 1px solid var(--ui-border-strong);
   background: var(--ui-elevated);
   color: var(--ui-accent);
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: background-color var(--app-transition), border-color var(--app-transition), color var(--app-transition);

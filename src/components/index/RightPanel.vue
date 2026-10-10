@@ -1186,10 +1186,14 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
         }
       }
 
-      /* 展开的分组：箭头转正指下并取强调色 */
+      /* 展开的分组：标题与箭头都取强调色（设计稿「∨ 文本」为强调色文字） */
       .sub-menu.is-opened :deep(.el-sub-menu__title .el-sub-menu__icon-arrow) {
         color: var(--ui-accent);
         transform: rotate(0deg);
+      }
+
+      .sub-menu.is-opened :deep(.el-sub-menu__title .title-text) {
+        color: var(--ui-accent);
       }
 
       /* ---------- 内层容器 ---------- */

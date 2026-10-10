@@ -811,8 +811,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
 /* ---------- 工具条 ---------- */
 .preview-bar {
   width: 100%;
-  height: 38px;
-  flex: 0 0 38px;
+  height: 34px;
+  flex: 0 0 34px;
   background: var(--ui-chrome);
   display: flex;
   align-items: center;
@@ -820,8 +820,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
   gap: 12px;
 
   .bar-icon {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -835,8 +835,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
     transition: background-color var(--app-transition), color var(--app-transition);
 
     svg {
-      width: 17px;
-      height: 17px;
+      width: 15px;
+      height: 15px;
     }
 
     &:hover {
@@ -847,8 +847,8 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
 
   /* 缩放下拉：不加边框，背景宽度与其他图标一致 */
   .bar-icon.is-text {
-    width: 28px;
-    font-size: 12px;
+    width: 26px;
+    font-size: 11.5px;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.2px;
   }

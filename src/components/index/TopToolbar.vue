@@ -188,8 +188,8 @@ onUnmounted(() => {
   flex-shrink: 0;
 
   .brand-mark {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     display: block;
     object-fit: contain;
     flex-shrink: 0;
@@ -198,7 +198,7 @@ onUnmounted(() => {
   }
 
   .brand-name {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.3px;
     color: var(--ui-text);
@@ -251,7 +251,7 @@ onUnmounted(() => {
     border: none;
     background: transparent;
     border-radius: var(--app-radius-xs);
-    font-size: 13px;
+    font-size: 12.5px;
     font-family: inherit;
     line-height: 26px;
     color: var(--ui-text-secondary);
@@ -283,22 +283,22 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 30px;
-  padding: 0 14px;
+  height: 26px;
+  padding: 0 12px;
   border: none;
   border-radius: var(--app-radius-sm);
   background: var(--ui-accent);
   color: var(--ui-accent-contrast);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 2px 10px var(--ui-accent-glow);
   transition: background-color var(--app-transition), box-shadow var(--app-transition);
 
   svg {
-    width: 14px;
-    height: 14px;
+    width: 13px;
+    height: 13px;
   }
 
   &:hover {
