@@ -237,8 +237,8 @@ onUnmounted(() => {
   position: relative;
   flex-shrink: 0;
   /* 输入框与下拉面板统一宽度 */
-  /* 设计稿实测：搜索框宽 174px@1920（≈9% 窗宽），随窗口小幅伸缩 */
-  --search-width: clamp(120px, 9.2vw, 180px);
+  /* 设计稿比例基础上放宽 50% */
+  --search-width: clamp(180px, 13.8vw, 270px);
 }
 
 .search-box {

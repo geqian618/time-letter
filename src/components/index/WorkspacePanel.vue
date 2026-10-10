@@ -1,15 +1,14 @@
 <template>
   <div class="canvas-viewport">
 
-    <!-- 空状态：虚线容器 + 托盘上传图标 + 格式说明 + 选择文件按钮 -->
-    <div class="uploader empty-state" ref="uploaderRef" v-show="canvasesStore.uploadVisible"
-         @click="requestImportFiles({isDragOver: false})">
+    <!-- 空状态：虚线容器 + 托盘上传图标 + 格式说明 + 选择文件按钮（仅按钮响应点击） -->
+    <div class="uploader empty-state" ref="uploaderRef" v-show="canvasesStore.uploadVisible">
       <div class="empty-icon">
         <SvgIcon name="empty-upload"/>
       </div>
       <h2 class="empty-title">{{ $t('workspace.dropTitle') }}</h2>
       <p class="empty-hint">{{ $t('workspace.dropHint') }}</p>
-      <button type="button" class="empty-button">{{ $t('workspace.chooseFile') }}</button>
+      <button type="button" class="empty-button" @click="requestImportFiles({isDragOver: false})">{{ $t('workspace.chooseFile') }}</button>
       <p class="empty-shortcut">{{ $t('workspace.quickImport') }}</p>
     </div>
 
@@ -1141,7 +1140,7 @@ onUnmounted(() => cancelZoomPin())
   background: var(--ui-workspace);
 }
 
-/* ---------- 空状态：虚线圆角容器，内容居中（底部加宽避开右下角缩放胶囊） ---------- */
+/* ---------- 空状态：无描边容器，内容居中（底部加宽避开右下角缩放胶囊） ---------- */
 .empty-state {
   position: absolute;
   inset: 32px 32px 64px;
@@ -1150,14 +1149,6 @@ onUnmounted(() => cancelZoomPin())
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: 1.5px dashed var(--ui-border);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: border-color var(--app-transition), background-color var(--app-transition);
-
-  &:hover {
-    border-color: var(--ui-border-strong);
-  }
 
   .empty-icon {
     width: 46px;

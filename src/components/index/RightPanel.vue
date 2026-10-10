@@ -318,15 +318,12 @@
               <li class="option" v-show="canvasesStore.borderOptions.borderType === 0">
                 <div class="label">{{ $t('right.borderColor') }}</div>
                 <div class="value">
-                  <div class="color-field">
-                    <el-color-picker
-                        size="small"
-                        @change="handleUpdateBorders"
-                        v-model="canvasesStore.borderOptions.borderColor"
-                        show-alpha
-                        :predefine="predefineColors"/>
-                    <span class="color-hex">{{ formatColor(canvasesStore.borderOptions.borderColor, '#000000') }}</span>
-                  </div>
+                  <el-color-picker
+                      size="small"
+                      @change="handleUpdateBorders"
+                      v-model="canvasesStore.borderOptions.borderColor"
+                      show-alpha
+                      :predefine="predefineColors"/>
                 </div>
               </li>
             </ul>
@@ -478,14 +475,11 @@
               <li class="option">
                 <div class="label">{{ $t('right.fontColor') }}</div>
                 <div class="value">
-                  <div class="color-field">
-                    <el-color-picker
-                        v-model="canvasesStore.textOptions.fontColor"
-                        show-alpha
-                        size="small"
-                        :predefine="predefineColors"/>
-                    <span class="color-hex">{{ formatColor(canvasesStore.textOptions.fontColor, '#FFFFFF') }}</span>
-                  </div>
+                  <el-color-picker
+                      v-model="canvasesStore.textOptions.fontColor"
+                      show-alpha
+                      size="small"
+                      :predefine="predefineColors"/>
                 </div>
               </li>
             </ul>
@@ -533,14 +527,11 @@
               <li class="option">
                 <div class="label">{{ $t('right.shadowColor') }}</div>
                 <div class="value">
-                  <div class="color-field">
-                    <el-color-picker
-                        v-model="canvasesStore.textOptions.shadow.color"
-                        show-alpha
-                        size="small"
-                        :predefine="predefineColors"/>
-                    <span class="color-hex">{{ formatColor(canvasesStore.textOptions.shadow.color, '#1E1E1E') }}</span>
-                  </div>
+                  <el-color-picker
+                      v-model="canvasesStore.textOptions.shadow.color"
+                      show-alpha
+                      size="small"
+                      :predefine="predefineColors"/>
                 </div>
               </li>
             </ul>
@@ -654,14 +645,11 @@
               <li class="option">
                 <div class="label">{{ $t('right.shadowColor') }}</div>
                 <div class="value">
-                  <div class="color-field">
-                    <el-color-picker
-                        v-model="canvasesStore.imageOptions.shadow.color"
-                        show-alpha
-                        size="small"
-                        :predefine="predefineColors"/>
-                    <span class="color-hex">{{ formatColor(canvasesStore.imageOptions.shadow.color, '#1E1E1E') }}</span>
-                  </div>
+                  <el-color-picker
+                      v-model="canvasesStore.imageOptions.shadow.color"
+                      show-alpha
+                      size="small"
+                      :predefine="predefineColors"/>
                 </div>
               </li>
             </ul>
@@ -760,18 +748,7 @@ const handleFilterFonts = (search) => {
 
 const formatSliderTooltip = (val) => {
   return Math.floor(val);
-};
-
-// 颜色组合框的文本：统一转为 HEX 显示（rgba 透明度为 1 时省略），空值回落默认
-const formatColor = (value, fallback) => {
-  let v = value || fallback
-  const m = /^rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)(?:[,\s]+([\d.]+))?\)$/i.exec(String(v).trim())
-  if (m) {
-    const hex = [m[1], m[2], m[3]].map(n => Number(n).toString(16).padStart(2, '0')).join('').toUpperCase()
-    v = '#' + hex + (m[4] !== undefined && Number(m[4]) !== 1 ? Math.round(Number(m[4]) * 255).toString(16).padStart(2, '0').toUpperCase() : '')
-  }
-  return String(v).toUpperCase()
-};
+};;
 
 const requestImportBorderImage = () => {
   window.electronAPI.requestImportBackgroundImage();
@@ -1348,50 +1325,6 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
               }
             }
 
-            /* 颜色组合框（设计稿：描边输入框内嵌色块 + HEX 文本） */
-            .color-field {
-              display: flex;
-              align-items: center;
-              gap: 6px;
-              width: calc(100% - 5px);
-              height: 22px;
-              margin-right: 16px;
-              padding: 0 8px 0 4px;
-              box-sizing: border-box;
-              background: var(--ui-elevated);
-              border-radius: var(--app-radius-xs);
-              box-shadow: 0 0 0 1px var(--ui-border) inset;
-              transition: box-shadow var(--app-transition);
-
-              &:hover {
-                box-shadow: 0 0 0 1px var(--ui-border-strong) inset;
-              }
-
-              :deep(.el-color-picker) {
-                flex-shrink: 0;
-
-                .el-color-picker__trigger {
-                  width: 14px;
-                  height: 14px;
-                  padding: 0;
-                  border: none;
-                  border-radius: 3px;
-                  overflow: hidden;
-                }
-              }
-
-              .color-hex {
-                flex: 1;
-                min-width: 0;
-                font-size: 8.5px;
-                font-variant-numeric: tabular-nums;
-                color: var(--ui-text-secondary);
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-              }
-            }
-
             :deep(.el-color-picker) {
               .el-icon {
                 font-size: 12px;
@@ -1451,7 +1384,6 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
               margin: 0 2px 0 0;
               --el-slider-button-size: 10px;
               --el-slider-height: 3px;
-              /* 滑块在滑轨上垂直居中：offset = (滑轨高 - 手柄容器高) / 2 = (3 - 24) / 2 */
               --el-slider-button-wrapper-size: 24px;
               --el-slider-button-wrapper-offset: -10.5px;
               --el-slider-main-bg-color: var(--ui-accent);
@@ -1461,8 +1393,17 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
                 border-radius: 2px;
               }
 
+              /* 钉死手柄几何：不依赖 EP 变量组合，保证与 3px 滑轨垂直居中 */
+              .el-slider__button-wrapper {
+                width: 24px;
+                height: 24px;
+                top: -10.5px;
+              }
+
               .el-slider__button {
                 margin-bottom: 0;
+                width: 10px;
+                height: 10px;
                 border: 2px solid var(--ui-accent);
                 background: var(--ui-elevated);
                 box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
