@@ -509,7 +509,10 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
 .preset-card {
   display: flex;
   align-items: center;
-  padding: 4px 8px;
+  /* 设计实测行距 63 物理px(200%DPI)≈31.5 CSS：行高 ~29.5 + 列表 gap 2 */
+  min-height: 29px;
+  padding: 7px 8px;
+  box-sizing: border-box;
   border-radius: var(--app-radius-sm);
   border: 1px solid transparent;
   background: transparent;
@@ -553,8 +556,8 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   }
 
   .preset-name {
-    font-size: 9.5px;
-    font-weight: 500;
+    font-size: 10px;
+    font-weight: 400;
     color: var(--ui-text);
     white-space: nowrap;
     overflow: hidden;

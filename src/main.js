@@ -20,6 +20,22 @@ import inputFocus from '@/directive/input-focus';
 
 import dragSort from '@/directive/drag-sort';
 
+/* electronAPI 兜底：preload 加载失败或非 Electron 环境（如纯浏览器调试）时，
+   以空实现代理避免启动阶段直接崩溃白屏；正常 Electron 运行时 preload 已注入真实 API，此处不生效 */
+if (typeof window !== 'undefined' && !window.electronAPI) {
+    const noop = () => {};
+    window.electronAPI = new Proxy({}, {
+        get: (target, prop) => {
+            if (!(prop in target)) {
+                target[prop] = prop === 'getPerformanceMetrics'
+                    ? async () => undefined
+                    : noop;
+            }
+            return target[prop];
+        }
+    });
+}
+
 const app = createApp(App)
 
 app.use(router)

@@ -71,7 +71,7 @@ const defaultProjectSettings = {
         },
         bottomSidebar: {
             width: "100%",
-            height: "17%"
+            height: "16%"
         }
     }
 }

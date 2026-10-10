@@ -1106,14 +1106,14 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
     .el-menu {
       border-right: none;
       background-color: var(--ui-panel);
-      padding: 8px 10px 12px;
+      padding: 11px 10px 12px;
 
       /* ---------- 分组卡片 ---------- */
       .sub-menu {
         background-color: var(--ui-card);
         border: 1px solid var(--ui-border);
         border-radius: var(--app-radius-lg);
-        margin-bottom: 8px;
+        margin-bottom: 11px;
         /* 标题行与卡片边框齐平：无内边距，用 overflow 裁出顶部圆角 */
         padding: 0;
         overflow: hidden;
