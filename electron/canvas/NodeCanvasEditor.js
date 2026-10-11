@@ -2059,7 +2059,8 @@ class Text extends Element {
     // ---------- 小字形超采样 ----------
     // 字形实际光栅尺寸（fontSize × zoom × dpr）低于该阈值（设备像素）时，Windows 的
     // 字形 hinting 会把细笔画吸附到像素网格，CJK 横竖笔画整条塌缩，且随缩放的亚像素
-    // 相位变化「时有时无」。低于阈值改走「离屏放大光栅化 + 高质量重采样回贴」，笔画只被柔化、不会缺失
+    // 相位变化「时有时无」。低于阈值改走「离屏放大光栅化 + 高质量重采样回贴」，
+    // 笔画只被柔化、不会缺失
     static TEXT_MIN_GLYPH_PX = 12;
 
     // 超采样离屏画布单边上限（物理像素），防止极端小缩放下离屏尺寸爆炸
@@ -2466,13 +2467,13 @@ class Text extends Element {
                 return;
             }
         }
-        const off = Text._supersampleCanvas;
-        const octx = off.getContext('2d');
-        octx.setTransform(1, 0, 0, 1, 0, 0);
+        const offscreenCanvas = Text._supersampleCanvas;
+        const offscreenCtx = offscreenCanvas.getContext('2d');
+        offscreenCtx.setTransform(1, 0, 0, 1, 0, 0);
         // 先解析布局得到未旋转内容宽高（旋转中心在此派生，与正常路径一致）；
         // 测量不受变换影响，需先设置字体
-        octx.font = this._fontSpec();
-        const layout = this._resolveLayout(octx);
+        offscreenCtx.font = this._fontSpec();
+        const layout = this._resolveLayout(offscreenCtx);
         const width = layout.width || (this.direction === 'horizontal' ? this.fontSize / 10 : this.fontSize);
         const height = layout.height || (this.direction === 'horizontal' ? this.fontSize : this.fontSize / 10);
 
@@ -2496,20 +2497,20 @@ class Text extends Element {
 
         const pw = Math.ceil(bw * k);
         const ph = Math.ceil(bh * k);
-        if (off.width < pw) off.width = pw;
-        if (off.height < ph) off.height = ph;
-        octx.setTransform(1, 0, 0, 1, 0, 0);
-        octx.clearRect(0, 0, pw, ph);
+        if (offscreenCanvas.width < pw) offscreenCanvas.width = pw;
+        if (offscreenCanvas.height < ph) offscreenCanvas.height = ph;
+        offscreenCtx.setTransform(1, 0, 0, 1, 0, 0);
+        offscreenCtx.clearRect(0, 0, pw, ph);
 
         // 光栅化：逻辑坐标 ×k 映射到离屏物理像素，包围盒左上角对齐离屏原点
-        octx.setTransform(k, 0, 0, k, -bx * k, -by * k);
-        this._drawContent(octx);
+        offscreenCtx.setTransform(k, 0, 0, k, -bx * k, -by * k);
+        this._drawContent(offscreenCtx);
 
         // 回贴：目标 ctx 处于逻辑坐标系，按 bw×bh 逻辑尺寸绘制 k 倍分辨率位图，
         // 等效「放大光栅化 + 重采样缩小」，笔画不会被 hinting 吞掉
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(off, 0, 0, pw, ph, bx, by, bw, bh);
+        ctx.drawImage(offscreenCanvas, 0, 0, pw, ph, bx, by, bw, bh);
     }
 
 
