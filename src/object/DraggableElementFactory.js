@@ -2,8 +2,6 @@ import {getCurrentDate, getCurrentDateTime} from '@/utils/datetime'
 
 import {executeFunctionScript} from '@/utils/script-helper'
 
-import {useProjectSettingsStore} from '@/stores/project-settings'
-
 import CanvasManager from "@/object/canvas-manager";
 
 import {Image, Text} from '@/canvas/CanvasEditor'

@@ -311,22 +311,39 @@ const handleDragStart = function (event) {
       : {type, content, expression, tagName}
 
   // 拖拽预览：文本类芯片只拖「图标本体」，不带外面的方框；图片缩略图仍用整块图片。
-  // 落点锚点必须与预览保持同一基准，否则放置位置会偏移一个「芯片内边距 + 居中差」。
   const icon = component.querySelector?.('.chip-icon')
   let dragImage = component
-  let anchorX = offsetX
-  let anchorY = offsetY
+  // 预览锚点：光标在拖拽预览图（元素盒子）内的相对位置，决定拖拽影像相对光标的绘制偏移
+  let previewAnchorX = offsetX
+  let previewAnchorY = offsetY
+  // 落点锚点：光标相对「被放置元素左上角」的偏移，drop 端按它反推元素画布坐标。
+  // 与预览锚点分离：两者基准不同时（如图片留白）落点仍精确重合
+  let dropAnchorX = offsetX
+  let dropAnchorY = offsetY
   if (icon) {
     const iconRect = icon.getBoundingClientRect()
     dragImage = icon
-    anchorX = event.clientX - iconRect.left
-    anchorY = event.clientY - iconRect.top
+    previewAnchorX = event.clientX - iconRect.left
+    previewAnchorY = event.clientY - iconRect.top
+    dropAnchorX = previewAnchorX
+    dropAnchorY = previewAnchorY
+  } else if (component instanceof HTMLImageElement) {
+    // 缩略图为 object-fit: contain：内容等比缩放后在盒内居中，四周有留白。
+    // 落点锚点换算到「有效内容」左上角（扣除居中留白），使光标下的图片内容
+    // 落到画布后与绘制位置完全重合；不能用卡片盒子的左上角充当图片坐标。
+    // 预览锚点仍用盒子坐标，避免拖起瞬间预览影像跳动。
+    const {naturalWidth: nw, naturalHeight: nh} = component
+    if (nw && nh) {
+      const scale = Math.min(width / nw, height / nh)
+      dropAnchorX = offsetX - (width - nw * scale) / 2
+      dropAnchorY = offsetY - (height - nh * scale) / 2
+    }
   }
 
   // 关键：设置拖拽数据传输（mouse 为落点锚点，drop 端按它反推元素左上角）
-  event.dataTransfer.setData('text/plain', JSON.stringify({settings, mouse: {offsetX: anchorX, offsetY: anchorY}}));
+  event.dataTransfer.setData('text/plain', JSON.stringify({settings, mouse: {offsetX: dropAnchorX, offsetY: dropAnchorY}}));
 
-  event.dataTransfer.setDragImage(dragImage, anchorX, anchorY);
+  event.dataTransfer.setDragImage(dragImage, previewAnchorX, previewAnchorY);
 
   // 设置拖拽效果
   event.dataTransfer.effectAllowed = 'move';
