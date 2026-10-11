@@ -305,7 +305,9 @@ const handleDragStart = function (event) {
   const height = componentRect.height;
 
   const settings = component instanceof HTMLImageElement
-      ? {url, path, tagName, width, height}
+      // 卡片 rect 是格子渲染尺寸（比例与原图无关），一并携带原图尺寸，
+      // 由 drop 端按原图比例适配进卡片格子，避免落下后宽高比变形
+      ? {url, path, tagName, width, height, naturalWidth: component.naturalWidth, naturalHeight: component.naturalHeight}
       : {type, content, expression, tagName}
 
   // 拖拽预览：文本类芯片只拖「图标本体」，不带外面的方框；图片缩略图仍用整块图片。

@@ -64,9 +64,16 @@ class DraggableElementFactory {
             // 对于图片元素，检查加载状态
             else if (this.settings.tagName === 'img') {
                 const {url, width, height, path} = this.settings
+                // 卡片格子是固定比例格子，宽高都传会按格子比例落图导致变形；
+                // 改为携带原图尺寸按比例适配进格子：取 min(格子宽/原图宽, 格子高/原图高)，
+                // 得到等比铺满格子的初始尺寸（与原视觉占位接近，比例与原图一致）
+                let fitWidth = width
+                if (this.settings.naturalWidth && this.settings.naturalHeight) {
+                    const scale = Math.min(width / this.settings.naturalWidth, height / this.settings.naturalHeight)
+                    fitWidth = this.settings.naturalWidth * scale
+                }
                 Image.fromURL(url, {
-                    width: width / zoom,
-                    height: height / zoom,
+                    width: fitWidth / zoom,
                     draggable: true,
                     cacheable: true,
                     meta: {path}
