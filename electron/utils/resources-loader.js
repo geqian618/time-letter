@@ -23,8 +23,9 @@ const loadResources = (window) => {
 }
 
 const loadFonts = (window) => {
-    const fonts = reloadFonts();
-    window.webContents.send('fonts:watch-import', {type: -1, data: fonts})
+    return reloadFonts().then((fonts) => {
+        window.webContents.send('fonts:watch-import', {type: -1, data: fonts})
+    })
 }
 
 
