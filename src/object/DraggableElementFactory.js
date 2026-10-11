@@ -2,6 +2,8 @@ import {getCurrentDate, getCurrentDateTime} from '@/utils/datetime'
 
 import {executeFunctionScript} from '@/utils/script-helper'
 
+import CanvasManager from "@/object/canvas-manager";
+
 import {Image, Text} from '@/canvas/CanvasEditor'
 
 class DraggableElementFactory {
