@@ -7,8 +7,7 @@ const ADD_OBJECT = 'add:object'
 const UPDATE_OBJECT = 'update:object'
 
 /**
- * Canvas 文本编辑器类
- * 封装 Canvas 文本编辑功能
+ * Canvas 编辑器类
  */
 class CanvasEditor {
     /**
@@ -447,6 +446,86 @@ class CanvasEditor {
         return filter && typeof filter === 'function'
             ? this.activeElements.filter(filter)
             : this.activeElements;
+    }
+
+    /**
+     * 对齐选中元素：多选时以选区联合包围盒为基准，单选时以画布为基准
+     * @param {'left'|'center-h'|'right'|'top'|'center-v'|'bottom'} mode - 对齐模式
+     */
+    alignElements(mode) {
+        const targets = this.activeElements;
+        if (!targets || targets.length === 0) return;
+        // 参考边界：多选取所有选中元素的联合包围盒，单选对齐整张画布
+        let refBounds;
+        if (targets.length === 1) {
+            refBounds = {x: 0, y: 0, w: this.width, h: this.height};
+        } else {
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            for (const el of targets) {
+                const b = el.getSelectionBounds();
+                minX = Math.min(minX, b.x);
+                minY = Math.min(minY, b.y);
+                maxX = Math.max(maxX, b.x + b.w);
+                maxY = Math.max(maxY, b.y + b.h);
+            }
+            refBounds = {x: minX, y: minY, w: maxX - minX, h: maxY - minY};
+        }
+        for (const el of targets) {
+            const b = el.getSelectionBounds();
+            let dx = 0, dy = 0;
+            if (mode === 'left') dx = refBounds.x - b.x;
+            else if (mode === 'center-h') dx = refBounds.x + refBounds.w / 2 - (b.x + b.w / 2);
+            else if (mode === 'right') dx = refBounds.x + refBounds.w - (b.x + b.w);
+            else if (mode === 'top') dy = refBounds.y - b.y;
+            else if (mode === 'center-v') dy = refBounds.y + refBounds.h / 2 - (b.y + b.h / 2);
+            else if (mode === 'bottom') dy = refBounds.y + refBounds.h - (b.y + b.h);
+            else return;
+            if (!dx && !dy) continue;
+            // 位移同步作用到 x/y 与旋转基准 centerX/centerY（与拖拽移动保持一致）
+            el.x += dx;
+            el.y += dy;
+            el.centerX += dx;
+            el.centerY += dy;
+        }
+        this.renderAll();
+    }
+
+    /**
+     * 分布选中元素：以首尾元素为基准，中间元素沿分布方向按中心点等距排布（参考 PS 分布）
+     * @param {'horizontal'|'vertical'} mode - 分布方向
+     */
+    distributeElements(mode) {
+        const targets = this.activeElements;
+        if (!targets || targets.length < 3) return;
+        const horizontal = mode === 'horizontal';
+        // 按分布方向上的中心点排序，确定首尾基准
+        const sorted = [...targets].sort((a, b) => {
+            const ba = a.getSelectionBounds();
+            const bb = b.getSelectionBounds();
+            return horizontal
+                ? (ba.x + ba.w / 2) - (bb.x + bb.w / 2)
+                : (ba.y + ba.h / 2) - (bb.y + bb.h / 2);
+        });
+        const first = sorted[0].getSelectionBounds();
+        const last = sorted[sorted.length - 1].getSelectionBounds();
+        const start = horizontal ? first.x + first.w / 2 : first.y + first.h / 2;
+        const end = horizontal ? last.x + last.w / 2 : last.y + last.h / 2;
+        if (start === end) return;
+        const step = (end - start) / (sorted.length - 1);
+        for (let i = 1; i < sorted.length - 1; i++) {
+            const el = sorted[i];
+            const b = el.getSelectionBounds();
+            let dx = 0, dy = 0;
+            if (horizontal) dx = start + step * i - (b.x + b.w / 2);
+            else dy = start + step * i - (b.y + b.h / 2);
+            if (!dx && !dy) continue;
+            // 位移同步作用到 x/y 与旋转基准 centerX/centerY（与拖拽移动保持一致）
+            el.x += dx;
+            el.y += dy;
+            el.centerX += dx;
+            el.centerY += dy;
+        }
+        this.renderAll();
     }
 
     /**
@@ -1977,6 +2056,18 @@ class Element {
  */
 class Text extends Element {
 
+    // ---------- 小字形超采样 ----------
+    // 字形实际光栅尺寸（fontSize × zoom × dpr）低于该阈值（设备像素）时，Windows 的
+    // 字形 hinting 会把细笔画吸附到像素网格，CJK 横竖笔画整条塌缩，且随缩放的亚像素
+    // 相位变化「时有时无」。低于阈值改走「离屏放大光栅化 + 高质量重采样回贴」，笔画只被柔化、不会缺失
+    static TEXT_MIN_GLYPH_PX = 12;
+
+    // 超采样离屏画布单边上限（物理像素），防止极端小缩放下离屏尺寸爆炸
+    static TEXT_SUPERSAMPLE_MAX_PX = 4096;
+
+    // 模块级复用的离屏画布（按需扩容，避免每次绘制重新分配）
+    static _supersampleCanvas = null;
+
     #width = 0;
 
     #height = 0;
@@ -2254,10 +2345,70 @@ class Text extends Element {
 
     draw(ctx) {
         ctx.save();
+        const transformScale = Element.getTransformScale(ctx);
+        // 小字形超采样判定：字形实际光栅尺寸 = fontSize × 总变换缩放（zoom × dpr）
+        const glyphPx = this.fontSize * transformScale;
+        if (glyphPx > 0 && glyphPx < Text.TEXT_MIN_GLYPH_PX) {
+            // 注意：元素在画布中以 Vue 响应式 Proxy 形态调用 draw，私有方法（#）会因
+            // 品牌检查失败抛错，因此这里必须使用普通方法
+            this._drawSupersampled(ctx, Text.TEXT_MIN_GLYPH_PX / glyphPx);
+        } else {
+            this._drawContent(ctx);
+        }
+        ctx.restore();
+    }
+
+    /**
+     * canvas font 简写（布局测量与内容绘制共用，保证两者使用同一字体）
+     * @returns {string}
+     * @private
+     */
+    _fontSpec() {
+        return `${this.fontStyle} ${this.fontWeight} ${this.fontSize}px "${this.fontFamily}", "Microsoft YaHei", sans-serif`;
+    }
+
+    /**
+     * 解析字符布局并派生旋转中心：旋转文本首次绘制时初始化中心点，缩放导致宽高变化时由中心点反推 x、y 并重新解析。ctx 需已设置字体
+     * @param ctx
+     * @returns {{width, height: number, chars: *[], lines: *[]}|{width: number, height, chars: *[], lines: *[]}}
+     * @private
+     */
+    _resolveLayout(ctx) {
+        let layout = this.direction === 'vertical' ? this.parseVerticalChars(ctx) : this.parseHorizontalChars(ctx)
+        if (this.angle !== 0) {
+            // 首次绘制时初始化中心点（centerX/centerY 默认为 0）
+            if (!this.centerX && !this.centerY) {
+                this.centerX = this.x + layout.width / 2;
+                this.centerY = this.y + layout.height / 2;
+            }
+            // 旋转时中心点不变：缩放导致宽高变化时，由中心点反推 x、y
+            const newX = this.centerX - layout.width / 2;
+            const newY = this.centerY - layout.height / 2;
+            if (newX !== this.x || newY !== this.y) {
+                this.x = newX;
+                this.y = newY;
+                // x、y 变化后重新解析字符位置
+                layout = this.direction === 'vertical' ? this.parseVerticalChars(ctx) : this.parseHorizontalChars(ctx)
+            }
+        } else {
+            // 未旋转：x、y 为左上角基准（缩放锚点），中心点由其派生
+            this.centerX = this.x + layout.width / 2;
+            this.centerY = this.y + layout.height / 2;
+        }
+        return layout
+    }
+
+    /**
+     * 文本内容绘制：阴影、布局解析、旋转变换、逐字符填充，并更新宽高 / 字符布局状态。
+     * 可作用于主画布 ctx 或超采样离屏 ctx（ctx 的变换决定字形光栅化分辨率）
+     * @param ctx
+     * @private
+     */
+    _drawContent(ctx) {
         ctx.textBaseline = 'alphabetic';
         ctx.textAlign = 'left';
         // 字体设置
-        ctx.font = `${this.fontStyle} ${this.fontWeight} ${this.fontSize}px "${this.fontFamily}", "Microsoft YaHei", sans-serif`;
+        ctx.font = this._fontSpec();
         // 字体颜色
         ctx.fillStyle = this.fontColor;
 
@@ -2272,41 +2423,14 @@ class Text extends Element {
         // 默认Y偏移
         ctx.shadowOffsetY = this.shadow.offsetY * transformScale;
 
-        let layout = this.direction === 'vertical'
-            ? this.parseVerticalChars(ctx)
-            : this.parseHorizontalChars(ctx)
-
-        let {chars, height, width, lines} = layout
+        const {chars, height, width, lines} = this._resolveLayout(ctx)
 
         if (this.angle !== 0) {
-            // 首次绘制时初始化中心点（centerX/centerY 默认为 0）
-            if (!this.centerX && !this.centerY) {
-                this.centerX = this.x + width / 2;
-                this.centerY = this.y + height / 2;
-            }
-            // 旋转时中心点不变：缩放导致宽高变化时，由中心点反推 x、y
-            const newX = this.centerX - width / 2;
-            const newY = this.centerY - height / 2;
-            if (newX !== this.x || newY !== this.y) {
-                this.x = newX;
-                this.y = newY;
-                // x、y 变化后重新解析字符位置
-                layout = this.direction === 'vertical' ? this.parseVerticalChars(ctx) : this.parseHorizontalChars(ctx)
-                chars = layout.chars
-                lines = layout.lines
-                width = layout.width
-                height = layout.height
-            }
             // 绕中心点旋转
             ctx.translate(this.centerX, this.centerY);
             ctx.rotate(this.angle * Math.PI / 180);
             ctx.translate(-this.centerX, -this.centerY);
-        } else {
-            // 未旋转：x、y 为左上角基准（缩放锚点），中心点由其派生
-            this.centerX = this.x + width / 2;
-            this.centerY = this.y + height / 2;
         }
-
 
         // 绘制每个字符
         for (const char of chars) {
@@ -2319,8 +2443,73 @@ class Text extends Element {
         this.height = height || (this.direction === 'horizontal' ? this.fontSize : this.fontSize / 10)
         this.chars = chars;
         this.lines = lines;
+    }
 
-        ctx.restore();
+    /**
+     *  小字形离屏超采样：以 k 倍尺寸在离屏画布上光栅化文本（字形在足够大的尺寸下光栅化，hinting 不会吞笔画），再 drawImage 高质量重采样回目标逻辑区域。
+     *  阴影 / 旋转与正常路径完全一致（_drawContent 直接复用在离屏 ctx 上）
+     * @param ctx
+     * @param k
+     * @private
+     */
+    _drawSupersampled(ctx, k) {
+        if (!Text._supersampleCanvas) {
+            try {
+                if (typeof document !== 'undefined') {
+                    Text._supersampleCanvas = document.createElement('canvas');
+                } else {
+                    const {createCanvas} = require('@napi-rs/canvas');
+                    Text._supersampleCanvas = createCanvas(1, 1);
+                }
+            } catch (e) {
+                this._drawContent(ctx);
+                return;
+            }
+        }
+        const off = Text._supersampleCanvas;
+        const octx = off.getContext('2d');
+        octx.setTransform(1, 0, 0, 1, 0, 0);
+        // 先解析布局得到未旋转内容宽高（旋转中心在此派生，与正常路径一致）；
+        // 测量不受变换影响，需先设置字体
+        octx.font = this._fontSpec();
+        const layout = this._resolveLayout(octx);
+        const width = layout.width || (this.direction === 'horizontal' ? this.fontSize / 10 : this.fontSize);
+        const height = layout.height || (this.direction === 'horizontal' ? this.fontSize : this.fontSize / 10);
+
+        // 旋转后的内容包围盒（绕中心旋转），外扩阴影影响范围避免离屏裁切
+        const rad = this.angle * Math.PI / 180;
+        const cos = Math.abs(Math.cos(rad));
+        const sin = Math.abs(Math.sin(rad));
+        const shadowPad = (this.shadow.blur || 0)
+            + Math.max(Math.abs(this.shadow.offsetX || 0), Math.abs(this.shadow.offsetY || 0)) + 2;
+        const bw = width * cos + height * sin + shadowPad * 2;
+        const bh = width * sin + height * cos + shadowPad * 2;
+        const bx = this.centerX - bw / 2;
+        const by = this.centerY - bh / 2;
+
+        // 离屏分辨率上限保护：极端小缩放下限制放大倍数，退化为可接受的近似超采样
+        k = Math.min(k, Text.TEXT_SUPERSAMPLE_MAX_PX / Math.max(bw, bh, 1));
+        if (k <= 1) {
+            this._drawContent(ctx);
+            return;
+        }
+
+        const pw = Math.ceil(bw * k);
+        const ph = Math.ceil(bh * k);
+        if (off.width < pw) off.width = pw;
+        if (off.height < ph) off.height = ph;
+        octx.setTransform(1, 0, 0, 1, 0, 0);
+        octx.clearRect(0, 0, pw, ph);
+
+        // 光栅化：逻辑坐标 ×k 映射到离屏物理像素，包围盒左上角对齐离屏原点
+        octx.setTransform(k, 0, 0, k, -bx * k, -by * k);
+        this._drawContent(octx);
+
+        // 回贴：目标 ctx 处于逻辑坐标系，按 bw×bh 逻辑尺寸绘制 k 倍分辨率位图，
+        // 等效「放大光栅化 + 重采样缩小」，笔画不会被 hinting 吞掉
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(off, 0, 0, pw, ph, bx, by, bw, bh);
     }
 
 
