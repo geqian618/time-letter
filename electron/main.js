@@ -184,7 +184,7 @@ const setupWindowEvents = (window) => {
             localshortcut.unregisterAll(window)
             // 联动关闭图片管理器窗口
             closeImageManagerWindow()
-            window = null
+            mainWindow = window = null
         }
     })
 
