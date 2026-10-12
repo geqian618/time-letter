@@ -95,6 +95,15 @@ let backgroundCanvasEditor = null;
 // 渲染版本号，防止快速切图时的异步渲染竞态
 let renderVersion = 0;
 
+// 编辑器当前加载的画布路径：渲染落定后更新。切换画布时据此判断编辑器里的内容
+// 到底属于哪张画布——快速切换时上一张的渲染可能还未落定，编辑器里仍是上上张的内容
+let loadedCanvasPath = null;
+
+// 工作区视图滚动的归属画布：scrollBarMoveToCenter / updateScrollBar 设置视图滚动时更新。
+// 滚动事件是异步派发的（主线程被图片解码占满时会延迟到切换之后才触发），
+// 若不加校验，防抖回调会把已不属于该画布的滚动位置写回其数据，导致下次渲染位置错误
+let viewOwnerPath = null;
+
 // 渲染串行队列：保证同一时刻最多一个渲染在操作 canvasEditor / backgroundCanvasEditor
 // 这两个共享实例。避免多次 load 的配置在 await 期间交错写入同一编辑器造成渲染错乱
 let renderTask = Promise.resolve();
@@ -329,7 +338,9 @@ const renderCanvasScrollbar = () => {
 function scrollBarMoveToCenter(canvas) {
   if (!canvas) return
   const {offsetWidth: canvasWrapperWidth, offsetHeight: canvasWrapperHeight} = canvasWrapper.value
-  const {offsetWidth: canvasWorkspaceWidth, offsetHeight: canvasWorkspaceHeight} = canvasWorkspaceRef.value
+  // 工作区用 clientWidth/clientHeight（扣除滚动条后的可视区）计算居中：
+  // offsetWidth 含滚动条宽度，滚动条可见时会把内容整体偏移约半个滚动条宽度
+  const {clientWidth: canvasWorkspaceWidth, clientHeight: canvasWorkspaceHeight} = canvasWorkspaceRef.value
   // 计算滚动位置，使图形内容居中
   const scrollLeft = (canvasWrapperWidth - canvasWorkspaceWidth) / 2;
   const scrollTop = (canvasWrapperHeight - canvasWorkspaceHeight) / 2;
@@ -338,6 +349,7 @@ function scrollBarMoveToCenter(canvas) {
   canvasWorkspaceRef.value.scrollTop = Math.max(0, scrollTop);
   canvas.scrollLeft = Math.max(0, scrollLeft);
   canvas.scrollTop = Math.max(0, scrollTop);
+  viewOwnerPath = canvas.path;
 }
 
 // 将画布内容滚动到工作区居中位置（供预览面板 / 设置弹窗调用）
@@ -365,6 +377,7 @@ const updateScrollBar = (canvas) => {
   // 设置滚动位置
   canvasWorkspaceRef.value.scrollLeft = canvas.scrollLeft;
   canvasWorkspaceRef.value.scrollTop = canvas.scrollTop;
+  viewOwnerPath = canvas.path;
 }
 
 const doRenderCanvas = async (canvas, currentVersion) => {
@@ -414,6 +427,8 @@ const doRenderCanvas = async (canvas, currentVersion) => {
     canvas.photographOptions = _.cloneDeep(image.meta)
     canvas.foreground = canvasEditor.exportToObject()
     canvas.background = backgroundCanvasEditor.exportToObject()
+    // 渲染落定：编辑器内容归属切换到本画布
+    loadedCanvasPath = canvas.path
 
   } else {
 
@@ -449,6 +464,8 @@ const doRenderCanvas = async (canvas, currentVersion) => {
     if (typeof background === 'string') {
       canvas.background = backgroundCanvasEditor.exportToObject()
     }
+    // 渲染落定：编辑器内容归属切换到本画布
+    loadedCanvasPath = canvas.path
   }
 
   // 渲染完成后同步浮动缩放胶囊的百分比
@@ -564,6 +581,8 @@ const clearCanvasElements = (path) => {
 const clearCanvas = () => {
   canvasEditor.clearCanvas();
   backgroundCanvasEditor.clearCanvas()
+  // 编辑器已清空，内容归属重置，避免切换时把空内容导出给画布
+  loadedCanvasPath = null
   CanvasManager.setSelectedObject({path: '', previewElement: null})
   zoomPct.value = 100
 }
@@ -732,9 +751,11 @@ const useTemplate = async (settings, path) => {
   canvas.foreground = JSON.stringify(foreground)
 
   if (!canvas.completed) {
-    // 计算滚动位置，使图形内容居中
-    const scrollLeft = (imageWidth - containerWidth) / 2;
-    const scrollTop = (imageHeight - containerHeight) / 2;
+    // 计算滚动位置，使图形内容居中（与 scrollBarMoveToCenter 同口径：
+    // 包装容器宽 = max(图片宽, 工作区理想宽)，可视区用 clientWidth 扣除滚动条）
+    const {clientWidth, clientHeight} = canvasWorkspaceRef.value;
+    const scrollLeft = (Math.max(imageWidth, idealWidth) - clientWidth) / 2;
+    const scrollTop = (Math.max(imageHeight, idealHeight) - clientHeight) / 2;
     canvas.scrollLeft = Math.max(0, scrollLeft);
     canvas.scrollTop = Math.max(0, scrollTop);
     canvas.completed = true;
@@ -755,6 +776,8 @@ Object.assign(canvasActions, {
   refreshZoom,
   permanentlyRemoveSelectedCanvas,
   useTemplate,
+  // 编辑器当前加载的画布路径：供预览面板在切换时判断能否把编辑器内容导出给离开的画布
+  getLoadedCanvasPath: () => loadedCanvasPath,
 })
 
 
@@ -928,8 +951,15 @@ const applyWheelZoom = () => {
   backgroundElement.value.classList.add('scale-animation')
   // 应用缩放：内部变换瞬时跳到 newZoom，CSS 盒子走 0.1s 过渡，rAF 同步滚动条钉住光标
   canvas.zoom = newZoom
-  canvas.background.zoom = newZoom
-  canvas.foreground.zoom = newZoom
+  // 画布数据在首次渲染前是 undefined、切换后可能是上次导出的 JSON 字符串，
+  // 这两种情况下直接挂属性会在严格模式下抛错（给字符串挂属性）导致整个缩放中断，
+  // 仅同步仍在编辑器里参与渲染的对象数据
+  if (canvas.background && typeof canvas.background === 'object') {
+    canvas.background.zoom = newZoom
+  }
+  if (canvas.foreground && typeof canvas.foreground === 'object') {
+    canvas.foreground.zoom = newZoom
+  }
   canvasEditor.setZoom(newZoom)
   backgroundCanvasEditor.setZoom(newZoom)
 
@@ -1009,6 +1039,10 @@ const handleMoveScrollbar = (event) => {
   }
   // 设置新的定时器（防抖：100ms）
   scrollTimeout = setTimeout(() => {
+    // 视图滚动已不属于该画布（期间发生了切换 / 重渲染）时丢弃这次写入：
+    // 滚动事件延迟到切换之后才派发时，这里会把上一张画布的滚动位置写进当前画布，
+    // 导致当前画布下次渲染时停靠在错误位置（不居中）
+    if (viewOwnerPath !== canvas.path) return;
     const target = event.target;
     // 设置滚动条参数到 image 对象
     canvas.scrollTop = target.scrollTop;

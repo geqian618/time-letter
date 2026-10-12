@@ -191,17 +191,21 @@ const syncWorkspaceIdealSize = (wsWidthPct, mainHeightPct) => {
 };
 
 // 将所有（非当前）画布的存储滚动位置重置为居中：依据各画布宽高与当前工作区尺寸，
-// 复用 scrollBarMoveToCenter 的算法（wrapper = max(画布宽, 工作区宽)），不依赖 DOM 渲染
+// 复用 scrollBarMoveToCenter 的算法（wrapper = max(画布宽, 工作区理想宽)），不依赖 DOM 渲染
 const centerAllCanvases = () => {
   const ws = canvasesStore.getWorkspace();
   if (!ws) return;
-  const viewportW = ws.offsetWidth;
-  const viewportH = ws.offsetHeight;
+  // 与 scrollBarMoveToCenter 同口径：clientWidth/clientHeight 为扣除滚动条后的可视区，
+  // 包装容器宽取 max(画布宽, 工作区理想宽)，理想宽缺失（尚未初始化）时退化为可视区宽
+  const viewportW = ws.clientWidth;
+  const viewportH = ws.clientHeight;
+  const idealW = ws.idealWidth || viewportW;
+  const idealH = ws.idealHeight || viewportH;
   const currentPath = CanvasManager.getSelectedPath();
   for (const [path, canvas] of CanvasManager.getCanvases()) {
     if (!canvas || !canvas.width || path === currentPath) continue;
-    const wrapperW = Math.max(canvas.width, viewportW);
-    const wrapperH = Math.max(canvas.height, viewportH);
+    const wrapperW = Math.max(canvas.width, idealW);
+    const wrapperH = Math.max(canvas.height, idealH);
     canvas.scrollLeft = Math.max(0, (wrapperW - viewportW) / 2);
     canvas.scrollTop = Math.max(0, (wrapperH - viewportH) / 2);
   }

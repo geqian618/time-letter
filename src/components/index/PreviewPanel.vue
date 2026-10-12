@@ -445,10 +445,14 @@ const switchPreviewImage = async (event, canvas) => {
 
     // 前一次预览元素与当前预览元素不同
     if (currentPath && currentPath !== targetPath) {
-      const backgroundCanvasEditor = canvasesStore.getBackgroundCanvasEditor();
-      const canvasEditor = canvasesStore.getCanvasEditor();
-      currentCanvas.foreground = canvasEditor.exportToJSON()
-      currentCanvas.background = backgroundCanvasEditor.exportToJSON()
+      // 仅当编辑器当前加载的正是离开的画布时才导出：快速切换时上一张的渲染可能
+      // 尚未落定，编辑器里仍是更早一张的内容，直接导出会把别的画布元素写进本画布数据
+      if (canvasActions.getLoadedCanvasPath() === currentPath) {
+        const backgroundCanvasEditor = canvasesStore.getBackgroundCanvasEditor();
+        const canvasEditor = canvasesStore.getCanvasEditor();
+        currentCanvas.foreground = canvasEditor.exportToJSON()
+        currentCanvas.background = backgroundCanvasEditor.exportToJSON()
+      }
     }
 
     // 没有预览元素或前一次预览元素与当前预览元素不同时显示，多次点击预览同一元素不重复渲染
@@ -602,112 +606,92 @@ const handleSelectAllPreviewElements = (event) => {
 }
 
 
-const switchPrevPreviewElement = useThrottle(async () => {
+// 切换到指定画布：更新选中态、按需保存离开画布的编辑器内容、渲染目标画布并滚动胶片条。
+// 上一张 / 下一张 / 第一张 / 最后一张 四个按钮共用本路径
+const switchToCanvas = async (targetCanvas) => {
+
+  if (!targetCanvas) return
 
   const {path: selectedPath, previewElement: currentElement} = CanvasManager.getSelectedObject();
 
   if (!selectedPath) return
 
   const currentCanvas = canvasesStore.availableCanvases.get(selectedPath);
+
+  if (!currentCanvas || currentCanvas.path === targetCanvas.path) return
+
+  currentElement.setAttribute('selected', 'false')
+  currentElement.classList.remove('active')
+  canvasesStore.selectedPreviewList.delete(selectedPath)
+
+  const targetElement = targetCanvas.getPreviewElement();
+  targetElement.classList.add('active')
+  targetElement.setAttribute('selected', 'true')
+
+  CanvasManager.setSelectedObject({path: targetCanvas.path, previewElement: targetElement})
+  canvasesStore.selectedPreviewList.set(targetCanvas.path, targetElement)
+
+  // 仅当编辑器当前加载的正是离开的画布时才导出（快速切换时编辑器里可能还是更早一张的内容）
+  if (canvasActions.getLoadedCanvasPath() === selectedPath) {
+    const backgroundCanvasEditor = canvasesStore.getBackgroundCanvasEditor();
+    const canvasEditor = canvasesStore.getCanvasEditor();
+    currentCanvas.foreground = canvasEditor.exportToJSON()
+    currentCanvas.background = backgroundCanvasEditor.exportToJSON()
+  }
+
+  await canvasActions.renderCanvas(targetCanvas)
+
+  // 方式二，过渡比较流畅
+  scrollBarMoveToHorizontalCenter(previewList.value, targetElement)
+}
+
+
+const switchPrevPreviewElement = useThrottle(async () => {
+
+  const {path: selectedPath} = CanvasManager.getSelectedObject();
+
+  if (!selectedPath) return
 
   const currentNode = canvasesStore.availableCanvases.getNode(selectedPath);
 
   const prevNode = currentNode.prev ? currentNode.prev : canvasesStore.availableCanvases.getLastNode();
 
-  const prevCanvas = prevNode.value;
-
-  if (currentCanvas && prevCanvas && currentCanvas.path !== prevCanvas.path) {
-
-    currentElement.setAttribute('selected', 'false')
-    currentElement.classList.remove('active')
-    canvasesStore.selectedPreviewList.delete(selectedPath)
-
-    const prevElement = prevCanvas.getPreviewElement();
-    prevElement.classList.add('active')
-    prevElement.setAttribute('selected', 'true')
-
-    CanvasManager.setSelectedObject({path: prevCanvas.path, previewElement: prevElement})
-    canvasesStore.selectedPreviewList.set(prevCanvas.path, prevElement)
-
-    const backgroundCanvasEditor = canvasesStore.getBackgroundCanvasEditor();
-    const canvasEditor = canvasesStore.getCanvasEditor();
-    currentCanvas.foreground = canvasEditor.exportToJSON()
-    currentCanvas.background = backgroundCanvasEditor.exportToJSON()
-
-    await canvasActions.renderCanvas(prevCanvas)
-
-    // 方式二，过渡比较流畅
-    scrollBarMoveToHorizontalCenter(previewList.value, prevElement)
-  }
+  await switchToCanvas(prevNode.value);
 }, 200)
 
 
 const switchNextPreviewElement = useThrottle(async () => {
 
-  const {path: selectedPath, previewElement: currentElement} = CanvasManager.getSelectedObject();
+  const {path: selectedPath} = CanvasManager.getSelectedObject();
 
   if (!selectedPath) return
 
-  const currentCanvas = canvasesStore.availableCanvases.get(selectedPath);
-
   const currentNode = canvasesStore.availableCanvases.getNode(selectedPath);
 
-  const prevNode = currentNode.next ? currentNode.next : canvasesStore.availableCanvases.getFirstNode();
+  const nextNode = currentNode.next ? currentNode.next : canvasesStore.availableCanvases.getFirstNode();
 
-  const nextCanvas = prevNode.value;
-
-  if (currentCanvas && nextCanvas && currentCanvas.path !== nextCanvas.path) {
-    currentElement.setAttribute('selected', 'false')
-    currentElement.classList.remove('active')
-    canvasesStore.selectedPreviewList.delete(selectedPath)
-
-    const nextElement = nextCanvas.getPreviewElement();
-    nextElement.classList.add('active')
-    nextElement.setAttribute('selected', 'true')
-    CanvasManager.setSelectedObject({path: nextCanvas.path, previewElement: nextElement})
-    canvasesStore.selectedPreviewList.set(nextCanvas.path, nextElement)
-
-    const backgroundCanvasEditor = canvasesStore.getBackgroundCanvasEditor();
-    const canvasEditor = canvasesStore.getCanvasEditor();
-    currentCanvas.foreground = canvasEditor.exportToJSON()
-    currentCanvas.background = backgroundCanvasEditor.exportToJSON()
-
-    await canvasActions.renderCanvas(nextCanvas)
-
-    // 方式二，过渡比较流畅
-    scrollBarMoveToHorizontalCenter(previewList.value, nextElement)
-  }
+  await switchToCanvas(nextNode.value);
 }, 200)
 
 
-const switchFirstPreviewElement = () => {
+const switchFirstPreviewElement = useThrottle(async () => {
 
   const firstNode = canvasesStore.availableCanvases.getFirstNode();
 
   if (!firstNode) return
 
-  const firstCanvas = firstNode.value;
-
-  const firstElement = firstCanvas.getPreviewElement();
-
-  // 方式二，过渡比较流畅
-  scrollBarMoveToHorizontalCenter(previewList.value, firstElement)
-}
+  await switchToCanvas(firstNode.value);
+}, 200)
 
 
-const switchLastPreviewElement = () => {
+const switchLastPreviewElement = useThrottle(async () => {
 
   const lastNode = canvasesStore.availableCanvases.getLastNode();
 
   if (!lastNode) return
 
-  const lastCanvas = lastNode.value;
-
-  const lastElement = lastCanvas.getPreviewElement();
-
-  // 方式二，过渡比较流畅
-  scrollBarMoveToHorizontalCenter(previewList.value, lastElement)
-}
+  await switchToCanvas(lastNode.value);
+}, 200)
 
 
 function scrollBarMoveToHorizontalCenter(container, element) {
