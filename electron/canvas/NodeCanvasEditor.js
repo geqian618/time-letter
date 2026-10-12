@@ -103,6 +103,7 @@ class CanvasEditor {
      * 初始化编辑器
      */
     init() {
+
         this.applyContextQuality();
 
         this.setupCanvas();
