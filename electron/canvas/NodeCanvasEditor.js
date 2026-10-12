@@ -103,13 +103,7 @@ class CanvasEditor {
      * 初始化编辑器
      */
     init() {
-        //设置高质量渲染选项
-        this.ctx.patternQuality = 'best';
-        this.ctx.quality = 'best'
-        this.ctx.antialias = 'subpixel'
-        this.ctx.imageSmoothingEnabled = true;
-        this.ctx.imageSmoothingQuality = 'high'
-        this.ctx.fontHinting = false
+        this.applyContextQuality();
 
         this.setupCanvas();
 
@@ -136,6 +130,23 @@ class CanvasEditor {
                 deep: true
             })
         }
+    }
+
+    /**
+     * 应用高质量渲染选项。
+     * 注意：setupCanvas 中重设 canvas.width 会把 2D 上下文状态整体重置为默认值
+     * （imageSmoothing / fontHinting 等全部丢失），因此每次尺寸变更后都必须重新应用，
+     * 否则缩放或加载预设后文字平滑与字形提示设置静默失效
+     */
+    applyContextQuality() {
+        const ctx = this.ctx;
+        if (!ctx) return;
+        ctx.patternQuality = 'best';
+        ctx.quality = 'best'
+        ctx.antialias = 'subpixel'
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high'
+        ctx.fontHinting = false
     }
 
 
