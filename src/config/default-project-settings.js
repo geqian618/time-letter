@@ -58,20 +58,20 @@ const defaultProjectSettings = {
     /* 面板默认比例（设计稿实测：左右面板各 ≈16.3%，底部区 ≈16%） */
     resize: {
         leftSidebar: {
-            width: "16%",
+            width: "17%",
             height: "80%"
         },
         canvasWorkspace: {
-            width: "67%",
+            width: "63%",
             height: "80%"
         },
         rightSidebar: {
-            width: "17%",
+            width: "20%",
             height: "80%"
         },
         bottomSidebar: {
             width: "100%",
-            height: "16%"
+            height: "20%"
         }
     }
 }

@@ -4,7 +4,7 @@
   "afterPack": "./scripts/encryptor-afterpack.js",
   "directories": {
     "buildResources": "assets",
-    "output": "electron_dist"
+    "output": "output"
   },
   "nsis": {
     "oneClick": false,
