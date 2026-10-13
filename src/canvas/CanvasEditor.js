@@ -158,6 +158,13 @@ class CanvasEditor {
 
         const dpr = this.isBrowser ? (window.devicePixelRatio || 1) : 1;
 
+        // 防御：非法尺寸/缩放会让 canvas.width 经 WebIDL 转成巨值无符号数（直接 OOM 崩溃），
+        // NaN 则得到 0 宽高的空白画布；此时保持上一次有效状态
+        if (![this.width, this.height, this.zoom].every(v => Number.isFinite(v) && v > 0)) {
+            console.warn(`[CanvasEditor] 忽略非法尺寸/缩放: width=${this.width}, height=${this.height}, zoom=${this.zoom}`);
+            return;
+        }
+
         // 重新计算缩放因子，使逻辑坐标精确对应物理像素
         let scaleX = this.zoom * dpr;
         let scaleY = this.zoom * dpr;
@@ -268,7 +275,8 @@ class CanvasEditor {
         this.editingText = textObj;
         this.isEditing = true;
         this.isCursorVisible = true;
-        this.cursorEnd = this.cursorStart = textObj.text.length;
+        // 调用方传入的光标位置（由点击位置换算而来）；未传入时落到文本末尾
+        this.cursorEnd = this.cursorStart = Math.min(Math.max(index ?? textObj.text.length, 0), textObj.text.length);
         this.canvas.style.cursor = textObj.direction === 'horizontal' ? 'text' : 'vertical-text';
 
         // 设置隐藏输入框的值
@@ -871,22 +879,25 @@ class CanvasEditor {
      */
     drawGrid() {
         if (!this.showGrid) return;
+        const scale = this.getTransformScale(this.ctx);
+        this.ctx.save();
         this.ctx.strokeStyle = this.gridColor;
-        this.ctx.lineWidth = 0.5;
+        this.ctx.lineWidth = 1 / scale;
+        const offset = 0.5 / scale;
+        this.ctx.beginPath();
         // 绘制垂直线
-        for (let x = 0; x <= this.canvas.width; x += this.gridSize) {
-            this.ctx.beginPath();
+        for (let x = offset; x <= this.width; x += this.gridSize) {
             this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, this.canvas.height);
-            this.ctx.stroke();
+            this.ctx.lineTo(x, this.height);
         }
         // 绘制水平线
-        for (let y = 0; y <= this.canvas.height; y += this.gridSize) {
-            this.ctx.beginPath();
+        for (let y = offset; y <= this.height; y += this.gridSize) {
             this.ctx.moveTo(0, y);
-            this.ctx.lineTo(this.canvas.width, y);
-            this.ctx.stroke();
+            this.ctx.lineTo(this.width, y);
         }
+        // 全部网格线合并为一次 stroke，避免每线一次光栅化调用
+        this.ctx.stroke();
+        this.ctx.restore();
     }
 
 
@@ -1287,7 +1298,8 @@ class CanvasEditor {
                 const top = Math.min(startY, moveY)
                 const bottom = Math.max(startY, moveY)
                 for (let el of elements) {
-                    if (el.x >= left && el.y >= top && el.x + el.width <= right && el.y + el.height <= bottom) {
+                    const {x: bx, y: by, w, h} = el.getSelectionBounds();
+                    if (bx >= left && by >= top && bx + w <= right && by + h <= bottom) {
                         if (el.status === Element.SELECTED) continue
                         el.status = Element.SELECTED;
                         this.activeElements.push(el)
@@ -1407,8 +1419,12 @@ class CanvasEditor {
      */
     handleActiveElement(event) {
         const target = event.target;
-        this.activeElements.push(event.target)
-        target.status = Element.SELECTED
+        if (this.hasActiveElement(target)) {
+            this.removeActiveElement(target);
+        } else {
+            this.activeElements.push(target);
+            target.status = Element.SELECTED;
+        }
         const callbacks = this.eventCallbacks.get(SELECTION_OBJECT);
         if (callbacks && callbacks.size) {
             callbacks.forEach(callback => callback(event))
@@ -1661,9 +1677,9 @@ class CanvasEditor {
      * @param {number} zoom - 缩放倍数
      */
     resizeCanvas(width, height, zoom) {
-        if (zoom) this.zoom = zoom;
-        this.width = width;
-        this.height = height;
+        if (Number.isFinite(width) && width > 0) this.width = width;
+        if (Number.isFinite(height) && height > 0) this.height = height;
+        if (Number.isFinite(zoom) && zoom > 0) this.zoom = zoom;
         this.setupCanvas()
     }
 
@@ -2353,6 +2369,7 @@ class Text extends Element {
         const {height, width} = this.direction === 'vertical'
             ? this.parseVerticalChars(ctx)
             : this.parseHorizontalChars(ctx)
+        ctx.restore();
         return {
             width: width || (this.direction === 'horizontal' ? this.fontSize / 10 : this.fontSize),
             height: height || (this.direction === 'horizontal' ? this.fontSize : this.fontSize / 10)
@@ -2843,8 +2860,9 @@ class Image extends Element {
                 image.onerror = () => {
                     reject(`Failed to load image: ${src}`);
                 };
+                // crossOrigin 必须在赋 src 之前设置才生效：后设等于没设，跨域图片会污染画布，exportPNG/JPEG 直接抛 SecurityError
+                image.crossOrigin = options.crossOrigin || 'anonymous';
                 image.src = src;
-                image.crossOrigin = options.crossOrigin;
             } else {
                 const {loadImage} = require('@napi-rs/canvas')
                 loadImage(src).then(image => {
@@ -3045,8 +3063,9 @@ class LazyImage extends Element {
                 image.onerror = () => {
                     reject(`Failed to load image: ${this.src}`);
                 };
-                image.src = this.src;
+                // crossOrigin 必须在赋 src 之前设置才生效（同 Image.fromURL）
                 image.crossOrigin = this.crossOrigin;
+                image.src = this.src;
                 this.image = image;
             } else {
                 const {loadImage} = require('@napi-rs/canvas')
