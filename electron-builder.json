@@ -9,9 +9,11 @@
   "nsis": {
     "oneClick": false,
     "language": "2052",
+    "installerLanguages": ["zh_CN", "en_US"],
     "allowToChangeInstallationDirectory": true,
     "installerIcon": "electron/resources/favicon.ico",
-    "uninstallerIcon": "electron/resources/favicon.ico"
+    "uninstallerIcon": "electron/resources/favicon.ico",
+    "include": "scripts/nsis/installer.nsh"
   },
   "win": {
     "icon": "electron/resources/favicon.png",

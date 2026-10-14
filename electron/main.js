@@ -299,6 +299,48 @@ const setupIpcHandlers = () => {
         }
     })
 
+    // ---------- 数据目录（设置项：查看 / 更改 / 打开） ----------
+
+    // 当前生效的数据目录（= userData）
+    ipcMain.handle('data-dir:get', () => {
+        return {current: app.getPath('userData')}
+    })
+
+    // 更改数据目录：选目录 → 整目录复制旧数据 → 写指针 → 重启应用生效
+    ipcMain.handle('data-dir:change', async () => {
+        const {canceled, filePaths} = await dialog.showOpenDialog({
+            buttonLabel: t('dialog.choose'),
+            properties: ['openDirectory', 'createDirectory']
+        })
+        if (canceled || !filePaths?.length) return {canceled: true}
+
+        const from = path.resolve(app.getPath('userData'))
+        const to = path.resolve(filePaths[0])
+        if (to === from) return {unchanged: true}
+        // 目标与当前数据目录互为嵌套会造成自我复制，直接拒绝
+        if (to.startsWith(from + path.sep) || from.startsWith(to + path.sep)) return {error: 'inside'}
+
+        try {
+            await fs.promises.cp(from, to, {recursive: true})
+        } catch (error) {
+            console.error('迁移数据目录失败:', error)
+            return {error: 'copy'}
+        }
+        if (!writeDataDirPointer(to)) return {error: 'pointer'}
+        // userData 路径只能在启动阶段设置，写完指针后重启应用使其生效
+        setTimeout(() => {
+            app.relaunch()
+            app.exit(0)
+        }, 1200)
+        return {success: true}
+    })
+
+    // 在系统文件管理器中打开当前数据目录
+    ipcMain.handle('data-dir:open', async () => {
+        await shell.openPath(app.getPath('userData'))
+        return true
+    })
+
     // 语言切换：持久化偏好并重建全部原生 UI（菜单 / 右键菜单 / 托盘 / 窗口标题），广播各窗口跟随
     ipcMain.on('language:set', (event, language) => {
         const resolved = setLanguage(language)
@@ -697,20 +739,60 @@ const setupAppLifecycle = () => {
 
 
 /**
+ * 数据目录指针：记录用户自定义的数据目录位置
+ *
+ * 指针文件放在「系统默认 userData 目录」下（必须在 setPath 重定向前捕获）：
+ *   Windows 为 %APPDATA%\时光信笺\data-dir.txt，macOS / Linux 为对应标准目录。
+ * 该位置不受安装器卸载 / 重装影响，因此重装后仍能找回自定义的数据目录。
+ * 未自定义时按各平台默认规则解析（见 setupUserData）。
+ */
+let dataDirPointerFile = null
+
+const readDataDirPointer = () => {
+    try {
+        // UTF-16LE + BOM：NSIS 卸载脚本（assets/installer.nsh）按 Unicode 文本读取
+        const dataDir = fs.readFileSync(dataDirPointerFile, 'utf16le').replace(/^\ufeff/, '').trim()
+        return dataDir || ''
+    } catch (error) {
+        return ''
+    }
+}
+
+const writeDataDirPointer = (dataDir) => {
+    try {
+        fs.mkdirSync(path.dirname(dataDirPointerFile), {recursive: true})
+        fs.writeFileSync(dataDirPointerFile, '\ufeff' + dataDir, 'utf16le')
+        return true
+    } catch (error) {
+        console.error('写入数据目录指针失败:', error)
+        return false
+    }
+}
+
+/**
  * 设置用户数据（必须在 whenReady 方法执行之前调用才生效）
  *
- * 数据目录按平台选择：
- *   开发环境 —— npm 脚本均从项目根启动，各平台统一使用项目根 data/；
- *   Windows 打包 —— 沿用工作目录下 data/（安装目录便携化，保持既有行为）；
- *   macOS / Linux 打包 —— 工作目录不可靠：macOS 从 Finder/Dock 启动时 cwd 为 /，
- *     且 Gatekeeper 会把应用转移到随机只读路径；AppImage 挂载点与 deb 安装目录同样只读。
- *     改用系统标准用户数据目录（如 ~/.config/时光信笺/data、
- *     ~/Library/Application Support/时光信笺/data）
+ * 数据目录按优先级选择：
+ *   1. 用户在设置中自定义过 → 使用指针文件记录的路径（卸载 / 重装 / 升级都不影响）；
+ *   2. 开发环境 → 项目根 data/；
+ *   3. Windows 打包（未自定义）→ 安装目录下 data/（默认便携，随卸载被删除）；
+ *   4. macOS / Linux 打包（未自定义）→ 系统标准用户数据目录（工作目录不可靠：
+ *      macOS 启动 cwd 为 /、AppImage 挂载点只读等）。
  */
 const setupUserData = () => {
-    const userDataPath = (isDev || process.platform === 'win32')
-        ? path.join(process.cwd(), 'data')
-        : path.join(app.getPath('userData'), 'data');
+    // 先捕获系统默认 userData 目录（setPath 之后 getPath 返回的就是重定向后的值）
+    const defaultUserData = app.getPath('userData')
+    dataDirPointerFile = path.join(defaultUserData, 'data-dir.txt')
+
+    const customDataDir = readDataDirPointer()
+    let userDataPath;
+    if (customDataDir) {
+        userDataPath = customDataDir
+    } else if (isDev || process.platform === 'win32') {
+        userDataPath = path.join(process.cwd(), 'data')
+    } else {
+        userDataPath = path.join(defaultUserData, 'data')
+    }
     if (!fs.existsSync(userDataPath)) {
         fs.mkdirSync(userDataPath, {recursive: true})
     }

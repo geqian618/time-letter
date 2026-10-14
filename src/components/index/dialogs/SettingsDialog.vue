@@ -427,6 +427,27 @@
 
           <!-- 其他 -->
           <template v-else-if="activePage === 'others'">
+            <!-- 数据目录：查看 / 更改 / 打开 -->
+            <div class="settings-section">
+              <div class="section-title">{{ $t('settings.dataDirGroup') }}</div>
+              <div class="settings-card">
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.dataDir') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.dataDir') }}</div>
+                  </div>
+                  <div class="row-control data-dir-control">
+                    <span class="data-dir-path" :title="dataDir">{{ dataDir }}</span>
+                    <button type="button" class="data-dir-button" :disabled="dataDirChanging"
+                            @click="handleChangeDataDir">{{ $t('settings.dataDirChange') }}</button>
+                    <button type="button" class="data-dir-button" @click="handleOpenDataDir">
+                      {{ $t('settings.dataDirOpen') }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="settings-section">
               <div class="section-title">{{ $t('settings.personalization') }}</div>
               <div class="settings-card">
@@ -558,6 +579,41 @@ import {useTheme} from '@/composables/shared/useTheme'
 
 const {t} = useI18n()
 
+// ---------- 数据目录：查看 / 更改 / 打开 ----------
+const dataDir = ref('')
+const dataDirChanging = ref(false)
+
+const loadDataDir = async () => {
+  dataDir.value = (await window.electronAPI.getDataDir()).current
+}
+
+// 更改数据目录：主进程完成复制并写指针后自动重启；失败时保持原目录不变
+const handleChangeDataDir = async () => {
+  if (dataDirChanging.value) return
+  dataDirChanging.value = true
+  try {
+    const result = await window.electronAPI.changeDataDir()
+    if (!result || result.canceled || result.unchanged) return
+    if (result.success) {
+      Notification.success(t('settings.dataDirMigrated'), t('common.notice'))
+      return
+    }
+    if (result.error === 'copy') {
+      Notification.error(t('settings.dataDirCopyError'), t('common.notice'))
+    } else if (result.error === 'inside') {
+      Notification.error(t('settings.dataDirInsideError'), t('common.notice'))
+    } else {
+      Notification.error(t('settings.dataDirError'), t('common.notice'))
+    }
+  } finally {
+    dataDirChanging.value = false
+  }
+}
+
+const handleOpenDataDir = () => window.electronAPI.openDataDir()
+
+loadDataDir()
+
 // 偏好设置弹窗的静态下拉选项：经 computed 依赖 locale，切换语言自动更新
 const outputSizeOptions = computed(() => [
   {label: t('settings.outputSizeOptions.best'), value: 0},
@@ -610,7 +666,7 @@ const navItems = [
   {
     key: 'others', icon: 'set-others', labelKey: 'settings.tabs.others',
     search: ['personalization', 'optionAnchor', 'deleteTips', 'autoCenter', 'canvasGroup',
-      'moveStep', 'defaultScale', 'focalZoom',
+      'moveStep', 'defaultScale', 'focalZoom', 'dataDir', 'desc.dataDir',
       'desc.optionAnchor', 'desc.deleteTips', 'desc.autoCenter', 'desc.moveStep',
       'desc.defaultScale', 'desc.focalZoom']
   },
@@ -1173,6 +1229,44 @@ const resetAllSettings = async () => {
 
   &.w-num .el-input {
     width: 150px;
+  }
+
+  // 数据目录：路径展示 + 更改 / 打开按钮
+  &.data-dir-control {
+    gap: 8px;
+
+    .data-dir-path {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+      color: var(--app-secondary-text);
+      direction: rtl; // 长路径从左侧截断，保留目录名部分
+      text-align: left;
+    }
+
+    .data-dir-button {
+      height: 26px;
+      padding: 0 10px;
+      border: 1px solid var(--ui-border);
+      border-radius: var(--app-radius-sm);
+      background: var(--ui-elevated);
+      color: var(--ui-text);
+      font-size: 10px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background-color var(--app-transition), border-color var(--app-transition);
+
+      &:hover:not(:disabled) {
+        background: var(--ui-control);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
   }
 
   &.w-slider .el-slider {

@@ -50,6 +50,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 触发原生菜单中的某一项（自绘导出按钮复用「文件 › 导出图片」）
     invokeAppMenu: (id) => ipcRenderer.send('menu:invoke', id),
 
+    // 数据目录（设置项：查看 / 更改 / 打开）
+    getDataDir: () => ipcRenderer.invoke('data-dir:get'),
+    changeDataDir: () => ipcRenderer.invoke('data-dir:change'),
+    openDataDir: () => ipcRenderer.invoke('data-dir:open'),
+
     // 语言切换（渲染进程为设置来源，主进程持久化并重建原生 UI 后广播回各窗口）
     setLanguage: (language) => ipcRenderer.send('language:set', language),
     watchLanguageChanged: (callback) => ipcRenderer.on('language:changed', callback),
