@@ -258,7 +258,7 @@
                       <el-option
                           v-for="item in languageOptions"
                           :key="item.value"
-                          :label="$t(item.labelKey)"
+                          :label="item.label || $t(item.labelKey)"
                           :value="item.value"/>
                     </el-select>
                   </div>
@@ -578,14 +578,6 @@ const downloadThreadsOptions = computed(() => [
 // 左侧导航项：key 对应右侧内容区页面；search 为该页各设置项的 i18n 键（供搜索匹配）
 const navItems = [
   {
-    key: 'export', icon: 'cmd-export', labelKey: 'settings.tabs.export',
-    search: ['imageSize', 'adjustMode', 'width', 'height', 'maxWidth', 'maxHeight',
-      'imageSettings', 'outputFormat', 'formatOriginal', 'imageQuality', 'syncMetadata',
-      'fileNaming', 'namingMode', 'nameOriginal', 'nameIndex', 'nameRandom', 'prefix', 'suffix',
-      'desc.adjustMode', 'desc.outputFormat', 'desc.imageQuality', 'desc.syncMetadata',
-      'desc.namingMode', 'desc.prefix', 'desc.suffix']
-  },
-  {
     key: 'appearance', icon: 'cmd-moon', labelKey: 'settings.tabs.appearance',
     search: ['themeGroup', 'themeMode', 'themeDark', 'themeLight', 'themeSystem', 'uiTheme',
       'canvasViewport', 'scrollbar', 'zoomPill',
@@ -593,8 +585,16 @@ const navItems = [
   },
   {
     key: 'language', icon: 'set-language', labelKey: 'settings.tabs.language',
-    search: ['languageGroup', 'interfaceLanguage', 'languageSystem', 'languageZh', 'languageEn',
+    search: ['languageGroup', 'interfaceLanguage', 'languageSystem',
       'desc.interfaceLanguage']
+  },
+  {
+    key: 'export', icon: 'cmd-export', labelKey: 'settings.tabs.export',
+    search: ['imageSize', 'adjustMode', 'width', 'height', 'maxWidth', 'maxHeight',
+      'imageSettings', 'outputFormat', 'formatOriginal', 'imageQuality', 'syncMetadata',
+      'fileNaming', 'namingMode', 'nameOriginal', 'nameIndex', 'nameRandom', 'prefix', 'suffix',
+      'desc.adjustMode', 'desc.outputFormat', 'desc.imageQuality', 'desc.syncMetadata',
+      'desc.namingMode', 'desc.prefix', 'desc.suffix']
   },
   {
     key: 'metadata', icon: 'cmd-doc-lines', labelKey: 'settings.tabs.metadata',

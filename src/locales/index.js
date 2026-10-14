@@ -13,11 +13,11 @@ import en from './languages/en.js'
 // 语言设置的候选值（存储值：system 为跟随系统）
 export const LANGUAGES = ['system', 'zh-CN', 'en']
 
-// 语言下拉框选项：选项文案跟随界面语言（key 在 settings 分组下维护）
+// 语言下拉框选项：语言名固定用各自母语显示（不随界面语言翻译），labelKey 选项则跟随界面语言
 export const languageOptions = [
     {value: 'system', labelKey: 'settings.languageSystem'},
-    {value: 'zh-CN', labelKey: 'settings.languageZh'},
-    {value: 'en', labelKey: 'settings.languageEn'},
+    {value: 'zh-CN', label: '中文'},
+    {value: 'en', label: 'English'},
 ]
 
 
