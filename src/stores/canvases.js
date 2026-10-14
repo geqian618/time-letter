@@ -9,7 +9,8 @@ export const useCanvasesStore = defineStore('canvases', () => {
 
     // ---------- 状态 ----------
 
-    const filterType = ref(0)
+    // 筛选条件：all / landscape / portrait / 扩展名（如 jpg）
+    const filterType = ref('all')
 
     const selectedPreviewList = ref(new Map())
 
@@ -59,12 +60,26 @@ export const useCanvasesStore = defineStore('canvases', () => {
         return result;
     });
 
+    // 已导入图片的扩展名选项（去重、动态收集）
+    const extnameOptions = computed(() => {
+        const exts = new Set();
+        for (const [, canvas] of CanvasManager.getCanvases()) {
+            const ext = (canvas.extname || '').toLowerCase();
+            if (ext) exts.add(ext);
+        }
+        return [...exts].sort();
+    });
+
     // 过滤函数
     const filterCanvas = (canvas, filter) => {
-        if (filter === 0) return true;
-        const {width, height} = canvas.metadata || {};
-        const w = Number(width), h = Number(height);
-        return filter === 1 ? w >= h : w < h;
+        if (filter === 'all') return true;
+        if (filter === 'landscape' || filter === 'portrait') {
+            const {width, height} = canvas.metadata || {};
+            const w = Number(width), h = Number(height);
+            return filter === 'landscape' ? w >= h : w < h;
+        }
+        // 其余值视为扩展名筛选
+        return (canvas.extname || '').toLowerCase() === filter;
     };
 
     const thumbnailVisible = (canvas) => availableCanvases.value.has(canvas.path)
@@ -93,6 +108,7 @@ export const useCanvasesStore = defineStore('canvases', () => {
 
     return {
         filterType,
+        extnameOptions,
         selectedPreviewList,
         imageResources,
         photographOptions,

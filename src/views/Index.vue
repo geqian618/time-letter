@@ -28,7 +28,7 @@
                @mousedown="handleBottomSidebarResize"></div>
           <PreviewPanel v-show="!bottomCollapsed" @toggle-bottom="toggleBottom"/>
           <!-- 收起后底部工具栏随之隐藏，仅保留这个浮动箭头用于展开 -->
-          <el-tooltip v-if="bottomCollapsed" :content="$t('panel.expandBottom')" placement="top"
+          <el-tooltip :show-after="1500" v-if="bottomCollapsed" :content="$t('panel.expandBottom')" placement="top"
                       :disabled="tipDisabled">
             <button class="panel-toggle toggle-bottom" @click="toggleBottom">
               <SvgIcon name="expand-bottom" width="12" height="12"/>

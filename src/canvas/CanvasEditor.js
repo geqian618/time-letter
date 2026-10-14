@@ -1273,6 +1273,9 @@ class CanvasEditor {
         const {x: startX, y: startY} = this.getCanvasPosition(event);
         const element = this.getElementAt(startX, startY, element => element.selectable);
 
+        // 实际参与拖拽的对象：Alt 拷贝后切换为副本，原元素保持原位
+        let dragElement = element;
+
         let lastMoveX = startX;
         let lastMoveY = startY;
         // 拖拽过程中的自由（未吸附）位置，按元素记录，避免吸附后离开时跳变
@@ -1326,15 +1329,32 @@ class CanvasEditor {
                     this.updateInputSelection();
                     this.renderAll();
                 }
-            } else if (interval > 200 && moved && element.draggable && (element.status === Element.NONE || this.hasActiveElement(element))) {
+            } else if (interval > 200 && moved && dragElement.draggable && (dragElement.status === Element.NONE || this.hasActiveElement(dragElement))) {
                 this.canvas.style.cursor = 'move';
                 // 计算偏移量
                 const offsetX = moveX - lastMoveX;
                 const offsetY = moveY - lastMoveY;
                 // 确定要拖拽的元素列表
-                const targetElements = element.status === Element.NONE
-                    ? [element]
+                let targetElements = dragElement.status === Element.NONE
+                    ? [dragElement]
                     : Array.from(this.activeElements).filter(el => el.draggable);
+                // Alt + 拖拽拷贝：仅在拖拽首帧判定（freePositions 尚未捕获时按下 Alt 才生效，
+                // 拖拽中途再按 Alt 不拷贝），克隆被拖元素并改为拖拽副本，原元素保持原位
+                if (e.altKey && !freePositions && targetElements.length) {
+                    const clones = targetElements.map(el => {
+                        this.addElement(el.clone());
+                        // 取回数组代理包装后的实例，保持与既有元素一致的响应式代理身份
+                        return this.elements[this.elements.length - 1];
+                    });
+                    // 选中态整体移交给副本，避免无关选中元素被卷入后续拖拽
+                    this.clearActiveElements();
+                    clones.forEach(clone => {
+                        clone.status = Element.SELECTED;
+                        this.activeElements.push(clone);
+                    });
+                    targetElements = clones;
+                    dragElement = clones[clones.length - 1];
+                }
                 // 首次进入拖拽时，捕获各元素的自由（未吸附）起始位置
                 if (!freePositions) {
                     freePositions = new Map();
@@ -1369,7 +1389,7 @@ class CanvasEditor {
                 // 更新最后移动位置并重新渲染
                 lastMoveX = moveX;
                 lastMoveY = moveY;
-                if (element.status === Element.NONE) {
+                if (dragElement.status === Element.NONE) {
                     this.removeActiveElements(this.activeElements);
                 }
                 this.renderAll();
@@ -2029,6 +2049,56 @@ class Element {
      */
     getSelectionBounds() {
         throw new Error('getSelectionBounds() must be implemented by subclass');
+    }
+
+    /**
+     * 克隆元素：生成属性相同、id 不同的独立副本（Alt + 拖拽拷贝用）
+     * 必须经构造函数创建实例：私有字段（#centerX / Text 的 #width/#chars 等）
+     * 只会在构造时安装，Object.create 出的空壳调用 setter 会因私有品牌检查抛 TypeError
+     * @returns {Element}
+     */
+    clone() {
+        let copy;
+        // 实例自身的可枚举属性即各子类的构造参数，整体作为 options 传入
+        const options = this;
+        if (this.type === 'text') {
+            copy = new this.constructor(this.text, options);
+        } else if (this.type === 'image') {
+            // Image 首参为图片对象，LazyImage 首参为 src（加载前 image 为 null）
+            copy = this.image ? new this.constructor(this.image, options) : new this.constructor(this.src, options);
+        } else {
+            copy = new this.constructor(options);
+        }
+        // 嵌套纯对象（shadow / lineDash 等）深拷贝，避免副本与原元素共享引用
+        const deepCopy = (value) => {
+            if (Array.isArray(value)) return value.map(deepCopy);
+            if (value && typeof value === 'object'
+                && (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)) {
+                const result = {};
+                for (const key of Object.keys(value)) {
+                    result[key] = deepCopy(value[key]);
+                }
+                return result;
+            }
+            return value;
+        };
+        // 覆盖构造函数写入的默认值（含 LazyImage 被重置为 null 的 image 引用）
+        for (const key of Object.keys(this)) {
+            copy[key] = deepCopy(this[key]);
+        }
+        // 访问器背后的私有字段不随自身属性拷贝，显式赋值走 setter
+        copy.centerX = this.centerX;
+        copy.centerY = this.centerY;
+        if (this.type === 'text') {
+            copy.width = this.width;
+            copy.height = this.height;
+            copy.chars = this.chars;
+            copy.lines = this.lines;
+        }
+        // 新 id：hasElement / removeElement 均按 id 匹配，复用 id 会误伤原元素
+        copy.id = Date.now() + Math.random();
+        copy.status = Element.NONE;
+        return copy;
     }
 
     /**

@@ -5,34 +5,34 @@
     <div class="preview-bar">
       <div class="left-preview-bar">
         <!-- 底部面板伸缩 -->
-        <el-tooltip :content="$t('panel.collapseBottom')" placement="top">
+        <el-tooltip :show-after="1500" :content="$t('panel.collapseBottom')" placement="top">
           <button type="button" class="bar-icon" @click="$emit('toggle-bottom')">
             <SvgIcon name="panel-collapse-bottom"/>
           </button>
         </el-tooltip>
 
-        <el-tooltip :content="$t('preview.first')" placement="top">
+        <el-tooltip :show-after="1500" :content="$t('preview.first')" placement="top">
           <button type="button" class="bar-icon" @click="switchFirstPreviewElement">
             <SvgIcon name="step-first"/>
           </button>
         </el-tooltip>
-        <el-tooltip :content="$t('preview.prev')" placement="top">
+        <el-tooltip :show-after="1500" :content="$t('preview.prev')" placement="top">
           <button type="button" class="bar-icon" @click="switchPrevPreviewElement">
             <SvgIcon name="step-prev"/>
           </button>
         </el-tooltip>
-        <el-tooltip :content="$t('preview.next')" placement="top">
+        <el-tooltip :show-after="1500" :content="$t('preview.next')" placement="top">
           <button type="button" class="bar-icon" @click="switchNextPreviewElement">
             <SvgIcon name="step-next"/>
           </button>
         </el-tooltip>
-        <el-tooltip :content="$t('preview.last')" placement="top">
+        <el-tooltip :show-after="1500" :content="$t('preview.last')" placement="top">
           <button type="button" class="bar-icon" @click="switchLastPreviewElement">
             <SvgIcon name="step-last"/>
           </button>
         </el-tooltip>
 
-        <el-tooltip :content="$t('preview.zoom')" placement="top" :disabled="tooltipDisabled">
+        <el-tooltip :show-after="1500" :content="$t('preview.zoom')" placement="top" :disabled="tooltipDisabled">
           <el-dropdown trigger="click" placement="top-start"
                        @visible-change="handleVisibleChange"
                        @command="handleZoom"
@@ -50,12 +50,12 @@
           </el-dropdown>
         </el-tooltip>
 
-        <el-tooltip :content="$t('preview.selectAll')" placement="top">
+        <el-tooltip :show-after="1500" :content="$t('preview.selectAll')" placement="top">
           <button type="button" class="bar-icon" @click="handleSelectAllPreviewElements">
             <SvgIcon name="select-all"/>
           </button>
         </el-tooltip>
-        <el-tooltip :content="$t('preview.center')" placement="top">
+        <el-tooltip :show-after="1500" :content="$t('preview.center')" placement="top">
           <button type="button" class="bar-icon" @click="canvasActions.centerCanvasScrollBar()">
             <SvgIcon name="center-canvas"/>
           </button>
@@ -67,44 +67,44 @@
         <!-- 对齐 / 分布：描边图标，分组与元素位置参考 PS 选项栏 -->
         <!-- 分组：[水平对齐族（竖参考线）] │ [垂直对齐族（横参考线）] │ [分布] -->
         <div class="align-group">
-          <el-tooltip :content="$t('preview.alignLeft')" placement="top">
+          <el-tooltip :show-after="1500" :content="$t('preview.alignLeft')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('left')">
               <SvgIcon name="align-left"/>
             </button>
           </el-tooltip>
-          <el-tooltip :content="$t('preview.alignCenterH')" placement="top">
+          <el-tooltip :show-after="1500" :content="$t('preview.alignCenterH')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('center-h')">
               <SvgIcon name="align-center-h"/>
             </button>
           </el-tooltip>
-          <el-tooltip :content="$t('preview.alignRight')" placement="top">
+          <el-tooltip :show-after="1500" :content="$t('preview.alignRight')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('right')">
               <SvgIcon name="align-right"/>
             </button>
           </el-tooltip>
           <span class="align-divider"/>
-          <el-tooltip :content="$t('preview.alignTop')" placement="top">
+          <el-tooltip :show-after="1500" :content="$t('preview.alignTop')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('top')">
               <SvgIcon name="align-top"/>
             </button>
           </el-tooltip>
-          <el-tooltip :content="$t('preview.alignCenterV')" placement="top">
+          <el-tooltip :show-after="1500" :content="$t('preview.alignCenterV')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('center-v')">
               <SvgIcon name="align-center-v"/>
             </button>
           </el-tooltip>
-          <el-tooltip :content="$t('preview.alignBottom')" placement="top">
+          <el-tooltip :show-after="1500" :content="$t('preview.alignBottom')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('bottom')">
               <SvgIcon name="align-bottom"/>
             </button>
           </el-tooltip>
           <span class="align-divider"/>
-          <el-tooltip :content="$t('preview.distributeH')" placement="top">
+          <el-tooltip :show-after="1500" :content="$t('preview.distributeH')" placement="top">
             <button type="button" class="bar-icon" @click="handleDistribute('horizontal')">
               <SvgIcon name="distribute-h"/>
             </button>
           </el-tooltip>
-          <el-tooltip :content="$t('preview.distributeV')" placement="top">
+          <el-tooltip :show-after="1500" :content="$t('preview.distributeV')" placement="top">
             <button type="button" class="bar-icon" @click="handleDistribute('vertical')">
               <SvgIcon name="distribute-v"/>
             </button>
@@ -121,11 +121,11 @@
           <div class="filter-label">{{ $t('preview.filter') }}</div>
           <div class="filter-select">
             <el-select v-model="canvasesStore.filterType" size="small" :placeholder="$t('common.select')">
-              <el-option
-                  v-for="item in [{label:$t('preview.filterNone'),value:0},{label:$t('preview.filterLandscape'),value:1},{label:$t('preview.filterPortrait'),value:2}]"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"/>
+              <el-option :label="$t('preview.filterNone')" value="all"/>
+              <el-option :label="$t('preview.filterLandscape')" value="landscape"/>
+              <el-option :label="$t('preview.filterPortrait')" value="portrait"/>
+              <!-- 已导入图片的扩展名选项动态追加 -->
+              <el-option v-for="item in canvasesStore.extnameOptions" :key="item" :label="item" :value="item"/>
             </el-select>
           </div>
         </div>
@@ -420,7 +420,7 @@ const setDefaultSelectedElement = async () => {
   canvasesStore.selectedPreviewList.set(nextSelectCanvas.path, previewElement)
 }
 
-// 筛选类型变化时清空选中并默认选中一张画布
+// 筛选条件变化时清空选中并默认选中一张画布
 watch(() => canvasesStore.filterType, async () => {
   clearSelectedPreviewList()
   await nextTick()

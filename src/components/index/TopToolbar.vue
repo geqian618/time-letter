@@ -11,7 +11,7 @@
     <!-- 菜单栏 -->
     <nav class="menu-bar">
       <!-- 左侧面板伸缩 -->
-      <el-tooltip :content="leftCollapsed ? $t('panel.expandLeft') : $t('panel.collapseLeft')" placement="bottom">
+      <el-tooltip :show-after="1500" :content="leftCollapsed ? $t('panel.expandLeft') : $t('panel.collapseLeft')" placement="bottom">
         <button type="button" class="panel-toggle" @click="$emit('toggle-left')">
           <SvgIcon name="panel-collapse-left"/>
         </button>
@@ -39,7 +39,7 @@
       </button>
 
       <!-- 检查更新：完整升级逻辑留待后续接入，当前仅提示 -->
-      <el-tooltip :content="$t('toolbar.checkUpdate')" placement="bottom">
+      <el-tooltip :show-after="1500" :content="$t('toolbar.checkUpdate')" placement="bottom">
         <button type="button" class="check-update-button" @click="handleCheckUpdate">
           <SvgIcon name="refresh"/>
         </button>
@@ -47,7 +47,7 @@
 
       <div class="window-controls" v-if="!isMac">
         <!-- 右侧面板伸缩 -->
-        <el-tooltip :content="rightCollapsed ? $t('panel.expandRight') : $t('panel.collapseRight')" placement="bottom">
+        <el-tooltip :show-after="1500" :content="rightCollapsed ? $t('panel.expandRight') : $t('panel.collapseRight')" placement="bottom">
           <button type="button" class="panel-toggle" @click="$emit('toggle-right')">
             <SvgIcon name="panel-collapse-right"/>
           </button>
@@ -56,18 +56,18 @@
         <!-- 分割线：隔开面板切换与窗口控制按钮 -->
         <span class="action-divider"/>
 
-        <el-tooltip :content="$t('toolbar.minimize')" placement="bottom">
+        <el-tooltip :show-after="1500" :content="$t('toolbar.minimize')" placement="bottom">
           <button type="button" class="window-button" @click="handleMinimize">
             <SvgIcon name="win-minimize"/>
           </button>
         </el-tooltip>
-        <el-tooltip :content="$t('toolbar.maximize')" placement="bottom">
+        <el-tooltip :show-after="1500" :content="$t('toolbar.maximize')" placement="bottom">
           <button type="button" class="window-button" @click="handleToggleMaximize">
             <SvgIcon v-if="isMaximized" name="win-restore"/>
             <SvgIcon v-else name="win-maximize"/>
           </button>
         </el-tooltip>
-        <el-tooltip :content="$t('toolbar.close')" placement="bottom">
+        <el-tooltip :show-after="1500" :content="$t('toolbar.close')" placement="bottom">
           <button type="button" class="window-button is-close" @click="handleClose">
             <SvgIcon name="win-close"/>
           </button>
@@ -232,8 +232,8 @@ onUnmounted(() => {
   transition: background-color var(--app-transition), color var(--app-transition);
 
   svg {
-    width: 13px;
-    height: 13px;
+    width: 15px;
+    height: 15px;
   }
 
   &:hover {
@@ -288,8 +288,14 @@ onUnmounted(() => {
   flex: 0 0 auto;
   width: 1px;
   height: 16px;
-  margin: 0 3px;
+  margin: 0 7px 0 4px;
   background: var(--ui-border);
+}
+
+/* 透明图标钮按钮框大于图标，负 margin 抵消隐形内边距，使可见间距与实心控件一致 */
+.check-update-button,
+.window-controls .panel-toggle {
+  margin: 0 -5px;
 }
 
 .export-button {
@@ -340,8 +346,8 @@ onUnmounted(() => {
   transition: background-color var(--app-transition), color var(--app-transition);
 
   svg {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
   }
 
   &:hover {

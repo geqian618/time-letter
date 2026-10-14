@@ -82,22 +82,22 @@
           <Transition name="collapse" v-bind="collapseTransition">
             <div class="section-body" v-show="opened.texts">
               <div class="text-grid" ref="textResourceRef">
-                <el-tooltip :content="$t('left.text')" placement="top">
+                <el-tooltip :show-after="1500" :content="$t('left.text')" placement="top">
                   <div class="text-chip text-resource" draggable="true" text="文本" type="text">
                     <span class="chip-icon"><SvgIcon name="text"/></span>
                   </div>
                 </el-tooltip>
-                <el-tooltip :content="$t('left.date')" placement="top">
+                <el-tooltip :show-after="1500" :content="$t('left.date')" placement="top">
                   <div class="text-chip text-resource" draggable="true" type="date">
                     <span class="chip-icon"><SvgIcon name="date"/></span>
                   </div>
                 </el-tooltip>
-                <el-tooltip :content="$t('left.datetime')" placement="top">
+                <el-tooltip :show-after="1500" :content="$t('left.datetime')" placement="top">
                   <div class="text-chip text-resource" draggable="true" type="datetime">
                     <span class="chip-icon"><SvgIcon name="datetime"/></span>
                   </div>
                 </el-tooltip>
-                <el-tooltip v-for="text in textResourcesStore.textResources" :key="text.id"
+                <el-tooltip :show-after="1500" v-for="text in textResourcesStore.textResources" :key="text.id"
                             :content="text.tips" placement="top">
                   <div
                       class="text-chip text-resource"

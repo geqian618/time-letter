@@ -21,19 +21,19 @@
 
     <!-- 浮动缩放胶囊 -->
     <div class="zoom-pill" v-if="settingsStore.projectSettings.appearance.enableZoomPill">
-      <el-tooltip :content="$t('preview.zoomOut')" placement="top">
+      <el-tooltip :show-after="1500" :content="$t('preview.zoomOut')" placement="top">
         <button type="button" class="zoom-button" @click="stepZoom(-1)">
           <SvgIcon name="zoom-minus"/>
         </button>
       </el-tooltip>
       <span class="zoom-value">{{ zoomPct }}%</span>
-      <el-tooltip :content="$t('preview.zoomIn')" placement="top">
+      <el-tooltip :show-after="1500" :content="$t('preview.zoomIn')" placement="top">
         <button type="button" class="zoom-button" @click="stepZoom(1)">
           <SvgIcon name="zoom-plus"/>
         </button>
       </el-tooltip>
       <span class="zoom-divider"></span>
-      <el-tooltip :content="$t('preview.center')" placement="top">
+      <el-tooltip :show-after="1500" :content="$t('preview.center')" placement="top">
         <button type="button" class="zoom-button" @click="fitToView">
           <SvgIcon name="fit-view"/>
         </button>
