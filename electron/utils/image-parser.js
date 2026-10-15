@@ -47,8 +47,10 @@ function getFileSize(filePath) {
 }
 
 function formatDateTime(DateTimeOriginal) {
+    // exiftool-vendored 解析出的 month/day/hour/... 为数字（如 1、9），统一补齐前导 0，输出 yyyy-MM-dd HH:mm:ss
+    const pad = (n) => String(n).padStart(2, '0');
     const {year, month, day, hour, minute, second} = DateTimeOriginal
-    return `${year}-${month}-${day} ${hour}:${minute}:${second}`
+    return `${year}-${pad(month)}-${pad(day)} ${pad(hour)}:${pad(minute)}:${pad(second)}`
 }
 
 module.exports = {parsePhotoMetadata};
