@@ -109,6 +109,16 @@
               <SvgIcon name="distribute-v"/>
             </button>
           </el-tooltip>
+          <el-tooltip :show-after="1500" :content="$t('preview.distributeCenterH')" placement="top">
+            <button type="button" class="bar-icon" @click="handleDistributeCenter('horizontal')">
+              <SvgIcon name="distribute-center-h"/>
+            </button>
+          </el-tooltip>
+          <el-tooltip :show-after="1500" :content="$t('preview.distributeCenterV')" placement="top">
+            <button type="button" class="bar-icon" @click="handleDistributeCenter('vertical')">
+              <SvgIcon name="distribute-center-v"/>
+            </button>
+          </el-tooltip>
         </div>
         <div class="counter">{{
             $t('preview.counter', {
@@ -765,9 +775,14 @@ const handleAlign = (mode) => {
 };
 
 
-// 分布选中元素：以首尾为基准，中间元素中心点等距排布（逻辑在 CanvasEditor.distributeElements）
+// 分布选中元素：以首尾为基准，中间元素边缘间隙等距排布（逻辑在 CanvasEditor.distributeElements）
 const handleDistribute = (mode) => {
   canvasesStore.getCanvasEditor()?.distributeElements(mode);
+};
+
+// 分布选中元素：以首尾为基准，中间元素中心点等距排布（逻辑在 CanvasEditor.distributeElementsByCenter）
+const handleDistributeCenter = (mode) => {
+  canvasesStore.getCanvasEditor()?.distributeElementsByCenter(mode);
 };
 
 

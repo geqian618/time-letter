@@ -36,6 +36,8 @@ import CmdTextIcon from '@/assets/icon/cmd-text.svg'
 import CustomIcon from '@/assets/icon/custom.svg'
 import DateIcon from '@/assets/icon/date.svg'
 import DatetimeIcon from '@/assets/icon/datetime.svg'
+import DistributeCenterHIcon from '@/assets/icon/distribute-center-h.svg'
+import DistributeCenterVIcon from '@/assets/icon/distribute-center-v.svg'
 import DistributeHIcon from '@/assets/icon/distribute-h.svg'
 import DistributeVIcon from '@/assets/icon/distribute-v.svg'
 import EmptyUploadIcon from '@/assets/icon/empty-upload.svg'
@@ -91,6 +93,8 @@ const registry = {
   'custom': CustomIcon,
   'date': DateIcon,
   'datetime': DatetimeIcon,
+  'distribute-center-h': DistributeCenterHIcon,
+  'distribute-center-v': DistributeCenterVIcon,
   'distribute-h': DistributeHIcon,
   'distribute-v': DistributeVIcon,
   'empty-upload': EmptyUploadIcon,

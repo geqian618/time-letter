@@ -514,10 +514,57 @@ class CanvasEditor {
     }
 
     /**
-     * 分布选中元素：以首尾元素为基准，中间元素沿分布方向按中心点等距排布（参考 PS 分布）
+     * 分布选中元素：以首尾元素为基准，中间元素沿分布方向按边缘间隙等距排布（参考 PS 分布间距）
      * @param {'horizontal'|'vertical'} mode - 分布方向
      */
     distributeElements(mode) {
+        const targets = this.activeElements;
+        if (!targets || targets.length < 3) return;
+        const horizontal = mode === 'horizontal';
+        // 按分布方向上的边缘排序，确定首尾基准
+        const sorted = [...targets].sort((a, b) => {
+            const ba = a.getSelectionBounds();
+            const bb = b.getSelectionBounds();
+            return horizontal ? ba.x - bb.x : ba.y - bb.y;
+        });
+        const first = sorted[0].getSelectionBounds();
+        const last = sorted[sorted.length - 1].getSelectionBounds();
+        // 间隙等距：首尾元素不动，可分配总间隙 = 首尾内边缘距离 - 中间元素占宽（高）
+        const span = horizontal
+            ? last.x - (first.x + first.w)
+            : last.y - (first.y + first.h);
+        const middleSize = sorted.slice(1, -1).reduce((sum, el) => {
+            const b = el.getSelectionBounds();
+            return sum + (horizontal ? b.w : b.h);
+        }, 0);
+        const gap = (span - middleSize) / (sorted.length - 1);
+        let cursor = horizontal ? first.x + first.w + gap : first.y + first.h + gap;
+        for (let i = 1; i < sorted.length - 1; i++) {
+            const el = sorted[i];
+            const b = el.getSelectionBounds();
+            let dx = 0, dy = 0;
+            if (horizontal) {
+                dx = cursor - b.x;
+                cursor += b.w + gap;
+            } else {
+                dy = cursor - b.y;
+                cursor += b.h + gap;
+            }
+            if (!dx && !dy) continue;
+            // 位移同步作用到 x/y 与旋转基准 centerX/centerY（与拖拽移动保持一致）
+            el.x += dx;
+            el.y += dy;
+            el.centerX += dx;
+            el.centerY += dy;
+        }
+        this.renderAll();
+    }
+
+    /**
+     * 分布选中元素：以首尾元素为基准，中间元素沿分布方向按中心点等距排布（参考 PS 分布中心）
+     * @param {'horizontal'|'vertical'} mode - 分布方向
+     */
+    distributeElementsByCenter(mode) {
         const targets = this.activeElements;
         if (!targets || targets.length < 3) return;
         const horizontal = mode === 'horizontal';
