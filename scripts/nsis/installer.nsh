@@ -211,8 +211,14 @@ FunctionEnd
 ; 文件清理：完全接管默认的 RMDir /r $INSTDIR，以支持「保留 data」分支。
 ; 注意：接管后失去了模板 atomicRMDir 的失败回滚能力，文件被占用（应用仍在运行）时
 ; 会进入中间态；此处通过 DetailPrint 输出失败项，便于日志定位。
+; 另注意：删除前必须先 SetOutPath 移出 $INSTDIR（见宏内注释）。
 !macro customRemoveFiles
   !insertmacro ResolveDeleteDataFlag $R9
+  ; 必须先把进程当前目录移出 $INSTDIR：模板 un.onInit 的 SetOutPath $INSTDIR 会把
+  ; 卸载器工作目录固定在安装目录，而 Windows 禁止删除作为进程 CWD 的目录——
+  ; 不移走的话 RMDir（含 /r）只能清空目录内容，安装根目录本身永远删不掉，
+  ; 卸载后会残留一个空安装目录（删除 data 或 data 已迁走时尤为明显）。
+  SetOutPath $TEMP
   ${If} $R9 == "1"
     ClearErrors
     RMDir /r "$INSTDIR"
