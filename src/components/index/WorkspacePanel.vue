@@ -1063,7 +1063,7 @@ const handleKeyDownMoveElement = (event) => {
 
   event.preventDefault();
 
-  const step = settingsStore.projectSettings.others.movingStepSize / canvas.initZoom;
+  const step = settingsStore.projectSettings.others.movingStepSize;
 
   const activeElements = canvasEditor.getActiveElements();
 
