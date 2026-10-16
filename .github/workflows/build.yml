@@ -39,7 +39,9 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Build & Package
-        run: npm run electron:build
+        # 显式禁用 electron-builder 的自动发布（CI 环境下它会尝试直传 GitHub Release，
+        # 需要 GH_TOKEN）；发布统一由下方 release job 处理
+        run: npm run electron:build -- --publish never
         env:
           # 无签名证书：跳过 macOS codesign 探测与 Windows 证书查找
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
