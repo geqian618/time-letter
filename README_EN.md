@@ -31,7 +31,7 @@
 - [📥 Download & Install](#-download--install)
 - [🚀 Getting Started (Local Development)](#-getting-started-local-development)
 - [⌨️ Keyboard Shortcuts](#-keyboard-shortcuts)
-- [🔐 Packaging & Source Protection](#-packaging--source-protection)
+- [📦 Packaging & Cross-Platform Build](#-packaging--cross-platform-build)
 - [❓ FAQ](#-faq)
 - [📜 Changelog](#-changelog)
 - [🤝 Contributing](#-contributing)
@@ -123,7 +123,6 @@ Video demos and tutorials on Bilibili:
 | Image processing | sharp (main-process export) + @napi-rs/canvas (Node-side canvas rendering) + Worker threads |
 | Metadata | exiftool-vendored / exif (EXIF reading & write-back)                                        |
 | File watching | chokidar (hot reload for image / font libraries)                                            |
-| Source protection | esbuild (bundle) + bytenode (V8 bytecode) + electron-builder-encryptor (AES-256)            |
 
 ## 📁 Project Structure
 
@@ -131,19 +130,15 @@ Video demos and tutorials on Bilibili:
 time-letter
 ├── electron/                     # Electron main process
 │   ├── main.js                   # Entry point (windows / menus / tray / IPC)
-│   ├── main-loader.js            # Production bootstrap loader (loads main.jsc)
 │   ├── preload/                  # Preload scripts (contextBridge IPC channels)
 │   ├── canvas/                   # Node-side canvas rendering
 │   ├── components/               # Native components: app menu / context menu / tray / file watchers / shortcuts / secondary window
 │   ├── thread/                   # Worker threads: image export processing
-│   ├── runtime/                  # Production renderer decryption loader (renderer-loader)
 │   ├── locales/                  # Main-process i18n (native menus, etc.)
 │   ├── utils/                    # sharp image processing / EXIF / font management / paths
 │   └── resources/                # Built-in assets: app icon, brand logos, bundled fonts
 ├── scripts/                      # Build scripts
 │   ├── bundle-main.js            # esbuild bundling for main process / worker / preload
-│   ├── compile.js                # bytenode compilation to .jsc bytecode
-│   ├── encryptor-afterpack.js    # afterPack hook: encryption & integrity finalization
 │   └── nsis/                     # NSIS installer script fragment
 ├── src/                          # Renderer process (Vue 3)
 │   ├── views/                    # Pages (main workspace / image manager extension)
@@ -156,7 +151,6 @@ time-letter
 │   ├── locales/                  # Renderer-side i18n
 │   ├── config/                   # Default configs (color schemes, default project settings)
 │   └── utils/                    # Utilities (fonts / notifications / throttle / deep clone, etc.)
-├── encryptor.config.js           # electron-builder-encryptor config (encryption key)
 ├── electron-builder.json         # Packaging config (Windows: NSIS/zip, macOS: dmg/zip, Linux: AppImage/tar.gz)
 ├── vite.config.js                # Vite build config
 └── package.json
@@ -200,7 +194,7 @@ npm run electron:serve
 npm run type-check
 npm run lint
 
-# 5. Package (runs automatically: vite build → main-process bundle → bytenode compile → electron-builder + encryption)
+# 5. Package (vite build + electron-builder, defaults to the current OS)
 npm run electron:build
 
 # 6. Or target a platform explicitly (defaults to the current OS)
@@ -224,20 +218,7 @@ npm run electron:build:mac
 | `Ctrl/⌘ + L` | Clear canvas |
 | `Ctrl/⌘ + R` | Reset canvas |
 
-## 🔐 Packaging & Source Protection
-
-During packaging (`npm run electron:build`), artifacts are protected via the `afterPack` hook of [electron-builder-encryptor](https://github.com/dusionlike/electron-builder-encryptor):
-
-| Content | Protection |
-| --- | --- |
-| Main process (`electron/**/*`) | `scripts/bundle-main.js` bundles all internal modules into a **single** esbuild bundle, then bytenode compiles it into a **single** `main.jsc` bytecode; the worker is likewise bundled into a single `worker.jsc`, and preload into `index.jsc`. App code inside `app.asar` is just 3 bytecode files + 3 bootstrap loaders |
-| Renderer process (`dist/`, vite output) | AES-256-CBC encrypted and packed into a single `resources/renderer.pkg`, removed from `app.asar` |
-| `app.asar` integrity | Generates `resources/app.yml` (MD5 checksum); the app exits at runtime if tampering is detected |
-
-- The encryption config has a **single source of truth**: `encryptor.config.js` (`key`, `protocol`, `renderer.entry/output`); `scripts/bundle-main.js` reads it at build time and injects it into `renderer-loader` via esbuild `define`, so the key needs no maintenance in multiple places.
-- Bundles are intermediate build artifacts output to `node_modules/.cache/electron-bundle/` (outside the source tree and the installer); only the compiled `main.jsc` / `worker.jsc` / `index.jsc` ship with the package.
-- The `afterPack` hook implementation is in `scripts/encryptor-afterpack.js`.
-- Decryption and loading of the renderer in production is done by the app itself: `electron/runtime/renderer-loader.js` (bundled into `main.jsc` with the main process) decrypts `renderer.pkg`, registers the `myclient://` protocol and verifies `app.asar` integrity; see `loadAppContent` in `electron/main.js` for the load URL (`myclient://apps/index.html`). Build artifacts do not depend on the build machine and can run anywhere.
+## 📦 Packaging & Cross-Platform Build
 
 ### Packaging Commands
 
@@ -245,7 +226,7 @@ During packaging (`npm run electron:build`), artifacts are protected via the `af
 # 1. Development: regular startup
 npm run electron:serve
 
-# 2. Package (runs automatically: vite build → bytenode compile → electron-builder + encryption)
+# 2. Package (runs automatically: vite build → electron-builder)
 npm run electron:build
 
 # 3. Target a platform explicitly (electron-builder defaults to the current OS)
@@ -264,23 +245,13 @@ Windows / macOS / Linux are all supported; platform differences are adapted in t
 | App icon | Windows uses `favicon.ico`; macOS / Linux use `favicon.png` (icns is generated by electron-builder) |
 | Tray | Windows / Linux: persistent menu + left-click toggles the window; macOS: left-click toggles the window, right-click opens the menu (a persistent menu would swallow the click event on macOS) |
 | Application menu | macOS appends the `appMenu` / `editMenu` / `windowMenu` roles — without them Cmd+Q and clipboard shortcuts (Cmd+C/V) do not work |
-| Package layout | macOS resources live in `<App>.app/Contents/Resources`; `renderer.pkg` / `app.asar` checksum paths are resolved per platform (`renderer-loader.js`, `encryptor-afterpack.js`) |
-| exiftool native deps | The `afterPack` unpack rule covers vendor packages of all platforms (`exiftool-vendored.*`) |
+| exiftool native deps | asar unpack rules cover vendor packages of all platforms (`exiftool-vendored.*`) |
 
 Key points:
 
-- bytenode bytecode (`.jsc`) is tied to the build machine's Electron V8 version and CPU architecture and is **not portable across platforms**: build Windows artifacts on Windows, macOS artifacts on macOS, and Linux artifacts on Linux. A three-OS CI matrix (`.github/workflows/build.yml`) builds all of them on tagged pushes.
 - macOS artifacts are unsigned (`mac.identity: null`); on first launch right-click → Open, or allow the app in System Settings → Privacy & Security.
 - The Linux tray requires `libappindicator` (`libayatana-appindicator3-1` on Ubuntu 22.04+); some desktop environments never fire the tray click event — the menu still works.
 - Linux targets are AppImage / tar.gz (no wine / dpkg toolchain needed); add deb / rpm targets on a Linux build machine if needed.
-
-### ⚠️ Source Protection Notes
-
-- After modifying main-process source (`electron/**/*.js`) or the encryption config (`encryptor.config.js`), simply repackage: `electron:build` automatically runs bundle (with config injection) → compile → package & encrypt — no manual steps needed.
-- `electron/main-loader.js`, `electron/preload/index-loader.js` and `electron/thread/worker-loader.js` are runtime bootstrap loaders kept in plain text; they are not bytecode-compiled.
-- After packaging, `app.asar` contains very few app files (3 bytecode files + 3 bootstrap loaders + icons); the rest is `node_modules` dependencies.
-- The encryption key lives in `encryptor.config.js` — keep it safe; anyone with the key can decrypt `renderer.pkg`.
-- `afterPack` removes the "build-machine absolute path" runtime chain (`main-c.jsc`) injected by encryptor and restores the `main-loader.js` bootstrap loader, ensuring the installer runs on any machine; it also regenerates the `app.yml` checksum based on the final `app.asar`.
 
 ## ❓ FAQ
 
@@ -318,12 +289,6 @@ All stored locally: template presets and text resources are persisted via the Pi
 <summary><b>5. How do I use my own fonts?</b></summary>
 
 Add them via "Extensions → Font Library → Import Fonts", or drop font files directly into the font resource directory — the app watches it and hot-loads new fonts automatically.
-</details>
-
-<details>
-<summary><b>6. Antivirus flags the app as risky?</b></summary>
-
-The app uses V8 bytecode compilation and AES encryption for source protection, which some antivirus software may misjudge as risky. It contains no malicious code — simply add it to the whitelist / trust list.
 </details>
 
 ## 📜 Changelog
