@@ -18,6 +18,7 @@ import AlignTopIcon from '@/assets/icon/align-top.svg'
 import CenterCanvasIcon from '@/assets/icon/center-canvas.svg'
 import CheckIcon from '@/assets/icon/check.svg'
 import ChevronUpIcon from '@/assets/icon/chevron-up.svg'
+import CoffeeIcon from '@/assets/icon/coffee.svg'
 import CmdDocInIcon from '@/assets/icon/cmd-doc-in.svg'
 import CmdDocLinesIcon from '@/assets/icon/cmd-doc-lines.svg'
 import CmdDocOutIcon from '@/assets/icon/cmd-doc-out.svg'
@@ -25,6 +26,7 @@ import CmdDropletIcon from '@/assets/icon/cmd-droplet.svg'
 import CmdExportIcon from '@/assets/icon/cmd-export.svg'
 import CmdFolderIcon from '@/assets/icon/cmd-folder.svg'
 import CmdGridIcon from '@/assets/icon/cmd-grid.svg'
+import CmdHeartIcon from '@/assets/icon/cmd-heart.svg'
 import CmdImportIcon from '@/assets/icon/cmd-import.svg'
 import CmdInfoIcon from '@/assets/icon/cmd-info.svg'
 import CmdMoonIcon from '@/assets/icon/cmd-moon.svg'
@@ -75,6 +77,7 @@ const registry = {
   'center-canvas': CenterCanvasIcon,
   'check': CheckIcon,
   'chevron-up': ChevronUpIcon,
+  'coffee': CoffeeIcon,
   'cmd-doc-in': CmdDocInIcon,
   'cmd-doc-lines': CmdDocLinesIcon,
   'cmd-doc-out': CmdDocOutIcon,
@@ -82,6 +85,7 @@ const registry = {
   'cmd-export': CmdExportIcon,
   'cmd-folder': CmdFolderIcon,
   'cmd-grid': CmdGridIcon,
+  'cmd-heart': CmdHeartIcon,
   'cmd-import': CmdImportIcon,
   'cmd-info': CmdInfoIcon,
   'cmd-moon': CmdMoonIcon,

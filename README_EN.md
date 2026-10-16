@@ -9,7 +9,9 @@
 **A fully local, offline photo watermark & border tool — seal this moment into letters that travel through time**
 
 [![Gitee Star](https://gitee.com/geqian618/time-letter/badge/star.svg?theme=dark)](https://gitee.com/geqian618/time-letter/stargazers)
-[![Version](https://img.shields.io/badge/version-v2.0.0-blue)](https://gitee.com/geqian618/time-letter/releases)
+[![GitHub Star](https://img.shields.io/github/stars/geqian618/time-letter?style=flat&logo=github&label=Star)](https://github.com/geqian618/time-letter/stargazers)
+[![Version](https://img.shields.io/badge/version-v2.0.0-blue)](https://github.com/geqian618/time-letter/releases)
+[![Build](https://github.com/geqian618/time-letter/actions/workflows/build.yml/badge.svg)](https://github.com/geqian618/time-letter/actions/workflows/build.yml)
 [![Electron](https://img.shields.io/badge/Electron-22.3-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![Vue](https://img.shields.io/badge/Vue-3.x-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vitejs.org/)
@@ -158,7 +160,7 @@ time-letter
 
 ## 📥 Download & Install
 
-Download the latest release from [Gitee Releases](https://gitee.com/geqian618/time-letter/releases):
+Download the latest release from [GitHub Releases](https://github.com/geqian618/time-letter/releases) or [Gitee Releases](https://gitee.com/geqian618/time-letter/releases) (installers for all three platforms are built automatically by GitHub Actions):
 
 | Package | Description |
 | --- | --- |
@@ -180,8 +182,9 @@ Download the latest release from [Gitee Releases](https://gitee.com/geqian618/ti
 ### Development & Build
 
 ```shell
-# 1. Clone the repository
-git clone https://gitee.com/geqian618/time-letter.git
+# 1. Clone the repository (GitHub is the primary repo; the Gitee mirror also works)
+git clone https://github.com/geqian618/time-letter.git
+# git clone https://gitee.com/geqian618/time-letter.git
 cd time-letter
 
 # 2. Install dependencies
@@ -293,7 +296,7 @@ Add them via "Extensions → Font Library → Import Fonts", or drop font files 
 
 ## 📜 Changelog
 
-> See the full [commit history](https://gitee.com/geqian618/time-letter/commits).
+> See the full commit history on [GitHub](https://github.com/geqian618/time-letter/commits) / [Gitee](https://gitee.com/geqian618/time-letter/commits).
 
 ### v2.0.0 (2026-08 · Current)
 

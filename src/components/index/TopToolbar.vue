@@ -30,8 +30,16 @@
 
     <!-- 右侧操作区 -->
     <div class="toolbar-actions">
+      <!-- 赞赏入口：纯渲染层按钮，点击直接打开赞赏弹窗 -->
+      <el-tooltip :show-after="1500" :content="$t('toolbar.menu.reward')" placement="bottom">
+        <button type="button" class="menu-item reward-button" @click="$emit('show-reward')">
+          <SvgIcon name="coffee" width="13" height="13"/>
+          <span>{{ $t('reward.button') }}</span>
+        </button>
+      </el-tooltip>
+
       <SearchDropdown @toggle-left="$emit('toggle-left')" @toggle-right="$emit('toggle-right')"
-                      @toggle-bottom="$emit('toggle-bottom')"/>
+                      @toggle-bottom="$emit('toggle-bottom')" @show-reward="$emit('show-reward')"/>
 
       <button type="button" class="export-button" @click="handleExport">
         <SvgIcon name="export"/>
@@ -96,7 +104,7 @@ const props = defineProps({
   rightCollapsed: {type: Boolean, default: false},
 })
 
-defineEmits(['toggle-left', 'toggle-right', 'toggle-bottom'])
+defineEmits(['toggle-left', 'toggle-right', 'toggle-bottom', 'show-reward'])
 
 // 顶级菜单：有原生菜单的走主进程弹出原生命令
 const menus = [
@@ -281,6 +289,30 @@ onUnmounted(() => {
   align-items: center;
   gap: 10px;
   -webkit-app-region: no-drag;
+
+  /* 赞赏入口：与菜单项同风格的图标+文字按钮（请作者喝一杯咖啡~） */
+  .reward-button {
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px;
+    border: none;
+    background: transparent;
+    border-radius: var(--app-radius-xs);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--ui-text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color var(--app-transition), color var(--app-transition);
+
+    &:hover {
+      background: var(--ui-control);
+      color: var(--ui-accent);
+    }
+  }
 }
 
 /* 操作区与面板/窗口控件组之间的竖分割线 */

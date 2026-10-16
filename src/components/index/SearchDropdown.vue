@@ -33,7 +33,7 @@ import {useI18n} from 'vue-i18n'
 import {useProjectSettingsStore} from '@/stores/project-settings'
 import {useTheme} from '@/composables/shared/useTheme'
 
-const emit = defineEmits(['toggle-left', 'toggle-right', 'toggle-bottom'])
+const emit = defineEmits(['toggle-left', 'toggle-right', 'toggle-bottom', 'show-reward'])
 
 const {t} = useI18n()
 
@@ -82,6 +82,7 @@ const commandGroups = [
     key: 'help', labelKey: 'menu.help',
     items: [
       {id: 'about', icon: 'cmd-info', labelKey: 'searchCommand.about', keywords: 'about 关于'},
+      {id: 'reward', icon: 'cmd-heart', labelKey: 'searchCommand.reward', keywords: 'reward appreciate donate 赞赏 打赏 捐'},
     ],
   },
   {
@@ -174,6 +175,9 @@ const runItem = (item) => {
       break
     case 'toggle-bottom-panel':
       emit('toggle-bottom')
+      break
+    case 'reward':
+      emit('show-reward')
       break
     default:
       window.electronAPI?.invokeAppMenu?.(item.id)

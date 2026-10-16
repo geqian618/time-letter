@@ -17,16 +17,15 @@
           <span class="title">{{ $t('about.contact') }}</span>
           <div class="value">
             <img src="/src/assets/images/qr-code.jpg">
-            <img src="/src/assets/images/reward-code.jpg">
           </div>
-        </div>
-        <div class="version">
-          <span class="title">{{ $t('about.version') }}</span>
-          <div class="value">v2.0</div>
         </div>
         <div class="author">
           <span class="title">{{ $t('about.author') }}</span>
           <div class="value">秋风吹落了秋枫</div>
+        </div>
+        <div class="version">
+          <span class="title">{{ $t('about.version') }}</span>
+          <div class="value">v2.0</div>
         </div>
       </div>
     </el-dialog>
@@ -71,8 +70,8 @@ window.electronAPI.openAboutDialog(() => {
       border-radius: 3px;
 
       img {
-        width: 240px;
-        height: 270px;
+        height: 240px;
+        width: auto;
       }
     }
 

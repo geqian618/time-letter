@@ -7,7 +7,9 @@
 **一款完全本地运行、无需联网的照片水印与边框工具 —— 将此刻封存，寄给未来的自己**
 
 [![Gitee Star](https://gitee.com/geqian618/time-letter/badge/star.svg?theme=dark)](https://gitee.com/geqian618/time-letter/stargazers)
-[![Version](https://img.shields.io/badge/version-v2.0.0-blue)](https://gitee.com/geqian618/time-letter/releases)
+[![GitHub Star](https://img.shields.io/github/stars/geqian618/time-letter?style=flat&logo=github&label=Star)](https://github.com/geqian618/time-letter/stargazers)
+[![Version](https://img.shields.io/badge/version-v2.0.0-blue)](https://github.com/geqian618/time-letter/releases)
+[![Build](https://github.com/geqian618/time-letter/actions/workflows/build.yml/badge.svg)](https://github.com/geqian618/time-letter/actions/workflows/build.yml)
 [![Electron](https://img.shields.io/badge/Electron-22.3-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![Vue](https://img.shields.io/badge/Vue-3.x-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vitejs.org/)
@@ -101,8 +103,8 @@
 
 ## 🖼️ 应用预览
 
-<div align="center">
-  <img src="src/assets/images/application.webp" width="100%" alt="时光信笺主界面"/>
+<div align="center">  
+  <img src="src/assets/images/application.webp" width="100%" alt="时光信笺主界面"/>  
 </div>
 
 *主工作区：左侧为预设与图片库，中间为画布编辑区，右侧为属性面板，底部为图片预览栏*
@@ -119,16 +121,16 @@
 
 ## 🛠️ 技术栈
 
-| 类别 | 技术选型                                                                   |
-| --- |------------------------------------------------------------------------|
-| 前端框架 | Vue 3 + Vite 5 + JavaScript                                            |
-| 状态管理 | Pinia + pinia-plugin-persistedstate（本地持久化）                             |
-| UI 组件 | Element Plus（unplugin 自动按需引入）                                          |
-| 国际化 | vue-i18n（中文 / 英文）                                                      |
-| 桌面端 | Electron 22 + electron-builder                                         |
-| 图像处理 | sharp（主进程导出）+ @napi-rs/canvas（Node 侧画布渲染）+ Worker 多线程                  |
-| 元数据 | exiftool-vendored / exif（EXIF 读取与回写）                                   |
-| 文件监听 | chokidar（图片库 / 字体库热加载）                                                 |
+| 类别    | 技术选型                                                  |
+| ----- | ----------------------------------------------------- |
+| 前端框架  | Vue 3 + Vite 5 + JavaScript                           |
+| 状态管理  | Pinia + pinia-plugin-persistedstate（本地持久化）            |
+| UI 组件 | Element Plus（unplugin 自动按需引入）                         |
+| 国际化   | vue-i18n（中文 / 英文）                                     |
+| 桌面端   | Electron 22 + electron-builder                        |
+| 图像处理  | sharp（主进程导出）+ @napi-rs/canvas（Node 侧画布渲染）+ Worker 多线程 |
+| 元数据   | exiftool-vendored / exif（EXIF 读取与回写）                  |
+| 文件监听  | chokidar（图片库 / 字体库热加载）                                |
 
 ---
 
@@ -168,13 +170,13 @@ time-letter
 
 ## 📥 下载与安装
 
-前往 [Gitee Releases](https://gitee.com/geqian618/time-letter/releases) 下载最新版本：
+前往 [GitHub Releases](https://github.com/geqian618/time-letter/releases) 或 [Gitee Releases](https://gitee.com/geqian618/time-letter/releases) 下载最新版本（三平台安装包由 GitHub Actions 自动构建）：
 
-| 安装包 | 说明 |
-| --- | --- |
-| `时光信笺 Setup x.x.x.exe` | Windows 安装版（NSIS），双击安装，支持自定义安装目录 |
-| `时光信笺 x.x.x.zip` | Windows 便携版，解压即用 |
-| `time-letter-x.x.x-x64.dmg / -arm64.dmg` | macOS 磁盘镜像（Intel / Apple Silicon，必须在 macOS 上构建） |
+| 安装包                                            | 说明                                                                     |
+| ---------------------------------------------- | ---------------------------------------------------------------------- |
+| `时光信笺 Setup x.x.x.exe`                         | Windows 安装版（NSIS），双击安装，支持自定义安装目录                                       |
+| `时光信笺 x.x.x.zip`                               | Windows 便携版，解压即用                                                       |
+| `time-letter-x.x.x-x64.dmg / -arm64.dmg`       | macOS 磁盘镜像（Intel / Apple Silicon，必须在 macOS 上构建）                        |
 | `time-letter-x.x.x-x64.AppImage / -x64.tar.gz` | Linux 安装包（AppImage 在 Windows 上构建需开启开发者模式或管理员权限；deb / rpm 需在 Linux 上构建） |
 
 ---
@@ -183,17 +185,18 @@ time-letter
 
 ### 环境要求
 
-| 依赖 | 版本 |
-| --- | --- |
-| Node.js | ≥ 18（推荐 LTS，已在 Node 20 / 22 验证） |
-| npm | ≥ 9（或 pnpm / yarn） |
-| 操作系统 | Windows / macOS / Linux 均可开发；Windows 与 Linux 产物可在 Windows 构建，macOS 产物必须在 macOS 构建 |
+| 依赖      | 版本                                                                                |
+| ------- | --------------------------------------------------------------------------------- |
+| Node.js | ≥ 18（推荐 LTS，已在 Node 20 / 22 验证）                                                   |
+| npm     | ≥ 9（或 pnpm / yarn）                                                                |
+| 操作系统    | Windows / macOS / Linux 均可开发；Windows 与 Linux 产物可在 Windows 构建，macOS 产物必须在 macOS 构建 |
 
 ### 开发与构建
 
 ```shell
-# 1. 克隆仓库
-git clone https://gitee.com/geqian618/time-letter.git
+# 1. 克隆仓库（GitHub 主仓库，也可改用 Gitee 镜像）
+git clone https://github.com/geqian618/time-letter.git
+# git clone https://gitee.com/geqian618/time-letter.git
 cd time-letter
 
 # 2. 安装依赖
@@ -221,16 +224,16 @@ npm run electron:build:mac
 
 ## ⌨️ 键盘快捷键
 
-| 快捷键 | 功能 |
-| --- | --- |
-| `Ctrl/⌘ + I` | 导入图片 |
-| `Ctrl/⌘ + O` | 导出图片 |
-| `Ctrl/⌘ + T` | 导出图片 |
+| 快捷键                | 功能     |
+| ------------------ | ------ |
+| `Ctrl/⌘ + I`       | 导入图片   |
+| `Ctrl/⌘ + O`       | 导出图片   |
+| `Ctrl/⌘ + T`       | 导出图片   |
 | `Ctrl/⌘ + Alt + S` | 打开偏好设置 |
-| `Ctrl/⌘ + D` | 移除图片 |
-| `Ctrl/⌘ + Alt + D` | 删除图片 |
-| `Ctrl/⌘ + L` | 清空画布 |
-| `Ctrl/⌘ + R` | 重置画布 |
+| `Ctrl/⌘ + D`       | 移除图片   |
+| `Ctrl/⌘ + Alt + D` | 删除图片   |
+| `Ctrl/⌘ + L`       | 清空画布   |
+| `Ctrl/⌘ + R`       | 重置画布   |
 
 ---
 
@@ -255,13 +258,13 @@ npm run electron:build:mac
 
 支持 Windows / macOS / Linux。平台差异已在主进程内按 `process.platform` 适配：
 
-| 差异点 | 适配方式 |
-| --- | --- |
+| 差异点                          | 适配方式                                                                                                                                                               |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 数据目录（模板 / 文本 / 图片资源、设置、窗口状态） | 开发环境与 Windows 打包沿用应用目录下 `data/`；macOS / Linux 打包使用系统标准用户数据目录（`~/Library/Application Support/时光信笺/data`、`~/.config/时光信笺/data`），因 Finder / AppImage / deb 场景下安装位置不可写 |
-| 应用图标 | Windows 用 `favicon.ico`，macOS / Linux 用 `favicon.png`（icns 由 electron-builder 自动生成） |
-| 托盘 | Windows / Linux：常驻菜单 + 左键切换窗口显隐；macOS：左键切换窗口、右键弹菜单（macOS 常驻菜单会吞掉点击事件） |
-| 应用菜单 | macOS 追加 `appMenu` / `editMenu` / `windowMenu` role，否则 Cmd+Q 退出、输入框 Cmd+C/V 复制粘贴不生效 |
-| exiftool 原生依赖 | asar 解包（unpack）规则覆盖全平台二进制包（`exiftool-vendored.*`） |
+| 应用图标                         | Windows 用 `favicon.ico`，macOS / Linux 用 `favicon.png`（icns 由 electron-builder 自动生成）                                                                                |
+| 托盘                           | Windows / Linux：常驻菜单 + 左键切换窗口显隐；macOS：左键切换窗口、右键弹菜单（macOS 常驻菜单会吞掉点击事件）                                                                                              |
+| 应用菜单                         | macOS 追加 `appMenu` / `editMenu` / `windowMenu` role，否则 Cmd+Q 退出、输入框 Cmd+C/V 复制粘贴不生效                                                                                |
+| exiftool 原生依赖                | asar 解包（unpack）规则覆盖全平台二进制包（`exiftool-vendored.*`）                                                                                                                  |
 
 **构建注意事项**：
 
@@ -274,18 +277,23 @@ npm run electron:build:mac
 ## ❓ 常见问题
 
 <details>
+
 <summary><b>1. 支持哪些图片格式？</b></summary>
 
 支持 JPG / JPEG / PNG / WEBP / GIF / AVIF 的导入与导出，导出时可保持原格式或指定格式。
+
 </details>
 
 <details>
+
 <summary><b>2. 需要联网吗？会收集我的数据吗？</b></summary>
 
 不需要联网。所有图片处理、水印渲染与导出均在本地完成，不收集、不上传任何数据。
+
 </details>
 
 <details>
+
 <summary><b>3. 支持哪些操作系统？</b></summary>
 
 当前发布版本面向 Windows（NSIS 安装版 + 便携版 zip），并已配置 macOS（dmg + zip，Intel / Apple Silicon）与 Linux（AppImage + tar.gz）目标：
@@ -295,27 +303,33 @@ npm run electron:build:mac
 - 构建 macOS 安装包可使用仓库自带的 GitHub Actions 工作流（`.github/workflows/build.yml`）：推送 `v*` tag 或手动触发，即可产出三平台安装包；也可以直接在任何 Mac 上运行 `npm run electron:build`。
 - 在 Windows 上构建 Linux AppImage 需开启开发者模式或使用管理员终端（符号链接权限）；deb / rpm 目标依赖 fpm，需在 Linux / macOS 上构建（在 `electron-builder.json` 的 `linux.target` 中追加即可）。
 - Windows 便携版数据存储在可执行文件同级 `data/` 目录；macOS / Linux 使用系统标准用户数据目录。
+
 </details>
 
 <details>
+
 <summary><b>4. 模板和设置保存在哪里？</b></summary>
 
 全部本地存储：模板预设与文本资源通过 Pinia 持久化插件保存，应用设置保存于 `settings.json`，窗口位置与大小记录在 `main-window-state.json`。整个应用数据目录可直接迁移 / 备份，菜单中也提供模板预设与全局设置的导入 / 导出功能。
+
 </details>
 
 <details>
+
 <summary><b>5. 如何使用自己的字体？</b></summary>
 
 通过"扩展 → 字体库 → 导入字体"添加，或直接将字体文件放入字体资源目录——应用会监听该目录并自动热加载新字体。
+
 </details>
 
 ---
 
 ## 📜 更新日志
 
-> 完整记录见 <a href="https://gitee.com/geqian618/time-letter/commits" target="_blank">提交历史</a>。
+> 完整记录见 <a href="https://github.com/geqian618/time-letter/commits" target="_blank">GitHub 提交历史</a> / <a href="https://gitee.com/geqian618/time-letter/commits" target="_blank">Gitee 提交历史</a>。
 
 ### v2.0.0（2026-08 · 当前版本）
+
 
 **🌟 新增**
 

@@ -44,6 +44,7 @@ declare module 'vue' {
     LeftPanel: typeof import('./src/components/index/LeftPanel.vue')['default']
     PreviewPanel: typeof import('./src/components/index/PreviewPanel.vue')['default']
     RenameTemplateDialog: typeof import('./src/components/index/dialogs/RenameTemplateDialog.vue')['default']
+    RewardDialog: typeof import('./src/components/index/dialogs/RewardDialog.vue')['default']
     RightPanel: typeof import('./src/components/index/RightPanel.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
