@@ -10,12 +10,33 @@
 
 [![Gitee Star](https://gitee.com/geqian618/time-letter/badge/star.svg?theme=dark)](https://gitee.com/geqian618/time-letter/stargazers)
 [![Version](https://img.shields.io/badge/version-v2.0.0-blue)](https://gitee.com/geqian618/time-letter/releases)
-[![Electron](https://img.shields.io/badge/Electron-29-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
+[![Electron](https://img.shields.io/badge/Electron-22.3-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![Vue](https://img.shields.io/badge/Vue-3.x-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
-[![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Platform](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows95&logoColor=white)](https://github.com/electron/electron)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vitejs.org/)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](#-cross-platform-build-notes)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 </div>
+
+---
+
+## 📑 Table of Contents
+
+- [📖 Introduction](#-introduction)
+- [✨ Features](#-features)
+- [🖼️ Screenshots](#-screenshots)
+- [🎬 Demo](#-demo)
+- [🛠️ Tech Stack](#-tech-stack)
+- [📁 Project Structure](#-project-structure)
+- [📥 Download & Install](#-download--install)
+- [🚀 Getting Started (Local Development)](#-getting-started-local-development)
+- [⌨️ Keyboard Shortcuts](#-keyboard-shortcuts)
+- [🔐 Packaging & Source Protection](#-packaging--source-protection)
+- [❓ FAQ](#-faq)
+- [📜 Changelog](#-changelog)
+- [🤝 Contributing](#-contributing)
+- [💝 Support the Author](#-support-the-author)
+- [📄 License](#-license)
 
 ---
 
@@ -29,11 +50,18 @@
 >
 > May we all turn fleeting emotions into silent letters traveling through time. One day in the future, opened by your own hands — a gentle reunion with your former self, remembering those moments.
 
+### ✨ Core Advantages
+
+- 🖱️ **Simple to use** — interaction logic is basically identical to common drawing software, zero learning curve
+- 🧩 **Highly extensible** — freely customize text, logos, fonts and template presets
+- 📦 **Easy to migrate** — freely export / import template presets and global app settings
+- 🔒 **Fully local** — no internet required, collects no data, privacy-safe
+
 ## ✨ Features
 
 ### 🖋️ Watermarks & Typography
 
-- **Text watermark**: fully adjustable font, size, weight, line height, letter spacing, column width, color, shadow, rotation, direction (horizontal / vertical), opacity and more
+- **Text watermark**: fully adjustable font, size, weight, line height, letter spacing, column width, color, shadow, rotation, direction (horizontal / vertical), opacity and more, with multi-line text support
 - **EXIF metadata watermark**: automatically reads camera brand, body, lens, focal length, ISO, shutter, aperture, shooting time and filename, and lays them out as a watermark in one click — with equivalent focal length conversion and custom date formats
 - **Logo watermark**: 16 built-in camera / phone brand logos (Canon, Sony, Nikon, Fujifilm, Huawei, Xiaomi, DJI, Insta360, etc.), custom image watermarks also supported
 - **Date watermark**: one-click date and date-time templates
@@ -42,18 +70,19 @@
 
 - **Three border types**: general (solid color), blur (extended blurred photo edges), and custom image — each side independently controllable in width and color
 - **Photo properties**: rounded corners, shadow (color / offset / blur), opacity, scale, etc.
-- **Professional canvas experience**: layer management, free dragging, property anchor, focal zoom, adjustable move step — interactions consistent with common drawing software
-- **Batch processing**: multiple canvases edited in parallel; the bottom preview panel supports landscape / portrait filtering, multi-select and quick paging
+- **Professional canvas experience**: layer management, free dragging, property anchor, focal zoom, adjustable move step, canvas alignment guides & auto-snapping — interactions consistent with common drawing software
+- **Batch processing**: multiple canvases edited in parallel; the bottom preview panel supports landscape / portrait filtering, marquee multi-select and quick paging
 
 ### 💾 Templates & Libraries
 
 - **Template presets**: save, rename and enable templates; apply configurations to multiple images via "sync by value / sync by ratio"
 - **Text library**: centrally manage frequently used watermark texts
 - **Font library**: import custom fonts with automatic hot-reloading via directory watching (ships with the "ZiKu XingQiu FeiYangTi" font)
+- **Image library**: the separate-window "Image Manager" for centralized asset management
 
-### 🚀 Batch Export
+### 📤 Batch Export
 
-- **Multi-threaded export**: adjustable thread count, processed in Worker threads without blocking the UI
+- **Multi-threaded export**: adjustable thread count, processed in Worker threads without blocking the UI, cancellable export tasks
 - **Format support**: JPG / JPEG / PNG / WEBP / GIF / AVIF — keep the original format or specify one, with adjustable quality
 - **Output size**: best / fixed width / fixed height / adaptive — four modes
 - **File naming**: original name / index / random, with custom prefix and suffix
@@ -68,93 +97,19 @@
 - 🖱️ Drag-and-drop upload, image lazy loading, system tray, native menus & shortcuts
 - 🔒 Fully local, no internet required, collects no data — privacy-safe
 
+## 🖼️ Screenshots
+
+<div align="center">
+  <img src="src/assets/images/application.webp" width="100%" alt="Time Letter main interface"/>
+</div>
+
+*Main workspace: presets & image library on the left, canvas editor in the center, properties panel on the right, and the image preview bar at the bottom*
+
 ## 🎬 Demo
 
 Video demos and tutorials on Bilibili:
 
 **[▶️ Watch here: https://space.bilibili.com/492789742](https://space.bilibili.com/492789742)**
-
-## 📥 Download & Install
-
-Download the latest release from [Gitee Releases](https://gitee.com/geqian618/time-letter/releases):
-
-| Package | Description |
-| --- | --- |
-| `Time Letter Setup x.x.x.exe` | Windows installer (NSIS), double-click to install, custom install directory supported |
-| `Time Letter x.x.x.zip` | Windows portable version, extract and run |
-| `time-letter-x.x.x-x64.dmg / -arm64.dmg` | macOS disk image (Intel / Apple Silicon, must be built on macOS) |
-| `time-letter-x.x.x-x64.AppImage / -x64.tar.gz` | Linux packages (AppImage build requires Windows Developer Mode / admin; deb/rpm must be built on Linux) |
-
-## 🚀 Getting Started (Local Development)
-
-### Requirements
-
-| Dependency | Version |
-| --- | --- |
-| Node.js | ≥ 18 (LTS recommended, verified on Node 22) |
-| npm | ≥ 9 (or pnpm / yarn) |
-| OS | Windows / macOS / Linux all work for development; Windows & Linux artifacts can be built on Windows, macOS artifacts must be built on macOS |
-
-### Development & Build
-
-```shell
-# 1. Clone the repository
-git clone https://gitee.com/geqian618/time-letter.git
-cd time-letter
-
-# 2. Install dependencies
-npm install
-
-# 3. Start development mode (Vite + Electron, hot reload for the renderer)
-npm run electron:serve
-
-# 4. Type check / lint
-npm run type-check
-npm run lint
-
-# 5. Package (runs automatically: vite build → main-process bundle → bytenode compile → electron-builder + encryption)
-npm run electron:build
-
-# Or target a platform explicitly (defaults to the current OS)
-npm run electron:build:win
-npm run electron:build:linux
-npm run electron:build:mac
-```
-
-> Build output goes to the `electron_dist/` directory.
-
-### Cross-Platform Build Notes
-
-Windows / macOS / Linux are all supported; platform differences are adapted in the main process via `process.platform`:
-
-| Difference | Adaptation |
-| --- | --- |
-| Data directory (templates / text / image resources, settings, window state) | Dev and packaged Windows keep `data/` next to the app; packaged macOS / Linux use the standard user data dir (`~/Library/Application Support/Time Letter/data`, `~/.config/Time Letter/data`) because Finder / AppImage / deb install locations are not writable |
-| App icon | Windows uses `favicon.ico`; macOS / Linux use `favicon.png` (icns is generated by electron-builder) |
-| Tray | Windows / Linux: persistent menu + left-click toggles the window; macOS: left-click toggles the window, right-click opens the menu (a persistent menu would swallow the click event on macOS) |
-| Application menu | macOS appends the `appMenu` / `editMenu` / `windowMenu` roles — without them Cmd+Q and clipboard shortcuts (Cmd+C/V) do not work |
-| Package layout | macOS resources live in `<App>.app/Contents/Resources`; `renderer.pkg` / `app.asar` checksum paths are resolved per platform (`renderer-loader.js`, `encryptor-afterpack.js`) |
-| exiftool native deps | The `afterPack` unpack rule covers vendor packages of all platforms (`exiftool-vendored.*`) |
-
-Key points:
-
-- bytenode bytecode (`.jsc`) is tied to the build machine's Electron V8 version and CPU architecture and is **not portable across platforms**: build Windows artifacts on Windows, macOS artifacts on macOS, and Linux artifacts on Linux. A three-OS CI matrix (`.github/workflows/build.yml`) builds all of them on tagged pushes.
-- macOS artifacts are unsigned (`mac.identity: null`); on first launch right-click → Open, or allow the app in System Settings → Privacy & Security.
-- The Linux tray requires `libappindicator` (`libayatana-appindicator3-1` on Ubuntu 22.04+); some desktop environments never fire the tray click event — the menu still works.
-- Linux targets are AppImage / tar.gz (no wine / dpkg toolchain needed); add deb / rpm targets on a Linux build machine if needed.
-
-## ⌨️ Keyboard Shortcuts
-
-| Shortcut | Action |
-| --- | --- |
-| `Ctrl/⌘ + I` | Import images |
-| `Ctrl/⌘ + O` | Export images |
-| `Ctrl/⌘ + T` | Export images |
-| `Ctrl/⌘ + Alt + S` | Open preferences |
-| `Ctrl/⌘ + D` | Remove image |
-| `Ctrl/⌘ + Alt + D` | Delete image |
-| `Ctrl/⌘ + L` | Clear canvas |
-| `Ctrl/⌘ + R` | Reset canvas |
 
 ## 🛠️ Tech Stack
 
@@ -164,7 +119,7 @@ Key points:
 | State management | Pinia + pinia-plugin-persistedstate (local persistence) |
 | UI components | Element Plus (auto on-demand import via unplugin) |
 | Internationalization | vue-i18n (Chinese / English) |
-| Desktop | Electron 29 + electron-builder |
+| Desktop | Electron 22 + electron-builder |
 | Image processing | sharp (main-process export) + @napi-rs/canvas (Node-side canvas rendering) + Worker threads |
 | Metadata | exiftool-vendored / exif (EXIF reading & write-back) |
 | File watching | chokidar (hot reload for image / font libraries) |
@@ -188,7 +143,8 @@ time-letter
 ├── scripts/                      # Build scripts
 │   ├── bundle-main.js            # esbuild bundling for main process / worker / preload
 │   ├── compile.js                # bytenode compilation to .jsc bytecode
-│   └── encryptor-afterpack.js    # afterPack hook: encryption & integrity finalization
+│   ├── encryptor-afterpack.js    # afterPack hook: encryption & integrity finalization
+│   └── nsis/                     # NSIS installer script fragment
 ├── src/                          # Renderer process (Vue 3)
 │   ├── views/                    # Pages (main workspace / image manager extension)
 │   ├── components/               # Panel components & dialogs
@@ -201,12 +157,74 @@ time-letter
 │   ├── config/                   # Default configs (color schemes, default project settings)
 │   └── utils/                    # Utilities (fonts / notifications / throttle / deep clone, etc.)
 ├── encryptor.config.js           # electron-builder-encryptor config (encryption key)
-├── electron-builder.json         # Packaging config (Windows: NSIS/zip, macOS: dmg/zip, Linux: AppImage/deb/tar.gz)
+├── electron-builder.json         # Packaging config (Windows: NSIS/zip, macOS: dmg/zip, Linux: AppImage/tar.gz)
 ├── vite.config.js                # Vite build config
 └── package.json
 ```
 
-## 🔐 Packaging & Source Protection (electron-builder-encryptor)
+## 📥 Download & Install
+
+Download the latest release from [Gitee Releases](https://gitee.com/geqian618/time-letter/releases):
+
+| Package | Description |
+| --- | --- |
+| `Time Letter Setup x.x.x.exe` | Windows installer (NSIS), double-click to install, custom install directory supported |
+| `Time Letter x.x.x.zip` | Windows portable version, extract and run |
+| `time-letter-x.x.x-x64.dmg / -arm64.dmg` | macOS disk image (Intel / Apple Silicon, must be built on macOS) |
+| `time-letter-x.x.x-x64.AppImage / -x64.tar.gz` | Linux packages (AppImage build requires Windows Developer Mode / admin; deb/rpm must be built on Linux) |
+
+## 🚀 Getting Started (Local Development)
+
+### Requirements
+
+| Dependency | Version |
+| --- | --- |
+| Node.js | ≥ 18 (LTS recommended, verified on Node 20 / 22) |
+| npm | ≥ 9 (or pnpm / yarn) |
+| OS | Windows / macOS / Linux all work for development; Windows & Linux artifacts can be built on Windows, macOS artifacts must be built on macOS |
+
+### Development & Build
+
+```shell
+# 1. Clone the repository
+git clone https://gitee.com/geqian618/time-letter.git
+cd time-letter
+
+# 2. Install dependencies
+npm install
+
+# 3. Start development mode (Vite + Electron, hot reload for the renderer)
+npm run electron:serve
+
+# 4. Type check / lint
+npm run type-check
+npm run lint
+
+# 5. Package (runs automatically: vite build → main-process bundle → bytenode compile → electron-builder + encryption)
+npm run electron:build
+
+# 6. Or target a platform explicitly (defaults to the current OS)
+npm run electron:build:win
+npm run electron:build:linux
+npm run electron:build:mac
+```
+
+> Build output goes to the `output/` directory.
+
+## ⌨️ Keyboard Shortcuts
+
+| Shortcut | Action |
+| --- | --- |
+| `Ctrl/⌘ + I` | Import images |
+| `Ctrl/⌘ + O` | Export images |
+| `Ctrl/⌘ + T` | Export images |
+| `Ctrl/⌘ + Alt + S` | Open preferences |
+| `Ctrl/⌘ + D` | Remove image |
+| `Ctrl/⌘ + Alt + D` | Delete image |
+| `Ctrl/⌘ + L` | Clear canvas |
+| `Ctrl/⌘ + R` | Reset canvas |
+
+## 🔐 Packaging & Source Protection
 
 During packaging (`npm run electron:build`), artifacts are protected via the `afterPack` hook of [electron-builder-encryptor](https://github.com/dusionlike/electron-builder-encryptor):
 
@@ -221,7 +239,42 @@ During packaging (`npm run electron:build`), artifacts are protected via the `af
 - The `afterPack` hook implementation is in `scripts/encryptor-afterpack.js`.
 - Decryption and loading of the renderer in production is done by the app itself: `electron/runtime/renderer-loader.js` (bundled into `main.jsc` with the main process) decrypts `renderer.pkg`, registers the `myclient://` protocol and verifies `app.asar` integrity; see `loadAppContent` in `electron/main.js` for the load URL (`myclient://apps/index.html`). Build artifacts do not depend on the build machine and can run anywhere.
 
-### Notes
+### Packaging Commands
+
+```shell
+# 1. Development: regular startup
+npm run electron:serve
+
+# 2. Package (runs automatically: vite build → bytenode compile → electron-builder + encryption)
+npm run electron:build
+
+# 3. Target a platform explicitly (electron-builder defaults to the current OS)
+npm run electron:build:win
+npm run electron:build:linux
+npm run electron:build:mac
+```
+
+### 🌍 Cross-Platform Build Notes
+
+Windows / macOS / Linux are all supported; platform differences are adapted in the main process via `process.platform`:
+
+| Difference | Adaptation |
+| --- | --- |
+| Data directory (templates / text / image resources, settings, window state) | Dev and packaged Windows keep `data/` next to the app; packaged macOS / Linux use the standard user data dir (`~/Library/Application Support/Time Letter/data`, `~/.config/Time Letter/data`) because Finder / AppImage / deb install locations are not writable |
+| App icon | Windows uses `favicon.ico`; macOS / Linux use `favicon.png` (icns is generated by electron-builder) |
+| Tray | Windows / Linux: persistent menu + left-click toggles the window; macOS: left-click toggles the window, right-click opens the menu (a persistent menu would swallow the click event on macOS) |
+| Application menu | macOS appends the `appMenu` / `editMenu` / `windowMenu` roles — without them Cmd+Q and clipboard shortcuts (Cmd+C/V) do not work |
+| Package layout | macOS resources live in `<App>.app/Contents/Resources`; `renderer.pkg` / `app.asar` checksum paths are resolved per platform (`renderer-loader.js`, `encryptor-afterpack.js`) |
+| exiftool native deps | The `afterPack` unpack rule covers vendor packages of all platforms (`exiftool-vendored.*`) |
+
+Key points:
+
+- bytenode bytecode (`.jsc`) is tied to the build machine's Electron V8 version and CPU architecture and is **not portable across platforms**: build Windows artifacts on Windows, macOS artifacts on macOS, and Linux artifacts on Linux. A three-OS CI matrix (`.github/workflows/build.yml`) builds all of them on tagged pushes.
+- macOS artifacts are unsigned (`mac.identity: null`); on first launch right-click → Open, or allow the app in System Settings → Privacy & Security.
+- The Linux tray requires `libappindicator` (`libayatana-appindicator3-1` on Ubuntu 22.04+); some desktop environments never fire the tray click event — the menu still works.
+- Linux targets are AppImage / tar.gz (no wine / dpkg toolchain needed); add deb / rpm targets on a Linux build machine if needed.
+
+### ⚠️ Source Protection Notes
 
 - After modifying main-process source (`electron/**/*.js`) or the encryption config (`encryptor.config.js`), simply repackage: `electron:build` automatically runs bundle (with config injection) → compile → package & encrypt — no manual steps needed.
 - `electron/main-loader.js`, `electron/preload/index-loader.js` and `electron/thread/worker-loader.js` are runtime bootstrap loaders kept in plain text; they are not bytecode-compiled.
@@ -250,7 +303,7 @@ Current releases target Windows (NSIS installer + portable zip), with macOS (dmg
 
 - The main-process code is cross-platform ready (data directory, icons, tray / menu behavior), so builds work out of the box on each platform.
 - Due to electron-builder limitations, macOS artifacts must be built on macOS (without a signing certificate the app runs locally, but distribution requires handling Gatekeeper notarization yourself); Linux AppImage / tar.gz can be cross-built directly on Windows.
-- For macOS builds, use the bundled GitHub Actions workflow (`.github/workflows/release.yml`): push a `v*` tag or dispatch manually to produce installers for all three platforms; alternatively run `npm run electron:build` directly on any Mac.
+- For macOS builds, use the bundled GitHub Actions workflow (`.github/workflows/build.yml`): push a `v*` tag or dispatch manually to produce installers for all three platforms; alternatively run `npm run electron:build` directly on any Mac.
 - Building the Linux AppImage on Windows requires Developer Mode or an elevated terminal (symlink privilege); deb / rpm targets depend on fpm and must be built on Linux / macOS (append them to `linux.target` in `electron-builder.json`).
 - The Windows portable build stores data next to the executable (`data/`); macOS / Linux use the standard per-user data directory.
 </details>
@@ -397,4 +450,16 @@ If this project helps you, follow me on [Bilibili](https://space.bilibili.com/49
 
 ## 📄 License
 
-No open-source license is attached to this project yet; all rights are reserved by default (Copyright © 搁浅). Free for personal learning; please contact the author before commercial use.
+This project is open-sourced under the [MIT License](LICENSE) — Copyright © 2025 搁浅.
+
+You are free to use, copy, modify, merge, publish, and distribute this software, including for commercial purposes, as long as the original copyright notice and this permission notice are retained in all copies or substantial portions of the Software. The software is provided "as is", without warranty of any kind.
+
+---
+
+<div align="center">
+
+**May every photo become a letter sent to the future.** ⏳
+
+<sub>Made with ❤️ by 搁浅</sub>
+
+</div>
