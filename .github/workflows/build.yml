@@ -18,8 +18,9 @@ jobs:
             name: win-x64
           - os: ubuntu-latest
             name: linux-x64
-          # bytenode 字节码与 CPU 架构绑定，mac 双架构必须在对应架构的 runner 上分别构建
-          - os: macos-13
+          # bytenode 字节码与 CPU 架构绑定，mac 双架构必须在对应架构的 runner 上分别构建；
+          # macos-13 镜像已于 2025-12 下线，Intel 构建改用 macos-15-intel（可用至 2027-08）
+          - os: macos-15-intel
             name: mac-x64
           - os: macos-latest
             name: mac-arm64
