@@ -4,7 +4,7 @@
 
 # 时光信笺 · Time Letter
 
-**一款完全本地运行、无需联网的照片水印与边框工具 —— 将此刻封存，寄给未来的自己**
+**一款完全本地运行、无需联网的照片水印与边框工具 —— 将此刻的记忆封存，寄送给未来的自己**
 
 [![Gitee Star](https://gitee.com/geqian618/time-letter/badge/star.svg?theme=dark)](https://gitee.com/geqian618/time-letter/stargazers)
 [![GitHub Star](https://img.shields.io/github/stars/geqian618/time-letter?style=flat&logo=github&label=Star)](https://github.com/geqian618/time-letter/stargazers)

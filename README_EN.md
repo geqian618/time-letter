@@ -6,7 +6,7 @@
 
 # Time Letter (时光信笺)
 
-**A fully local, offline photo watermark & border tool — seal this moment into letters that travel through time**
+**A fully local, offline photo watermark & border tool — seal the memories of this moment into letters sent to your future self**
 
 [![Gitee Star](https://gitee.com/geqian618/time-letter/badge/star.svg?theme=dark)](https://gitee.com/geqian618/time-letter/stargazers)
 [![GitHub Star](https://img.shields.io/github/stars/geqian618/time-letter?style=flat&logo=github&label=Star)](https://github.com/geqian618/time-letter/stargazers)
