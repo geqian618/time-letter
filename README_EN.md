@@ -113,17 +113,17 @@ Video demos and tutorials on Bilibili:
 
 ## 🛠️ Tech Stack
 
-| Category | Technology |
-| --- | --- |
-| Frontend | Vue 3 + Vite 5 + TypeScript |
-| State management | Pinia + pinia-plugin-persistedstate (local persistence) |
-| UI components | Element Plus (auto on-demand import via unplugin) |
-| Internationalization | vue-i18n (Chinese / English) |
-| Desktop | Electron 22 + electron-builder |
+| Category | Technology                                                                                  |
+| --- |---------------------------------------------------------------------------------------------|
+| Frontend | Vue 3 + Vite 5 + JavaScript                                                                 |
+| State management | Pinia + pinia-plugin-persistedstate (local persistence)                                     |
+| UI components | Element Plus (auto on-demand import via unplugin)                                           |
+| Internationalization | vue-i18n (Chinese / English)                                                                |
+| Desktop | Electron 22 + electron-builder                                                              |
 | Image processing | sharp (main-process export) + @napi-rs/canvas (Node-side canvas rendering) + Worker threads |
-| Metadata | exiftool-vendored / exif (EXIF reading & write-back) |
-| File watching | chokidar (hot reload for image / font libraries) |
-| Source protection | esbuild (bundle) + bytenode (V8 bytecode) + electron-builder-encryptor (AES-256) |
+| Metadata | exiftool-vendored / exif (EXIF reading & write-back)                                        |
+| File watching | chokidar (hot reload for image / font libraries)                                            |
+| Source protection | esbuild (bundle) + bytenode (V8 bytecode) + electron-builder-encryptor (AES-256)            |
 
 ## 📁 Project Structure
 
@@ -328,7 +328,7 @@ The app uses V8 bytecode compilation and AES encryption for source protection, w
 
 ## 📜 Changelog
 
-> Version numbers below are organized from the project's commit history. See the full [commit history](https://gitee.com/geqian618/time-letter/commits).
+> See the full [commit history](https://gitee.com/geqian618/time-letter/commits).
 
 ### v2.0.0 (2026-08 · Current)
 

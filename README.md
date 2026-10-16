@@ -119,16 +119,16 @@
 
 ## 🛠️ 技术栈
 
-| 类别 | 技术选型 |
-| --- | --- |
-| 前端框架 | Vue 3 + Vite 5 + TypeScript |
-| 状态管理 | Pinia + pinia-plugin-persistedstate（本地持久化） |
-| UI 组件 | Element Plus（unplugin 自动按需引入） |
-| 国际化 | vue-i18n（中文 / 英文） |
-| 桌面端 | Electron 22 + electron-builder |
-| 图像处理 | sharp（主进程导出）+ @napi-rs/canvas（Node 侧画布渲染）+ Worker 多线程 |
-| 元数据 | exiftool-vendored / exif（EXIF 读取与回写） |
-| 文件监听 | chokidar（图片库 / 字体库热加载） |
+| 类别 | 技术选型                                                                   |
+| --- |------------------------------------------------------------------------|
+| 前端框架 | Vue 3 + Vite 5 + JavaScript                                            |
+| 状态管理 | Pinia + pinia-plugin-persistedstate（本地持久化）                             |
+| UI 组件 | Element Plus（unplugin 自动按需引入）                                          |
+| 国际化 | vue-i18n（中文 / 英文）                                                      |
+| 桌面端 | Electron 22 + electron-builder                                         |
+| 图像处理 | sharp（主进程导出）+ @napi-rs/canvas（Node 侧画布渲染）+ Worker 多线程                  |
+| 元数据 | exiftool-vendored / exif（EXIF 读取与回写）                                   |
+| 文件监听 | chokidar（图片库 / 字体库热加载）                                                 |
 | 源码保护 | esbuild（bundle）+ bytenode（V8 字节码）+ electron-builder-encryptor（AES-256） |
 
 ---
@@ -348,7 +348,7 @@ npm run electron:build:mac
 
 ## 📜 更新日志
 
-> 以下版本号整理自项目提交历史，完整记录见 <a href="https://gitee.com/geqian618/time-letter/commits" target="_blank">提交历史</a>。
+> 完整记录见 <a href="https://gitee.com/geqian618/time-letter/commits" target="_blank">提交历史</a>。
 
 ### v2.0.0（2026-08 · 当前版本）
 
