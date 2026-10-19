@@ -514,10 +514,57 @@ class CanvasEditor {
     }
 
     /**
-     * 分布选中元素：以首尾元素为基准，中间元素沿分布方向按中心点等距排布（参考 PS 分布）
+     * 分布选中元素：以首尾元素为基准，中间元素沿分布方向按边缘间隙等距排布（参考 PS 分布间距）
      * @param {'horizontal'|'vertical'} mode - 分布方向
      */
     distributeElements(mode) {
+        const targets = this.activeElements;
+        if (!targets || targets.length < 3) return;
+        const horizontal = mode === 'horizontal';
+        // 按分布方向上的边缘排序，确定首尾基准
+        const sorted = [...targets].sort((a, b) => {
+            const ba = a.getSelectionBounds();
+            const bb = b.getSelectionBounds();
+            return horizontal ? ba.x - bb.x : ba.y - bb.y;
+        });
+        const first = sorted[0].getSelectionBounds();
+        const last = sorted[sorted.length - 1].getSelectionBounds();
+        // 间隙等距：首尾元素不动，可分配总间隙 = 首尾内边缘距离 - 中间元素占宽（高）
+        const span = horizontal
+            ? last.x - (first.x + first.w)
+            : last.y - (first.y + first.h);
+        const middleSize = sorted.slice(1, -1).reduce((sum, el) => {
+            const b = el.getSelectionBounds();
+            return sum + (horizontal ? b.w : b.h);
+        }, 0);
+        const gap = (span - middleSize) / (sorted.length - 1);
+        let cursor = horizontal ? first.x + first.w + gap : first.y + first.h + gap;
+        for (let i = 1; i < sorted.length - 1; i++) {
+            const el = sorted[i];
+            const b = el.getSelectionBounds();
+            let dx = 0, dy = 0;
+            if (horizontal) {
+                dx = cursor - b.x;
+                cursor += b.w + gap;
+            } else {
+                dy = cursor - b.y;
+                cursor += b.h + gap;
+            }
+            if (!dx && !dy) continue;
+            // 位移同步作用到 x/y 与旋转基准 centerX/centerY（与拖拽移动保持一致）
+            el.x += dx;
+            el.y += dy;
+            el.centerX += dx;
+            el.centerY += dy;
+        }
+        this.renderAll();
+    }
+
+    /**
+     * 分布选中元素：以首尾元素为基准，中间元素沿分布方向按中心点等距排布（参考 PS 分布中心）
+     * @param {'horizontal'|'vertical'} mode - 分布方向
+     */
+    distributeElementsByCenter(mode) {
         const targets = this.activeElements;
         if (!targets || targets.length < 3) return;
         const horizontal = mode === 'horizontal';
@@ -1273,6 +1320,9 @@ class CanvasEditor {
         const {x: startX, y: startY} = this.getCanvasPosition(event);
         const element = this.getElementAt(startX, startY, element => element.selectable);
 
+        // 实际参与拖拽的对象：Alt 拷贝后切换为副本，原元素保持原位
+        let dragElement = element;
+
         let lastMoveX = startX;
         let lastMoveY = startY;
         // 拖拽过程中的自由（未吸附）位置，按元素记录，避免吸附后离开时跳变
@@ -1299,7 +1349,14 @@ class CanvasEditor {
                 const bottom = Math.max(startY, moveY)
                 for (let el of elements) {
                     const {x: bx, y: by, w, h} = el.getSelectionBounds();
-                    if (bx >= left && by >= top && bx + w <= right && by + h <= bottom) {
+                    // 统一「完全包含」语义：元素可能部分位于画布外，而框选矩形受，getCanvasPosition 钳制无法超出画布，直接判定原包围盒会永远选不中。
+                    // 这里将元素包围盒先裁剪到画布范围，取其在画布内的可见部分，要求框选矩形完整覆盖该可见部分才触发选中
+                    const visLeft = Math.max(bx, 0);
+                    const visTop = Math.max(by, 0);
+                    const visRight = Math.min(bx + w, this.width);
+                    const visBottom = Math.min(by + h, this.height);
+                    const selected = visRight > visLeft && visBottom > visTop && visLeft >= left && visTop >= top && visRight <= right && visBottom <= bottom;
+                    if (selected) {
                         if (el.status === Element.SELECTED) continue
                         el.status = Element.SELECTED;
                         this.activeElements.push(el)
@@ -1326,15 +1383,32 @@ class CanvasEditor {
                     this.updateInputSelection();
                     this.renderAll();
                 }
-            } else if (interval > 200 && moved && element.draggable && (element.status === Element.NONE || this.hasActiveElement(element))) {
+            } else if (interval > 200 && moved && dragElement.draggable && (dragElement.status === Element.NONE || this.hasActiveElement(dragElement))) {
                 this.canvas.style.cursor = 'move';
                 // 计算偏移量
                 const offsetX = moveX - lastMoveX;
                 const offsetY = moveY - lastMoveY;
                 // 确定要拖拽的元素列表
-                const targetElements = element.status === Element.NONE
-                    ? [element]
+                let targetElements = dragElement.status === Element.NONE
+                    ? [dragElement]
                     : Array.from(this.activeElements).filter(el => el.draggable);
+                // Alt + 拖拽拷贝：仅在拖拽首帧判定（freePositions 尚未捕获时按下 Alt 才生效，
+                // 拖拽中途再按 Alt 不拷贝），克隆被拖元素并改为拖拽副本，原元素保持原位
+                if (e.altKey && !freePositions && targetElements.length) {
+                    const clones = targetElements.map(el => {
+                        this.addElement(el.clone());
+                        // 取回数组代理包装后的实例，保持与既有元素一致的响应式代理身份
+                        return this.elements[this.elements.length - 1];
+                    });
+                    // 选中态整体移交给副本，避免无关选中元素被卷入后续拖拽
+                    this.clearActiveElements();
+                    clones.forEach(clone => {
+                        clone.status = Element.SELECTED;
+                        this.activeElements.push(clone);
+                    });
+                    targetElements = clones;
+                    dragElement = clones[clones.length - 1];
+                }
                 // 首次进入拖拽时，捕获各元素的自由（未吸附）起始位置
                 if (!freePositions) {
                     freePositions = new Map();
@@ -1369,7 +1443,7 @@ class CanvasEditor {
                 // 更新最后移动位置并重新渲染
                 lastMoveX = moveX;
                 lastMoveY = moveY;
-                if (element.status === Element.NONE) {
+                if (dragElement.status === Element.NONE) {
                     this.removeActiveElements(this.activeElements);
                 }
                 this.renderAll();
@@ -2029,6 +2103,56 @@ class Element {
      */
     getSelectionBounds() {
         throw new Error('getSelectionBounds() must be implemented by subclass');
+    }
+
+    /**
+     * 克隆元素：生成属性相同、id 不同的独立副本（Alt + 拖拽拷贝用）
+     * 必须经构造函数创建实例：私有字段（#centerX / Text 的 #width/#chars 等）
+     * 只会在构造时安装，Object.create 出的空壳调用 setter 会因私有品牌检查抛 TypeError
+     * @returns {Element}
+     */
+    clone() {
+        let copy;
+        // 实例自身的可枚举属性即各子类的构造参数，整体作为 options 传入
+        const options = this;
+        if (this.type === 'text') {
+            copy = new this.constructor(this.text, options);
+        } else if (this.type === 'image') {
+            // Image 首参为图片对象，LazyImage 首参为 src（加载前 image 为 null）
+            copy = this.image ? new this.constructor(this.image, options) : new this.constructor(this.src, options);
+        } else {
+            copy = new this.constructor(options);
+        }
+        // 嵌套纯对象（shadow / lineDash 等）深拷贝，避免副本与原元素共享引用
+        const deepCopy = (value) => {
+            if (Array.isArray(value)) return value.map(deepCopy);
+            if (value && typeof value === 'object'
+                && (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)) {
+                const result = {};
+                for (const key of Object.keys(value)) {
+                    result[key] = deepCopy(value[key]);
+                }
+                return result;
+            }
+            return value;
+        };
+        // 覆盖构造函数写入的默认值（含 LazyImage 被重置为 null 的 image 引用）
+        for (const key of Object.keys(this)) {
+            copy[key] = deepCopy(this[key]);
+        }
+        // 访问器背后的私有字段不随自身属性拷贝，显式赋值走 setter
+        copy.centerX = this.centerX;
+        copy.centerY = this.centerY;
+        if (this.type === 'text') {
+            copy.width = this.width;
+            copy.height = this.height;
+            copy.chars = this.chars;
+            copy.lines = this.lines;
+        }
+        // 新 id：hasElement / removeElement 均按 id 匹配，复用 id 会误伤原元素
+        copy.id = Date.now() + Math.random();
+        copy.status = Element.NONE;
+        return copy;
     }
 
     /**

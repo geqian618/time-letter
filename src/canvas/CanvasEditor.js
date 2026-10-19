@@ -1349,7 +1349,14 @@ class CanvasEditor {
                 const bottom = Math.max(startY, moveY)
                 for (let el of elements) {
                     const {x: bx, y: by, w, h} = el.getSelectionBounds();
-                    if (bx >= left && by >= top && bx + w <= right && by + h <= bottom) {
+                    // 统一「完全包含」语义：元素可能部分位于画布外，而框选矩形受，getCanvasPosition 钳制无法超出画布，直接判定原包围盒会永远选不中。
+                    // 这里将元素包围盒先裁剪到画布范围，取其在画布内的可见部分，要求框选矩形完整覆盖该可见部分才触发选中
+                    const visLeft = Math.max(bx, 0);
+                    const visTop = Math.max(by, 0);
+                    const visRight = Math.min(bx + w, this.width);
+                    const visBottom = Math.min(by + h, this.height);
+                    const selected = visRight > visLeft && visBottom > visTop && visLeft >= left && visTop >= top && visRight <= right && visBottom <= bottom;
+                    if (selected) {
                         if (el.status === Element.SELECTED) continue
                         el.status = Element.SELECTED;
                         this.activeElements.push(el)
