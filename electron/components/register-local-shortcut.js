@@ -1,27 +1,32 @@
-const localshortcut  = require('electron-localshortcut')
+const localshortcut = require('electron-localshortcut')
+const {defaultShortcuts} = require('../../src/config/default-project-settings')
 
-const registerLocalShortcut = (window) => {
+// 画布类快捷键 → 渲染进程右键菜单命令 type
+const LOCAL_SHORTCUT_ACTIONS = {
+    removeImage: 1,
+    deleteImage: 2,
+    savePreset: 4,
+    clearCanvas: 6,
+    resetCanvas: 7
+}
 
-    // 使用 electron-localshortcut 注册快捷键
-    localshortcut.register(window, 'CommandOrControl+D', () => {
-        window.webContents.send('contextMenu:watch', { type: 1 });
-    });
+const registerLocalShortcut = (window, shortcuts = defaultShortcuts) => {
+    // 快捷键变更后重新注册前先注销，避免旧按键残留
+    localshortcut.unregisterAll(window)
 
-    localshortcut.register(window, 'CommandOrControl+Alt+D', () => {
-        window.webContents.send('contextMenu:watch', { type: 2 });
-    });
-
-    localshortcut.register(window, 'CommandOrControl+L', () => {
-        window.webContents.send('contextMenu:watch', { type: 6 });
-    });
-
-    localshortcut.register(window, 'CommandOrControl+R', () => {
-        window.webContents.send('contextMenu:watch', { type: 7 });
-    });
-
-    localshortcut.register(window, 'CommandOrControl+T', () => {
-        window.webContents.send('contextMenu:watch', { type: 4 });
-    });
+    for (const [action, type] of Object.entries(LOCAL_SHORTCUT_ACTIONS)) {
+        const register = (accelerator) => {
+            localshortcut.register(window, accelerator, () => {
+                window.webContents.send('contextMenu:watch', {type});
+            });
+        };
+        try {
+            register(shortcuts[action] || defaultShortcuts[action]);
+        } catch (e) {
+            // 导入的设置可能包含非法按键：回落到默认快捷键，避免主进程抛错
+            register(defaultShortcuts[action]);
+        }
+    }
 }
 
 module.exports = registerLocalShortcut

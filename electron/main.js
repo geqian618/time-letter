@@ -13,6 +13,8 @@ const resourcesLoader = require('./utils/resources-loader')
 const {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl} = require('./utils/path-helper')
 const {getSystemFonts, getCustomFonts} = require('./utils/font-manager')
 const performanceMetrics = require('./utils/performance-metrics')
+const settingsManager = require('./utils/settings-manager')
+const {defaultShortcuts} = require('../src/config/default-project-settings')
 const ImageMetadataHelper = require("./utils/ImageMetadataHelper");
 
 
@@ -48,6 +50,8 @@ let contextMenu = null;
 let templateContextMenu = null;
 let applicationMenu = null;
 let tray = null;
+// 当前生效的快捷键（渲染进程偏好设置启动后同步覆盖 settings.json 中的值）
+let shortcuts = {...defaultShortcuts};
 
 /**
  * 创建主窗口
@@ -120,15 +124,15 @@ const loadAppContent = (window) => {
  */
 const initializeComponents = (window) => {
 
-    applicationMenu = createApplicationMenu(window);
+    applicationMenu = createApplicationMenu(window, shortcuts);
 
-    contextMenu = createContextMenu(window);
+    contextMenu = createContextMenu(window, shortcuts);
 
     templateContextMenu = createTemplateContextMenu(window);
 
     tray = createTray(window)
 
-    registerLocalShortcut(window);
+    registerLocalShortcut(window, shortcuts);
 
     imageWatcher.watch(window, resourcesPath)
 
@@ -141,14 +145,39 @@ const initializeComponents = (window) => {
 const rebuildAppComponents = () => {
 
     if (mainWindow && !tray.isDestroyed()) {
-        applicationMenu = createApplicationMenu(mainWindow);
-        contextMenu = createContextMenu(mainWindow);
+        applicationMenu = createApplicationMenu(mainWindow, shortcuts);
+        contextMenu = createContextMenu(mainWindow, shortcuts);
         templateContextMenu = createTemplateContextMenu(mainWindow);
     }
 
     if (tray && !tray.isDestroyed()) {
         tray.destroy();
         tray = createTray(mainWindow);
+    }
+}
+
+/**
+ * 应用快捷键：持久化并重新注册窗口快捷键、重建带加速键的原生菜单
+ */
+const applyShortcuts = (nextShortcuts) => {
+    shortcuts = {...defaultShortcuts, ...nextShortcuts}
+    settingsManager.write({shortcuts})
+    if (!mainWindow) return
+    registerLocalShortcut(mainWindow, shortcuts)
+    applicationMenu = createApplicationMenu(mainWindow, shortcuts)
+    contextMenu = createContextMenu(mainWindow, shortcuts)
+}
+
+/**
+ * 录制快捷键期间临时停用快捷键与原生菜单加速键，避免按下旧按键就触发对应操作
+ */
+const suspendShortcuts = () => {
+    if (!mainWindow) return
+    localshortcut.unregisterAll(mainWindow)
+    if (process.platform === 'darwin') {
+        Menu.setApplicationMenu(null)
+    } else {
+        mainWindow.setMenu(null)
     }
 }
 
@@ -346,6 +375,16 @@ const setupIpcHandlers = () => {
         const resolved = setLanguage(language)
         BrowserWindow.getAllWindows().forEach(w => w.webContents.send('language:changed', resolved))
         rebuildAppComponents()
+    })
+
+    // 快捷键设置：更新注册与原生菜单加速键并持久化
+    ipcMain.on('shortcuts:set', (event, nextShortcuts) => {
+        applyShortcuts(nextShortcuts)
+    })
+
+    // 录制快捷键：先暂停快捷键响应，取消录制时恢复当前配置
+    ipcMain.on('shortcuts:recording', (event, recording) => {
+        recording ? suspendShortcuts() : applyShortcuts(shortcuts)
     })
 
     // 主题切换
@@ -806,6 +845,9 @@ const initializeApp = () => {
 
     // 设置用户数据（必须在 whenReady 方法执行之前调用才生效）
     setupUserData()
+
+    // 读取持久化的快捷键配置：启动时即按上次设置注册，渲染进程随后会用自身设置同步覆盖
+    shortcuts = {...defaultShortcuts, ...settingsManager.read().shortcuts}
 
     // 设置主题
     initTheme()

@@ -1,3 +1,15 @@
+// 全局快捷键默认值（Electron accelerator 格式）：偏好设置与主进程注册共用
+const defaultShortcuts = {
+    importImages: 'CommandOrControl+I',
+    exportImages: 'CommandOrControl+O',
+    preferences: 'CommandOrControl+Alt+S',
+    savePreset: 'CommandOrControl+T',
+    removeImage: 'CommandOrControl+D',
+    deleteImage: 'CommandOrControl+Alt+D',
+    clearCanvas: 'CommandOrControl+L',
+    resetCanvas: 'CommandOrControl+R'
+}
+
 const defaultProjectSettings = {
     outputSettings: {
         outputSize: {
@@ -37,6 +49,8 @@ const defaultProjectSettings = {
     performance: {
         downloadThreads: -1,
     },
+    // 全局快捷键（Electron accelerator 格式），可在偏好设置中修改
+    shortcuts: {...defaultShortcuts},
     locale: {
         language: 'system'
     },
@@ -76,4 +90,4 @@ const defaultProjectSettings = {
     }
 }
 
-export {defaultProjectSettings}
+export {defaultProjectSettings, defaultShortcuts}

@@ -29,6 +29,7 @@ import CmdGridIcon from '@/assets/icon/cmd-grid.svg'
 import CmdHeartIcon from '@/assets/icon/cmd-heart.svg'
 import CmdImportIcon from '@/assets/icon/cmd-import.svg'
 import CmdInfoIcon from '@/assets/icon/cmd-info.svg'
+import CmdKeyboardIcon from '@/assets/icon/cmd-keyboard.svg'
 import CmdMoonIcon from '@/assets/icon/cmd-moon.svg'
 import CmdPanelBIcon from '@/assets/icon/cmd-panel-b.svg'
 import CmdPanelLIcon from '@/assets/icon/cmd-panel-l.svg'
@@ -88,6 +89,7 @@ const registry = {
   'cmd-heart': CmdHeartIcon,
   'cmd-import': CmdImportIcon,
   'cmd-info': CmdInfoIcon,
+  'cmd-keyboard': CmdKeyboardIcon,
   'cmd-moon': CmdMoonIcon,
   'cmd-panel-b': CmdPanelBIcon,
   'cmd-panel-l': CmdPanelLIcon,
