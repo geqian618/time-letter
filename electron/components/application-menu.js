@@ -6,6 +6,7 @@ const {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl} = requ
 const {registerFont} = require('../utils/font-manager')
 const {openImageManagerWindow} = require('./image-manager-window')
 const {t} = require('../locales')
+const {defaultShortcuts} = require('../../src/config/default-project-settings')
 const {IMAGE_TYPES} = require("../constant/project-constants");
 
 const resourcesPath = getResourcePath()
@@ -19,7 +20,7 @@ const fontPath = getFontPath()
 
 let window;
 
-const createApplicationMenu = (mainWindow) => {
+const createApplicationMenu = (mainWindow, shortcuts = defaultShortcuts) => {
 
     window = mainWindow;
 
@@ -40,14 +41,14 @@ const createApplicationMenu = (mainWindow) => {
                     label: t('menu.importImages'),
                     // 无传参
                     click: selectFile,
-                    accelerator: 'CommandOrControl+I'
+                    accelerator: shortcuts.importImages
 
                 },
                 {
                     id: 'export-images',
                     label: t('menu.exportImages'),
                     click: saveFiles,
-                    accelerator: 'CommandOrControl+O'
+                    accelerator: shortcuts.exportImages
                 }
             ]
         },
@@ -59,7 +60,7 @@ const createApplicationMenu = (mainWindow) => {
                     id: 'preferences',
                     label: t('menu.preferences'),
                     click: openSettingsDialog,
-                    accelerator: 'CommandOrControl+Alt+S',
+                    accelerator: shortcuts.preferences,
                 },
                 {
                     label: t('menu.templatePresets'),
@@ -192,7 +193,12 @@ const createApplicationMenu = (mainWindow) => {
 
     const applicationMenu = Menu.buildFromTemplate(template);
 
-    window.setMenu(applicationMenu)
+    // macOS 的应用菜单挂在应用级；Windows / Linux 挂在窗口上
+    if (process.platform === 'darwin') {
+        Menu.setApplicationMenu(applicationMenu)
+    } else {
+        window.setMenu(applicationMenu)
+    }
 
     return applicationMenu;
 }

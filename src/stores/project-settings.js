@@ -73,6 +73,13 @@ export const useProjectSettingsStore = defineStore('projectSettings', () => {
             if (ctx.store?.projectSettings?.appearance) {
                 delete ctx.store.projectSettings.appearance.uiTheme
             }
+            // 旧版本数据没有快捷键字段：补齐默认值，缺少单项时也回落到默认按键
+            if (ctx.store?.projectSettings) {
+                ctx.store.projectSettings.shortcuts = {
+                    ...defaultProjectSettings.shortcuts,
+                    ...ctx.store.projectSettings.shortcuts
+                }
+            }
         }
     }
 })

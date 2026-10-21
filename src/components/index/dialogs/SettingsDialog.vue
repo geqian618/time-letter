@@ -267,6 +267,46 @@
             </div>
           </template>
 
+          <!-- 快捷键 -->
+          <template v-else-if="activePage === 'shortcuts'">
+            <div class="settings-section">
+              <div class="section-title">{{ $t('settings.shortcutsGroup') }}</div>
+              <div class="settings-card">
+                <div class="setting-row" v-for="item in shortcutItems" :key="item.key">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t(item.labelKey) }}</div>
+                  </div>
+                  <div class="row-control">
+                    <button type="button"
+                            class="shortcut-button"
+                            :class="{ 'is-recording': recordingShortcut === item.key }"
+                            @click="startShortcutRecording(item.key)">
+                      {{ recordingShortcut === item.key
+                          ? $t('settings.shortcutsRecording')
+                          : formatAccelerator(settingsStore.projectSettings.shortcuts[item.key]) }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="shortcuts-hint">{{ $t('settings.shortcutsHint') }}</div>
+            </div>
+
+            <div class="settings-section">
+              <div class="section-title">{{ $t('settings.shortcutsResetTitle') }}</div>
+              <div class="settings-card">
+                <div class="setting-row">
+                  <div class="row-info">
+                    <div class="row-label">{{ $t('settings.shortcutsReset') }}</div>
+                    <div class="row-desc">{{ $t('settings.desc.shortcutsReset') }}</div>
+                  </div>
+                  <div class="row-control">
+                    <el-button @click="resetShortcutSettings">{{ $t('settings.shortcutsResetGroup') }}</el-button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+
           <!-- 元数据 -->
           <template v-else-if="activePage === 'metadata'">
             <div class="settings-section">
@@ -550,7 +590,7 @@
 
 <script setup lang="js">
 
-import {ref, computed, watch} from 'vue'
+import {ref, computed, watch, onBeforeUnmount} from 'vue'
 
 import _ from 'lodash'
 
@@ -645,6 +685,14 @@ const navItems = [
       'desc.interfaceLanguage']
   },
   {
+    key: 'shortcuts', icon: 'cmd-keyboard', labelKey: 'settings.tabs.shortcuts',
+    search: ['shortcutsGroup', 'shortcutsHint', 'shortcutsRecording', 'shortcutsReset', 'shortcutsResetGroup',
+      'shortcutsResetTitle', 'desc.shortcutsReset',
+      'shortcutLabels.importImages', 'shortcutLabels.exportImages', 'shortcutLabels.preferences',
+      'shortcutLabels.savePreset', 'shortcutLabels.removeImage', 'shortcutLabels.deleteImage',
+      'shortcutLabels.clearCanvas', 'shortcutLabels.resetCanvas']
+  },
+  {
     key: 'export', icon: 'cmd-export', labelKey: 'settings.tabs.export',
     search: ['imageSize', 'adjustMode', 'width', 'height', 'maxWidth', 'maxHeight',
       'imageSettings', 'outputFormat', 'formatOriginal', 'imageQuality', 'syncMetadata',
@@ -705,6 +753,146 @@ const canvasesStore = useCanvasesStore()
 const settingsDialogVisible = ref(false)
 
 const confirmRef = ref(null)
+
+// ---------- 快捷键设置 ----------
+
+// 可自定义的全局快捷键项：key 对应 projectSettings.shortcuts 字段
+const shortcutItems = [
+  {key: 'importImages', labelKey: 'settings.shortcutLabels.importImages'},
+  {key: 'exportImages', labelKey: 'settings.shortcutLabels.exportImages'},
+  {key: 'preferences', labelKey: 'settings.shortcutLabels.preferences'},
+  {key: 'savePreset', labelKey: 'settings.shortcutLabels.savePreset'},
+  {key: 'removeImage', labelKey: 'settings.shortcutLabels.removeImage'},
+  {key: 'deleteImage', labelKey: 'settings.shortcutLabels.deleteImage'},
+  {key: 'clearCanvas', labelKey: 'settings.shortcutLabels.clearCanvas'},
+  {key: 'resetCanvas', labelKey: 'settings.shortcutLabels.resetCanvas'},
+]
+
+const isMac = window.electronAPI?.platform === 'darwin'
+
+// 仅用于展示：存储值保持 Electron accelerator 格式
+const formatAccelerator = (accelerator) => (accelerator || '').split('+').map(part => {
+  if (part === 'CommandOrControl') return isMac ? '⌘' : 'Ctrl'
+  if (part === 'Control') return isMac ? '⌃' : 'Ctrl'
+  if (part === 'Alt') return isMac ? '⌥' : 'Alt'
+  if (part === 'Shift') return isMac ? '⇧' : 'Shift'
+  return part
+}).join(' + ')
+
+const MODIFIER_KEYS = ['Control', 'Shift', 'Alt', 'Meta']
+
+const KEY_NAME_MAP = {
+  ' ': 'Space',
+  ArrowUp: 'Up',
+  ArrowDown: 'Down',
+  ArrowLeft: 'Left',
+  ArrowRight: 'Right',
+  Escape: 'Esc',
+  Enter: 'Enter',
+  Tab: 'Tab',
+  Backspace: 'Backspace',
+  Delete: 'Delete',
+  Home: 'Home',
+  End: 'End',
+  PageUp: 'PageUp',
+  PageDown: 'PageDown',
+  Insert: 'Insert'
+}
+
+const keyNameFromEvent = (event) => {
+  if (KEY_NAME_MAP[event.key]) return KEY_NAME_MAP[event.key]
+  if (/^[a-zA-Z0-9]$/.test(event.key)) return event.key.toUpperCase()
+  if (/^F([1-9]|1[0-2])$/.test(event.key)) return event.key
+  return null
+}
+
+const recordingShortcut = ref(null)
+
+let shortcutRecordingHandler = null
+
+const stopShortcutRecording = () => {
+  if (shortcutRecordingHandler) {
+    window.removeEventListener('keydown', shortcutRecordingHandler, true)
+    window.removeEventListener('blur', stopShortcutRecording)
+    shortcutRecordingHandler = null
+  }
+  if (!recordingShortcut.value) return
+  recordingShortcut.value = null
+  window.electronAPI?.setShortcutRecording?.(false)
+}
+
+const startShortcutRecording = (key) => {
+  stopShortcutRecording()
+  recordingShortcut.value = key
+  window.electronAPI?.setShortcutRecording?.(true)
+
+  shortcutRecordingHandler = (event) => {
+    // 录制期间拦截按键，避免触发搜索、元素快捷键等页面内响应
+    event.preventDefault()
+    event.stopPropagation()
+    if (event.key === 'Escape') {
+      stopShortcutRecording()
+      return
+    }
+    if (MODIFIER_KEYS.includes(event.key)) return
+
+    const keyName = keyNameFromEvent(event)
+    if (!keyName) {
+      Notification.error(t('settings.shortcutsUnsupported'), t('common.notice'))
+      return
+    }
+
+    const primaryModifier = isMac ? event.metaKey : event.ctrlKey
+    if (!primaryModifier && !event.altKey && !event.ctrlKey) {
+      Notification.error(t('settings.shortcutsModifierRequired'), t('common.notice'))
+      return
+    }
+
+    const accelerator = [
+      ...(primaryModifier ? ['CommandOrControl'] : []),
+      ...(isMac && event.ctrlKey ? ['Control'] : []),
+      ...(event.altKey ? ['Alt'] : []),
+      ...(event.shiftKey ? ['Shift'] : []),
+      keyName
+    ].join('+')
+
+    const conflict = shortcutItems.find(item =>
+        item.key !== key && settingsStore.projectSettings.shortcuts[item.key] === accelerator)
+    if (conflict) {
+      Notification.error(t('settings.shortcutsConflict', {
+        shortcut: formatAccelerator(accelerator),
+        action: t(conflict.labelKey)
+      }), t('common.notice'))
+      return
+    }
+
+    settingsStore.projectSettings.shortcuts[key] = accelerator
+    stopShortcutRecording()
+  }
+
+  window.addEventListener('keydown', shortcutRecordingHandler, true)
+  window.addEventListener('blur', stopShortcutRecording)
+}
+
+// 快捷键变更（修改 / 导入 / 恢复默认）后同步主进程重新注册；启动时也发送一次使持久化设置生效
+watch(() => settingsStore.projectSettings.shortcuts, (shortcuts) => {
+  // 展开为普通对象：reactive proxy 无法通过 IPC 结构化克隆
+  window.electronAPI?.setShortcuts?.({...shortcuts})
+}, {deep: true, immediate: true})
+
+watch(settingsDialogVisible, (visible) => {
+  if (!visible) stopShortcutRecording()
+})
+
+watch(activePage, stopShortcutRecording)
+
+onBeforeUnmount(stopShortcutRecording)
+
+// 恢复全部快捷键为默认按键（watch 会同步主进程重新注册）
+const resetShortcutSettings = () => {
+  stopShortcutRecording()
+  settingsStore.projectSettings.shortcuts = _.cloneDeep(defaultProjectSettings.shortcuts)
+}
 
 const {applyTheme, renderUiStyle} = useTheme();
 
@@ -1307,6 +1495,39 @@ const resetAllSettings = async () => {
     color: var(--app-secondary-text);
     font-size: 12px;
   }
+}
+
+/* 快捷键录制按钮 */
+.shortcut-button {
+  min-width: 128px;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--app-radius-sm);
+  background: var(--ui-elevated);
+  color: var(--ui-text);
+  font-size: 12.5px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color var(--app-transition), border-color var(--app-transition), box-shadow var(--app-transition);
+
+  &:hover {
+    background: var(--ui-control);
+  }
+
+  &.is-recording {
+    border-color: var(--ui-accent);
+    color: var(--ui-accent);
+    box-shadow: 0 0 0 1px var(--ui-accent) inset;
+  }
+}
+
+.shortcuts-hint {
+  margin-top: 8px;
+  padding: 0 2px;
+  font-size: 12px;
+  color: var(--app-secondary-text);
+  line-height: 1.5;
 }
 
 /* 弹窗内控件文字使用 EP 默认字号（14px），不参与全局 10px 字号体系（仅本弹窗生效） */

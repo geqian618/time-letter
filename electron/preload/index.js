@@ -58,4 +58,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 语言切换（渲染进程为设置来源，主进程持久化并重建原生 UI 后广播回各窗口）
     setLanguage: (language) => ipcRenderer.send('language:set', language),
     watchLanguageChanged: (callback) => ipcRenderer.on('language:changed', callback),
+
+    // 全局快捷键（设置页修改后同步主进程重新注册；录制期间暂停快捷键响应）
+    setShortcuts: (shortcuts) => ipcRenderer.send('shortcuts:set', shortcuts),
+    setShortcutRecording: (recording) => ipcRenderer.send('shortcuts:recording', recording),
 });
