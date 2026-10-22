@@ -10,7 +10,7 @@ const sharp = require("sharp");
 const imageParser = require('./utils/image-parser')
 const imageExportProcessor = require('./thread/image-export-processor')
 const resourcesLoader = require('./utils/resources-loader')
-const {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl} = require('./utils/path-helper')
+const {getResourcePath, getFontPath, getConfigDir, localPathToUrl, localPathToThumbUrl} = require('./utils/path-helper')
 const {getSystemFonts, getCustomFonts} = require('./utils/font-manager')
 const performanceMetrics = require('./utils/performance-metrics')
 const settingsManager = require('./utils/settings-manager')
@@ -64,6 +64,7 @@ const createMainWindow = () => {
         defaultWidth: 1000,
         defaultHeight: 600,
         electronStoreOptions: {
+            cwd: getConfigDir(),
             name: 'main-window-state'
         }
     })

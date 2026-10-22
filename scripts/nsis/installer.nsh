@@ -6,6 +6,7 @@
 ;
 ; 行为约定（不区分默认路径与自定义路径，统一处理）：
 ;   覆盖安装 —— 数据选项页：勾选「覆盖旧的数据文件夹」才删除，缺省不勾选（保留）；
+;               保留时同时保留安装目录下的 data 与 config（config 存放设置与窗口状态）；
 ;               选择经注册表 OverwriteData 传递给静默执行的旧卸载器
 ;   卸载     —— 数据文件夹选项页：勾选「同时删除数据文件夹」缺省选中（删除），
 ;               取消勾选则保留
@@ -226,7 +227,7 @@ FunctionEnd
       DetailPrint "安装目录未能完全删除（应用可能仍在运行），残留文件由安装流程覆盖"
     ${EndIf}
   ${Else}
-    ; 保留 data：仅删除安装目录内的其余内容（目录才判定 data，避免同名文件误留）
+    ; 保留 data 与 config：仅删除安装目录内的其余内容（目录才判定，避免同名文件误留）
     StrCpy $R3 "0"
     FindFirst $R1 $R2 "$INSTDIR\*.*"
     rm_loop:
@@ -235,6 +236,7 @@ FunctionEnd
       StrCmp $R2 ".." rm_next
       IfFileExists "$INSTDIR\$R2\*.*" 0 rm_isfile
         StrCmp $R2 "data" rm_next
+        StrCmp $R2 "config" rm_next
         ClearErrors
         RMDir /r "$INSTDIR\$R2"
         ${If} ${Errors}

@@ -260,7 +260,8 @@ npm run electron:build:mac
 
 | 差异点                          | 适配方式                                                                                                                                                               |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 数据目录（模板 / 文本 / 图片资源、设置、窗口状态） | 开发环境与 Windows 打包沿用应用目录下 `data/`；macOS / Linux 打包使用系统标准用户数据目录（`~/Library/Application Support/时光信笺/data`、`~/.config/时光信笺/data`），因 Finder / AppImage / deb 场景下安装位置不可写 |
+| 数据目录（模板 / 文本 / 图片资源） | 开发环境与 Windows 打包沿用应用目录下 `data/`；macOS / Linux 打包使用系统标准用户数据目录（`~/Library/Application Support/时光信笺/data`、`~/.config/时光信笺/data`），因 Finder / AppImage / deb 场景下安装位置不可写 |
+| 配置目录（设置、窗口状态） | 开发环境与 Windows 打包为安装目录下 `config/`（覆盖安装缺省保留）；macOS / Linux 因安装位置可能只读，使用系统标准用户目录下的 `config/` |
 | 应用图标                         | Windows 用 `favicon.ico`，macOS / Linux 用 `favicon.png`（icns 由 electron-builder 自动生成）                                                                                |
 | 托盘                           | Windows / Linux：常驻菜单 + 左键切换窗口显隐；macOS：左键切换窗口、右键弹菜单（macOS 常驻菜单会吞掉点击事件）                                                                                              |
 | 应用菜单                         | macOS 追加 `appMenu` / `editMenu` / `windowMenu` role，否则 Cmd+Q 退出、输入框 Cmd+C/V 复制粘贴不生效                                                                                |
@@ -302,7 +303,7 @@ npm run electron:build:mac
 - 受 electron-builder 限制，macOS 产物必须在 macOS 上构建（无签名证书时应用可本地运行，但分发需自行处理 Gatekeeper 公证）。
 - 构建 macOS 安装包可使用仓库自带的 GitHub Actions 工作流（`.github/workflows/build.yml`）：推送 `v*` tag 或手动触发，即可产出三平台安装包；也可以直接在任何 Mac 上运行 `npm run electron:build`。
 - 在 Windows 上构建 Linux AppImage 需开启开发者模式或使用管理员终端（符号链接权限）；deb / rpm 目标依赖 fpm，需在 Linux / macOS 上构建（在 `electron-builder.json` 的 `linux.target` 中追加即可）。
-- Windows 便携版数据存储在可执行文件同级 `data/` 目录；macOS / Linux 使用系统标准用户数据目录。
+- Windows 便携版数据存储在可执行文件同级 `data/`，设置与窗口状态在同级 `config/`；macOS / Linux 使用系统标准用户数据目录。
 
 </details>
 
@@ -310,7 +311,7 @@ npm run electron:build:mac
 
 <summary><b>4. 模板和设置保存在哪里？</b></summary>
 
-全部本地存储：模板预设与文本资源通过 Pinia 持久化插件保存，应用设置保存于 `settings.json`，窗口位置与大小记录在 `main-window-state.json`。整个应用数据目录可直接迁移 / 备份，菜单中也提供模板预设与全局设置的导入 / 导出功能。
+全部本地存储：模板预设与文本资源保存于数据目录下的 `templates.json` / `text-resources.json`，应用设置保存于安装目录 `config/settings.json`，窗口位置与大小记录在 `config/main-window-state.json`。数据目录可直接迁移 / 备份，菜单中也提供模板预设与全局设置的导入 / 导出功能。
 
 </details>
 

@@ -1,9 +1,24 @@
 const path = require('path');
 const {app} = require('electron');
 
-// 应用偏好配置文件（userData/settings.json）：主题 / 语言等模块共用
+// 安装目录：开发环境为项目根目录，打包后为可执行文件所在目录
+const getInstallDir = () => {
+    return process.env.NODE_ENV === 'development'
+        ? process.cwd()
+        : path.dirname(app.getPath('exe'))
+}
+
+// 应用配置目录：安装目录/config；macOS / Linux 安装位置可能只读（DMG / AppImage），
+// 回退到系统标准用户目录（与默认 userData 同级）
+const getConfigDir = () => {
+    return process.env.NODE_ENV === 'development' || process.platform === 'win32'
+        ? path.join(getInstallDir(), 'config')
+        : path.join(app.getPath('appData'), app.getName(), 'config')
+}
+
+// 应用偏好配置文件（config/settings.json）：主题 / 语言 / 快捷键等模块共用
 const getSettingsFilePath = () => {
-    return path.join(app.getPath('userData'), 'settings.json');
+    return path.join(getConfigDir(), 'settings.json');
 }
 
 const getResourcePath = () => {
@@ -45,4 +60,4 @@ function localPathToThumbUrl(filePath) {
     return `thumb:///${encodeLocalPath(filePath)}`;
 }
 
-module.exports = {getSettingsFilePath, getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl}
+module.exports = {getConfigDir, getSettingsFilePath, getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl}

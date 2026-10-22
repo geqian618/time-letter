@@ -17,6 +17,7 @@ coverage
 
 # 打包产物 / 运行时数据 / bytenode 字节码（均由构建自动生成）
 data
+/config
 *.jsc
 # 注意：encryptor.config.js 与 electron/runtime/renderer-loader.js 中
 # 的加密 key 必须保持一致，且都需要提交到仓库。
