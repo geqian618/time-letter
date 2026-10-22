@@ -55,6 +55,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     changeDataDir: () => ipcRenderer.invoke('data-dir:change'),
     openDataDir: () => ipcRenderer.invoke('data-dir:open'),
 
+    // 持久化数据（模板 / 文本资源）：主进程读写数据目录下的 JSON 文件
+    persistedStorage: {
+        getItem: (key) => ipcRenderer.sendSync('storage:read', key),
+        setItem: (key, value) => ipcRenderer.send('storage:write', key, value),
+    },
+
     // 语言切换（渲染进程为设置来源，主进程持久化并重建原生 UI 后广播回各窗口）
     setLanguage: (language) => ipcRenderer.send('language:set', language),
     watchLanguageChanged: (callback) => ipcRenderer.on('language:changed', callback),

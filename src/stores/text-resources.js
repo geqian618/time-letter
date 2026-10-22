@@ -34,10 +34,12 @@ export const useTextResourcesStore = defineStore('textResources', () => {
         textResourceDialogTitle,
     }
 }, {
-    // 仅持久化 textResources：key 为 store id（textResources），以纯数组形式读写，与历史本地数据格式一致
+    // 仅持久化 textResources：存储为数据目录下的 text-resources.json（纯数组）
     persist: {
+        key: 'text-resources',
+        storage: window.electronAPI?.persistedStorage,
         serializer: {
-            serialize: (state) => JSON.stringify(state.textResources),
+            serialize: (state) => JSON.stringify(state.textResources, null, 2),
             deserialize: (json) => ({textResources: JSON.parse(json)})
         }
     }

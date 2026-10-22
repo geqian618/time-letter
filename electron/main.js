@@ -370,6 +370,35 @@ const setupIpcHandlers = () => {
         return true
     })
 
+    // ---------- 渲染进程持久化数据（模板 / 文本资源） ----------
+
+    // 白名单：key 即文件名（templates.json / text-resources.json），避免渲染进程借此读写任意路径
+    const persistedStoreKeys = new Set(['templates', 'text-resources'])
+
+    const getPersistedFilePath = (key) => {
+        return persistedStoreKeys.has(key) ? path.join(app.getPath('userData'), `${key}.json`) : null
+    }
+
+    // 同步读取：pinia 持久化插件在 store 创建时需要同步恢复数据
+    ipcMain.on('storage:read', (event, key) => {
+        const filePath = getPersistedFilePath(key)
+        try {
+            event.returnValue = filePath ? fs.readFileSync(filePath, 'utf8') : null
+        } catch (error) {
+            event.returnValue = null
+        }
+    })
+
+    ipcMain.on('storage:write', (event, key, value) => {
+        const filePath = getPersistedFilePath(key)
+        if (!filePath) return
+        try {
+            fs.writeFileSync(filePath, value, 'utf8')
+        } catch (error) {
+            console.error('保存数据文件失败:', error)
+        }
+    })
+
     // 语言切换：持久化偏好并重建全部原生 UI（菜单 / 右键菜单 / 托盘 / 窗口标题），广播各窗口跟随
     ipcMain.on('language:set', (event, language) => {
         const resolved = setLanguage(language)
