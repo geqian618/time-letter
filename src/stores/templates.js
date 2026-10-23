@@ -1,9 +1,10 @@
-import {ref} from 'vue'
+import {ref, watch} from 'vue'
 import {defineStore} from 'pinia'
 
 export const useTemplatesStore = defineStore('templates', () => {
 
-    const templates = ref([])
+    // 数据文件在 data/templates.json，读写都交给主进程，不再走浏览器持久化插件
+    const templates = ref(window.electronAPI?.persistedStorage.getItem('templates') ?? [])
 
     const templateSettings = ref({})
 
@@ -24,6 +25,8 @@ export const useTemplatesStore = defineStore('templates', () => {
 
     const enableTemplateDialogVisible = ref(false)
 
+    watch(templates, value => window.electronAPI?.persistedStorage.setItem('templates', value), {deep: true})
+
     return {
         templates,
         templateSettings,
@@ -33,15 +36,5 @@ export const useTemplatesStore = defineStore('templates', () => {
         saveTemplateDialogVisible,
         renameTemplateDialogVisible,
         enableTemplateDialogVisible,
-    }
-}, {
-    // 仅持久化 templates：存储为数据目录下的 templates.json（纯数组）
-    persist: {
-        key: 'templates',
-        storage: window.electronAPI?.persistedStorage,
-        serializer: {
-            serialize: (state) => JSON.stringify(state.templates, null, 2),
-            deserialize: (json) => ({templates: JSON.parse(json)})
-        }
     }
 })

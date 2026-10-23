@@ -1,4 +1,4 @@
-import {ref, computed} from 'vue'
+import {ref, computed, watch} from 'vue'
 import {defineStore} from 'pinia'
 
 import {TextResource} from '@/object/Configuration'
@@ -7,7 +7,8 @@ import i18n from '@/locales'
 
 export const useTextResourcesStore = defineStore('textResources', () => {
 
-    const textResources = ref([])
+    // 数据文件在 data/text-resources.json，读写都交给主进程，不再走浏览器持久化插件
+    const textResources = ref(window.electronAPI?.persistedStorage.getItem('text-resources') ?? [])
 
     const textResource = ref(new TextResource())
 
@@ -24,6 +25,8 @@ export const useTextResourcesStore = defineStore('textResources', () => {
         return i18n.global.t(handleTextResourceType.value === 0 ? 'textResource.addTitle' : 'textResource.editTitle')
     })
 
+    watch(textResources, value => window.electronAPI?.persistedStorage.setItem('text-resources', value), {deep: true})
+
     return {
         textResources,
         textResource,
@@ -32,15 +35,5 @@ export const useTextResourcesStore = defineStore('textResources', () => {
         editorImageLabelDialogVisible,
         textResourceManagerDialogVisible,
         textResourceDialogTitle,
-    }
-}, {
-    // 仅持久化 textResources：存储为数据目录下的 text-resources.json（纯数组）
-    persist: {
-        key: 'text-resources',
-        storage: window.electronAPI?.persistedStorage,
-        serializer: {
-            serialize: (state) => JSON.stringify(state.textResources, null, 2),
-            deserialize: (json) => ({textResources: JSON.parse(json)})
-        }
     }
 })

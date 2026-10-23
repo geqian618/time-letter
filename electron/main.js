@@ -19,6 +19,7 @@ const {
     localPathToUrl,
     localPathToThumbUrl
 } = require('./utils/path-helper')
+const {serializeTemplates, deserializeTemplates} = require('./utils/templates-serializer')
 const {getSystemFonts, getCustomFonts} = require('./utils/font-manager')
 const performanceMetrics = require('./utils/performance-metrics')
 const settingsManager = require('./utils/settings-manager')
@@ -390,17 +391,24 @@ const setupIpcHandlers = () => {
     ipcMain.on('storage:read', (event, key) => {
         const filePath = getPersistedFilePath(key)
         try {
-            event.returnValue = filePath ? fs.readFileSync(filePath, 'utf8') : null
+            const json = filePath ? fs.readFileSync(filePath, 'utf8') : null
+            if (!json) {
+                event.returnValue = null
+                return
+            }
+            // 文件损坏时按空数据处理，用户下次改动会覆盖原文件；想救数据先把坏文件改名再启动
+            event.returnValue = key === 'templates' ? deserializeTemplates(json) : JSON.parse(json)
         } catch (error) {
             event.returnValue = null
         }
     })
 
-    ipcMain.on('storage:write', (event, key, value) => {
+    ipcMain.on('storage:write', (event, key, data) => {
         const filePath = getPersistedFilePath(key)
         if (!filePath) return
         try {
-            fs.writeFileSync(filePath, value, 'utf8')
+            const json = key === 'templates' ? serializeTemplates(data) : JSON.stringify(data, null, 2)
+            fs.writeFileSync(filePath, json, 'utf8')
         } catch (error) {
             console.error('保存数据文件失败:', error)
         }
@@ -522,7 +530,10 @@ const setupIpcHandlers = () => {
         }
 
         const zip = new AdmZip();
-        const data = JSON.stringify({type: 'TEMPLATE', templates}, null, 2);
+        const data = JSON.stringify({
+            type: 'TEMPLATE',
+            templates: JSON.parse(serializeTemplates(templates))
+        }, null, 2);
         const textBuffer = Buffer.from(data, 'utf-8');
         zip.addFile('templates.json', textBuffer);
         zip.addFile("resources/", Buffer.alloc(0));
