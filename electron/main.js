@@ -10,7 +10,15 @@ const sharp = require("sharp");
 const imageParser = require('./utils/image-parser')
 const imageExportProcessor = require('./thread/image-export-processor')
 const resourcesLoader = require('./utils/resources-loader')
-const {getResourcePath, getFontPath, getConfigDir, localPathToUrl, localPathToThumbUrl} = require('./utils/path-helper')
+const {
+    setDataRoot,
+    getDataRoot,
+    getResourcePath,
+    getFontPath,
+    getConfigDir,
+    localPathToUrl,
+    localPathToThumbUrl
+} = require('./utils/path-helper')
 const {getSystemFonts, getCustomFonts} = require('./utils/font-manager')
 const performanceMetrics = require('./utils/performance-metrics')
 const settingsManager = require('./utils/settings-manager')
@@ -34,8 +42,6 @@ const {initLanguage, t, setLanguage, changeLanguage} = require('./locales')
 const {initTheme, setTheme} = require('./components/theme')
 const environment = process.env.NODE_ENV
 const isDev = environment === 'development'
-const resourcesPath = getResourcePath()
-const fontPath = getFontPath()
 
 // 禁用安全警告
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
@@ -135,9 +141,9 @@ const initializeComponents = (window) => {
 
     registerLocalShortcut(window, shortcuts);
 
-    imageWatcher.watch(window, resourcesPath)
+    imageWatcher.watch(window, getResourcePath())
 
-    fontWatcher.watch(window, fontPath)
+    fontWatcher.watch(window, getFontPath())
 }
 
 /**
@@ -331,9 +337,9 @@ const setupIpcHandlers = () => {
 
     // ---------- 数据目录（设置项：查看 / 更改 / 打开） ----------
 
-    // 当前生效的数据目录（= userData）
+    // 当前生效的数据目录（数据根，Chromium 配置在其 browser/ 子目录）
     ipcMain.handle('data-dir:get', () => {
-        return {current: app.getPath('userData')}
+        return {current: getDataRoot()}
     })
 
     // 更改数据目录：选目录 → 整目录复制旧数据 → 写指针 → 重启应用生效
@@ -344,7 +350,7 @@ const setupIpcHandlers = () => {
         })
         if (canceled || !filePaths?.length) return {canceled: true}
 
-        const from = path.resolve(app.getPath('userData'))
+        const from = path.resolve(getDataRoot())
         const to = path.resolve(filePaths[0])
         if (to === from) return {unchanged: true}
         // 目标与当前数据目录互为嵌套会造成自我复制，直接拒绝
@@ -367,7 +373,7 @@ const setupIpcHandlers = () => {
 
     // 在系统文件管理器中打开当前数据目录
     ipcMain.handle('data-dir:open', async () => {
-        await shell.openPath(app.getPath('userData'))
+        await shell.openPath(getDataRoot())
         return true
     })
 
@@ -377,7 +383,7 @@ const setupIpcHandlers = () => {
     const persistedStoreKeys = new Set(['templates', 'text-resources'])
 
     const getPersistedFilePath = (key) => {
-        return persistedStoreKeys.has(key) ? path.join(app.getPath('userData'), `${key}.json`) : null
+        return persistedStoreKeys.has(key) ? path.join(getDataRoot(), `${key}.json`) : null
     }
 
     // 同步读取：pinia 持久化插件在 store 创建时需要同步恢复数据
@@ -839,33 +845,55 @@ const writeDataDirPointer = (dataDir) => {
 }
 
 /**
+ * 内置图片 / 字体：数据目录中对应文件夹不存在时从安装目录复制一次。
+ * 文件夹一旦存在就不再复制，用户删除的资源不会在下次启动时复活。
+ */
+const seedBuiltInAssets = (dataRoot) => {
+    const sourceRoot = isDev ? path.join(process.cwd(), 'electron', 'resources') : process.resourcesPath
+    for (const name of ['resources', 'fonts']) {
+        const source = path.join(sourceRoot, name)
+        const target = path.join(dataRoot, name)
+        if (fs.existsSync(target) || !fs.existsSync(source)) continue
+        fs.cpSync(source, target, {recursive: true})
+    }
+}
+
+/**
  * 设置用户数据（必须在 whenReady 方法执行之前调用才生效）
  *
- * 数据目录按优先级选择：
+ * 数据根目录（data/）按优先级选择：
  *   1. 用户在设置中自定义过 → 使用指针文件记录的路径（卸载 / 重装 / 升级都不影响）；
  *   2. 开发环境 → 项目根 data/；
  *   3. Windows 打包（未自定义）→ 安装目录下 data/（默认便携，随卸载被删除）；
- *   4. macOS / Linux 打包（未自定义）→ 系统标准用户数据目录（工作目录不可靠：
- *      macOS 启动 cwd 为 /、AppImage 挂载点只读等）。
+ *   4. macOS / Linux 打包（未自定义）→ 系统标准用户数据目录下的 data/
+ *      （工作目录不可靠：macOS 启动 cwd 为 /、AppImage 挂载点只读等）。
+ *
+ * 数据根下的布局：browser/（Chromium Profile / 缓存 / LocalStorage）、
+ * resources/（图片库）、fonts/（字体库）、templates.json、text-resources.json。
  */
 const setupUserData = () => {
     // 先捕获系统默认 userData 目录（setPath 之后 getPath 返回的就是重定向后的值）
     const defaultUserData = app.getPath('userData')
     dataDirPointerFile = path.join(defaultUserData, 'data-dir.txt')
-
     const customDataDir = readDataDirPointer()
-    let userDataPath;
+    let dataRoot;
+
     if (customDataDir) {
-        userDataPath = customDataDir
+        dataRoot = customDataDir
     } else if (isDev || process.platform === 'win32') {
-        userDataPath = path.join(process.cwd(), 'data')
+        dataRoot = path.join(process.cwd(), 'data')
     } else {
-        userDataPath = path.join(defaultUserData, 'data')
+        dataRoot = path.join(defaultUserData, 'data')
     }
-    if (!fs.existsSync(userDataPath)) {
-        fs.mkdirSync(userDataPath, {recursive: true})
-    }
-    app.setPath('userData', userDataPath);
+
+    const browserDataDir = path.join(dataRoot, 'browser')
+    fs.mkdirSync(browserDataDir, {recursive: true})
+    seedBuiltInAssets(dataRoot)
+
+    setDataRoot(dataRoot)
+    // Chromium 的 Profile / 缓存 / LocalStorage 统一收敛到 data/browser，数据根目录只保留业务数据与资源目录，便于整体迁移和查看
+    app.setPath('userData', browserDataDir);
+    app.setPath('sessionData', browserDataDir);
 }
 
 /**

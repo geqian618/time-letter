@@ -2,7 +2,6 @@ const {GlobalFonts} = require("@napi-rs/canvas");
 const fs = require("fs");
 const path = require("path");
 const {getFontPath, localPathToUrl} = require("./path-helper");
-const fontPath = getFontPath();
 
 const availableFonts = new Map();
 
@@ -34,6 +33,7 @@ const reloadSystemFonts = async () => {
 
 
 const reloadCustomFonts = async () => {
+    const fontPath = getFontPath();
     const filenames = await fs.promises.readdir(fontPath);
     for (let filename of filenames) {
         const fileParsed = path.parse(filename);

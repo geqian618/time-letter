@@ -3,9 +3,8 @@ const {reloadFonts} = require('./font-manager')
 const path = require('path');
 const fs = require('fs');
 
-const resourcesPath = getResourcePath()
-
 const loadResources = (window) => {
+    const resourcesPath = getResourcePath()
     fs.readdir(resourcesPath, (err, filenames) => {
         const files = filenames.map((filename) => {
             const extname = path.extname(filename).slice(1);
