@@ -3,7 +3,7 @@ const path = require('path')
 const fs = require('fs')
 const AdmZip = require('adm-zip');
 const {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl} = require('../utils/path-helper')
-const {registerFont} = require('../utils/font-manager')
+const {addFont} = require('../utils/font-manager')
 const {openImageManagerWindow} = require('./image-manager-window')
 const {t} = require('../locales')
 const {defaultShortcuts} = require('../../src/config/default-project-settings')
@@ -349,9 +349,9 @@ const selectFonts = async () => {
                 family: fileParsed.name,
                 url: localPathToUrl(destPath),
                 path: destPath,
+                isSystem: false
             };
-            // 注册字体
-            registerFont(font);
+            addFont(font);
             return {family: font.family, font};
         })
     );
