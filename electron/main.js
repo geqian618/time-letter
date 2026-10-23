@@ -816,18 +816,21 @@ const setupAppLifecycle = () => {
 /**
  * 数据目录指针：记录用户自定义的数据目录位置
  *
- * 指针文件放在「系统默认 userData 目录」下（必须在 setPath 重定向前捕获）：
- *   Windows 为 %APPDATA%\时光信笺\data-dir.txt，macOS / Linux 为对应标准目录。
- * 该位置不受安装器卸载 / 重装影响，因此重装后仍能找回自定义的数据目录。
+ * 存放在安装目录 config/config.ini（与 settings.json 同目录）：
+ *   [Data]
+ *   Dir=C:\...
+ * NSIS 安装器 / 卸载器用 ReadINIStr 读取，因此固定写 UTF-16LE + BOM，
+ * 否则中文路径会按系统代码页解析成乱码。
  * 未自定义时按各平台默认规则解析（见 setupUserData）。
  */
-let dataDirPointerFile = null
+let configIniFile = null
 
 const readDataDirPointer = () => {
     try {
-        // UTF-16LE + BOM：NSIS 卸载脚本（assets/installer.nsh）按 Unicode 文本读取
-        const dataDir = fs.readFileSync(dataDirPointerFile, 'utf16le').replace(/^\ufeff/, '').trim()
-        return dataDir || ''
+        const buffer = fs.readFileSync(configIniFile)
+        // 手动编辑时编辑器通常存 UTF-8，按 BOM 区分编码
+        const text = buffer[0] === 0xFF && buffer[1] === 0xFE ? buffer.toString('utf16le') : buffer.toString('utf8')
+        return (text.match(/^\s*Dir\s*=\s*(.*)$/m)?.[1] || '').trim()
     } catch (error) {
         return ''
     }
@@ -835,8 +838,8 @@ const readDataDirPointer = () => {
 
 const writeDataDirPointer = (dataDir) => {
     try {
-        fs.mkdirSync(path.dirname(dataDirPointerFile), {recursive: true})
-        fs.writeFileSync(dataDirPointerFile, '\ufeff' + dataDir, 'utf16le')
+        fs.mkdirSync(path.dirname(configIniFile), {recursive: true})
+        fs.writeFileSync(configIniFile, `\ufeff[Data]\r\nDir=${dataDir}\r\n`, 'utf16le')
         return true
     } catch (error) {
         console.error('写入数据目录指针失败:', error)
@@ -862,7 +865,7 @@ const seedBuiltInAssets = (dataRoot) => {
  * 设置用户数据（必须在 whenReady 方法执行之前调用才生效）
  *
  * 数据根目录（data/）按优先级选择：
- *   1. 用户在设置中自定义过 → 使用指针文件记录的路径（卸载 / 重装 / 升级都不影响）；
+ *   1. 用户在设置中自定义过 → 使用 config/config.ini 记录的路径；
  *   2. 开发环境 → 项目根 data/；
  *   3. Windows 打包（未自定义）→ 安装目录下 data/（默认便携，随卸载被删除）；
  *   4. macOS / Linux 打包（未自定义）→ 系统标准用户数据目录下的 data/
@@ -874,7 +877,7 @@ const seedBuiltInAssets = (dataRoot) => {
 const setupUserData = () => {
     // 先捕获系统默认 userData 目录（setPath 之后 getPath 返回的就是重定向后的值）
     const defaultUserData = app.getPath('userData')
-    dataDirPointerFile = path.join(defaultUserData, 'data-dir.txt')
+    configIniFile = path.join(getConfigDir(), 'config.ini')
     const customDataDir = readDataDirPointer()
     let dataRoot;
 
