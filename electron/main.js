@@ -20,7 +20,7 @@ const {
     localPathToThumbUrl
 } = require('./utils/path-helper')
 const {serializeTemplates, deserializeTemplates} = require('./utils/templates-serializer')
-const {getSystemFonts, getCustomFonts} = require('./utils/font-manager')
+const {listSystemFonts, listCustomFonts} = require('./utils/font-manager')
 const performanceMetrics = require('./utils/performance-metrics')
 const settingsManager = require('./utils/settings-manager')
 const {defaultShortcuts} = require('../src/config/default-project-settings')
@@ -39,7 +39,7 @@ const {closeImageManagerWindow, getImageManagerWindow} = require('./components/i
 
 // 配置常量
 const {APP_NAME, APP_ICON_PATH, APP_VERSION, IMAGE_TYPES} = require('./constant/project-constants')
-const {initLanguage, t, setLanguage, changeLanguage} = require('./locales')
+const {initLanguage, t, setLanguage} = require('./locales')
 const {initTheme, setTheme} = require('./components/theme')
 const environment = process.env.NODE_ENV
 const isDev = environment === 'development'
@@ -495,8 +495,8 @@ const setupIpcHandlers = () => {
 
         const imageSet = new Set();
         const fontSet = new Set();
-        const systemFonts = getSystemFonts();
-        const customFonts = getCustomFonts();
+        const systemFonts = listSystemFonts();
+        const customFonts = listCustomFonts();
 
         for (let template of templates) {
             const elements = template.settings.foreground.elements;

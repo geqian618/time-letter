@@ -4,68 +4,82 @@ const path = require("path");
 const {GlobalFonts} = require("@napi-rs/canvas");
 const {getFontPath, localPathToUrl} = require("./path-helper");
 
-const availableFonts = new Map();
+const fontRegistry = new Map();
 
-const refreshFonts = () => {
 
-    availableFonts.clear();
-
-    refreshSystemFonts();
-
-    refreshCustomFonts();
-
-    return availableFonts;
-}
-
-const refreshSystemFonts = () => {
+const pullSystemFonts = () => {
+    const systemFonts = new Map();
     GlobalFonts.families.forEach(({family}) => {
         const font = {family, url: null, path: null, isSystem: true};
-        availableFonts.set(font.family, font)
-    })
-}
+        systemFonts.set(font.family, font);
+    });
+    return systemFonts;
+};
 
-
-const refreshCustomFonts = () => {
+const pullCustomFonts = () => {
+    const customFonts = new Map();
     const fontPath = getFontPath();
     const filenames = fs.readdirSync(fontPath);
-    for (let filename of filenames) {
-        const fileParsed = path.parse(filename);
+    for (const filename of filenames) {
+        const fullPath = path.join(fontPath, filename);
         const font = {
-            family: fileParsed.name,
-            url: localPathToUrl(path.join(fontPath, filename)),
-            path: path.join(fontPath, filename),
+            family: path.parse(filename).name,
+            url: localPathToUrl(fullPath),
+            path: fullPath,
             isSystem: false
         };
-        addFont(font);
+        customFonts.set(font.family, font);
     }
+    return customFonts;
+};
+
+
+const pullFonts = () => {
+    const systemFonts = pullSystemFonts();
+    const customFonts = pullCustomFonts();
+    // 自定义字体优先，覆盖同名系统字体
+    const allFonts = new Map([...systemFonts, ...customFonts]);
+    fontRegistry.clear();
+    for (const [family, font] of allFonts) {
+        fontRegistry.set(family, font);
+    }
+    return fontRegistry;
+};
+
+
+const listFonts = () => {
+    if (fontRegistry.size === 0) {
+        return pullFonts()
+    }
+    return fontRegistry;
 }
 
 
-const getSystemFonts = () => {
-    return new Map([...availableFonts].filter(([_, font]) => font.isSystem));
+const listSystemFonts = () => {
+    return new Map([...fontRegistry].filter(([_, font]) => font.isSystem));
 }
 
 
-const getCustomFonts = () => {
-    return new Map([...availableFonts].filter(([_, font]) => !font.isSystem));
+const listCustomFonts = () => {
+    return new Map([...fontRegistry].filter(([_, font]) => !font.isSystem));
 }
 
 
 const hasFont = (family) => {
-    return availableFonts.has(family)
+    return fontRegistry.has(family)
 }
 
 
 const addFont = (font) => {
-    if (!availableFonts.has(font.family)) {
-        availableFonts.set(font.family, font)
+    if (!fontRegistry.has(font.family)) {
+        fontRegistry.set(font.family, font)
     }
 }
 
 
 const removeFont = (family) => {
-    availableFonts.delete(family)
+    fontRegistry.delete(family)
 }
 
 
-module.exports = {refreshFonts, getCustomFonts, getSystemFonts, addFont, removeFont, hasFont}
+module.exports = {listFonts, listCustomFonts, listSystemFonts, addFont, removeFont, hasFont}

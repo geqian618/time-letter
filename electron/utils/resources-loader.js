@@ -1,5 +1,5 @@
 const {getResourcePath, localPathToUrl, localPathToThumbUrl} = require('./path-helper')
-const {refreshFonts} = require('./font-manager')
+const {listFonts} = require('./font-manager')
 const path = require('path');
 const fs = require('fs');
 
@@ -22,7 +22,7 @@ const loadResources = (window) => {
 }
 
 const loadFonts = (window) => {
-    const fonts = refreshFonts();
+    const fonts = listFonts();
     window.webContents.send('fonts:watch-import', {type: -1, data: fonts})
 }
 
