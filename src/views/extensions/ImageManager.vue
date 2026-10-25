@@ -71,7 +71,7 @@
 
 <script setup lang="js">
 
-import {ref, computed, watch, onMounted} from 'vue'
+import {ref, computed, watch, onMounted, onUnmounted} from 'vue'
 
 import {ElMessage} from 'element-plus'
 
@@ -265,21 +265,27 @@ watch(locale, applyDocumentTitle)
 
 const {renderTheme} = useTheme();
 
+// IPC 监听解绑函数集合（onMounted 中注册，卸载时统一解绑，防 HMR 重挂载累积监听器）
+const ipcDisposers = []
+
 onMounted(() => {
   applyDocumentTitle()
   measureWrapper()
   // 先注册监听，再拉取初始快照
-  watchImageData()
-  watchMoveResult()
+  ipcDisposers.push(watchImageData(), watchMoveResult())
   window.electronAPI.imageManagerRequestData()
 
   // 跟随主窗口的主题切换广播
-  window.electronAPI?.watchThemeChanged?.((event, theme) => {
+  ipcDisposers.push(window.electronAPI?.watchThemeChanged?.((event, theme) => {
     renderTheme(theme);
-  });
+  }));
 
   useEventListener(window, 'keydown', handleKeydown)
   useEventListener(window, 'resize', measureWrapper)
+})
+
+onUnmounted(() => {
+  ipcDisposers.forEach((dispose) => dispose?.())
 })
 
 </script>

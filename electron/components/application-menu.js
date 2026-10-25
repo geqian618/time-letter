@@ -1,7 +1,10 @@
 const {dialog, app, Menu, shell} = require('electron');
 const path = require('path')
 const fs = require('fs')
-const AdmZip = require('adm-zip');
+const yauzl = require('yauzl');
+// stream/promises 的 pipeline 在 Node 16（Electron 22）与更高版本 Node 上均为 promise 形式；
+// 顶层 require('stream').pipeline 在部分版本要求必须传回调
+const {pipeline} = require('stream/promises');
 const {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl} = require('../utils/path-helper')
 const {addFont} = require('../utils/font-manager')
 const {openImageManagerWindow} = require('./image-manager-window')
@@ -16,6 +19,18 @@ const {IMAGE_TYPES} = require("../constant/project-constants");
  */
 
 let window;
+
+// macOS 关闭主窗口后应用仍存活，应用菜单仍挂载可点击；
+// 发送前统一判存活，避免向已销毁 webContents 发送抛 "Object has been destroyed"
+const send = (channel, payload) => {
+    if (!window || window.isDestroyed()) return
+    send(channel, payload)
+}
+
+// 窗口关闭时由主进程调用，释放对已销毁窗口的引用
+const dispose = () => {
+    window = null
+}
 
 const createApplicationMenu = (mainWindow, shortcuts = defaultShortcuts) => {
 
@@ -107,7 +122,7 @@ const createApplicationMenu = (mainWindow, shortcuts = defaultShortcuts) => {
                             id: 'manage-text',
                             label: t('menu.manageText'),
                             click: () => {
-                                window.webContents.send('resources:watch-change', {type: 3})
+                                send('resources:watch-change', {type: 3})
                             }
                         }
                     ],
@@ -225,10 +240,98 @@ const selectFile = async () => {
             })
         );
         const data = new Map(files.map(item => [item.path, item]));
-        window.webContents.send('images:watch-import', data)
+        send('images:watch-import', data)
     }
 }
 
+
+// ---------- .tile（zip）流式读取（yauzl） ----------
+// AdmZip 会把整个压缩包读进内存，导入大模板包时主进程峰值随包体积线性增长；
+// yauzl 逐条目流式读取，内存占用约等于当前正在解压的单个文件。
+
+const openZip = (zipPath) => new Promise((resolve, reject) => {
+    yauzl.open(zipPath, {lazyEntries: true, autoClose: false}, (err, zipfile) => {
+        if (err) reject(err)
+        else resolve(zipfile)
+    })
+})
+
+const openZipEntryStream = (zipfile, entry) => new Promise((resolve, reject) => {
+    zipfile.openReadStream(entry, (err, stream) => {
+        if (err) reject(err)
+        else resolve(stream)
+    })
+})
+
+// 流式读取 zip 内指定文本条目的完整内容；条目不存在时 resolve(null)
+const readZipTextEntry = async (zipPath, entryName) => {
+    const zipfile = await openZip(zipPath)
+    try {
+        return await new Promise((resolve, reject) => {
+            zipfile.on('error', reject)
+            zipfile.on('end', () => resolve(null))
+            zipfile.on('entry', (entry) => {
+                if (entry.fileName !== entryName) {
+                    zipfile.readEntry()
+                    return
+                }
+                openZipEntryStream(zipfile, entry).then(stream => {
+                    const chunks = []
+                    stream.on('data', (chunk) => chunks.push(chunk))
+                    stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
+                    stream.on('error', reject)
+                }).catch(reject)
+            })
+            zipfile.readEntry()
+        })
+    } finally {
+        zipfile.close()
+    }
+}
+
+// 流式解出 zip 中 targetDirOf 命中的条目：以 basename 落到目标目录，已存在的文件不覆盖
+// （与旧行为一致）；未命中的条目跳过。targetDirOf(entryName) 返回 null 表示不处理
+const extractZipEntriesByBasename = async (zipPath, targetDirOf) => {
+    const zipfile = await openZip(zipPath)
+    try {
+        await new Promise((resolve, reject) => {
+            zipfile.on('error', reject)
+            zipfile.on('end', resolve)
+            zipfile.on('entry', (entry) => {
+                // 目录条目（名以 / 结尾）直接跳过
+                if (/\/$/.test(entry.fileName)) {
+                    zipfile.readEntry()
+                    return
+                }
+                const targetDir = targetDirOf(entry.fileName)
+                if (targetDir == null) {
+                    zipfile.readEntry()
+                    return
+                }
+                openZipEntryStream(zipfile, entry).then(async (stream) => {
+                    try {
+                        const target = path.join(targetDir, path.basename(entry.fileName))
+                        // 已存在则不覆盖：yauzl 要求当前流结束或销毁后才能继续遍历
+                        const exists = await fs.promises.access(target, fs.constants.F_OK)
+                            .then(() => true).catch(() => false)
+                        if (exists) {
+                            stream.destroy()
+                        } else {
+                            await fs.promises.mkdir(targetDir, {recursive: true})
+                            await pipeline(stream, fs.createWriteStream(target))
+                        }
+                        zipfile.readEntry()
+                    } catch (err) {
+                        reject(err)
+                    }
+                }).catch(reject)
+            })
+            zipfile.readEntry()
+        })
+    } finally {
+        zipfile.close()
+    }
+}
 
 const importTemplates = async () => {
     const {filePaths} = await dialog.showOpenDialog({
@@ -240,69 +343,54 @@ const importTemplates = async () => {
 
     if (!filePaths?.length) return;
 
-    const zip = new AdmZip(filePaths[0]);
-    const configEntry = zip.getEntry('templates.json');
-
-    if (!configEntry || configEntry.isDirectory) {
-        return;
-    }
-
-    let config;
     try {
-        const configData = configEntry.getData().toString('utf8');
-        config = JSON.parse(configData);
-    } catch (err) {
-        return;
-    }
+        // 第一遍只读 templates.json 做校验（流式）：配置无效时与旧行为一致，不写任何文件
+        const configText = await readZipTextEntry(filePaths[0], 'templates.json');
+        if (configText == null) return;
 
-    const {type, templates} = config;
+        let config;
+        try {
+            config = JSON.parse(configText);
+        } catch (err) {
+            return;
+        }
 
-    if (type !== 'TEMPLATE' || !templates?.length) {
-        return;
-    }
+        const {type, templates} = config;
 
-    const data = [];
-    let nextId = Date.now();
-    const entries = zip.getEntries();
+        if (type !== 'TEMPLATE' || !templates?.length) {
+            return;
+        }
 
-    // 先处理模板配置中的图片路径
-    for (const template of templates) {
-        const newTemplate = {...template, templateId: nextId++};
-        const elements = newTemplate.settings?.foreground?.elements;
-        if (elements && Array.isArray(elements)) {
-            for (const element of elements) {
-                if (element.type === 'image' && element.meta?.path) {
-                    const originalPath = element.meta.path;
-                    const fileName = path.basename(originalPath);
-                    const newFilePath = path.join(getResourcePath(), fileName);
-                    element.meta.path = newFilePath;
-                    element.src = localPathToUrl(newFilePath);
+        const data = [];
+        let nextId = Date.now();
+
+        // 处理模板配置中的图片路径（重写为本机资源目录）
+        for (const template of templates) {
+            const newTemplate = {...template, templateId: nextId++};
+            const elements = newTemplate.settings?.foreground?.elements;
+            if (elements && Array.isArray(elements)) {
+                for (const element of elements) {
+                    if (element.type === 'image' && element.meta?.path) {
+                        const fileName = path.basename(element.meta.path);
+                        const newFilePath = path.join(getResourcePath(), fileName);
+                        element.meta.path = newFilePath;
+                        element.src = localPathToUrl(newFilePath);
+                    }
                 }
             }
+            data.push(newTemplate);
         }
-        data.push(newTemplate);
-    }
 
-    for (const entry of entries) {
-        if (!entry.isDirectory) {
-            const entryName = entry.entryName;
-            if (entryName.startsWith('resources/') || entryName.startsWith('fonts/')) {
-                const filename = path.basename(entryName);
-                const file = path.join(entryName.startsWith('resources/') ? getResourcePath() : getFontPath(), filename);
-                fs.access(file, fs.constants.F_OK, (err) => {
-                    if (err) {
-                        const buffer = zip.readFile(entry);
-                        fs.writeFile(file, buffer, err => {
-                            if (err) {
-                                console.log('文件写入失败：', err);
-                            }
-                        })
-                    }
-                });
-            }
-        }
+        // 第二遍流式解出资源与字体文件
+        await extractZipEntriesByBasename(filePaths[0], (entryName) => {
+            if (entryName.startsWith('resources/')) return getResourcePath();
+            if (entryName.startsWith('fonts/')) return getFontPath();
+            return null;
+        });
+        send('templates:watch', {type: 2, data})
+    } catch (err) {
+        console.error('模板导入失败:', err)
     }
-    window.webContents.send('templates:watch', {type: 2, data})
 }
 
 
@@ -314,7 +402,7 @@ const exportTemplates = async () => {
         filters: [{name: 'TILE', extensions: ['tile']}]
     })
     if (!canceled && filePath) {
-        window.webContents.send('templates:watch', {type: 1, data: filePath})
+        send('templates:watch', {type: 1, data: filePath})
     }
 }
 
@@ -367,7 +455,7 @@ const selectFonts = async () => {
     }
 
     if (fontMap.size && window) {
-        window.webContents.send('fonts:watch-import', {type: 0, data: fontMap});
+        send('fonts:watch-import', {type: 0, data: fontMap});
     }
 
     if (errors.length > 0) {
@@ -387,28 +475,26 @@ const selectImageResources = async () => {
         fs.mkdirSync(getResourcePath(), {recursive: true});
         const files = await Promise.all(
             filePaths.map(async (filePath) => {
-                // 读取文件
-                const buffer = fs.readFileSync(filePath);
-                // 写入文件
-                fs.writeFileSync(path.join(getResourcePath(), path.basename(filePath)), buffer);
-                const extname = path.extname(filePath).slice(1);
-                filePath = path.join(getResourcePath(), path.basename(filePath));
+                // 直接复制文件，内容不进主进程内存中转（此前 readFileSync/writeFileSync
+                // 使每个文件完整内容在内存过一遍，且 async 包裹内全是同步调用、实为串行阻塞）
+                const target = path.join(getResourcePath(), path.basename(filePath));
+                await fs.promises.copyFile(filePath, target);
                 return {
-                    filename: path.basename(filePath),
-                    url: localPathToUrl(filePath),
-                    path: filePath,
-                    extname: extname
+                    filename: path.basename(target),
+                    url: localPathToUrl(target),
+                    path: target,
+                    extname: path.extname(target).slice(1)
                 };
             })
         );
         const data = new Map(files.map(item => [item.path, item]));
-        window.webContents.send('resources:watch-change', {type: 0, data, event: 0})
+        send('resources:watch-change', {type: 0, data, event: 0})
     }
 }
 
 
 const addTextResource = () => {
-    window.webContents.send('resources:watch-change', {type: 1})
+    send('resources:watch-change', {type: 1})
 }
 
 /**
@@ -421,18 +507,18 @@ const saveFiles = async () => {
         properties: ['openDirectory', 'createDirectory']
     })
     if (!canceled && filePaths) {
-        window.webContents.send('contextMenu:watch', {type: 3, outputDirectory: filePaths[0]})
+        send('contextMenu:watch', {type: 3, outputDirectory: filePaths[0]})
     }
 }
 
 
 const openSettingsDialog = () => {
-    window.webContents.send('settings-dialog:open')
+    send('settings-dialog:open')
 }
 
 
 const openAboutDialog = () => {
-    window.webContents.send('about-dialog:open')
+    send('about-dialog:open')
 }
 
 
@@ -444,7 +530,7 @@ const exportSettings = async () => {
         filters: [{name: 'JSON', extensions: ['json']}]
     })
     if (!canceled && filePath) {
-        window.webContents.send('settings:watch', {type: 1, data: {filePath}})
+        send('settings:watch', {type: 1, data: {filePath}})
     }
 }
 
@@ -462,7 +548,7 @@ const importSettings = async () => {
     try {
         const {settings, type} = JSON.parse(fs.readFileSync(filePaths[0], 'utf8'))
         if (type === 'Settings' && settings && typeof settings === 'object') {
-            window.webContents.send('settings:watch', {type: 0, data: {settings}})
+            send('settings:watch', {type: 0, data: {settings}})
         }
     } catch (e) {
         dialog.showMessageBox({type: 'error', title: '导入失败', message: '无效配置文件'})
@@ -471,4 +557,4 @@ const importSettings = async () => {
 }
 
 
-module.exports = createApplicationMenu
+module.exports = {createApplicationMenu, dispose}

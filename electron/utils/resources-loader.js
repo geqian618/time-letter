@@ -6,6 +6,9 @@ const fs = require('fs');
 const loadResources = (window) => {
     const resourcesPath = getResourcePath()
     fs.readdir(resourcesPath, (err, filenames) => {
+        // 资源目录不存在（首启异常 / 数据目录被移动）时按空库处理：
+        // 不判 err 的话 filenames 为 undefined，.map 抛 TypeError 汇入 uncaughtException 错误弹窗
+        if (err || !Array.isArray(filenames)) return
         const files = filenames.map((filename) => {
             const extname = path.extname(filename).slice(1);
             return {

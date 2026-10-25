@@ -42,6 +42,7 @@ module.exports = {
         saveFile: '保存文件',
         save: '保存',
         export: '导出',
+        exportInProgress: '已有导出任务正在进行，请等待完成后再试',
         moveTo: '移动到',
         move: '移动',
         importImages: '导入图片',

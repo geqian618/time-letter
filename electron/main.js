@@ -2,7 +2,7 @@ const {app, ipcMain, protocol, globalShortcut, BrowserWindow, Menu, dialog, shel
 const WinState = require('electron-win-state').default
 const path = require('path');
 const fs = require('fs')
-const AdmZip = require('adm-zip');
+const {ZipArchive} = require('archiver');
 const localshortcut = require('electron-localshortcut')
 const sharp = require("sharp");
 
@@ -31,9 +31,9 @@ const ImageMetadataHelper = require("./utils/ImageMetadataHelper");
 const imageWatcher = require('./components/image-watcher')
 const fontWatcher = require('./components/font-watcher')
 const {createTray} = require('./components/tray')
-const createApplicationMenu = require('./components/application-menu')
-const createContextMenu = require('./components/context-menu')
-const createTemplateContextMenu = require('./components/template-context-menu')
+const {createApplicationMenu, dispose: disposeApplicationMenu} = require('./components/application-menu')
+const {createContextMenu, dispose: disposeContextMenu} = require('./components/context-menu')
+const {createTemplateContextMenu, dispose: disposeTemplateContextMenu} = require('./components/template-context-menu')
 const registerLocalShortcut = require('./components/register-local-shortcut')
 const {closeImageManagerWindow, getImageManagerWindow} = require('./components/image-manager-window')
 
@@ -221,6 +221,14 @@ const setupWindowEvents = (window) => {
             localshortcut.unregisterAll(window)
             // 联动关闭图片管理器窗口
             closeImageManagerWindow()
+            // 释放菜单模块对已关窗口的引用，停掉资源 / 字体目录监控：
+            // macOS 关闭主窗口后应用仍存活，不再向已销毁 webContents 推送变动或滞留引用
+            // （窗口重建时 initializeComponents 会重新挂菜单并重启监控）
+            disposeApplicationMenu()
+            disposeContextMenu()
+            disposeTemplateContextMenu()
+            imageWatcher.close()
+            fontWatcher.close()
             mainWindow = window = null
         }
     })
@@ -439,8 +447,12 @@ const setupIpcHandlers = () => {
     });
 
 
-    // 导出文件
+    // 导出文件（防重入：进行中时忽略新请求，避免并行两组导出子进程池内存翻倍）
     ipcMain.on('files:request-export', (event, data) => {
+        if (imageExportProcessor.isExporting()) {
+            dialog.showErrorBox(t('dialog.export'), t('dialog.exportInProgress'))
+            return
+        }
         imageExportProcessor.exportFiles(data, (progress) => {
             mainWindow?.webContents.send('download-progress:watch', {
                 percentage: progress.percentage,
@@ -474,6 +486,8 @@ const setupIpcHandlers = () => {
                     };
                 })
             );
+            // 对话框打开期间主窗口可能已关闭：发送前判存活，避免向已销毁 webContents 发送抛异常
+            if (!mainWindow || mainWindow.isDestroyed()) return
             const data = new Map(files.map(item => [item.path, item]));
             mainWindow.webContents.send('images:watch-import', data)
         }
@@ -491,7 +505,7 @@ const setupIpcHandlers = () => {
 
 
     // 导出模板配置
-    ipcMain.on('templates:export', (event, {outputPath, templates}) => {
+    ipcMain.on('templates:export', async (event, {outputPath, templates}) => {
 
         const imageSet = new Set();
         const fontSet = new Set();
@@ -529,42 +543,47 @@ const setupIpcHandlers = () => {
             }
         }
 
-        const zip = new AdmZip();
-        const data = JSON.stringify({
-            type: 'TEMPLATE',
-            templates: JSON.parse(serializeTemplates(templates))
-        }, null, 2);
-        const textBuffer = Buffer.from(data, 'utf-8');
-        zip.addFile('templates.json', textBuffer);
-        zip.addFile("resources/", Buffer.alloc(0));
-        zip.addFile("fonts/", Buffer.alloc(0));
+        // 流式打包（archiver v8）：文件内容经读取流压缩后直写磁盘，不再像 AdmZip 那样
+        // 把全部资源读进内存再一次性写出（大模板库导出时主进程峰值随库体积线性增长）。
+        // 中文文件名的 UTF-8 标志位（bit 11）由 archiver 自动设置，无需再手动改 entry 头。
+        // 完成以输出流 close 为准（不依赖 finalize 的返回值形态）
+        try {
+            await new Promise((resolve, reject) => {
+                const output = fs.createWriteStream(outputPath);
+                const archive = new ZipArchive();
+                archive.on('warning', (err) => console.error('模板导出警告:', err));
+                archive.on('error', reject);
+                output.on('error', reject);
+                output.on('close', resolve);
+                archive.pipe(output);
 
-        imageSet.forEach(item => {
-            const stat = fs.statSync(item);
-            if (stat.isFile()) {
-                // 如果是文件，直接添加
-                zip.addLocalFile(item, "resources/");
-            }
-        });
+                const data = JSON.stringify({
+                    type: 'TEMPLATE',
+                    templates: JSON.parse(serializeTemplates(templates))
+                }, null, 2);
+                archive.append(Buffer.from(data, 'utf-8'), {name: 'templates.json'});
+                // 目录占位条目：与旧版 .tile 布局保持一致
+                archive.append(null, {name: 'resources/'});
+                archive.append(null, {name: 'fonts/'});
 
-        fontSet.forEach(item => {
-            const stat = fs.statSync(item);
-            if (stat.isFile()) {
-                // 如果是文件，直接添加
-                zip.addLocalFile(item, "fonts/");
-            }
-        });
+                imageSet.forEach(item => {
+                    if (fs.statSync(item).isFile()) {
+                        archive.file(item, {name: `resources/${path.basename(item)}`});
+                    }
+                });
 
-        // 遍历所有条目，为每个条目的头部设置 UTF-8 标志位
-        zip.getEntries().forEach(entry => {
-            // 设置创建系统的版本号为Unix (0x314)，以确保兼容性
-            entry.header.made = 0x314;
-            // 设置 bit 11 (0x800)
-            entry.header.flags |= 0x800;
-        });
+                fontSet.forEach(item => {
+                    if (fs.statSync(item).isFile()) {
+                        archive.file(item, {name: `fonts/${path.basename(item)}`});
+                    }
+                });
 
-        // 将压缩包写入磁盘
-        zip.writeZip(outputPath);
+                const fin = archive.finalize();
+                if (fin && typeof fin.catch === 'function') fin.catch(reject);
+            })
+        } catch (err) {
+            dialog.showMessageBox({type: 'error', title: '导出失败', message: `打包失败：${err.message}`})
+        }
     })
 
 
@@ -679,6 +698,8 @@ const setupIpcHandlers = () => {
             filters: [{name: 'Images', extensions: IMAGE_TYPES}]
         });
         if (filePaths && filePaths.length) {
+            // 对话框打开期间主窗口可能已关闭：发送前判存活，避免向已销毁 webContents 发送抛异常
+            if (!mainWindow || mainWindow.isDestroyed()) return
             const filePath = filePaths[0];
             const extname = path.extname(filePath).slice(1);
             mainWindow.webContents.send('image:watch-import', {
@@ -784,13 +805,22 @@ const setupAppLifecycle = () => {
     })
 
     // 所有窗口已关闭，应用即将退出
-    app.on('will-quit', () => {
-        imageWatcher.close()
-        fontWatcher.close();
-        // 注销全局快捷键
-        globalShortcut.unregisterAll();
-
-        ImageMetadataHelper.close()
+    app.on('will-quit', (event) => {
+        // exiftool 常驻进程（-stay_open）与 chokidar 的关闭是异步送达的，
+        // 不等待就退出可能留下孤儿子进程或中断清理；先阻止默认退出，
+        // 清理完成后再显式退出。兜底超时防止清理悬挂导致应用退不出去。
+        event.preventDefault()
+        const quitTimer = setTimeout(() => app.exit(0), 3000)
+        Promise.allSettled([
+            ImageMetadataHelper.close(),
+            imageWatcher.close(),
+            fontWatcher.close(),
+        ]).finally(() => {
+            clearTimeout(quitTimer)
+            // 注销全局快捷键
+            globalShortcut.unregisterAll()
+            app.exit(0)
+        })
     })
 
     // 所有窗口关闭

@@ -6,6 +6,10 @@ const {getFontPath} = require('../utils/path-helper');
 // 中断标志：stopExportFiles 置 true，exportFiles 开头复位为 false。
 let interrupt = false;
 
+// 导出进行中标志：防止重复触发并行启动两组子进程池（子进程内存峰值直接翻倍），
+// 且 interrupt 是全局复位的，并行批次的停止逻辑会互相干扰。
+let running = false;
+
 // 导出统一放到独立子进程（utilityProcess）中执行：@napi-rs/canvas 的原生内存
 // （解码图、Skia surface）峰值只出现在子进程，主进程不再参与渲染。此前用 Piscina
 // 线程池时，这些原生内存计入主进程，Windows 对已释放的堆页面常不退还提交内存，
@@ -20,10 +24,25 @@ const CHILD_PATH = path.join(
 
 const exportFiles = async ({projectSettings, outputDirectory, settings}, progressCallback) => {
 
+    if (running) return false;
+    running = true;
     interrupt = false;
 
+    // 自动档 = max(2, min(CPU 推算, 内存推算, 8))。
+    // - CPU 侧取逻辑核数一半 ≈ 物理核数：解码 / 编码是内存带宽密集负载，
+    //   超线程（SMT）对这类负载收益仅 10-20%，按逻辑核开满只会放大每进程的
+    //   基线与字体内存，换不来等比吞吐（非 SMT 机器会被低估，误差方向安全）；
+    // - 内存侧按每进程 ~768MB 峰值预算（大图解码位图 + Skia surface + 全量字体
+    //   按进程复制 + avif 编码）推算，并为系统与其他应用保留 4GB；
+    // - 上限 8：超过物理核后收益急剧递减，且字体 / 基线内存按进程数线性复制。
+    // 想要更高并发的用户可在设置中手动选择 8/12/16/32
+    const autoThreads = Math.max(2, Math.min(
+        Math.floor(os.cpus().length / 2),
+        Math.floor((os.totalmem() / (1024 ** 3) - 4) / 0.75),
+        8
+    ));
     const maxThreads = projectSettings.performance.downloadThreads === -1
-        ? os.cpus().length
+        ? autoThreads
         : Math.max(1, projectSettings.performance.downloadThreads);
 
     const reportProgress = typeof progressCallback === 'function'
@@ -115,6 +134,7 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
                 console.error('导出子进程关闭失败:', err);
             }
         }
+        running = false;
         console.log('export children destroyed...');
     }
 
@@ -133,4 +153,6 @@ const stopExportFiles = () => {
     interrupt = true;
 };
 
-module.exports = {exportFiles, stopExportFiles};
+const isExporting = () => running;
+
+module.exports = {exportFiles, stopExportFiles, isExporting};

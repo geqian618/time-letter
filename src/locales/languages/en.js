@@ -38,7 +38,7 @@ export default {
             zoomPill: 'Show the zoom control on the canvas',
             equivFocal: 'Convert and display the equivalent focal length',
             cropFactor: 'Multiplier used for focal length conversion',
-            threads: 'Number of concurrent export processes',
+            threads: 'Number of concurrent export processes. Auto picks 2-8 based on CPU cores and memory.',
             interfaceLanguage: 'Language of the interface text',
             optionAnchor: 'Show property anchors on canvas elements',
             deleteTips: 'Show a confirmation prompt before deleting files',

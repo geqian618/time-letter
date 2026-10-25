@@ -211,7 +211,7 @@
 
 <script setup lang="js">
 
-import {ref, watch, nextTick, computed, onUnmounted} from 'vue'
+import {ref, reactive, watch, nextTick, computed, onUnmounted} from 'vue'
 
 import _ from 'lodash'
 
@@ -234,7 +234,6 @@ import {CanvasSettings} from '@/object/Configuration'
 
 import {useCanvasesStore} from '@/stores/canvases'
 import {useProjectSettingsStore} from '@/stores/project-settings'
-import canvasManager from "@/object/canvas-manager";
 
 const canvasesStore = useCanvasesStore()
 
@@ -264,7 +263,9 @@ const statusItems = computed(() => {
   return items
 })
 
-// 状态栏右侧：性能指标按「系统 | 应用」分组（系统=整机，应用=本应用全部进程），指标每 4 秒轮询，FPS 由 rAF 逐帧采样
+// 状态栏右侧：性能指标按「系统 | 应用」分组（系统=整机，应用=本应用全部进程）
+// 状态栏性能参数统一刷新间隔：轮询指标与 FPS 结算同频（FPS 为该窗口的平均帧率）
+const METRICS_REFRESH_MS = 5000
 const perfMetrics = ref(null)
 const fps = ref(0)
 
@@ -307,19 +308,29 @@ const appMetricsText = computed(() => {
 })
 
 const refreshPerformanceMetrics = async () => {
+  // 页面隐藏（窗口被遮挡/最小化）时跳过刷新、保留上一次可见时的值——与下方 FPS 采样
+  // 同一策略：隐藏期间不再让主进程周期性 spawn powershell 查询内存（Win32 内存口径
+  // 依赖该查询对齐任务管理器，故只门控频率、不改数据来源）
+  if (document.visibilityState !== 'visible') return
   perfMetrics.value = await window.electronAPI.getPerformanceMetrics()
 }
 
 refreshPerformanceMetrics()
-const perfTimer = setInterval(refreshPerformanceMetrics, 4000)
+const perfTimer = setInterval(refreshPerformanceMetrics, METRICS_REFRESH_MS)
 
-// FPS：逐帧计数、每秒结算一次。页面隐藏（窗口被遮挡/最小化）时 Chromium 会把 rAF 节流到低频，
+// 窗口重新露出立即补一次刷新，数值即刻恢复新鲜（隐藏期间停更）
+useEventListener(document, 'visibilitychange', () => {
+  if (document.visibilityState === 'visible') refreshPerformanceMetrics()
+})
+
+// FPS：逐帧计数、每 METRICS_REFRESH_MS 结算一次（与轮询指标同频，显示该窗口的平均帧率）。
+// 页面隐藏（窗口被遮挡/最小化）时 Chromium 会把 rAF 节流到低频，
 // 此时的帧率不代表渲染性能——不结算、保持上一次可见时的值，窗口重新露出后自动恢复刷新
 let fpsFrames = 0
 let fpsLastTime = performance.now()
 let fpsRafId = requestAnimationFrame(function sampleFps(now) {
   fpsFrames++
-  if (now - fpsLastTime >= 1000) {
+  if (now - fpsLastTime >= METRICS_REFRESH_MS) {
     if (document.visibilityState === 'visible') {
       fps.value = Math.round(fpsFrames * 1000 / (now - fpsLastTime))
     }
@@ -332,6 +343,7 @@ let fpsRafId = requestAnimationFrame(function sampleFps(now) {
 onUnmounted(() => {
   clearInterval(perfTimer)
   cancelAnimationFrame(fpsRafId)
+  disposeWatchImportImages?.()
 })
 
 // 导入更多图片：复用工作区的导入流程
@@ -374,7 +386,10 @@ const watchImportImages = () => {
                 metadata[key] = format.replace('${' + key + '}', value);
               }
             }
-            settings.metadata = metadata
+            // metadata 单独保持深响应式：画布 Map 已改 shallowReactive（canvas-manager.js），
+            // 而悬浮卡片 / 状态栏等模板在订阅 metadata 字段（filename、shootingTime 等，
+            // 且 RightPanel 的 metadataOptions 与此处是同一对象、可就地编辑）
+            settings.metadata = reactive(metadata)
           }
           CanvasManager.setCanvas(path, Object.assign(settings, picture))
         }
@@ -383,8 +398,8 @@ const watchImportImages = () => {
   });
 }
 
-// 图片导入监听
-watchImportImages()
+// 图片导入监听（卸载时解绑，防 HMR 重挂载累积监听器）
+const disposeWatchImportImages = watchImportImages()
 
 
 // ---------- 预览元素选中状态 ----------
@@ -408,6 +423,19 @@ const clearSelectedPreviewList = () => {
   canvasesStore.selectedPreviewList.clear()
 }
 
+// 离开画布时把编辑器内容序列化写回该画布条目：条目从活实例退回 JSON 字符串后，
+// 元素实例（含已解码图片引用）才能在编辑器灌入下一张时释放，内存中同一时刻
+// 只保留当前画布一份活实例。
+// 仅当编辑器当前加载的正是离开的画布时才导出：快速切换时上一张的渲染可能
+// 尚未落定，编辑器里仍是更早一张的内容，直接导出会把别的画布元素写进本画布数据。
+const serializeLoadedCanvas = (path) => {
+  if (!path || canvasActions.getLoadedCanvasPath() !== path) return
+  const canvas = CanvasManager.getCanvas(path)
+  if (!canvas) return
+  canvas.foreground = canvasesStore.getCanvasEditor().exportToJSON()
+  canvas.background = canvasesStore.getBackgroundCanvasEditor().exportToJSON()
+}
+
 // 筛选变化后重新渲染并默认选中一张画布
 const setDefaultSelectedElement = async () => {
   const selectedPath = CanvasManager.getSelectedPath();
@@ -420,6 +448,9 @@ const setDefaultSelectedElement = async () => {
     previewElement = nextSelectCanvas.getPreviewElement();
     await canvasActions.renderCanvas(selectedCanvas)
   } else {
+    // 当前画布被新筛选排除：渲染替代画布前先把编辑器内容序列化回它，
+    // 否则它的活实例会一直驻留到再次被正常路径访问并离开
+    serializeLoadedCanvas(selectedPath)
     nextSelectCanvas = canvasesStore.availableCanvases.get(paths[0]);
     previewElement = nextSelectCanvas.getPreviewElement();
     await canvasActions.renderCanvas(nextSelectCanvas)
@@ -452,18 +483,10 @@ const switchPreviewImage = async (event, canvas) => {
 
     const targetPath = canvas.path;
     const currentPath = CanvasManager.getSelectedPath();
-    const currentCanvas = canvasManager.getCurrentCanvas();
 
     // 前一次预览元素与当前预览元素不同
     if (currentPath && currentPath !== targetPath) {
-      // 仅当编辑器当前加载的正是离开的画布时才导出：快速切换时上一张的渲染可能
-      // 尚未落定，编辑器里仍是更早一张的内容，直接导出会把别的画布元素写进本画布数据
-      if (canvasActions.getLoadedCanvasPath() === currentPath) {
-        const backgroundCanvasEditor = canvasesStore.getBackgroundCanvasEditor();
-        const canvasEditor = canvasesStore.getCanvasEditor();
-        currentCanvas.foreground = canvasEditor.exportToJSON()
-        currentCanvas.background = backgroundCanvasEditor.exportToJSON()
-      }
+      serializeLoadedCanvas(currentPath)
     }
 
     // 没有预览元素或前一次预览元素与当前预览元素不同时显示，多次点击预览同一元素不重复渲染
@@ -643,12 +666,7 @@ const switchToCanvas = async (targetCanvas) => {
   canvasesStore.selectedPreviewList.set(targetCanvas.path, targetElement)
 
   // 仅当编辑器当前加载的正是离开的画布时才导出（快速切换时编辑器里可能还是更早一张的内容）
-  if (canvasActions.getLoadedCanvasPath() === selectedPath) {
-    const backgroundCanvasEditor = canvasesStore.getBackgroundCanvasEditor();
-    const canvasEditor = canvasesStore.getCanvasEditor();
-    currentCanvas.foreground = canvasEditor.exportToJSON()
-    currentCanvas.background = backgroundCanvasEditor.exportToJSON()
-  }
+  serializeLoadedCanvas(selectedPath)
 
   await canvasActions.renderCanvas(targetCanvas)
 

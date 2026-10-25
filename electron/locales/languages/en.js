@@ -42,6 +42,7 @@ module.exports = {
         saveFile: 'Save File',
         save: 'Save',
         export: 'Export',
+        exportInProgress: 'An export task is already in progress. Please wait for it to finish.',
         moveTo: 'Move to',
         move: 'Move',
         importImages: 'Import Image',

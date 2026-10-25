@@ -34,14 +34,16 @@
 
 <script setup lang="js">
 
-import {ref} from 'vue'
+import {ref, onUnmounted} from 'vue'
 
 const aboutDialogVisible = ref(false)
 
-// 应用菜单"关于"的 IPC 监听
-window.electronAPI.openAboutDialog(() => {
+// 应用菜单"关于"的 IPC 监听（卸载时解绑，防 HMR 重挂载累积监听器）
+const disposeOpenAboutDialog = window.electronAPI.openAboutDialog(() => {
   aboutDialogVisible.value = true;
 })
+
+onUnmounted(() => disposeOpenAboutDialog?.())
 
 </script>
 

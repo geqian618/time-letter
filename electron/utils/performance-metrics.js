@@ -85,7 +85,7 @@ const queryGpuAccelerated = (featureStatus) => {
 }
 
 // 系统 CPU 占用百分比：os.cpus() 前后两次采样差值（整机 0-100%，与任务管理器「性能」页同口径，跨平台）；
-// 首次调用没有历史快照，返回 null，4 秒轮询的第二次起即有值（数值为采样窗平均值，会平滑瞬间尖峰）
+// 首次调用没有历史快照，返回 null，5 秒轮询的第二次起即有值（数值为采样窗平均值，会平滑瞬间尖峰）
 let lastSystemCpuSnapshot = null
 
 const querySystemCpuPercent = () => {

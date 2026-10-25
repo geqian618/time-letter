@@ -38,7 +38,7 @@ export default {
             zoomPill: '设置画布上是否显示缩放控件。',
             equivFocal: '设置是否按转换倍率换算并显示等效焦段。',
             cropFactor: '设置用于等效焦距换算的倍率。',
-            threads: '设置同时导出图片的进程数量。',
+            threads: '设置同时导出图片的进程数量。自动时按 CPU 核数与内存推算，取 2-8 个。',
             interfaceLanguage: '设置界面文字的显示语言。',
             optionAnchor: '设置选中元素后是否自动定位至对应的属性面板。',
             deleteTips: '设置删除文件前是否显示确认提示。',

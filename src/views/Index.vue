@@ -57,7 +57,7 @@
 
 <script setup lang="js">
 
-import {ref, watch, onMounted} from "vue";
+import {ref, watch, onMounted, onUnmounted} from "vue";
 
 // 面板展开箭头：统一通过 <SvgIcon name="expand-bottom"/> 使用（注册表见 src/components/SvgIcon.vue）
 
@@ -630,20 +630,29 @@ const watchImageManagerMoved = () => {
 }
 
 
+// IPC 监听解绑函数集合（onMounted 中注册，卸载时统一解绑，防 HMR 重挂载累积监听器）
+const ipcDisposers = []
+
 onMounted(() => {
   // 注册页面根元素引用，供画布初始化与布局计算使用
   canvasesStore.registerCanvasRefs({page: page.value})
 
   // 注册业务监听
-  watchTemplates()
-  watchTemplateContextMenu()
-  watchResources()
-  watchDownloadProgress()
+  ipcDisposers.push(
+      watchTemplates(),
+      watchTemplateContextMenu(),
+      watchResources(),
+      watchDownloadProgress(),
 
-  // 注册图片管理器联动
-  watchImageManagerCollect()
-  watchImageManagerRemoveApply()
-  watchImageManagerMoved()
+      // 注册图片管理器联动
+      watchImageManagerCollect(),
+      watchImageManagerRemoveApply(),
+      watchImageManagerMoved()
+  )
+})
+
+onUnmounted(() => {
+  ipcDisposers.forEach((dispose) => dispose?.())
 })
 
 </script>

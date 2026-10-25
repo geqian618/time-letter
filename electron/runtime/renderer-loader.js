@@ -69,20 +69,24 @@ function decryptPkg(pkgPath) {
 }
 
 /**
- * 将解密后的 zip 解压为 内存 Map（entryName -> Buffer）。
+ * 解密 renderer.pkg 并返回 zip 条目表（entryName -> AdmZip entry）。
+ * entry 对象持有对解密后 zip 整体缓冲的引用，解压（getData）按需进行。
  */
-function buildResourcesMap(pkgPath) {
+function loadPendingEntries(pkgPath) {
   const zip = new AdmZip(decryptPkg(pkgPath))
-  const map = new Map()
+  const entries = new Map()
   for (const entry of zip.getEntries()) {
     if (entry.isDirectory === false) {
-      map.set(entry.entryName.toString().replaceAll('\\', '/'), entry.getData())
+      entries.set(entry.entryName.toString().replaceAll('\\', '/'), entry)
     }
   }
-  return map
+  return entries
 }
 
+// 已解压资源（entryName -> Buffer），按需填充
 let resourcesMap = null
+// 未解压的 zip 条目（连带持有解密后的 zip 整体缓冲）；全部条目解压完成后置 null 释放
+let pendingEntries = null
 
 /**
  * 注册自定义协议 scheme 权限（必须在 app ready 之前调用）。
@@ -107,12 +111,18 @@ function registerPrivilegedSchemes() {
 /**
  * 解密 renderer.pkg 并注册 myclient:// 协议
  * （在 app ready 之后、创建窗口加载渲染进程之前调用）。
+ *
+ * 解压按需进行：资源首次被请求时才 inflate 进缓存 Map，而不是启动即全量解压常驻，
+ * 启动后常驻内存从「整包解压体积」降为「zip 体积 + 已请求部分」；
+ * 全部条目都被请求后自动释放对 zip 的引用（连带解密后的整体缓冲），
+ * 最终常驻收敛为与全量解压一致。
  */
 function registerRendererProtocol() {
 
   if (resourcesMap) return
   const pkgPath = path.join(getPackagedAppRootDir(), PKG_RELATIVE_PATH)
-  resourcesMap = buildResourcesMap(pkgPath)
+  pendingEntries = loadPendingEntries(pkgPath)
+  resourcesMap = new Map()
 
   protocol.registerBufferProtocol(PROTOCOL, (request, callback) => {
     try {
@@ -120,6 +130,14 @@ function registerRendererProtocol() {
       url = url.replaceAll('\\', '/')
       url = decodeURIComponent(url)
       url = url.split(/#|\?/)[0]
+      if (!resourcesMap.has(url) && pendingEntries && pendingEntries.has(url)) {
+        resourcesMap.set(url, pendingEntries.get(url).getData())
+        pendingEntries.delete(url)
+        if (pendingEntries.size === 0) {
+          // 全部条目已解压：释放 zip 引用（含解密后的整体缓冲）
+          pendingEntries = null
+        }
+      }
       const data = resourcesMap.get(url)
       const ext = path.extname(url).slice(1).toLowerCase()
       callback({
@@ -131,7 +149,7 @@ function registerRendererProtocol() {
       callback({ data: undefined })
     }
   })
-  console.log(`[renderer-loader] ${PROTOCOL}:// 协议已注册，共 ${resourcesMap.size} 个资源`)
+  console.log(`[renderer-loader] ${PROTOCOL}:// 协议已注册，共 ${resourcesMap.size + pendingEntries.size} 个资源`)
 }
 
 /**

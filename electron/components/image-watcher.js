@@ -22,8 +22,10 @@ const watch = async (window, folderPath) => {
             }
         });
 
-        // 监听文件变化事件
+        // 监听文件变化事件。回调闭包持有 window：macOS 关闭主窗口后应用仍存活，
+        // 变动推送前先判存活，避免向已销毁 webContents 发送抛 "Object has been destroyed"
         watcher.on('add', filePath => {
+            if (!window || window.isDestroyed()) return
             const pathParsed = path.parse(filePath);
             const image = {
                 filename: path.basename(filePath),
@@ -34,6 +36,7 @@ const watch = async (window, folderPath) => {
             const data = new Map([[image.path, image]])
             window.webContents.send('resources:watch-change', {type: 0, data, event: 0})
         }).on('unlink', filePath => {
+            if (!window || window.isDestroyed()) return
             window.webContents.send('resources:watch-change', {type: 0, data: {filePath}, event: 1})
         }).on('error', error => {
             console.error('监控错误:', error);
@@ -45,9 +48,11 @@ const watch = async (window, folderPath) => {
 }
 
 
-const close = () => {
+const close = async () => {
     if (watcher) {
-        watcher.close();
+        const closing = watcher
+        watcher = null
+        await closing.close()
     }
 }
 

@@ -51,6 +51,8 @@ import _ from 'lodash'
 
 import useEventListener from '@/composables/common/useEventListener'
 
+import useDeepToRaw from '@/composables/common/useDeepToRaw'
+
 import {CanvasEditor, Image, LazyImage, Rect, Text} from '@/canvas/CanvasEditor'
 
 import {getCurrentDate, getCurrentDateTime} from '@/utils/datetime'
@@ -74,6 +76,9 @@ import {useTemplatesStore} from '@/stores/templates'
 const canvasesStore = useCanvasesStore()
 
 const settingsStore = useProjectSettingsStore()
+
+// 深度解包响应式代理为普通对象（导出载荷过 IPC 结构化克隆前使用）
+const deepToRaw = useDeepToRaw()
 
 const templatesStore = useTemplatesStore()
 
@@ -217,27 +222,26 @@ const watchContextMenu = () => {
             return {filePath: path, index, filename, json: JSON.stringify(background)}
           }
 
-          let {background, foreground} = _.cloneDeep(canvas);
-
-          if (typeof background === 'string') {
-            background = JSON.parse(background)
+          // 解析出普通对象后新建数组做合并：不深克隆整个条目，也不改动画布持有的原数据
+          // （此前 _.cloneDeep 既慢，还靠它隐式把元素的 image（DOM 引用）克隆成 {} 才让载荷可发；
+          //   现在直接序列化，DOM 引用同样被 JSON.stringify 剥离，导出子进程按 meta.path 重载图片）
+          const parseLayer = (layer) => typeof layer === 'string' ? JSON.parse(layer) : layer
+          const background = parseLayer(canvas.background)
+          const foreground = parseLayer(canvas.foreground)
+          const merged = {
+            ...background,
+            elements: [...background.elements, ...foreground.elements]
           }
-
-          if (typeof foreground === 'string') {
-            foreground = JSON.parse(foreground)
-          }
-
-          for (let element of foreground.elements) {
-            background.elements.push(element);
-          }
-          return {filePath: path, index, filename, json: JSON.stringify(background)}
+          return {filePath: path, index, filename, json: JSON.stringify(merged)}
         });
 
-        window.electronAPI.requestExportFiles(_.cloneDeep({
-          projectSettings: settingsStore.projectSettings,
+        // settings 均为原始值（json 已是字符串），只需把深响应式的 projectSettings
+        // 解包成普通对象即可过 IPC 结构化克隆，无需整体 cloneDeep
+        window.electronAPI.requestExportFiles({
+          projectSettings: deepToRaw(settingsStore.projectSettings),
           outputDirectory: data.outputDirectory,
           settings
-        }))
+        })
         canvasesStore.downloadProgressVisible = true
       } else if (type === 4) {
         templatesStore.saveTemplateDialogVisible = true
@@ -255,8 +259,8 @@ const watchContextMenu = () => {
   });
 }
 
-// 画布右键菜单命令监听
-watchContextMenu()
+// 画布右键菜单命令监听（卸载时解绑，防 HMR 重挂载累积监听器）
+const disposeWatchContextMenu = watchContextMenu()
 
 
 // ---------- 画布编辑器初始化与渲染 ----------
@@ -1161,7 +1165,10 @@ onMounted(() => {
 })
 
 // 卸载时取消进行中的缩放跟随，避免悬空 rAF
-onUnmounted(() => cancelZoomPin())
+onUnmounted(() => {
+  cancelZoomPin()
+  disposeWatchContextMenu?.()
+})
 
 </script>
 

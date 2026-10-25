@@ -886,7 +886,12 @@ watch(settingsDialogVisible, (visible) => {
 
 watch(activePage, stopShortcutRecording)
 
-onBeforeUnmount(stopShortcutRecording)
+onBeforeUnmount(() => {
+  stopShortcutRecording()
+  disposeOpenSettingsDialog?.()
+  disposeWatchImportFonts?.()
+  disposeWatchProjectSettings?.()
+})
 
 // 恢复全部快捷键为默认按键（watch 会同步主进程重新注册）
 const resetShortcutSettings = () => {
@@ -926,8 +931,8 @@ const handleUiAccentChange = (val) => {
   renderUiStyle();
 };
 
-// 应用菜单"偏好设置"的 IPC 监听
-window.electronAPI.openSettingsDialog(() => {
+// 应用菜单"偏好设置"的 IPC 监听（卸载时解绑，防 HMR 重挂载累积监听器）
+const disposeOpenSettingsDialog = window.electronAPI.openSettingsDialog(() => {
   settingsDialogVisible.value = true
 })
 
@@ -1121,10 +1126,10 @@ const watchProjectSettings = () => {
 }
 
 // 字体导入 / 移除监听
-watchImportFonts()
+const disposeWatchImportFonts = watchImportFonts()
 
 // 设置导入 / 导出监听
-watchProjectSettings()
+const disposeWatchProjectSettings = watchProjectSettings()
 
 // 初始化布局 CSS 变量（项目设置已在页面 setup 中加载完成）
 initAreaResize()

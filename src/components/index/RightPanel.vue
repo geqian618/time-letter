@@ -667,7 +667,7 @@
 
 <script setup lang="js">
 
-import {ref, watch, nextTick} from 'vue'
+import {ref, watch, nextTick, onUnmounted} from 'vue'
 
 import {storeToRefs} from 'pinia'
 
@@ -1034,10 +1034,12 @@ const handleUpdateBorders = () => {
 }
 
 
-// 边框图片导入监听：导入成功后以该图片重建边框
-window.electronAPI.watchImportBackgroundImage(async (event, data) => {
+// 边框图片导入监听：导入成功后以该图片重建边框（卸载时解绑，防 HMR 重挂载累积监听器）
+const disposeWatchImportBackgroundImage = window.electronAPI.watchImportBackgroundImage(async (event, data) => {
   handleCreateBorders(data)
 })
+
+onUnmounted(() => disposeWatchImportBackgroundImage?.())
 
 
 // 元数据 label 拖拽开始时打包数据
