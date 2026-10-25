@@ -25,7 +25,7 @@ export const useTemplatesStore = defineStore('templates', () => {
 
     const enableTemplateDialogVisible = ref(false)
 
-    watch(templates, value => window.electronAPI?.persistedStorage.setItem('templates', value), {deep: true})
+    watch(templates, value => window.electronAPI?.persistedStorage.setItem('templates', JSON.parse(JSON.stringify(value))), {deep: true})
 
     return {
         templates,

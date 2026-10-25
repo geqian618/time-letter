@@ -24,8 +24,8 @@ export const useTextResourcesStore = defineStore('textResources', () => {
     const textResourceDialogTitle = computed(() => {
         return i18n.global.t(handleTextResourceType.value === 0 ? 'textResource.addTitle' : 'textResource.editTitle')
     })
-
-    watch(textResources, value => window.electronAPI?.persistedStorage.setItem('text-resources', value), {deep: true})
+    
+    watch(textResources, value => window.electronAPI?.persistedStorage.setItem('text-resources', JSON.parse(JSON.stringify(value))), {deep: true})
 
     return {
         textResources,
