@@ -3,14 +3,11 @@ const path = require('path')
 const fs = require('fs')
 const AdmZip = require('adm-zip');
 const {getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl} = require('../utils/path-helper')
-const {registerFont} = require('../utils/font-manager')
+const {addFont} = require('../utils/font-manager')
 const {openImageManagerWindow} = require('./image-manager-window')
 const {t} = require('../locales')
 const {defaultShortcuts} = require('../../src/config/default-project-settings')
 const {IMAGE_TYPES} = require("../constant/project-constants");
-
-const resourcesPath = getResourcePath()
-const fontPath = getFontPath()
 
 /**
  * mainMenu 定义为函数，主进程可以传参到菜单中
@@ -128,7 +125,7 @@ const createApplicationMenu = (mainWindow, shortcuts = defaultShortcuts) => {
                             label: t('menu.openResources'),
                             click: () => {
                                 // 尝试打开文件夹
-                                shell.openPath(resourcesPath);
+                                shell.openPath(getResourcePath());
                             }
                         }
                     ]
@@ -146,7 +143,7 @@ const createApplicationMenu = (mainWindow, shortcuts = defaultShortcuts) => {
                             label: t('menu.openResources'),
                             click: () => {
                                 // 尝试打开文件夹
-                                shell.openPath(fontPath);
+                                shell.openPath(getFontPath());
                             }
                         }
                     ],
@@ -335,7 +332,7 @@ const selectFonts = async () => {
     if (!filePaths || filePaths.length === 0) return;
 
     // 确保目标目录存在
-    await fs.promises.mkdir(fontPath, {recursive: true});
+    await fs.promises.mkdir(getFontPath(), {recursive: true});
 
     const fontMap = new Map();
     const errors = [];
@@ -343,7 +340,7 @@ const selectFonts = async () => {
     // 使用 Promise.allSettled 允许部分成功
     const results = await Promise.allSettled(
         filePaths.map(async (filePath) => {
-            const destPath = path.join(fontPath, path.basename(filePath));
+            const destPath = path.join(getFontPath(), path.basename(filePath));
             // 文件拷贝
             await fs.promises.copyFile(filePath, destPath);
 
@@ -352,9 +349,9 @@ const selectFonts = async () => {
                 family: fileParsed.name,
                 url: localPathToUrl(destPath),
                 path: destPath,
+                isSystem: false
             };
-            // 注册字体
-            registerFont(font);
+            addFont(font);
             return {family: font.family, font};
         })
     );
@@ -387,14 +384,15 @@ const selectImageResources = async () => {
         filters: [{name: 'Images', extensions: [...IMAGE_TYPES, 'svg']}]
     });
     if (filePaths && filePaths.length) {
+        fs.mkdirSync(getResourcePath(), {recursive: true});
         const files = await Promise.all(
             filePaths.map(async (filePath) => {
                 // 读取文件
                 const buffer = fs.readFileSync(filePath);
                 // 写入文件
-                fs.writeFileSync(path.join(resourcesPath, path.basename(filePath)), buffer);
+                fs.writeFileSync(path.join(getResourcePath(), path.basename(filePath)), buffer);
                 const extname = path.extname(filePath).slice(1);
-                filePath = path.join(resourcesPath, path.basename(filePath));
+                filePath = path.join(getResourcePath(), path.basename(filePath));
                 return {
                     filename: path.basename(filePath),
                     url: localPathToUrl(filePath),

@@ -1,6 +1,6 @@
 const chokidar = require('chokidar')
 const path = require('path');
-const {registerFont, removeFont, hasFont} = require('../utils/font-manager');
+const {addFont, removeFont, hasFont} = require('../utils/font-manager');
 const {localPathToUrl} = require('../utils/path-helper');
 
 let watcher;
@@ -30,7 +30,7 @@ const watch = async (window, folderPath) => {
             const family = fileParse.name;
             if (!hasFont(family)) {
                 const font = {family, path: filePath, url: localPathToUrl(filePath), isSystem: false};
-                registerFont(font)
+                addFont(font)
                 window.webContents.send('fonts:watch-import', {type: 0, data: new Map([[font.family, font]])})
             }
         }).on('unlink', filePath => {

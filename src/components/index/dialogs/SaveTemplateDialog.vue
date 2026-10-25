@@ -85,18 +85,23 @@ const saveTemplates = async () => {
         if (element.type === 'text') {
           item.fontSize = element.fontSize * initZoom
         }
+        // 模板只认 src：带上 DOM Image 引用会把整张解码位图钉在常驻 store 里直到退出
+        delete item.image
         items.push(item)
       }
       const {idealWidth, idealHeight} = canvasesStore.getWorkspace();
+      const settings = _.cloneDeep({
+        idealWidth,
+        idealHeight,
+        background,
+        foreground: {width, height, zoom, elements: items}
+      })
+      // cloneDeep 对 DOM 对象返回原引用，background 图层里的解码位图需单独摘除
+      settings.background.elements?.forEach(element => delete element.image)
       const newTemplates = [...templatesStore.templates, {
         templateId: Date.now(),
         templateName: templatesStore.newTemplate.templateName,
-        settings: _.cloneDeep({
-          idealWidth,
-          idealHeight,
-          background,
-          foreground: {width, height, zoom, elements: items}
-        })
+        settings
       }]
 
       // 重新赋值以触发模版列表重新渲染

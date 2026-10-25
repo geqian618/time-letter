@@ -1,11 +1,12 @@
 ﻿; ---------- 数据文件夹：覆盖安装选项页 + 卸载选项页 ----------
 ;
-; 指针文件 %APPDATA%\时光信笺\data-dir.txt 由主进程（electron/main.js 的 writeDataDirPointer）
-; 写入，内容为用户自定义数据文件夹的完整路径（UTF-16LE + BOM）。
+; 指针文件 $INSTDIR\config\config.ini 由主进程（electron/main.js 的 writeDataDirPointer）
+; 写入，[Data] 段的 Dir 为用户自定义数据文件夹的完整路径（UTF-16LE + BOM，供 ReadINIStr 读取）。
 ; 注意：默认 userData 目录名取自 package.json 的 productName（时光信笺），两者需保持一致。
 ;
 ; 行为约定（不区分默认路径与自定义路径，统一处理）：
 ;   覆盖安装 —— 数据选项页：勾选「覆盖旧的数据文件夹」才删除，缺省不勾选（保留）；
+;               保留时同时保留安装目录下的 data 与 config（config 存放设置与窗口状态）；
 ;               选择经注册表 OverwriteData 传递给静默执行的旧卸载器
 ;   卸载     —— 数据文件夹选项页：勾选「同时删除数据文件夹」缺省选中（删除），
 ;               取消勾选则保留
@@ -57,32 +58,9 @@ LangString dataDirPathLabel 1033 "Data directory: "
 LangString deleteDataCheckbox 2052 "同时删除配置与数据"
 LangString deleteDataCheckbox 1033 "Also delete the data folder (settings, thumbnails, etc.)"
 
-; 读取指针文件，结果存 $customDataDirPath（无指针文件时为空串）
+; 读取指针（config.ini 的 [Data] Dir），结果存 $customDataDirPath（无指针时为空串）
 !macro ReadDataDirPointer
-  Push $R0
-  StrCpy $customDataDirPath ""
-  ClearErrors
-  FileOpen $R0 "$APPDATA\时光信笺\data-dir.txt" r
-  IfErrors ptr_fail
-  FileRead $R0 $customDataDirPath
-  FileClose $R0
-  ; 去除尾部换行与空白
-  ptr_trim:
-    StrCpy $R0 $customDataDirPath 1 -1
-    StrCmp $R0 "$\r" ptr_strip
-    StrCmp $R0 "$\n" ptr_strip
-    StrCmp $R0 " " ptr_strip
-    Goto ptr_done
-  ptr_strip:
-    StrCpy $customDataDirPath $customDataDirPath -1
-    Goto ptr_trim
-  ptr_done:
-    Goto ptr_end
-  ptr_fail:
-    StrCpy $customDataDirPath ""
-    ClearErrors
-  ptr_end:
-    Pop $R0
+  ReadINIStr $customDataDirPath "$INSTDIR\config\config.ini" "Data" "Dir"
 !macroend
 
 ; 覆盖安装侧（安装器专有）：仅在实际打包安装器时编译。
@@ -226,7 +204,7 @@ FunctionEnd
       DetailPrint "安装目录未能完全删除（应用可能仍在运行），残留文件由安装流程覆盖"
     ${EndIf}
   ${Else}
-    ; 保留 data：仅删除安装目录内的其余内容（目录才判定 data，避免同名文件误留）
+    ; 保留 data 与 config：仅删除安装目录内的其余内容（目录才判定，避免同名文件误留）
     StrCpy $R3 "0"
     FindFirst $R1 $R2 "$INSTDIR\*.*"
     rm_loop:
@@ -235,6 +213,7 @@ FunctionEnd
       StrCmp $R2 ".." rm_next
       IfFileExists "$INSTDIR\$R2\*.*" 0 rm_isfile
         StrCmp $R2 "data" rm_next
+        StrCmp $R2 "config" rm_next
         ClearErrors
         RMDir /r "$INSTDIR\$R2"
         ${If} ${Errors}
@@ -260,7 +239,9 @@ FunctionEnd
   ${EndIf}
 !macroend
 
-; 卸载收尾：按判定清理自定义数据文件夹与指针文件
+; 卸载收尾：按判定清理自定义数据文件夹
+; config.ini 位于安装目录内：删除数据时已由 customRemoveFiles 整目录删除，
+; 保留数据时随 config 目录一起保留
 !macro customUnInstall
   !insertmacro ResolveDeleteDataFlag $R9
   ${If} $R9 == "1"
@@ -270,7 +251,6 @@ FunctionEnd
     ${If} ${Errors}
       DetailPrint "自定义数据目录未能完全删除（应用可能仍在运行）"
     ${EndIf}
-    Delete "$APPDATA\时光信笺\data-dir.txt"
   ${EndIf}
   ; 本宏是 OverwriteData 的最后消费者，覆盖安装流程结束时清理注册表值。
   ; 仅删值不删键：键若未来存放其他值，删键会造成连带损失，空键无副作用

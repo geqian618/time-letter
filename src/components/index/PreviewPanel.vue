@@ -150,6 +150,7 @@
             width="fit-content"
             :show-after="2000"
             :hide-after="0"
+            :persistent="false"
             trigger="hover">
           <template #default>
             <div style="font-size: 10px">

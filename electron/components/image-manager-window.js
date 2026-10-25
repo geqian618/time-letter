@@ -4,6 +4,7 @@ const WinState = require('electron-win-state').default
 const {t} = require('../locales')
 
 const {APP_ICON_PATH} = require('../constant/project-constants')
+const {getConfigDir} = require('../utils/path-helper')
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -27,6 +28,7 @@ const openImageManagerWindow = () => {
         defaultWidth: 960,
         defaultHeight: 640,
         electronStoreOptions: {
+            cwd: getConfigDir(),
             name: 'image-manager-window-state'
         }
     })

@@ -1,11 +1,10 @@
 const {getResourcePath, localPathToUrl, localPathToThumbUrl} = require('./path-helper')
-const {reloadFonts} = require('./font-manager')
+const {listFonts} = require('./font-manager')
 const path = require('path');
 const fs = require('fs');
 
-const resourcesPath = getResourcePath()
-
 const loadResources = (window) => {
+    const resourcesPath = getResourcePath()
     fs.readdir(resourcesPath, (err, filenames) => {
         const files = filenames.map((filename) => {
             const extname = path.extname(filename).slice(1);
@@ -23,9 +22,8 @@ const loadResources = (window) => {
 }
 
 const loadFonts = (window) => {
-    return reloadFonts().then((fonts) => {
-        window.webContents.send('fonts:watch-import', {type: -1, data: fonts})
-    })
+    const fonts = listFonts();
+    window.webContents.send('fonts:watch-import', {type: -1, data: fonts})
 }
 
 

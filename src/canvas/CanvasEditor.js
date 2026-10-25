@@ -2211,18 +2211,17 @@ class Element {
  */
 class Text extends Element {
 
-    // ---------- 小字形超采样 ----------
+    // ----------------------------------小字形超采样 ----------------------------------
     // 字形实际光栅尺寸（fontSize × zoom × dpr）低于该阈值（设备像素）时，Windows 的
     // 字形 hinting 会把细笔画吸附到像素网格，CJK 横竖笔画整条塌缩，且随缩放的亚像素
-    // 相位变化「时有时无」。低于阈值改走「离屏放大光栅化 + 高质量重采样回贴」，
-    // 笔画只被柔化、不会缺失
+    // 相位变化「时有时无」。低于阈值改走「离屏放大光栅化 + 高质量重采样回贴」，笔画只被柔化、不会缺失
     static TEXT_MIN_GLYPH_PX = 12;
 
     // 超采样离屏画布单边上限（物理像素），防止极端小缩放下离屏尺寸爆炸
     static TEXT_SUPERSAMPLE_MAX_PX = 4096;
 
     // 模块级复用的离屏画布（按需扩容，避免每次绘制重新分配）
-    static _supersampleCanvas = null;
+    static #supersampleCanvas = null;
 
     #width = 0;
 
@@ -2610,20 +2609,20 @@ class Text extends Element {
      * @private
      */
     _drawSupersampled(ctx, k) {
-        if (!Text._supersampleCanvas) {
+        if (!Text.#supersampleCanvas) {
             try {
                 if (typeof document !== 'undefined') {
-                    Text._supersampleCanvas = document.createElement('canvas');
+                    Text.#supersampleCanvas = document.createElement('canvas');
                 } else {
                     const {createCanvas} = require('@napi-rs/canvas');
-                    Text._supersampleCanvas = createCanvas(1, 1);
+                    Text.#supersampleCanvas = createCanvas(1, 1);
                 }
             } catch (e) {
                 this._drawContent(ctx);
                 return;
             }
         }
-        const offscreenCanvas = Text._supersampleCanvas;
+        const offscreenCanvas = Text.#supersampleCanvas;
         const offscreenCtx = offscreenCanvas.getContext('2d');
         offscreenCtx.setTransform(1, 0, 0, 1, 0, 0);
         // 先解析布局得到未旋转内容宽高（旋转中心在此派生，与正常路径一致）；
@@ -3118,7 +3117,7 @@ class Image extends Element {
         ctx.lineTo(x, y + radius);
         ctx.quadraticCurveTo(x, y, x + radius, y);
         ctx.closePath();
-    };
+    }
 
     /**
      * 选中包围盒需按 scale 缩放

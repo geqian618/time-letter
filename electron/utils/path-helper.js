@@ -1,22 +1,46 @@
 const path = require('path');
 const {app} = require('electron');
 
-// 应用偏好配置文件（userData/settings.json）：主题 / 语言等模块共用
-const getSettingsFilePath = () => {
-    return path.join(app.getPath('userData'), 'settings.json');
+// 数据根目录：主进程启动时确定（自定义目录 / 开发与 Windows 的 data / macOS、Linux 用户目录下的 data）
+let dataRoot = ''
+
+const setDataRoot = (dir) => {
+    dataRoot = dir
 }
 
-const getResourcePath = () => {
-    return process.env.NODE_ENV === 'development'
-        ? path.join(process.cwd(), 'electron', 'resources', 'resources')
-        : path.join(process.resourcesPath, 'resources')
+const getDataRoot = () => {
+    if (!dataRoot) throw new Error('数据根目录尚未初始化：setupUserData 必须先于所有路径调用执行')
+    return dataRoot
+}
 
+// 安装目录：开发环境为项目根目录，打包后为可执行文件所在目录
+const getInstallDir = () => {
+    return process.env.NODE_ENV === 'development'
+        ? process.cwd()
+        : path.dirname(app.getPath('exe'))
+}
+
+// 应用配置目录：安装目录/config；macOS / Linux 安装位置可能只读（DMG / AppImage），
+// 回退到系统标准用户目录（与默认 userData 同级）
+const getConfigDir = () => {
+    return process.env.NODE_ENV === 'development' || process.platform === 'win32'
+        ? path.join(getInstallDir(), 'config')
+        : path.join(app.getPath('appData'), app.getName(), 'config')
+}
+
+// 应用偏好配置文件（config/settings.json）：主题 / 语言 / 快捷键等模块共用
+const getSettingsFilePath = () => {
+    return path.join(getConfigDir(), 'settings.json');
+}
+
+
+// 图片库与字体库随用户数据存放，避免安装目录变更 / 覆盖升级时丢失导入的资源
+const getResourcePath = () => {
+    return path.join(getDataRoot(), 'resources')
 }
 
 const getFontPath = () => {
-    return process.env.NODE_ENV === 'development'
-        ? path.join(process.cwd(), 'electron', 'resources', 'fonts')
-        : path.join(process.resourcesPath, 'fonts');
+    return path.join(getDataRoot(), 'fonts')
 }
 
 
@@ -45,4 +69,4 @@ function localPathToThumbUrl(filePath) {
     return `thumb:///${encodeLocalPath(filePath)}`;
 }
 
-module.exports = {getSettingsFilePath, getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl}
+module.exports = {setDataRoot, getDataRoot, getConfigDir, getSettingsFilePath, getResourcePath, getFontPath, localPathToUrl, localPathToThumbUrl}
