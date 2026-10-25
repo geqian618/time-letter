@@ -1,7 +1,6 @@
 import {toRaw} from 'vue'
 
-// 深度解包响应式代理：toRaw 只解一层，嵌套元素仍是代理，
-// IPC 结构化克隆 / structuredClone 均无法序列化代理，跨进程传参前需整体转为纯对象
+// 深度解包响应式代理：解决 toRaw 只解一层，无法处理嵌套元素仍是代理的情况
 const deepToRaw = (value) => {
     const raw = toRaw(value)
     if (Array.isArray(raw)) return raw.map(deepToRaw)
