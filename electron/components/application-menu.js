@@ -24,7 +24,7 @@ let window;
 // 发送前统一判存活，避免向已销毁 webContents 发送抛 "Object has been destroyed"
 const send = (channel, payload) => {
     if (!window || window.isDestroyed()) return
-    send(channel, payload)
+    window.webContents.send(channel, payload)
 }
 
 // 窗口关闭时由主进程调用，释放对已销毁窗口的引用

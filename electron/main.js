@@ -2,7 +2,7 @@ const {app, ipcMain, protocol, globalShortcut, BrowserWindow, Menu, dialog, shel
 const WinState = require('electron-win-state').default
 const path = require('path');
 const fs = require('fs')
-const {ZipArchive} = require('archiver');
+const archiver = require('archiver');
 const localshortcut = require('electron-localshortcut')
 const sharp = require("sharp");
 
@@ -543,14 +543,15 @@ const setupIpcHandlers = () => {
             }
         }
 
-        // 流式打包（archiver v8）：文件内容经读取流压缩后直写磁盘，不再像 AdmZip 那样
+        // 流式打包（archiver）：文件内容经读取流压缩后直写磁盘，不再像 AdmZip 那样
         // 把全部资源读进内存再一次性写出（大模板库导出时主进程峰值随库体积线性增长）。
         // 中文文件名的 UTF-8 标志位（bit 11）由 archiver 自动设置，无需再手动改 entry 头。
         // 完成以输出流 close 为准（不依赖 finalize 的返回值形态）
+        // 注意：archiver 必须锁在 v7（CJS）——Electron 22 的 Node 18 不能 require ESM 包
         try {
             await new Promise((resolve, reject) => {
                 const output = fs.createWriteStream(outputPath);
-                const archive = new ZipArchive();
+                const archive = archiver('zip');
                 archive.on('warning', (err) => console.error('模板导出警告:', err));
                 archive.on('error', reject);
                 output.on('error', reject);
