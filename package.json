@@ -8,11 +8,12 @@
   "scripts": {
     "electron:serve": "npm run bundle:main && npm run compile && concurrently -n \"VITE,NODE\" -c \"blue,green\" -k \"npm run vite:start\" \"npm run electron:start\"",
     "electron:start": "wait-on http://localhost:5173 && node scripts/dev-codepage.js && cross-env NODE_ENV=development electron .",
-    "electron:build": "vite build && npm run bundle:main && npm run compile && electron-builder",
+    "electron:build": "npm run check:build-env && vite build && npm run bundle:main && npm run compile && electron-builder",
     "electron:build:win": "npm run electron:build -- --win",
     "electron:build:linux": "npm run electron:build -- --linux",
     "electron:build:mac": "npm run electron:build -- --mac",
     "compile": "node scripts/compile.js",
+    "check:build-env": "node scripts/check-build-env.js",
     "bundle:main": "node scripts/bundle-main.js",
     "vite:start": "vite",
     "vite:build": "vite build",
