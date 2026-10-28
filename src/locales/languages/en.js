@@ -394,6 +394,7 @@ export default {
         existsMessage: 'A preset named "{name}" already exists. Choose how to save it.',
         overwriteSave: 'Overwrite',
         addNewSave: 'Save as New',
+        renameExistsMessage: 'A preset named "{name}" already exists. Continue renaming?',
     },
     downloadProgress: {
         title: 'Export Progress',
