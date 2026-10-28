@@ -390,6 +390,10 @@ export default {
         positionByValue: '按固定值定位位置',
         positionByRatio: '按比例定位位置',
         apply: '应用',
+        existsTitle: '预设名已存在',
+        existsMessage: '“{name}”预设名已存在，请选择处理方式。',
+        overwriteSave: '替换',
+        addNewSave: '新增',
     },
     downloadProgress: {
         title: '导出进度',

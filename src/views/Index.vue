@@ -43,6 +43,7 @@
 
     <TextResourceDialog/>
     <SaveTemplateDialog/>
+    <SaveExistsDialog/>
     <RenameTemplateDialog/>
     <TextResourceManagerDialog/>
     <DownloadProgressDialog/>
@@ -77,6 +78,7 @@ import TopToolbar from '@/components/index/TopToolbar.vue'
 
 import TextResourceDialog from '@/components/index/dialogs/TextResourceDialog.vue'
 import SaveTemplateDialog from '@/components/index/dialogs/SaveTemplateDialog.vue'
+import SaveExistsDialog from '@/components/index/dialogs/SaveExistsDialog.vue'
 import RenameTemplateDialog from '@/components/index/dialogs/RenameTemplateDialog.vue'
 import TextResourceManagerDialog from '@/components/index/dialogs/TextResourceManagerDialog.vue'
 import DownloadProgressDialog from '@/components/index/dialogs/DownloadProgressDialog.vue'

@@ -98,18 +98,15 @@ const saveTemplates = async () => {
       })
       // cloneDeep 对 DOM 对象返回原引用，background 图层里的解码位图需单独摘除
       settings.background.elements?.forEach(element => delete element.image)
-      const newTemplates = [...templatesStore.templates, {
-        templateId: Date.now(),
-        templateName: templatesStore.newTemplate.templateName,
-        settings
-      }]
-
-      // 重新赋值以触发模版列表重新渲染
-      templatesStore.templates = []
-      await nextTick();
-      templatesStore.templates = newTemplates;
-      templatesStore.newTemplate.templateName = ''
-      templatesStore.saveTemplateDialogVisible = false
+      const templateName = templatesStore.newTemplate.templateName
+      templatesStore.pendingTemplate = {templateName, settings}
+      if (templatesStore.templates.some(template => template.templateName === templateName)) {
+        // 同名预设已存在：弹出选择弹窗，由用户决定覆盖保存还是新增保存
+        templatesStore.saveExistsDialogVisible = true
+        return
+      }
+      // 名称未被占用：直接新增
+      await templatesStore.commitTemplateSave()
     }
   })
 }

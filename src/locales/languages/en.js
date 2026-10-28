@@ -390,6 +390,10 @@ export default {
         positionByValue: 'Position by fixed values',
         positionByRatio: 'Position by ratio',
         apply: 'Apply',
+        existsTitle: 'Preset Already Exists',
+        existsMessage: 'A preset named "{name}" already exists. Choose how to save it.',
+        overwriteSave: 'Overwrite',
+        addNewSave: 'Save as New',
     },
     downloadProgress: {
         title: 'Export Progress',

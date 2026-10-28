@@ -48,6 +48,7 @@ declare module 'vue' {
     RightPanel: typeof import('./src/components/index/RightPanel.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SaveExistsDialog: typeof import('./src/components/index/dialogs/SaveExistsDialog.vue')['default']
     SaveTemplateDialog: typeof import('./src/components/index/dialogs/SaveTemplateDialog.vue')['default']
     SearchDropdown: typeof import('./src/components/index/SearchDropdown.vue')['default']
     SettingsDialog: typeof import('./src/components/index/dialogs/SettingsDialog.vue')['default']
