@@ -22,7 +22,8 @@
   },
   "win": {
     "icon": "electron/resources/favicon.png",
-    "target": ["nsis", "zip"]
+    "target": ["nsis", "zip"],
+    "artifactName": "${name}-${version}-${arch}.${ext}"
   },
   "linux": {
     "icon": "electron/resources/favicon.png",
