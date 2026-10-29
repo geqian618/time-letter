@@ -7,7 +7,7 @@
           <img class="brand-mark" :src="appLogo" :alt="$t('toolbar.brand')" draggable="false">
           <div class="meta">
             <div class="name">{{ $t('toolbar.brand') }}</div>
-            <div class="sub">秋风吹落了秋枫 · v2.0.0</div>
+            <div class="sub">秋风吹落了秋枫 · v2.0.1</div>
           </div>
           <a class="repo-button" :href="repoUrl" :title="repoUrl" @click.prevent="openRepo">
             <SvgIcon name="github"/>
