@@ -9,23 +9,34 @@ on:
     tags:
       - 'v*'
 
+# 同一 tag 重复触发时不并发打包：两次运行会往同一个 Release 争抢同名资产
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
             name: win-x64
+            arch: x64
           - os: ubuntu-latest
             name: linux-x64
+            arch: x64
           # bytenode 字节码与 CPU 架构绑定，mac 双架构必须在对应架构的 runner 上分别构建；
           # macos-13 镜像已于 2025-12 下线，Intel 构建改用 macos-15-intel（可用至 2027-08）
           - os: macos-15-intel
             name: mac-x64
+            arch: x64
           - os: macos-latest
             name: mac-arm64
-      fail-fast: false
+            arch: arm64
     runs-on: ${{ matrix.os }}
+    # electron-builder 首次运行需下载 electron / nsis / AppImage 工具，留足余量
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,6 +45,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       # 各平台的原生依赖（sharp / exiftool-vendored / electron 二进制）按当前系统安装
       - name: Install dependencies
@@ -46,6 +58,17 @@ jobs:
         env:
           # 无签名证书：跳过 macOS codesign 探测与 Windows 证书查找
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      # 两个 mac job 都会产出同名 latest-mac.yml，merge-multiple 下载时会互相覆盖
+      # （最终只剩一个架构的元数据，另一架构的自动更新失效）。
+      # 先按架构改名，由 release job 合并成一份完整的更新元数据。
+      - name: Split macOS update metadata
+        if: startsWith(matrix.name, 'mac')
+        run: |
+          cd output
+          if [ -f latest-mac.yml ]; then
+            mv latest-mac.yml "latest-mac-${{ matrix.arch }}.yml"
+          fi
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -60,24 +83,34 @@ jobs:
             output/*.dmg
             output/*.blockmap
             output/*.yml
+            !output/builder-debug.yml
 
-  # 推送 v* tag 时：汇总四平台产物，创建 GitHub Release（草稿状态，人工确认后发布）
+  # 推送 v* tag 时：汇总四平台产物，创建 GitHub Release
   release:
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+    # 单个平台失败时仍发布其余可用产物；只有整体取消才跳过
+    if: startsWith(github.ref, 'refs/tags/v') && !cancelled()
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
           merge-multiple: true
 
+      - name: Merge macOS update metadata
+        run: node scripts/merge-mac-latest.js artifacts
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          draft: true
+          name: 时光信笺 ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          draft: false
           generate_release_notes: true
           files: artifacts/**/*
