@@ -176,8 +176,8 @@ time-letter
 
 | 安装包                                            | 说明                                                                     |
 | ---------------------------------------------- | ---------------------------------------------------------------------- |
-| `时光信笺 Setup x.x.x.exe`                         | Windows 安装版（NSIS），双击安装，支持自定义安装目录                                       |
-| `时光信笺 x.x.x.zip`                               | Windows 便携版，解压即用                                                       |
+| `time-letter-x.x.x-win-x64.exe`                | Windows 安装版（NSIS），双击安装，支持自定义安装目录                                       |
+| `time-letter-x.x.x-win-x64.zip`                | Windows 便携版，解压即用                                                       |
 | `time-letter-x.x.x-x64.dmg / -arm64.dmg`       | macOS 磁盘镜像（Intel / Apple Silicon，必须在 macOS 上构建）                        |
 | `time-letter-x.x.x-x64.AppImage / -x64.tar.gz` | Linux 安装包（AppImage 在 Windows 上构建需开启开发者模式或管理员权限；deb / rpm 需在 Linux 上构建） |
 

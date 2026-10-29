@@ -164,8 +164,8 @@ Download the latest release from [GitHub Releases](https://github.com/geqian618/
 
 | Package | Description |
 | --- | --- |
-| `Time Letter Setup x.x.x.exe` | Windows installer (NSIS), double-click to install, custom install directory supported |
-| `Time Letter x.x.x.zip` | Windows portable version, extract and run |
+| `time-letter-x.x.x-win-x64.exe` | Windows installer (NSIS), double-click to install, custom install directory supported |
+| `time-letter-x.x.x-win-x64.zip` | Windows portable version, extract and run |
 | `time-letter-x.x.x-x64.dmg / -arm64.dmg` | macOS disk image (Intel / Apple Silicon, must be built on macOS) |
 | `time-letter-x.x.x-x64.AppImage / -x64.tar.gz` | Linux packages (AppImage build requires Windows Developer Mode / admin; deb/rpm must be built on Linux) |
 
