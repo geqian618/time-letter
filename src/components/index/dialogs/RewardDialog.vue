@@ -1,19 +1,32 @@
 <template>
   <div class="dialog-wrapper">
     <el-dialog v-model="visible" :close-on-click-modal="false" :close-on-press-escape="false" :title="$t('reward.title')"
-               width="540" align-center>
+               width="640" align-center>
       <div class="reward">
         <div class="description">{{ $t('reward.description') }}</div>
         <div class="codes">
-          <figure>
-            <span class="channel">{{ $t('reward.wechat') }}</span>
-            <img src="/src/assets/images/reward-code.jpg" alt="wechat reward">
-          </figure>
-          <figure>
-            <span class="channel">{{ $t('reward.alipay') }}</span>
-            <img src="/src/assets/images/alipay.png" alt="alipay reward">
-          </figure>
+          <div class="code-card">
+            <div class="card-head">
+              <span class="dot"></span>
+              <span class="channel">{{ $t('reward.wechat') }}</span>
+            </div>
+            <div class="qr">
+              <img src="/src/assets/images/reward-code.png" alt="wechat reward">
+            </div>
+            <div class="hint">{{ $t('reward.wechatHint') }}</div>
+          </div>
+          <div class="code-card">
+            <div class="card-head">
+              <span class="dot"></span>
+              <span class="channel">{{ $t('reward.alipay') }}</span>
+            </div>
+            <div class="qr">
+              <img src="/src/assets/images/alipay.png" alt="alipay reward">
+            </div>
+            <div class="hint">{{ $t('reward.alipayHint') }}</div>
+          </div>
         </div>
+        <div class="footnote">{{ $t('reward.footnote') }}</div>
       </div>
     </el-dialog>
   </div>
@@ -46,44 +59,79 @@ const visible = computed({
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
+  gap: 14px;
   font-family: "黑体", "Microsoft YaHei", sans-serif;
 
   .description {
-    width: 100%;
     font-size: 13px;
     color: var(--ui-text);
-    text-align: center;
     line-height: 1.6;
+    /* 上沿到标题栏 10px（弹窗 body padding）、下沿到卡片 14px（列 gap），补 4px 让文案在这段空隙里上下居中 */
+    /* shortcut: 4px 由 body padding 与列 gap 手算，改这两处要跟着调 */
+    margin-top: 4px;
   }
 
   .codes {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 28px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
 
-    figure {
+    .code-card {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
-      margin: 0;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--app-settings-card-border);
+      border-radius: var(--app-radius-lg);
+      background-color: var(--app-settings-card-bg);
 
-      .channel {
-        font-size: 12px;
-        font-weight: bold;
-        color: var(--ui-text-secondary);
+      .card-head {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        .dot {
+          width: 6px;
+          height: 6px;
+          flex-shrink: 0;
+          border-radius: 50%;
+          background-color: var(--ui-accent);
+        }
+
+        .channel {
+          font-size: 12px;
+          font-weight: bold;
+          color: var(--ui-text-secondary);
+        }
       }
 
-      img {
-        /* 等高 250px、宽度按各自比例，不拉伸不裁剪 */
-        height: 250px;
-        width: auto;
-        border-radius: 3px;
+      .qr {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        img {
+          /* 等高 220px、宽度按各自比例，不拉伸不裁剪 */
+          height: 220px;
+          width: auto;
+          border-radius: var(--app-radius-md);
+        }
+      }
+
+      .hint {
+        font-size: 11px;
+        color: var(--ui-text-muted);
       }
     }
+  }
+
+  .footnote {
+    text-align: center;
+    font-size: 11px;
+    color: var(--ui-text-faint);
   }
 }
 </style>

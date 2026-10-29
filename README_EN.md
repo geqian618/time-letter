@@ -412,9 +412,9 @@ git push origin feature/your-feature
 If this project helps you, follow me on [Bilibili](https://space.bilibili.com/492789742) or buy me a coffee~
 
 <div align="center">
-  <img src="src/assets/images/qr-code.jpg" width="220" alt="Contact"/>
+  <img src="src/assets/images/qr-code.png" width="220" alt="Contact"/>
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="src/assets/images/reward-code.jpg" width="220" alt="Donate"/>
+  <img src="src/assets/images/reward-code.png" width="220" alt="Donate"/>
 </div>
 
 ## 📄 License

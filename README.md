@@ -103,8 +103,10 @@
 
 ## 🖼️ 应用预览
 
-<div align="center">  
-  <img src="src/assets/images/application.webp" width="100%" alt="时光信笺主界面"/>  
+<div align="center">
+  
+  <img src="src/assets/images/application.webp" width="100%" alt="时光信笺主界面"/>
+  
 </div>
 
 *主工作区：左侧为预设与图片库，中间为画布编辑区，右侧为属性面板，底部为图片预览栏*
@@ -447,9 +449,9 @@ git push origin feature/your-feature
 如果这个项目对你有帮助，欢迎来 [B 站](https://space.bilibili.com/492789742) 关注我，也欢迎请作者喝杯咖啡 ~
 
 <div align="center">
-  <img src="src/assets/images/qr-code.jpg" width="220" alt="联系作者"/>
+  <img src="src/assets/images/qr-code.png" width="220" alt="联系作者"/>
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="src/assets/images/reward-code.jpg" width="220" alt="赞赏码"/>
+  <img src="src/assets/images/reward-code.png" width="220" alt="赞赏码"/>
 </div>
 
 ---
