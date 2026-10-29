@@ -7,7 +7,7 @@
           <img class="brand-mark" :src="appLogo" :alt="$t('toolbar.brand')" draggable="false">
           <div class="meta">
             <div class="name">{{ $t('toolbar.brand') }}</div>
-            <div class="sub">秋风吹落了秋枫 · v2.0.1</div>
+            <div class="sub">秋风吹落了秋枫 · v{{ appVersion }}</div>
           </div>
           <a class="repo-button" :href="repoUrl" :title="repoUrl" @click.prevent="openRepo">
             <SvgIcon name="github"/>
@@ -49,6 +49,8 @@
 
 import {ref, onUnmounted} from 'vue'
 import appLogo from '@resources/favicon.png'
+// 版本号跟 package.json 走，发版只改那一处
+import {version as appVersion} from '../../../../package.json'
 
 // 项目主页：关于 / 赞赏弹窗里的品牌名与 GitHub 按钮都跳这里
 const repoUrl = 'https://github.com/geqian618/time-letter'
