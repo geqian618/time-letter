@@ -59,6 +59,7 @@ jobs:
             output/*.tar.gz
             output/*.dmg
             output/*.blockmap
+            output/*.yml
 
   # 推送 v* tag 时：汇总四平台产物，创建 GitHub Release（草稿状态，人工确认后发布）
   release:

@@ -192,7 +192,6 @@ export default {
         },
         export: '导出',
         checkUpdate: '检查更新',
-        upToDate: '当前已是最新版本',
         menu: {
             file: '文件',
             edit: '编辑',
@@ -423,5 +422,18 @@ export default {
         alipayHint: '支付宝扫一扫',
         footnote: '赞赏完全自愿 · 不影响任何功能使用',
         button: '请作者喝一杯咖啡~',
+    },
+    update: {
+        checking: '正在检查更新…',
+        latest: '当前已是最新版本（v{version}）',
+        available: '发现新版本 v{version}，当前版本 v{current}。',
+        unreleased: '暂未发布可下载的版本，请前往 Releases 页面查看。',
+        downloading: '正在下载更新 {percent}%',
+        downloaded: '更新已下载，重启后完成安装',
+        download: '前往下载',
+        restart: '立即重启',
+        later: '稍后',
+        background: '后台下载',
+        failed: '检查更新失败，请稍后重试',
     },
 }

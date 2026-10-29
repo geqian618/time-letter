@@ -48,7 +48,7 @@
 
       <!-- 检查更新：完整升级逻辑留待后续接入，当前仅提示 -->
       <el-tooltip :show-after="1500" :content="$t('toolbar.checkUpdate')" placement="bottom">
-        <button type="button" class="check-update-button" @click="handleCheckUpdate">
+        <button type="button" class="check-update-button" @click="$emit('check-update')">
           <SvgIcon name="refresh"/>
         </button>
       </el-tooltip>
@@ -88,15 +88,9 @@
 <script setup lang="js">
 import {ref, onMounted, onUnmounted} from 'vue'
 
-import {useI18n} from 'vue-i18n'
-
-import {ElMessage} from 'element-plus'
-
 import appLogo from '@resources/favicon.png'
 
 import SearchDropdown from '@/components/index/SearchDropdown.vue'
-
-const {t} = useI18n()
 
 // 面板伸缩状态由父组件（Index.vue）持有，这里只转发切换事件并按状态提示文案
 const props = defineProps({
@@ -104,7 +98,7 @@ const props = defineProps({
   rightCollapsed: {type: Boolean, default: false},
 })
 
-defineEmits(['toggle-left', 'toggle-right', 'toggle-bottom', 'show-reward'])
+defineEmits(['toggle-left', 'toggle-right', 'toggle-bottom', 'show-reward', 'check-update'])
 
 // 顶级菜单：有原生菜单的走主进程弹出原生命令
 const menus = [
@@ -136,15 +130,6 @@ const handleMenuClick = (event, item) => {
 // 导出：复用原生「文件 › 导出图片」命令（弹目录 → 走既有导出进度流程）
 const handleExport = () => {
   window.electronAPI?.invokeAppMenu?.('export-images')
-}
-
-// 检查更新：完整逻辑（请求版本源 → 比对 → 下载安装）后续接入，
-// 当前占位实现，仅提示已是最新版本
-const handleCheckUpdate = () => {
-  ElMessage({
-    message: t('toolbar.upToDate'),
-    type: 'success',
-  })
 }
 
 const handleMinimize = () => window.electronAPI?.minimizeWindow?.()

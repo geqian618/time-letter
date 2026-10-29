@@ -4,7 +4,8 @@
 
       <TopToolbar :left-collapsed="leftCollapsed" :right-collapsed="rightCollapsed"
                   @toggle-left="toggleLeft" @toggle-right="toggleRight" @toggle-bottom="toggleBottom"
-                  @show-reward="rewardDialogVisible = true"/>
+                  @show-reward="rewardDialogVisible = true"
+                  @check-update="updateDialogRef?.check()"/>
 
       <div class="page-body" ref="page">
 
@@ -51,6 +52,7 @@
     <EnableTemplateDialog/>
     <AboutDialog/>
     <RewardDialog v-model="rewardDialogVisible"/>
+    <UpdateDialog ref="updateDialogRef"/>
     <DeleteConfirmDialog/>
 
   </div>
@@ -86,6 +88,7 @@ import SettingsDialog from '@/components/index/dialogs/SettingsDialog.vue'
 import EnableTemplateDialog from '@/components/index/dialogs/EnableTemplateDialog.vue'
 import AboutDialog from '@/components/index/dialogs/AboutDialog.vue'
 import RewardDialog from '@/components/index/dialogs/RewardDialog.vue'
+import UpdateDialog from '@/components/index/dialogs/UpdateDialog.vue'
 import DeleteConfirmDialog from '@/components/index/dialogs/DeleteConfirmDialog.vue'
 
 import {useProjectSettingsStore} from '@/stores/project-settings'
@@ -122,6 +125,7 @@ const bottomCollapsed = ref(false);
 
 // 赞赏弹窗：顶部咖啡图标按钮 / 搜索命令"赞赏"触发
 const rewardDialogVisible = ref(false);
+const updateDialogRef = ref(null);
 
 // 收起时暂存面板尺寸，展开时按此恢复
 const savedLeftWidth = ref(18);

@@ -192,7 +192,6 @@ export default {
         },
         export: 'Export',
         checkUpdate: 'Check for Updates',
-        upToDate: 'You are on the latest version',
         menu: {
             file: 'File',
             edit: 'Edit',
@@ -423,5 +422,18 @@ export default {
         alipayHint: 'Scan with Alipay',
         footnote: 'Tipping is entirely optional · it never affects any feature',
         button: 'Buy the author a coffee~',
+    },
+    update: {
+        checking: 'Checking for updates…',
+        latest: 'You are on the latest version (v{version})',
+        available: 'Version v{version} is available. You are on v{current}.',
+        unreleased: 'No published release is available yet. Check the Releases page.',
+        downloading: 'Downloading update {percent}%',
+        downloaded: 'Update downloaded. Restart to finish installing.',
+        download: 'Download',
+        restart: 'Restart Now',
+        later: 'Later',
+        background: 'Download in Background',
+        failed: 'Failed to check for updates. Please try again later.',
     },
 }

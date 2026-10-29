@@ -56,6 +56,7 @@ declare module 'vue' {
     TextResourceDialog: typeof import('./src/components/index/dialogs/TextResourceDialog.vue')['default']
     TextResourceManagerDialog: typeof import('./src/components/index/dialogs/TextResourceManagerDialog.vue')['default']
     TopToolbar: typeof import('./src/components/index/TopToolbar.vue')['default']
+    UpdateDialog: typeof import('./src/components/index/dialogs/UpdateDialog.vue')['default']
     WorkspacePanel: typeof import('./src/components/index/WorkspacePanel.vue')['default']
   }
   export interface GlobalDirectives {

@@ -1,6 +1,11 @@
 {
   "appId": "com.electron.app",
   "asar": true,
+  "publish": {
+    "provider": "github",
+    "owner": "geqian618",
+    "repo": "time-letter"
+  },
   "afterPack": "./scripts/encryptor-afterpack.js",
   "directories": {
     "buildResources": "assets",

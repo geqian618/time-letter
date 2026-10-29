@@ -1,4 +1,4 @@
-const {app, ipcMain, protocol, globalShortcut, BrowserWindow, Menu, dialog, shell, nativeTheme} = require('electron')
+const {app, ipcMain, protocol, globalShortcut, BrowserWindow, Menu, dialog, shell, nativeTheme, net} = require('electron')
 const WinState = require('electron-win-state').default
 const path = require('path');
 const fs = require('fs')
@@ -41,6 +41,7 @@ const {closeImageManagerWindow, getImageManagerWindow} = require('./components/i
 const {APP_NAME, APP_ICON_PATH, APP_VERSION, IMAGE_TYPES} = require('./constant/project-constants')
 const {initLanguage, t, setLanguage} = require('./locales')
 const {initTheme, setTheme} = require('./components/theme')
+const {checkForUpdate, quitAndInstall} = require('./components/updater')
 const environment = process.env.NODE_ENV
 const isDev = environment === 'development'
 
@@ -268,6 +269,75 @@ const setupIpcHandlers = () => {
     ipcMain.on('shell:open-external', (event, url) => {
         if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
             shell.openExternal(url)
+        }
+    })
+
+    // 自动更新：安装版走 electron-updater（检查后自动下载，见 components/updater.js）
+    ipcMain.handle('update:check', () => checkForUpdate())
+    ipcMain.on('update:install', () => quitAndInstall())
+
+    // 检查更新：读 GitHub 最新 release 与当前版本比较（只做检查，下载跳转 release 页）
+    // 用 net 而非 Node https：走 Chromium 网络栈，跟随系统代理并信任系统证书
+    ipcMain.handle('app:check-update', async () => {
+        const current = app.getVersion()
+        const releasesUrl = 'https://github.com/geqian618/time-letter/releases'
+        const release = await new Promise((resolve) => {
+            let settled = false
+            const done = (value) => {
+                if (settled) return
+                settled = true
+                clearTimeout(timer)
+                resolve(value)
+            }
+            const request = net.request({
+                url: 'https://api.github.com/repos/geqian618/time-letter/releases/latest',
+                method: 'GET',
+            })
+            request.setHeader('User-Agent', 'time-letter')
+            request.setHeader('Accept', 'application/vnd.github+json')
+            const timer = setTimeout(() => {
+                request.abort()
+                done({status: 0})
+            }, 15000)
+            request.on('response', (response) => {
+                if (response.statusCode !== 200) {
+                    done({status: response.statusCode})
+                    return
+                }
+                let body = ''
+                response.on('data', (chunk) => body += chunk.toString())
+                response.on('end', () => {
+                    try {
+                        done({status: 200, data: JSON.parse(body)})
+                    } catch (e) {
+                        done({status: 0})
+                    }
+                })
+            })
+            request.on('error', () => done({status: 0}))
+            request.end()
+        })
+        // 404 = 仓库没有已发布的 release（草稿对匿名接口不可见），与网络失败区分开
+        if (release.status === 404) return {error: 'no-release', current, url: releasesUrl}
+        if (release.status !== 200 || !release.data || !release.data.tag_name) return {error: 'request-failed', current}
+
+        const parse = (v) => String(v).replace(/^v/i, '').split(/[.-]/).map((n) => parseInt(n, 10) || 0)
+        const latestParts = parse(release.data.tag_name)
+        const currentParts = parse(current)
+        let hasUpdate = false
+        for (let i = 0; i < Math.max(latestParts.length, currentParts.length); i++) {
+            const diff = (latestParts[i] || 0) - (currentParts[i] || 0)
+            if (diff !== 0) {
+                hasUpdate = diff > 0
+                break
+            }
+        }
+        return {
+            error: false,
+            current,
+            latest: String(release.data.tag_name).replace(/^v/i, ''),
+            hasUpdate,
+            url: release.data.html_url,
         }
     })
 
