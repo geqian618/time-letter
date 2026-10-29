@@ -16,7 +16,7 @@
 [![Vue](https://img.shields.io/badge/Vue-3.x-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vitejs.org/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](#-cross-platform-build-notes)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 </div>
 
@@ -419,15 +419,15 @@ If this project helps you, follow me on [Bilibili](https://space.bilibili.com/49
 
 ## 📄 License
 
-This project is open-sourced under the [MIT License](LICENSE) — Copyright © 2025 秋风吹落了秋枫.
+This project is open-sourced under the [GNU General Public License v3.0](LICENSE) — Copyright © 2025 秋风吹落了秋枫.
 
-You are free to use, copy, modify, merge, publish, and distribute this software, including for commercial purposes, as long as the original copyright notice and this permission notice are retained in all copies or substantial portions of the Software. The software is provided "as is", without warranty of any kind.
+You are free to use, modify and redistribute this software, including commercially; however, any modified version you distribute must be released under the GPL-3.0 together with its complete source code, and the original copyright and license notices must be retained. Personal and internal use is unrestricted. The software is provided "as is", without warranty of any kind.
 
 ---
 
 <div align="center">
 
-**May every photo become a letter sent to the future.** ⏳
+**May every photo become a time letter sent to the future.** ⏳
 
 <sub>Made with ❤️ by 秋风吹落了秋枫</sub>
 

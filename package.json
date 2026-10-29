@@ -2,7 +2,7 @@
   "name": "time-letter",
   "productName": "时光信笺",
   "version": "2.0.0",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "private": true,
   "main": "electron/main-loader.js",
   "scripts": {

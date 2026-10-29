@@ -14,7 +14,7 @@
 [![Vue](https://img.shields.io/badge/Vue-3.x-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vitejs.org/)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](#-跨平台适配与构建)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 </div>
 
@@ -458,15 +458,15 @@ git push origin feature/your-feature
 
 ## 📄 许可证
 
-本项目基于 [MIT 许可证](LICENSE) 开源 —— Copyright © 2025 秋风吹落了秋枫。
+本项目基于 [GNU General Public License v3.0](LICENSE) 开源 —— Copyright © 2025 秋风吹落了秋枫。
 
-你可以自由地使用、复制、修改、合并、发布、分发本软件及其副本，包括用于商业目的，唯一的要求是在所有副本或重要片段中保留原版权声明与许可声明。软件按“原样”提供，作者不承担任何担保责任。
+你可以自由地使用、修改和分发本软件，包括商用；但分发修改后的版本时，必须以 GPL-3.0 同协议开源并提供完整源代码，同时保留原版权与许可声明。个人使用与内部使用不受限制。软件按“原样”提供，作者不承担任何担保责任。
 
 ---
 
 <div align="center">
 
-**愿每一张照片，都成为一封寄往未来的信。** ⏳
+**愿每一张照片，都成为一封寄往未来的信笺。** ⏳
 
 <sub>Made with ❤️ by 秋风吹落了秋枫</sub>
 
