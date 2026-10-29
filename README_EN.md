@@ -167,7 +167,8 @@ Download the latest release from [GitHub Releases](https://github.com/geqian618/
 | `time-letter-x.x.x-win-x64.exe` | Windows installer (NSIS), double-click to install, custom install directory supported |
 | `time-letter-x.x.x-win-x64.zip` | Windows portable version, extract and run |
 | `time-letter-x.x.x-x64.dmg / -arm64.dmg` | macOS disk image (Intel / Apple Silicon, must be built on macOS) |
-| `time-letter-x.x.x-x64.AppImage / -x64.tar.gz` | Linux packages (AppImage build requires Windows Developer Mode / admin; deb/rpm must be built on Linux) |
+| `time-letter-x.x.x-x86_64.AppImage` | Linux portable executable, chmod +x and run |
+| `time-letter-x.x.x-x64.tar.gz` | Linux portable archive, extract and run |
 
 ## 🚀 Getting Started (Local Development)
 
@@ -274,7 +275,7 @@ No internet needed. All image processing, watermark rendering and exporting happ
 <details>
 <summary><b>3. Which operating systems are supported?</b></summary>
 
-Current releases target Windows (NSIS installer + portable zip), with macOS (dmg + zip, Intel / Apple Silicon) and Linux (AppImage + tar.gz) targets configured:
+Installers for all three platforms — Windows (NSIS installer + portable zip), macOS (dmg + zip, Intel / Apple Silicon) and Linux (AppImage + tar.gz) — are built on their native runners by GitHub Actions; pushing a `v*` tag publishes them to Releases automatically:
 
 - The main-process code is cross-platform ready (data directory, icons, tray / menu behavior), so builds work out of the box on each platform.
 - Due to electron-builder limitations, macOS artifacts must be built on macOS (without a signing certificate the app runs locally, but distribution requires handling Gatekeeper notarization yourself); Linux AppImage / tar.gz can be cross-built directly on Windows.

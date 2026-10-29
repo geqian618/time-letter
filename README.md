@@ -179,7 +179,8 @@ time-letter
 | `time-letter-x.x.x-win-x64.exe`                | Windows 安装版（NSIS），双击安装，支持自定义安装目录                                       |
 | `time-letter-x.x.x-win-x64.zip`                | Windows 便携版，解压即用                                                       |
 | `time-letter-x.x.x-x64.dmg / -arm64.dmg`       | macOS 磁盘镜像（Intel / Apple Silicon，必须在 macOS 上构建）                        |
-| `time-letter-x.x.x-x64.AppImage / -x64.tar.gz` | Linux 安装包（AppImage 在 Windows 上构建需开启开发者模式或管理员权限；deb / rpm 需在 Linux 上构建） |
+| `time-letter-x.x.x-x86_64.AppImage`            | Linux 免安装包，赋予可执行权限后直接运行                                                |
+| `time-letter-x.x.x-x64.tar.gz`                 | Linux 便携版，解压即用                                                         |
 
 ---
 
@@ -299,7 +300,7 @@ npm run electron:build:mac
 
 <summary><b>3. 支持哪些操作系统？</b></summary>
 
-当前发布版本面向 Windows（NSIS 安装版 + 便携版 zip），并已配置 macOS（dmg + zip，Intel / Apple Silicon）与 Linux（AppImage + tar.gz）目标：
+Windows（NSIS 安装版 + 便携版 zip）、macOS（dmg + zip，Intel / Apple Silicon）与 Linux（AppImage + tar.gz）三平台安装包均由 GitHub Actions 在对应系统上构建，推送 `v*` tag 即自动发布到 Releases：
 
 - 主进程代码已按跨平台编写（数据目录、图标、托盘 / 菜单行为），在各平台构建机上均可直接出包。
 - 受 electron-builder 限制，macOS 产物必须在 macOS 上构建（无签名证书时应用可本地运行，但分发需自行处理 Gatekeeper 公证）。
