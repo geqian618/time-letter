@@ -68,6 +68,12 @@ onUnmounted(() => disposeOpenAboutDialog?.())
 <style scoped lang="scss">
 @use '@/assets/styles/dialog';
 
+/* 左右比 body 默认 10px 再松一点 */
+.dialog-wrapper :deep(.el-dialog > .el-dialog__body) {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
 .about {
   width: 100%;
   display: flex;
