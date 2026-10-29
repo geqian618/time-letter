@@ -407,14 +407,16 @@ export default {
     about: {
         title: 'About',
         intro: 'Overview',
-        introText: '"时光信笺" is a simple, easy-to-use photo watermark and border tool that supports deep customization and runs entirely offline on your own machine.',
+        introBefore: '"',
+        introAfter: '" is a simple, easy-to-use photo watermark and border tool that supports deep customization and runs entirely offline on your own machine.',
         origin: 'Origin',
         originText: 'Inspired by the "letter-burying ritual" from the internet — "find a spot, bury a letter, and send it to yourself years from now." Carefully seal away your feelings at this moment and wait for time to open them. Photos are much the same: if letters are written monologues to the future, then photos are silent poems dedicated to the years. May we all condense our fleeting emotions into silent letters that travel through time — to be unsealed by your own hands someday, reuniting tenderly with who you once were.',
         contact: 'Contact the Author',
     },
     reward: {
         title: 'Appreciate',
-        description: 'Creating this takes effort. If you enjoy 《时光信笺》, feel free to buy the author a cup of coffee. Every bit of support is a precious encouragement.',
+        descriptionBefore: 'Creating this takes effort. If you enjoy ',
+        descriptionAfter: ', feel free to buy the author a cup of coffee. Every bit of support is a precious encouragement.',
         wechat: 'WeChat',
         wechatHint: 'Scan with WeChat',
         alipay: 'Alipay',

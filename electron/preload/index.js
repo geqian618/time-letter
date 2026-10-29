@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     watchDownloadProgress: (callback) => subscribe('download-progress:watch', callback),
     openSettingsDialog: (callback) => subscribe('settings-dialog:open', callback),
     openAboutDialog: (callback) => subscribe('about-dialog:open', callback),
+    openExternal: (url) => ipcRenderer.send('shell:open-external', url),
     watchTemplates: (callback) => subscribe('templates:watch', callback),
     exportTemplates: (args) => ipcRenderer.send('templates:export', args),
     watchProjectSettings: (callback) => subscribe('settings:watch', callback),

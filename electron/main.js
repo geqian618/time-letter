@@ -264,6 +264,13 @@ const setupIpcHandlers = () => {
         templateContextMenu?.popup()
     })
 
+    // 用系统浏览器打开外链：只放行 http(s)，避免渲染层把任意协议交给系统
+    ipcMain.on('shell:open-external', (event, url) => {
+        if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
+            shell.openExternal(url)
+        }
+    })
+
     // ---------- 自绘窗口控制（无边框窗口由渲染进程顶部工具栏驱动） ----------
 
     // 最小化

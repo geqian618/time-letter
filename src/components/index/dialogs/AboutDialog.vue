@@ -9,6 +9,9 @@
             <div class="name">{{ $t('toolbar.brand') }}</div>
             <div class="sub">秋风吹落了秋枫 · v2.0.0</div>
           </div>
+          <a class="repo-button" :href="repoUrl" :title="repoUrl" @click.prevent="openRepo">
+            <SvgIcon name="github"/>
+          </a>
         </div>
         <div class="panels">
           <div class="texts">
@@ -17,7 +20,9 @@
                 <span class="dot"></span>
                 <span class="title">{{ $t('about.intro') }}</span>
               </div>
-              <div class="panel-body">{{ $t('about.introText') }}</div>
+              <div class="panel-body">
+                {{ $t('about.introBefore') }}<a class="link" :href="repoUrl" @click.prevent="openRepo">{{ $t('toolbar.brand') }}</a>{{ $t('about.introAfter') }}
+              </div>
             </div>
             <div class="panel">
               <div class="panel-head">
@@ -44,6 +49,10 @@
 
 import {ref, onUnmounted} from 'vue'
 import appLogo from '@resources/favicon.png'
+
+// 项目主页：关于 / 赞赏弹窗里的品牌名与 GitHub 按钮都跳这里
+const repoUrl = 'https://github.com/geqian618/time-letter'
+const openRepo = () => window.electronAPI.openExternal(repoUrl)
 
 const aboutDialogVisible = ref(false)
 
@@ -93,6 +102,42 @@ onUnmounted(() => disposeOpenAboutDialog?.())
       margin-top: 2px;
       font-size: 12px;
       color: var(--ui-text-muted);
+    }
+
+    /* 与主界面窗口按钮同款：中性填充、无描边，悬停加深 */
+    .repo-button {
+      margin-left: auto;
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: var(--app-radius-xs);
+      background-color: var(--ui-control);
+      color: var(--ui-text-secondary);
+      transition: background-color var(--app-transition), color var(--app-transition);
+
+      &:hover {
+        background-color: var(--ui-control-hover);
+        color: var(--ui-text);
+      }
+
+      svg {
+        width: 16px;
+        height: 16px;
+        display: block;
+      }
+    }
+  }
+
+  .link {
+    color: var(--ui-accent);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
     }
   }
 

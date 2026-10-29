@@ -47,6 +47,7 @@ import EmptyUploadIcon from '@/assets/icon/empty-upload.svg'
 import ExpandBottomIcon from '@/assets/icon/expand-bottom.svg'
 import ExportIcon from '@/assets/icon/export.svg'
 import FitViewIcon from '@/assets/icon/fit-view.svg'
+import GithubIcon from '@/assets/icon/github.svg'
 import PanelCollapseBottomIcon from '@/assets/icon/panel-collapse-bottom.svg'
 import PanelCollapseLeftIcon from '@/assets/icon/panel-collapse-left.svg'
 import PanelCollapseRightIcon from '@/assets/icon/panel-collapse-right.svg'
@@ -107,6 +108,7 @@ const registry = {
   'expand-bottom': ExpandBottomIcon,
   'export': ExportIcon,
   'fit-view': FitViewIcon,
+  'github': GithubIcon,
   'panel-collapse-bottom': PanelCollapseBottomIcon,
   'panel-collapse-left': PanelCollapseLeftIcon,
   'panel-collapse-right': PanelCollapseRightIcon,

@@ -458,7 +458,7 @@ git push origin feature/your-feature
 
 ## 📄 许可证
 
-本项目基于 [MIT 许可证](LICENSE) 开源 —— Copyright © 2025 搁浅。
+本项目基于 [MIT 许可证](LICENSE) 开源 —— Copyright © 2025 秋风吹落了秋枫。
 
 你可以自由地使用、复制、修改、合并、发布、分发本软件及其副本，包括用于商业目的，唯一的要求是在所有副本或重要片段中保留原版权声明与许可声明。软件按“原样”提供，作者不承担任何担保责任。
 
@@ -468,6 +468,6 @@ git push origin feature/your-feature
 
 **愿每一张照片，都成为一封寄往未来的信。** ⏳
 
-<sub>Made with ❤️ by 搁浅</sub>
+<sub>Made with ❤️ by 秋风吹落了秋枫</sub>
 
 </div>

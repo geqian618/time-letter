@@ -3,7 +3,9 @@
     <el-dialog v-model="visible" :close-on-click-modal="false" :close-on-press-escape="false" :title="$t('reward.title')"
                width="640" align-center>
       <div class="reward">
-        <div class="description">{{ $t('reward.description') }}</div>
+        <div class="description">
+          {{ $t('reward.descriptionBefore') }}<a class="link" :href="repoUrl" @click.prevent="openRepo">{{ $t('toolbar.brand') }}</a>{{ $t('reward.descriptionAfter') }}
+        </div>
         <div class="codes">
           <div class="code-card">
             <div class="card-head">
@@ -35,6 +37,10 @@
 <script setup lang="js">
 
 import {computed} from 'vue'
+
+// 项目主页：关于 / 赞赏弹窗里的品牌名都跳这里
+const repoUrl = 'https://github.com/geqian618/time-letter'
+const openRepo = () => window.electronAPI.openExternal(repoUrl)
 
 const props = defineProps({
   modelValue: {
@@ -69,6 +75,15 @@ const visible = computed({
     /* 上沿到标题栏 10px（弹窗 body padding）、下沿到卡片 14px（列 gap），补 4px 让文案在这段空隙里上下居中 */
     /* shortcut: 4px 由 body padding 与列 gap 手算，改这两处要跟着调 */
     margin-top: 4px;
+  }
+
+  .link {
+    color: var(--ui-accent);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 
   .codes {

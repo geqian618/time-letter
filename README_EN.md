@@ -419,7 +419,7 @@ If this project helps you, follow me on [Bilibili](https://space.bilibili.com/49
 
 ## 📄 License
 
-This project is open-sourced under the [MIT License](LICENSE) — Copyright © 2025 搁浅.
+This project is open-sourced under the [MIT License](LICENSE) — Copyright © 2025 秋风吹落了秋枫.
 
 You are free to use, copy, modify, merge, publish, and distribute this software, including for commercial purposes, as long as the original copyright notice and this permission notice are retained in all copies or substantial portions of the Software. The software is provided "as is", without warranty of any kind.
 
@@ -429,6 +429,6 @@ You are free to use, copy, modify, merge, publish, and distribute this software,
 
 **May every photo become a letter sent to the future.** ⏳
 
-<sub>Made with ❤️ by 搁浅</sub>
+<sub>Made with ❤️ by 秋风吹落了秋枫</sub>
 
 </div>
