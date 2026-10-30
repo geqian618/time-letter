@@ -8,7 +8,7 @@
 
 [![Gitee Star](https://gitee.com/geqian618/time-letter/badge/star.svg?theme=dark)](https://gitee.com/geqian618/time-letter/stargazers)
 [![GitHub Star](https://img.shields.io/github/stars/geqian618/time-letter?style=flat&logo=github&label=Star)](https://github.com/geqian618/time-letter/stargazers)
-[![Version](https://img.shields.io/badge/version-v2.0.0-blue)](https://github.com/geqian618/time-letter/releases)
+[![Version](https://img.shields.io/badge/version-v2.0.1-blue)](https://github.com/geqian618/time-letter/releases)
 [![Build](https://github.com/geqian618/time-letter/actions/workflows/build.yml/badge.svg)](https://github.com/geqian618/time-letter/actions/workflows/build.yml)
 [![Electron](https://img.shields.io/badge/Electron-22.3-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![Vue](https://img.shields.io/badge/Vue-3.x-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
@@ -333,8 +333,19 @@ Windows（NSIS 安装版 + 便携版 zip）、macOS（dmg + zip，Intel / Apple 
 
 > 完整记录见 <a href="https://github.com/geqian618/time-letter/commits" target="_blank">GitHub 提交历史</a> / <a href="https://gitee.com/geqian618/time-letter/commits" target="_blank">Gitee 提交历史</a>。
 
-### v2.0.0（2026-08 · 当前版本）
+### v2.0.1（2026-10 · 当前版本）
 
+**🆕 新增**
+
+- 内置 UI 中文字体，中文界面渲染不再依赖系统字体
+
+**🐛 修复**
+
+- Windows 产物文件名中文被剥离导致自动更新 404
+- 未选中任何图片时仍可触发导出 / 保存预设
+- 图片被移除后仍可能因异步加载被渲染
+
+### v2.0.0（2026-08 ~ 2026-10）
 
 **🌟 新增**
 
@@ -348,12 +359,14 @@ Windows（NSIS 安装版 + 便携版 zip）、macOS（dmg + zip，Intel / Apple 
 - GIF & AVIF 图片格式支持
 - 左 / 右 / 底面板可折叠，底部工具栏缩放，布局更自由
 - "重置所有设置"功能
+- 检查更新与自动下载安装
 
 **⚡ 优化**
 
 - 底部预览栏改用缩略图，大幅降低加载延迟
 - 图片导航改为链表结构，支持跳转首 / 末张
 - 图片切换过渡与首次加载性能
+- 处理模板预设名称冲突
 - 重构数据持久化（Pinia 持久化插件）
 - Index.vue 代码重组
 

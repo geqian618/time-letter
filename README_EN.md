@@ -10,7 +10,7 @@
 
 [![Gitee Star](https://gitee.com/geqian618/time-letter/badge/star.svg?theme=dark)](https://gitee.com/geqian618/time-letter/stargazers)
 [![GitHub Star](https://img.shields.io/github/stars/geqian618/time-letter?style=flat&logo=github&label=Star)](https://github.com/geqian618/time-letter/stargazers)
-[![Version](https://img.shields.io/badge/version-v2.0.0-blue)](https://github.com/geqian618/time-letter/releases)
+[![Version](https://img.shields.io/badge/version-v2.0.1-blue)](https://github.com/geqian618/time-letter/releases)
 [![Build](https://github.com/geqian618/time-letter/actions/workflows/build.yml/badge.svg)](https://github.com/geqian618/time-letter/actions/workflows/build.yml)
 [![Electron](https://img.shields.io/badge/Electron-22.3-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![Vue](https://img.shields.io/badge/Vue-3.x-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
@@ -301,7 +301,20 @@ Add them via "Extensions → Font Library → Import Fonts", or drop font files 
 
 > See the full commit history on [GitHub](https://github.com/geqian618/time-letter/commits) / [Gitee](https://gitee.com/geqian618/time-letter/commits).
 
-### v2.0.0 (2026-08 · Current)
+### v2.0.1 (2026-10 · Current)
+
+**🆕 Added**
+
+- Bundled UI Chinese font, so Chinese UI rendering no longer depends on system fonts
+
+
+**🐛 Fixed**
+
+- Auto-update 404 caused by Chinese characters being stripped from Windows artifact filenames
+- Export / save-preset could still be triggered with no image selected
+- Removed images could still be rendered due to async loading
+
+### v2.0.0 (2026-08 ~ 2026-10)
 
 **🌟 Added**
 
@@ -315,12 +328,14 @@ Add them via "Extensions → Font Library → Import Fonts", or drop font files 
 - GIF & AVIF image format support
 - Collapsible left/right/bottom panels and bottom toolbar zoom for freer layouts
 - "Reset all settings" feature
+- In-app update check with automatic download & install
 
 **⚡ Improved**
 
 - Bottom preview bar now uses thumbnails, greatly reducing loading latency
 - Linked-list-based image navigation with jump-to-first / jump-to-last
 - Image switching transitions and first-load performance
+- Handle template preset name conflicts
 - Refactored data persistence (Pinia persistence plugin)
 - Index.vue code reorganization
 
