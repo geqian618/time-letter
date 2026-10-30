@@ -6,7 +6,7 @@
 
 # Time Letter (时光信笺)
 
-**A fully local, offline photo watermark & border tool — seal the memories of this moment into letters sent to your future self**
+**A fully local, offline photo watermark & border editor — seal the memories of this moment into letters sent to your future self**
 
 [![Gitee Star](https://gitee.com/geqian618/time-letter/badge/star.svg?theme=dark)](https://gitee.com/geqian618/time-letter/stargazers)
 [![GitHub Star](https://img.shields.io/github/stars/geqian618/time-letter?style=flat&logo=github&label=Star)](https://github.com/geqian618/time-letter/stargazers)
@@ -44,7 +44,7 @@
 
 ## 📖 Introduction
 
-"Time Letter" is a simple, flexible and highly extensible photo watermark & border tool that **runs entirely locally, no internet connection required**.
+"Time Letter" is an easy-to-use, highly customizable photo watermark & border editor that supports unlimited multi-process exporting and **runs entirely locally, no internet connection required**.
 
 > Inspired by the "letter-burying ritual" from the internet — "Find a spot, bury a letter, and mail it to yourself years from now." Carefully seal away your present feelings, waiting for time to open them.
 >
@@ -55,7 +55,8 @@
 ### ✨ Core Advantages
 
 - 🖱️ **Simple to use** — interaction logic is basically identical to common drawing software, zero learning curve
-- 🧩 **Highly extensible** — freely customize text, logos, fonts and template presets
+- 🧩 **Highly customizable** — freely customize text, logos, fonts and template presets
+- 🚀 **Unlimited multi-process exporting** — export without quantity limits, with multi-process parallel rendering
 - 📦 **Easy to migrate** — freely export / import template presets and global app settings
 - 🔒 **Fully local** — no internet required, collects no data, privacy-safe
 

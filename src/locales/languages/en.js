@@ -409,7 +409,7 @@ export default {
         title: 'About',
         intro: 'Overview',
         introBefore: '"',
-        introAfter: '" is a simple, easy-to-use photo watermark and border tool that supports deep customization and runs entirely offline on your own machine.',
+        introAfter: '" is an easy-to-use, highly customizable photo watermark & border editor with unlimited multi-process exporting that runs entirely locally, no internet connection required.',
         origin: 'Origin',
         originText: 'Inspired by the "letter-burying ritual" from the internet — "find a spot, bury a letter, and send it to yourself years from now." Carefully seal away your feelings at this moment and wait for time to open them. Photos are much the same: if letters are written monologues to the future, then photos are silent poems dedicated to the years. May we all condense our fleeting emotions into silent letters that travel through time — to be unsealed by your own hands someday, reuniting tenderly with who you once were.',
         contact: 'Contact the Author',
