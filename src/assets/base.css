@@ -67,6 +67,8 @@ body {
     background-color 0.5s;
   line-height: 1.6;
   font-family:
+    'Noto Sans SC Variable',
+    'Noto Sans SC',
     Inter,
     -apple-system,
     BlinkMacSystemFont,
