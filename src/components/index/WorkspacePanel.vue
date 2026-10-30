@@ -587,6 +587,8 @@ const clearCanvasElements = (path) => {
 
 
 const clearCanvas = () => {
+  // 作废排队中的渲染：删除/清空时可能仍有画布在异步加载，不 bump 会让过期渲染把已删除的图片画回清空的画布
+  renderVersion++
   canvasEditor.clearCanvas();
   backgroundCanvasEditor.clearCanvas()
   // 编辑器已清空，内容归属重置，避免切换时把空内容导出给画布
