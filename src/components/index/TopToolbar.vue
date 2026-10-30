@@ -41,10 +41,13 @@
       <SearchDropdown @toggle-left="$emit('toggle-left')" @toggle-right="$emit('toggle-right')"
                       @toggle-bottom="$emit('toggle-bottom')" @show-reward="$emit('show-reward')"/>
 
-      <button type="button" class="export-button" @click="handleExport">
-        <SvgIcon name="export"/>
-        <span>{{ $t('toolbar.export') }}</span>
-      </button>
+      <!-- 未选中任何画布时禁用导出，tooltip 仅在禁用时提示原因 -->
+      <el-tooltip :show-after="1500" :content="$t('toolbar.exportDisabled')" placement="bottom" :disabled="hasSelection">
+        <button type="button" class="export-button" :disabled="!hasSelection" @click="handleExport">
+          <SvgIcon name="export"/>
+          <span>{{ $t('toolbar.export') }}</span>
+        </button>
+      </el-tooltip>
 
       <!-- 检查更新：完整升级逻辑留待后续接入，当前仅提示 -->
       <el-tooltip :show-after="1500" :content="$t('toolbar.checkUpdate')" placement="bottom">
@@ -86,11 +89,19 @@
 </template>
 
 <script setup lang="js">
-import {ref, onMounted, onUnmounted} from 'vue'
+
+import {ref, computed, onMounted, onUnmounted} from 'vue'
 
 import appLogo from '@resources/favicon.png'
 
 import SearchDropdown from '@/components/index/SearchDropdown.vue'
+
+import {useCanvasesStore} from '@/stores/canvases'
+
+const canvasesStore = useCanvasesStore()
+
+// 是否选中了待导出的画布（预览选中列表非空）
+const hasSelection = computed(() => canvasesStore.selectedPreviewList?.size > 0)
 
 // 面板伸缩状态由父组件（Index.vue）持有，这里只转发切换事件并按状态提示文案
 const props = defineProps({
@@ -344,6 +355,17 @@ onUnmounted(() => {
   &:active {
     background: var(--ui-accent-active);
     box-shadow: none;
+  }
+
+  // 未选中画布：半透明置灰并去掉交互反馈
+  &:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    box-shadow: none;
+
+    &:hover, &:active {
+      background: var(--ui-accent);
+    }
   }
 }
 

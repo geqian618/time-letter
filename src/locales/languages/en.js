@@ -191,6 +191,7 @@ export default {
             toggleBottomPanel: 'Toggle Bottom Panel',
         },
         export: 'Export',
+        exportDisabled: 'Select images first',
         checkUpdate: 'Check for Updates',
         menu: {
             file: 'File',
@@ -222,6 +223,7 @@ export default {
         presetLabel: 'Preset',
         layerUnit: 'layers',
         newPreset: 'New Preset',
+        newPresetDisabled: 'Select images first',
         emptyPresets: 'No presets yet. Save the current canvas as a preset from the context menu.',
         noMatchPresets: 'No matching presets',
     },

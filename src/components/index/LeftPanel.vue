@@ -117,11 +117,13 @@
 
     </el-scrollbar>
 
-    <!-- 新建预设 -->
-    <button type="button" class="new-preset-button" @click="handleCreatePreset">
-      <SvgIcon name="plus"/>
-      <span>{{ $t('left.newPreset') }}</span>
-    </button>
+    <!-- 新建预设：无选中画布时禁用（预设以当前画布为来源），tooltip 仅在禁用时提示 -->
+    <el-tooltip :show-after="1500" :content="$t('left.newPresetDisabled')" placement="top" :disabled="hasCurrentCanvas">
+      <button type="button" class="new-preset-button" :disabled="!hasCurrentCanvas" @click="handleCreatePreset">
+        <SvgIcon name="plus"/>
+        <span>{{ $t('left.newPreset') }}</span>
+      </button>
+    </el-tooltip>
 
   </aside>
 </template>
@@ -265,6 +267,9 @@ const openEnableTemplateDialog = ({templateId, settings}) => {
 }
 
 // 新建预设：以当前选中画布保存为预设
+// selectedObject 是 reactive（canvas-manager.js），path 变化会驱动本 computed
+const hasCurrentCanvas = computed(() => !!CanvasManager.getSelectedPath())
+
 const handleCreatePreset = () => {
   templatesStore.saveTemplateDialogVisible = true
 }
@@ -705,6 +710,18 @@ useEventListener(textResourceRef, 'dragstart', handleDragStart)
   &:hover {
     background: var(--ui-accent-soft);
     border-color: var(--ui-accent);
+  }
+
+  // 无选中画布：置灰并去掉悬停反馈
+  &:disabled {
+    color: var(--ui-text-muted);
+    border-color: var(--ui-border);
+    cursor: not-allowed;
+
+    &:hover {
+      background: var(--ui-elevated);
+      border-color: var(--ui-border);
+    }
   }
 }
 

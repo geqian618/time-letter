@@ -202,6 +202,8 @@ const watchContextMenu = () => {
           permanentlyRemoveSelectedCanvas();
         }
       } else if (type === 3) {
+        // 未选中任何画布时直接忽略导出，避免空列表触发导出流程
+        if (!canvasesStore.selectedPreviewList?.size) return
         const paths = Array.from(canvasesStore.selectedPreviewList.keys());
         const settings = paths.map((path, index) => {
           const canvas = CanvasManager.getCanvas(path);
@@ -244,6 +246,8 @@ const watchContextMenu = () => {
         })
         canvasesStore.downloadProgressVisible = true
       } else if (type === 4) {
+        // 无选中画布时不弹保存预设框（预设来源为当前画布）
+        if (!CanvasManager.getSelectedPath()) return
         templatesStore.saveTemplateDialogVisible = true
       } else if (type === 5) {
         templatesStore.synchronousMode = data.method

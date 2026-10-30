@@ -191,6 +191,7 @@ export default {
             toggleBottomPanel: '折叠/展开底部面板',
         },
         export: '导出',
+        exportDisabled: '请先选择图片',
         checkUpdate: '检查更新',
         menu: {
             file: '文件',
@@ -222,6 +223,7 @@ export default {
         presetLabel: '预设',
         layerUnit: '图层',
         newPreset: '新建预设',
+        newPresetDisabled: '请先选择图片',
         emptyPresets: '暂无预设，可从画布右上角菜单保存当前效果为预设',
         noMatchPresets: '未找到匹配的预设',
     },
