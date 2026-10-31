@@ -1,15 +1,19 @@
-const SELECTION_OBJECT = 'selection:object'
-
-const MOVE_OBJECT = 'move:object'
-
-const ADD_OBJECT = 'add:object'
-
-const UPDATE_OBJECT = 'update:object'
-
 /**
  * Canvas 编辑器类
  */
 class CanvasEditor {
+
+    // 事件名：选中 / 移动 / 添加 / 属性更新 / 历史变化
+    static SELECTION_OBJECT = 'selection:object'
+
+    static MOVE_OBJECT = 'move:object'
+
+    static ADD_OBJECT = 'add:object'
+
+    static UPDATE_OBJECT = 'update:object'
+
+    static HISTORY_CHANGE = 'history:change'
+
     /**
      * 构造函数
      * @param {HTMLCanvasElement} canvas - Canvas 元素
@@ -87,6 +91,16 @@ class CanvasEditor {
         // 标记是否处于 order 变更触发的内部排序中
         this._sorting = false;
 
+        // 撤销 / 恢复：栈纪律由 HistoryManager 负责，快照语义（生成 / 应用）留在编辑器
+        this.history = new HistoryManager({
+            capture: () => this._createSnapshot(),
+            restore: (snapshot) => this._applySnapshot(snapshot),
+            beforeApply: () => this.isEditing && this.finishEditing(),
+            onChange: (type) => this._emitHistoryChange(type),
+            enabled: options.enableHistory !== false,
+            maxSize: options.maxHistory || 50,
+        });
+
         // 绑定事件处理函数
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.handleInput = this.handleInput.bind(this);
@@ -118,7 +132,7 @@ class CanvasEditor {
                 if (['chars', 'ascent', 'descent', 'centerX', 'centerY', 'status'].includes(property)) return;
                 // 跳过 order 变更内部排序触发的冗余回调
                 if (property === 'sort' && this._sorting) return;
-                const callbacks = this.eventCallbacks.get(UPDATE_OBJECT);
+                const callbacks = this.eventCallbacks.get(CanvasEditor.UPDATE_OBJECT);
                 if (callbacks && callbacks.size) {
                     callbacks.forEach(callback => callback(target))
                 }
@@ -127,9 +141,19 @@ class CanvasEditor {
                     this.elements.sort((a, b) => a.order - b.order);
                     this._sorting = false;
                 }
+                // 历史记录：结构变更（增删清排序）立即入栈，属性变更防抖合并为一条；
+                // 渲染派生属性（如首次绘制测量回写的 width/height/lines）不算编辑，跳过
+                if (HistoryManager.ARRAY_METHODS.includes(property)) {
+                    this.history.push();
+                } else if (!HistoryManager.DERIVED_PROPS.includes(property)) {
+                    this.history.schedule();
+                }
             }, {
                 deep: true
             })
+
+            // 以初始空状态为基线快照，首个变更可通过 undo 回退到空画布
+            this.history.push();
         }
     }
 
@@ -325,7 +349,7 @@ class CanvasEditor {
         if (element.type === 'image' && this.enableCache && element.cacheable) {
             this.cache.set(element.src, element.image)
         }
-        const callbacks = this.eventCallbacks.get(ADD_OBJECT);
+        const callbacks = this.eventCallbacks.get(CanvasEditor.ADD_OBJECT);
         if (callbacks && callbacks.size) {
             callbacks.forEach(callback => callback({x: element.x, y: element.y, target: element}))
         }
@@ -394,6 +418,83 @@ class CanvasEditor {
         }
         // 从索引 0 开始，删除现有全部长度，并插入新数据，保持响应式代理不变
         this.elements.splice(0, this.elements.length, ...newArray);
+    }
+
+
+    // ---------------- 撤销 / 恢复（栈纪律在 HistoryManager，快照语义在此） ----------------
+
+    /**
+     * 撤销：回退到上一条快照，刚落盘的当前状态转入重做栈
+     * @returns {boolean} 是否执行了撤销
+     */
+    undo() {
+        return this.history.undo();
+    }
+
+    /**
+     * 恢复：重新应用最近一次被撤销的快照
+     * @returns {boolean} 是否执行了恢复
+     */
+    redo() {
+        return this.history.redo();
+    }
+
+    canUndo() {
+        return this.history.canUndo();
+    }
+
+    canRedo() {
+        return this.history.canRedo();
+    }
+
+    /**
+     * 生成当前编辑状态快照：克隆全部元素（图片共享底层位图引用，开销可控），并保持元素 id 稳定
+     * @returns {{elements: Array, activeIds: Array}}
+     */
+    _createSnapshot() {
+        return {
+            activeIds: this.activeElements.map(el => el.id),
+            elements: this.elements.map(el => this._cloneElement(el)),
+        };
+    }
+
+    /**
+     * 克隆元素并保持 id 稳定（快照记录与恢复共用）
+     * @param {Object} el - 元素
+     * @returns {Object} 克隆元素
+     */
+    _cloneElement(el) {
+        const clone = el.clone();
+        // clone 会生成新 id，这里还原为原 id：快照间的选中态恢复与增删匹配都依赖稳定 id
+        clone.id = el.id;
+        return clone;
+    }
+
+    /**
+     * 应用快照：整体替换元素并按 id 恢复选中态（由 HistoryManager 在抑制记录期间调用）
+     * @param {{elements: Array, activeIds: Array}} snapshot
+     */
+    _applySnapshot(snapshot) {
+        this.clearActiveElements();
+        // 灌入快照元素的工作副本而非快照本体：恢复后这些实例会成为活动元素被后续编辑原地改写，
+        // 若直接使用快照持有的实例，栈内历史会被污染（撤销丢失真实旧状态）
+        this.resetElements(snapshot.elements.map(el => this._cloneElement(el)));
+        const activeIds = new Set(snapshot.activeIds);
+        this.activeElements = this.elements.filter(el => activeIds.has(el.id));
+        this.activeElements.forEach(el => el.status = Element.SELECTED);
+        this.renderAll();
+    }
+
+    /**
+     * 派发历史变化事件，供外部同步持久化数据与刷新按钮状态
+     * @param {'push'|'undo'|'redo'} type
+     */
+    _emitHistoryChange(type) {
+        const callbacks = this.eventCallbacks.get(CanvasEditor.HISTORY_CHANGE);
+        if (callbacks && callbacks.size) {
+            const state = {type, canUndo: this.canUndo(), canRedo: this.canRedo()};
+            callbacks.forEach(callback => callback(state));
+        }
     }
 
 
@@ -1396,7 +1497,10 @@ class CanvasEditor {
                 // 拖拽中途再按 Alt 不拷贝），克隆被拖元素并改为拖拽副本，原元素保持原位
                 if (e.altKey && !freePositions && targetElements.length) {
                     const clones = targetElements.map(el => {
+                        // Alt 拷贝属同一拖拽手势的中间态：抑制 addElement 的立即记录，与随后的位移合并为一条历史
+                        this.history.suppressed = true;
                         this.addElement(el.clone());
+                        this.history.suppressed = false;
                         // 取回数组代理包装后的实例，保持与既有元素一致的响应式代理身份
                         return this.elements[this.elements.length - 1];
                     });
@@ -1434,7 +1538,7 @@ class CanvasEditor {
                     el.centerX = fp.cx + snap.dx;
                     el.centerY = fp.cy + snap.dy;
                     // 触发回调
-                    const callbacks = this.eventCallbacks.get(MOVE_OBJECT);
+                    const callbacks = this.eventCallbacks.get(CanvasEditor.MOVE_OBJECT);
                     if (callbacks && callbacks.size) {
                         callbacks.forEach(callback => callback({x: moveX, y: moveY, target: el}));
                     }
@@ -1499,7 +1603,7 @@ class CanvasEditor {
             this.activeElements.push(target);
             target.status = Element.SELECTED;
         }
-        const callbacks = this.eventCallbacks.get(SELECTION_OBJECT);
+        const callbacks = this.eventCallbacks.get(CanvasEditor.SELECTION_OBJECT);
         if (callbacks && callbacks.size) {
             callbacks.forEach(callback => callback(event))
         }
@@ -1722,6 +1826,8 @@ class CanvasEditor {
         this.isEditing = false;
         this.cursorEnd = this.cursorStart = 0;
         clearInterval(this.cursorBlinkInterval);
+        // 释放焦点：避免编辑结束后隐藏输入框仍持有焦点，拦截 Ctrl+Z 等文档级快捷键
+        this.hiddenInput && this.hiddenInput.blur();
     }
 
     /**
@@ -1735,6 +1841,8 @@ class CanvasEditor {
             this.removeHiddenInput();
             // 清除定时器
             clearInterval(this.cursorBlinkInterval);
+            // 清除历史栈与防抖定时器
+            this.history.destroy();
 
             this.eventCallbacks.clear();
         }
@@ -1960,6 +2068,8 @@ class CanvasEditor {
     _createApplyHandle(preload) {
         return {
             apply: () => {
+                // 载入是整体替换而非编辑动作：抑制载入期间的历史记录，完成后以载入状态为基线重置历史
+                this.history.restoring = true;
                 try {
                     const {width, height, zoom, elements} = preload;
                     this.clearCanvas();
@@ -1968,8 +2078,11 @@ class CanvasEditor {
                     this.resetElements(elements);
                 } catch (e) {
                     throw new Error(`加载失败: ${e.message}`);
+                } finally {
+                    this.history.restoring = false;
                 }
                 this.renderAll();
+                this.history.reset();
             }
         };
     }
@@ -2021,6 +2134,178 @@ class CanvasEditor {
         document.body.removeChild(link);
     }
 
+}
+
+
+/**
+ * 撤销 / 恢复历史栈：通用的快照进栈 / 回退机制，不感知元素与画布。
+ * 快照的生成（capture）与应用（restore）由宿主编入，本类只负责栈纪律：
+ * 容量上限、重做栈失效、结构变更立即入栈、连续属性变更防抖合并、恢复与载入期间抑制记录
+ */
+class HistoryManager {
+
+    // 结构性变更对应的数组变异方法名（响应式数组回调以方法名作为 property 传入），此类变更立即记录历史
+    static ARRAY_METHODS = ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse']
+
+    // 属性连续变更（拖拽 / 连续输入 / 面板调参）合并为一条历史的防抖间隔（毫秒）
+    static DEBOUNCE = 400
+
+    // 渲染派生 / 编辑临时的属性：width、height、lines 由每次绘制自动重算（如文本首次绘制测量回写），
+    // oldText 是编辑态的暂存值。它们的变化不代表用户编辑，不记录历史（快照本身会携带这些值，
+    // 真正的用户编辑如 text / fontSize 均由各自属性触发记录）
+    static DERIVED_PROPS = ['width', 'height', 'lines', 'oldText']
+
+    /**
+     * @param {Object} options
+     * @param {() => *} options.capture - 生成当前状态快照
+     * @param {(snapshot: *) => void} options.restore - 应用快照
+     * @param {() => void} [options.beforeApply] - 撤销 / 恢复应用快照前的宿主收尾（如提交编辑中的文本）
+     * @param {('push'|'undo'|'redo') => void} [options.onChange] - 历史变化回调
+     * @param {boolean} [options.enabled=true] - 关闭后不记录，undo / redo 也不再响应
+     * @param {number} [options.maxSize=50] - 撤销栈容量上限
+     */
+    constructor(options = {}) {
+
+        this.capture = options.capture;
+
+        this.restore = options.restore;
+
+        this.beforeApply = options.beforeApply || null;
+
+        this.onChange = options.onChange || null;
+
+        this.enabled = options.enabled !== false;
+
+        this.maxSize = options.maxSize || 50;
+
+        // 撤销栈：每项为一次变更后的快照，栈底为基线快照
+        this.undoStack = [];
+
+        // 重做栈：撤销时弹出的快照，产生新变更后清空
+        this.redoStack = [];
+
+        // 恢复快照 / 载入数据期间抑制记录
+        this.restoring = false;
+
+        // 同一手势的中间态（如 Alt 拷贝入列）抑制立即记录，由随后的属性变更防抖合并记录
+        this.suppressed = false;
+
+        // 属性连续变更的防抖定时器
+        this.pendingTimer = null;
+    }
+
+    /**
+     * 记录当前状态快照：结构变更与防抖合并后的属性变更都会走到这里
+     */
+    push() {
+        if (!this.enabled || this.restoring || this.suppressed) return;
+        this.undoStack.push(this.capture());
+        if (this.undoStack.length > this.maxSize) this.undoStack.shift();
+        // 产生新变更后不可再重做
+        this.redoStack.length = 0;
+        this.onChange && this.onChange('push');
+    }
+
+    /**
+     * 属性连续变更防抖：拖拽 / 连续输入 / 面板调参只在停止变更后记录一条历史
+     */
+    schedule(delay = HistoryManager.DEBOUNCE) {
+        if (!this.enabled) return;
+        if (this.pendingTimer) clearTimeout(this.pendingTimer);
+        this.pendingTimer = setTimeout(() => {
+            this.pendingTimer = null;
+            this.push();
+        }, delay);
+    }
+
+    /**
+     * 立即落盘防抖中的属性变更（undo / redo 前调用）
+     */
+    flush() {
+        if (!this.pendingTimer) return;
+        clearTimeout(this.pendingTimer);
+        this.pendingTimer = null;
+        this.push();
+    }
+
+    /**
+     * 撤销：回退到上一条快照，刚落盘的当前状态转入重做栈
+     * @returns {boolean} 是否执行了撤销
+     */
+    undo() {
+        if (!this.enabled) return false;
+        // 先落盘防抖中未入栈的属性变更，保证刚做的修改可被撤销
+        this.flush();
+        // 栈内需同时存在当前状态与上一状态才可撤销
+        if (this.undoStack.length < 2) return false;
+        this.beforeApply && this.beforeApply();
+        this.redoStack.push(this.undoStack.pop());
+        this.#apply(this.undoStack[this.undoStack.length - 1]);
+        this.onChange && this.onChange('undo');
+        return true;
+    }
+
+    /**
+     * 恢复：重新应用最近一次被撤销的快照
+     * @returns {boolean} 是否执行了恢复
+     */
+    redo() {
+        if (!this.enabled) return false;
+        // 撤销后若又有新变更，flush 已清空重做栈，此处自然不可恢复
+        this.flush();
+        if (!this.redoStack.length) return false;
+        this.beforeApply && this.beforeApply();
+        const next = this.redoStack.pop();
+        this.undoStack.push(next);
+        if (this.undoStack.length > this.maxSize) this.undoStack.shift();
+        this.#apply(next);
+        this.onChange && this.onChange('redo');
+        return true;
+    }
+
+    canUndo() {
+        return this.enabled && this.undoStack.length > 1;
+    }
+
+    canRedo() {
+        return this.enabled && this.redoStack.length > 0;
+    }
+
+    /**
+     * 清空历史并以当前状态为基线（载入数据 / 切换画布后调用，跨载入的操作不可互相撤销）
+     */
+    reset() {
+        if (this.pendingTimer) {
+            clearTimeout(this.pendingTimer);
+            this.pendingTimer = null;
+        }
+        this.undoStack.length = 0;
+        this.redoStack.length = 0;
+        this.push();
+    }
+
+    /**
+     * 销毁：清除防抖定时器与栈
+     */
+    destroy() {
+        clearTimeout(this.pendingTimer);
+        this.pendingTimer = null;
+        this.undoStack.length = 0;
+        this.redoStack.length = 0;
+    }
+
+    /**
+     * 应用快照：抑制记录期间执行宿主恢复逻辑，恢复引发的属性写入不再入栈
+     * @param {*} snapshot
+     */
+    #apply(snapshot) {
+        this.restoring = true;
+        try {
+            this.restore(snapshot);
+        } finally {
+            this.restoring = false;
+        }
+    }
 }
 
 
