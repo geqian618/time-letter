@@ -287,7 +287,8 @@ const initCanvasSize = () => {
       eventScope: canvasElement.value.parentNode
     });
 
-    backgroundCanvasEditor = new CanvasEditor(backgroundElement.value);
+    // 背景层由照片/边框属性面板整体重建，不参与撤销恢复
+    backgroundCanvasEditor = new CanvasEditor(backgroundElement.value, {enableHistory: false});
 
     // 注册编辑器实例，供其他组件读写画布
     canvasesStore.setCanvasEditor(canvasEditor)
@@ -332,6 +333,14 @@ const initCanvasSize = () => {
       // const canvas = CanvasManager.getCurrentCanvas();
       // canvas.foreground = canvasEditor.exportToObject()
       // canvas.background = backgroundCanvasEditor.exportToObject()
+    })
+
+    // 撤销 / 恢复后同步画布数据，避免切换画布时丢失已撤销（恢复）的状态
+    canvasEditor.on('history:change', () => {
+      const canvas = CanvasManager.getCurrentCanvas();
+      if (canvas) {
+        canvas.foreground = canvasEditor.exportToObject()
+      }
     })
 
   }, 1000)
@@ -1141,6 +1150,44 @@ const preventSwitchingElements = (event) => {
 }
 
 
+// 撤销 / 恢复画布操作（Ctrl+Z 撤销，Ctrl+Shift+Z 恢复；macOS 对应 Cmd+Z / Cmd+Shift+Z）
+const handleUndoRedo = (event) => {
+
+  if (event.defaultPrevented) return;
+
+  const isZKey = event.key.toLowerCase() === 'z';
+
+  const primaryModifier = event.ctrlKey || event.metaKey;
+
+  if (!isZKey || !primaryModifier || event.altKey) return;
+
+  if (!canvasEditor) return;
+
+  // 文本编辑中交给隐藏输入框的原生撤销
+  if (canvasEditor.isEditing) return;
+
+  // 焦点在可输入元素上时交给原生撤销
+  const activeElement = document.activeElement;
+
+  const isEditable = activeElement && (
+    activeElement.tagName === 'INPUT' ||
+    activeElement.tagName === 'TEXTAREA' ||
+    activeElement.tagName === 'SELECT' ||
+    activeElement.isContentEditable
+  );
+
+  if (isEditable) return;
+
+  event.preventDefault();
+
+  if (event.shiftKey) {
+    canvasEditor.redo()
+  } else {
+    canvasEditor.undo()
+  }
+}
+
+
 // 画布工作区的拖放与滚动事件
 useEventListener(canvasWorkspaceRef, 'drop', handleDropElement);
 useEventListener(canvasWorkspaceRef, 'drop', handleDropFiles);
@@ -1151,9 +1198,10 @@ useEventListener(canvasWorkspaceRef, 'scroll', handleMoveScrollbar);
 useEventListener(canvasWorkspaceRef, 'mousedown', handleDragMoveCanvas);
 useEventListener(canvasWorkspaceRef, 'wheel', handleCanvasResize, {passive: false});
 
-// 文档级按键：删除元素 / 方向键移动 / 空格拖拽画布 / 阻止 Tab 切换
+// 文档级按键：删除元素 / 撤销恢复 / 方向键移动 / 空格拖拽画布 / 阻止 Tab 切换
 useEventListener(document, 'dragend', handleDragend);
 useEventListener(document, 'keydown', handleRemoveElement)
+useEventListener(document, 'keydown', handleUndoRedo)
 useEventListener(document, 'keydown', handleKeyDownMoveElement)
 useEventListener(document, 'keydown', triggerDragCanvas)
 useEventListener(document, 'keydown', preventSwitchingElements)
