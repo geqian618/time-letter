@@ -22,6 +22,9 @@
         <el-form-item :label="$t('textResource.script')" prop="script" v-if="textResourcesStore.textResource.type === 'script'">
           <el-input v-model="textResourcesStore.textResource.script" :rows="4" type="textarea"/>
         </el-form-item>
+        <el-form-item :label="$t('textResource.editable')">
+          <el-switch v-model="textResourcesStore.textResource.editable"/>
+        </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">

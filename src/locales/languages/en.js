@@ -365,6 +365,7 @@ export default {
         typePlain: 'Plain Text',
         typeScript: 'JavaScript Script',
         tips: 'Tooltip',
+        editable: 'Editable',
         text: 'Text',
         script: 'Script',
         rules: {

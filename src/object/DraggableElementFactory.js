@@ -45,12 +45,13 @@ class DraggableElementFactory {
             const {zoom} = CanvasManager.getCurrentCanvas();
             // 对于非图片元素（如div），直接返回
             if (this.settings.tagName === 'div') {
-                const {type, content, expression, fontSize = 14} = this.settings
+                const {type, content, expression, fontSize = 14, editable = false} = this.settings
                 const context = this.#getText();
                 const text = new Text(context, {
                     fontSize: Math.floor(fontSize / zoom),
                     draggable: true,
-                    editable: type === 'text',
+                    // 可编辑性由来源条目的 editable 标记决定（无标记默认不可编辑）
+                    editable: editable === true,
                     meta: {
                         type,
                         content,

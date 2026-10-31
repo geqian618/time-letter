@@ -109,6 +109,7 @@ export class TextResource {
         this.id = '';
         this.tips = '';
         this.type = 'text';
+        this.editable = false;
         this.content = '';
         this.script = 'function extendScript() {\n' +
             '  return Date.now();\n' +

@@ -83,7 +83,7 @@
             <div class="section-body" v-show="opened.texts">
               <div class="text-grid" ref="textResourceRef">
                 <el-tooltip :show-after="1500" :content="$t('left.text')" placement="top">
-                  <div class="text-chip text-resource" draggable="true" text="文本" type="text">
+                  <div class="text-chip text-resource" draggable="true" text="文本" type="text" editable="true">
                     <span class="chip-icon"><SvgIcon name="text"/></span>
                   </div>
                 </el-tooltip>
@@ -105,7 +105,8 @@
                       draggable="true"
                       :text="text.content"
                       :expression="text.script"
-                      :type="text.type === 'text' ? 'text' : 'script'">
+                      :type="text.type === 'text' ? 'text' : 'script'"
+                      :editable="text.editable === true">
                     <span class="chip-icon"><SvgIcon name="custom"/></span>
                   </div>
                 </el-tooltip>
@@ -299,6 +300,8 @@ const handleDragStart = function (event) {
   const type = component.getAttribute('type');
   const content = component.getAttribute('text')
   const expression = component.getAttribute('expression')
+  // 可编辑性：资源条目按其 editable 标记（true 才可编辑），无标记的条目（日期/时间/元数据等）默认不可编辑
+  const editable = component.getAttribute('editable') === 'true'
 
   const url = component.getAttribute('src');
   const path = component.getAttribute('path');
@@ -313,7 +316,7 @@ const handleDragStart = function (event) {
       // 卡片 rect 是格子渲染尺寸（比例与原图无关），一并携带原图尺寸，
       // 由 drop 端按原图比例适配进卡片格子，避免落下后宽高比变形
       ? {url, path, tagName, width, height, naturalWidth: component.naturalWidth, naturalHeight: component.naturalHeight}
-      : {type, content, expression, tagName}
+      : {type, content, expression, editable, tagName}
 
   // 拖拽预览：文本类芯片只拖「图标本体」，不带外面的方框；图片缩略图仍用整块图片。
   const icon = component.querySelector?.('.chip-icon')

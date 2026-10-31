@@ -365,6 +365,7 @@ export default {
         typePlain: '普通文本',
         typeScript: 'JavaScript脚本',
         tips: '提示',
+        editable: '是否可编辑',
         text: '文本',
         script: '脚本',
         rules: {
