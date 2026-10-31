@@ -73,7 +73,7 @@
 
 - **Three border types**: general (solid color), blur (extended blurred photo edges), and custom image — each side independently controllable in width and color
 - **Photo properties**: rounded corners, shadow (color / offset / blur), opacity, scale, etc.
-- **Professional canvas experience**: layer management, free dragging, property anchor, focal zoom, adjustable move step, canvas alignment guides & auto-snapping — interactions consistent with common drawing software
+- **Professional canvas experience**: layer management, free dragging, property anchor, focal zoom, adjustable move step, canvas alignment guides & auto-snapping, with undo & redo — interactions consistent with common drawing software
 - **Batch processing**: multiple canvases edited in parallel; the bottom preview panel supports landscape / portrait filtering, marquee multi-select and quick paging
 
 ### 💾 Templates & Libraries
@@ -216,12 +216,16 @@ npm run electron:build:mac
 | --- | --- |
 | `Ctrl/⌘ + I` | Import images |
 | `Ctrl/⌘ + O` | Export images |
-| `Ctrl/⌘ + T` | Export images |
 | `Ctrl/⌘ + Alt + S` | Open preferences |
+| `Ctrl/⌘ + T` | Save as preset |
 | `Ctrl/⌘ + D` | Remove image |
 | `Ctrl/⌘ + Alt + D` | Delete image |
 | `Ctrl/⌘ + L` | Clear canvas |
 | `Ctrl/⌘ + R` | Reset canvas |
+| `Ctrl/⌘ + Z` | Undo |
+| `Ctrl/⌘ + Shift + Z` | Redo |
+
+> Except for undo / redo, all shortcuts can be customized in "Preferences → Shortcuts".
 
 ## 📦 Packaging & Cross-Platform Build
 
@@ -306,6 +310,8 @@ Add them via "Extensions → Font Library → Import Fonts", or drop font files 
 **🆕 Added**
 
 - Bundled UI Chinese font, so Chinese UI rendering no longer depends on system fonts
+- Undo & redo history (`Ctrl/⌘ + Z` to undo, `Ctrl/⌘ + Shift + Z` to redo)
+- Option to configure whether texts appended from the text library are editable
 
 
 **🐛 Fixed**
