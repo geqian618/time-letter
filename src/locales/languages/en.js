@@ -298,6 +298,7 @@ export default {
         zoomOut: 'Zoom out',
         selectAll: 'Select All',
         center: 'Center',
+        fill: 'Fill',
         align: 'Align',
         alignLeft: 'Align Left',
         alignCenterH: 'Align Horizontal Center',

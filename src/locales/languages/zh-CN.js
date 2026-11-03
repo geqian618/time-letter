@@ -298,6 +298,7 @@ export default {
         zoomOut: '缩小',
         selectAll: '全选',
         center: '居中',
+        fill: '铺满',
         align: '对齐',
         alignLeft: '左对齐',
         alignCenterH: '水平居中',
