@@ -470,9 +470,13 @@ git push origin feature/your-feature
 如果这个项目对你有帮助，欢迎来 [B 站](https://space.bilibili.com/492789742) 关注我，也欢迎请作者喝杯咖啡 ~
 
 <div align="center">
-  <img src="src/assets/images/qr-code.png" width="220" alt="联系作者"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="src/assets/images/reward-code.png" width="220" alt="赞赏码"/>
+  <table>
+    <tr>
+      <td align="center"><img src="src/assets/images/alipay.png" width="220" alt="支付宝赞赏码"/><br/>支付宝扫一扫</td>
+      <td width="24"></td>
+      <td align="center"><img src="src/assets/images/reward-code.png" width="220" alt="微信赞赏码"/><br/>微信扫一扫</td>
+    </tr>
+  </table>
 </div>
 
 ---

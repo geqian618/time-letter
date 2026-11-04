@@ -435,9 +435,13 @@ git push origin feature/your-feature
 If this project helps you, follow me on [Bilibili](https://space.bilibili.com/492789742) or buy me a coffee~
 
 <div align="center">
-  <img src="src/assets/images/qr-code.png" width="220" alt="Contact"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="src/assets/images/reward-code.png" width="220" alt="Donate"/>
+  <table>
+    <tr>
+      <td align="center"><img src="src/assets/images/alipay.png" width="220" alt="Alipay"/><br/>Scan with Alipay</td>
+      <td width="24"></td>
+      <td align="center"><img src="src/assets/images/reward-code.png" width="220" alt="WeChat"/><br/>Scan with WeChat</td>
+    </tr>
+  </table>
 </div>
 
 ## 📄 License
