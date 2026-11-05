@@ -14,6 +14,9 @@ class CanvasEditor {
 
     static HISTORY_CHANGE = 'history:change'
 
+    // 隔离模式下组合外部内容的降维透明度（参考 AI 隔离模式的半透明效果）
+    static ISOLATION_DIM_ALPHA = 0.35
+
     /**
      * 构造函数
      * @param {HTMLCanvasElement} canvas - Canvas 元素
@@ -39,6 +42,9 @@ class CanvasEditor {
         this.elements = [];
 
         this.activeElements = [];
+
+        // 隔离模式：进入其内部单独编辑的组合 id（按 id 解析，撤销 / 恢复重建实例后仍有效）
+        this.isolationGroupId = null;
 
         // 默认不开启图片缓存
         this.enableCache = options.enableCache || false;
@@ -105,6 +111,7 @@ class CanvasEditor {
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.handleInput = this.handleInput.bind(this);
         this.handleMouseDown = this.handleMouseDown.bind(this);
+        this.handleDoubleClick = this.handleDoubleClick.bind(this);
         // this.handleKeyUp = this.handleKeyUp.bind(this);
         // this.handleBlur = this.handleBlur.bind(this);
 
@@ -125,6 +132,7 @@ class CanvasEditor {
         // 仅浏览器环境生效
         if (this.isBrowser) {
             this.eventScope.addEventListener('mousedown', this.handleMouseDown);
+            this.eventScope.addEventListener('dblclick', this.handleDoubleClick);
             this.createHiddenInput();
             // 设置响应式
             this.elements = new ReactiveObserver([], (value) => {
@@ -367,10 +375,18 @@ class CanvasEditor {
      * @param {number} element - 元素
      */
     removeElement(element) {
+        let removed = false;
         let index = this.elements.findIndex(item => item.id === element.id);
         while (index !== -1) {
             this.elements.splice(index, 1);
+            removed = true;
             index = this.elements.findIndex(item => item.id === element.id);
+        }
+        // 顶层未命中：组合内部子元素，从所属组合中移除（children 为响应式嵌套数组，正常记录历史）
+        if (!removed) {
+            const parent = this._findParentGroup(element);
+            const childIndex = parent ? parent.children.findIndex(child => child.id === element.id) : -1;
+            if (childIndex !== -1) parent.children.splice(childIndex, 1);
         }
         this.removeActiveElement(element);
     }
@@ -390,6 +406,12 @@ class CanvasEditor {
         const targets = new Set(elementArray.map(element => element.id));
         // 过滤掉匹配id的元素
         this.resetElements(this.elements.filter(element => !targets.has(element.id)))
+        // 顶层未命中的为组合内部子元素：从所属组合中移除（响应式嵌套数组，正常记录历史）
+        for (const element of elementArray) {
+            const parent = this._findParentGroup(element);
+            const index = parent ? parent.children.findIndex(child => child.id === element.id) : -1;
+            if (index !== -1) parent.children.splice(index, 1);
+        }
         // 同时删除激活元素
         this.activeElements = this.activeElements.filter(element => !targets.has(element.id));
     }
@@ -459,15 +481,28 @@ class CanvasEditor {
     }
 
     /**
-     * 克隆元素并保持 id 稳定（快照记录与恢复共用）
+     * 克隆元素并保持 id 稳定（快照记录与恢复共用）：组合内嵌套子元素的 id 一并还原，
+     * 撤销 / 恢复后的选中态恢复与按 id 增删都依赖整棵树 id 稳定
      * @param {Object} el - 元素
      * @returns {Object} 克隆元素
      */
     _cloneElement(el) {
         const clone = el.clone();
-        // clone 会生成新 id，这里还原为原 id：快照间的选中态恢复与增删匹配都依赖稳定 id
-        clone.id = el.id;
+        this._restoreIds(el, clone);
         return clone;
+    }
+
+    /**
+     * 按 clone 的结构顺序把源元素树 id 还原到克隆树上（clone 保序，按下标一一对应）
+     * @param {Object} source - 源元素
+     * @param {Object} target - 克隆元素
+     */
+    _restoreIds(source, target) {
+        target.id = source.id;
+        if (source.type !== 'group') return;
+        source.children.forEach((child, index) => {
+            if (target.children[index]) this._restoreIds(child, target.children[index]);
+        });
     }
 
     /**
@@ -544,6 +579,208 @@ class CanvasEditor {
     }
 
 
+    // ---------------- 组合隔离模式（参考 AI：进入组合内部单独编辑） ----------------
+
+    /**
+     * 进入组合内部单独编辑：此后命中 / 框选仅作用于该组合的直接子元素
+     * （嵌套组合作为整体选中，可继续双击深入）；组合按 id 记录，撤销 / 恢复重建实例后仍有效
+     * @param {Object} group - 组合元素
+     */
+    enterIsolation(group) {
+        if (!group || group.type !== 'group') return;
+        this.isolationGroupId = group.id;
+        this.clearActiveElements();
+        this.renderAll();
+    }
+
+    /**
+     * 退出隔离：逐层退出并重新选中当前组合，已是最外层时完全退出
+     */
+    exitIsolation() {
+        const group = this._getIsolationGroup();
+        if (!group) return;
+        this.clearActiveElements();
+        this.isolationGroupId = this._findParentGroup(group)?.id || null;
+        group.status = Element.SELECTED;
+        this.activeElements.push(group);
+        this.renderAll();
+    }
+
+    /**
+     * 解析当前隔离组合（按 id 查找；组合已不存在如被撤销时自动视为退出）
+     * @returns {Object|null}
+     */
+    _getIsolationGroup() {
+        if (!this.isolationGroupId) return null;
+        const found = this._findById(this.isolationGroupId, this.elements);
+        if (!found) this.isolationGroupId = null;
+        return found;
+    }
+
+    /**
+     * 隔离模式下激活元素所在的容器：隔离中为当前组合的 children，否则为顶层元素数组
+     * @returns {Array}
+     */
+    _activeContainer() {
+        const isolation = this._getIsolationGroup();
+        return isolation ? isolation.children : this.elements;
+    }
+
+    /**
+     * 命中测试：隔离中仅命中当前组合的直接子元素，否则命中顶层元素
+     * @param {number} x - 画布 X 坐标
+     * @param {number} y - 画布 Y 坐标
+     * @returns {Object|null}
+     */
+    _hitTest(x, y) {
+        const isolation = this._getIsolationGroup();
+        if (!isolation) {
+            return this.getElementAt(x, y, element => element.selectable);
+        }
+        return this._childAt(isolation, x, y, element => element.selectable);
+    }
+
+    /**
+     * 在组合的直接子元素中按画布坐标命中（子元素为组内局部坐标，先减去组合的绝对原点）
+     * @param {Object} group - 组合元素
+     * @param {number} x - 画布 X 坐标
+     * @param {number} y - 画布 Y 坐标
+     * @param {(el: Object) => boolean} [filter]
+     * @returns {Object|null}
+     */
+    _childAt(group, x, y, filter) {
+        const off = this._originOffset(group) || {x: 0, y: 0};
+        const localX = x - off.x - group.x;
+        const localY = y - off.y - group.y;
+        const children = [...group.children].reverse();
+        for (const child of children) {
+            if (child.contains(localX, localY) && (!filter || filter(child))) return child;
+        }
+        return null;
+    }
+
+    /**
+     * 按 id 在元素树中查找（含组合嵌套）
+     * @param {number} id - 元素 id
+     * @param {Array} list - 搜索范围
+     * @returns {Object|null}
+     */
+    _findById(id, list) {
+        for (const item of list) {
+            if (item.id === id) return item;
+            if (item.type !== 'group') continue;
+            const found = this._findById(id, item.children);
+            if (found) return found;
+        }
+        return null;
+    }
+
+    /**
+     * 查找元素的直接所属组合（顶层元素返回 null）
+     * @param {Object} el - 元素
+     * @param {Array} [list] - 搜索范围（递归用）
+     * @returns {Object|null}
+     */
+    _findParentGroup(el, list = this.elements) {
+        for (const item of list) {
+            if (item.type !== 'group') continue;
+            if (item.children.some(child => child.id === el.id)) return item;
+            const nested = this._findParentGroup(el, item.children);
+            if (nested) return nested;
+        }
+        return null;
+    }
+
+    /**
+     * 元素的画布原点偏移：祖先组合原点之和（顶层元素为 0,0），未在元素树中返回 null。
+     * 组合不旋转，祖先变换均为平移，因此位移增量在局部系与画布系相等，仅包围盒类查询需要换算
+     * @param {Object} el - 元素
+     * @param {Array} [list] - 搜索范围（递归用）
+     * @returns {{x: number, y: number}|null}
+     */
+    _originOffset(el, list = this.elements) {
+        for (const item of list) {
+            if (item.id === el.id) return {x: 0, y: 0};
+            if (item.type !== 'group') continue;
+            const nested = this._originOffset(el, item.children);
+            if (nested) return {x: nested.x + item.x, y: nested.y + item.y};
+        }
+        return null;
+    }
+
+    /**
+     * 元素的画布绝对包围盒：组合内子元素在其局部包围盒上累加祖先原点（框选 / 吸附用）
+     * @param {Object} el - 元素
+     * @returns {{x: number, y: number, w: number, h: number}}
+     */
+    _absoluteBounds(el) {
+        const b = el.getSelectionBounds();
+        const off = this._originOffset(el) || {x: 0, y: 0};
+        return {x: b.x + off.x, y: b.y + off.y, w: b.w, h: b.h};
+    }
+
+    /**
+     * 查找元素经组合嵌套的祖先链（外层 → 直接父级），未找到返回 null
+     * @param {Object} el - 元素
+     * @param {Array} [list] - 搜索范围（递归用）
+     * @param {Array} [chain] - 已累计的祖先（递归用）
+     * @returns {Array|null}
+     */
+    _ancestorChain(el, list = this.elements, chain = []) {
+        for (const item of list) {
+            if (item.id === el.id) return chain;
+            if (item.type !== 'group') continue;
+            const found = this._ancestorChain(el, item.children, [...chain, item]);
+            if (found) return found;
+        }
+        return null;
+    }
+
+    /**
+     * 在元素所属坐标系下绘制（沿祖先组合原点逐级平移）：组合内部子元素的选框与编辑装饰用
+     * @param {Object} el - 组合内子元素
+     * @param {(ctx: CanvasRenderingContext2D) => void} draw - 绘制回调
+     */
+    _drawDeep(el, draw) {
+        const chain = this._ancestorChain(el);
+        if (!chain || !chain.length) return;
+        const ctx = this.ctx;
+        ctx.save();
+        for (const g of chain) ctx.translate(g.x, g.y);
+        draw(ctx);
+        ctx.restore();
+    }
+
+    /**
+     * 隔离模式下需降维绘制的顶层元素 id 集合：隔离子树（祖先链 + 当前组合）之外的顶层元素。
+     * 嵌套组合的祖先链正常显示（其内部承载着被编辑内容）
+     * @returns {Set|null} 非隔离模式返回 null
+     */
+    _dimmedElementIds() {
+        const isolation = this._getIsolationGroup();
+        if (!isolation) return null;
+        const keep = new Set((this._ancestorChain(isolation) || []).map(el => el.id));
+        keep.add(isolation.id);
+        return new Set(this.elements.filter(el => !keep.has(el.id)).map(el => el.id));
+    }
+
+    /**
+     * 处理双击事件：双击组合进入其内部单独编辑，隔离中双击嵌套组合继续深入；
+     * 双击文本交给文本编辑流程
+     * @param event
+     */
+    handleDoubleClick(event) {
+        if (this.isEditing) return;
+        const {x, y} = this.getCanvasPosition(event);
+        const isolation = this._getIsolationGroup();
+        const groupFilter = element => element.selectable && element.type === 'group';
+        const target = isolation
+            ? this._childAt(isolation, x, y, groupFilter)
+            : this.getElementAt(x, y, groupFilter);
+        if (target) this.enterIsolation(target);
+    }
+
+
     updateElement(element) {
         for (let item of this.elements) {
             if (element.id === item.id) {
@@ -582,6 +819,8 @@ class CanvasEditor {
         // 参考边界：多选取所有选中元素的联合包围盒，单选对齐整张画布
         let refBounds;
         if (targets.length === 1) {
+            // 组合内部子元素坐标为组内局部系，没有画布对齐基准，跳过
+            if (!this.hasElement(targets[0])) return;
             refBounds = {x: 0, y: 0, w: this.width, h: this.height};
         } else {
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -697,6 +936,81 @@ class CanvasEditor {
             el.centerY += dy;
         }
         this.renderAll();
+    }
+
+    /**
+     * 组合选中元素（参考 AI 组合 Ctrl+G）：组合作为一个整体元素占据最上层成员的
+     * 层级位置，组合后整体处于选中态。移动 / 对齐 / 吸附只操作组合自身，
+     * 与普通元素走完全相同的路径
+     * @returns {Object|null} 组合元素，选中不足两个时返回 null
+     */
+    groupElements() {
+        // 隔离模式：在当前组合内部建组；选中项必同属一个容器（隔离语义保证）
+        const container = this._activeContainer();
+        const isTopLevel = container === this.elements;
+        // 按容器顺序（堆叠）取选中元素，保证组内层叠关系不变
+        const targets = container.filter(el => this.hasActiveElement(el));
+        if (targets.length < 2) return null;
+        // 坐标局部化与层级/可拖拽性继承是组合的内部表示，由 Group 工厂负责
+        const group = Group.fromElements(targets);
+        // 整体替换产生单次结构变更（只记录一条历史）；组合插入到最上层成员原位置
+        const next = container.filter(el => !this.hasActiveElement(el));
+        const topId = targets[targets.length - 1].id;
+        let insertIndex = 0;
+        for (const el of container) {
+            if (el.id === topId) break;
+            if (!targets.includes(el)) insertIndex++;
+        }
+        next.splice(insertIndex, 0, group);
+        if (isTopLevel) {
+            this.resetElements(next);
+        } else {
+            // 组合内部 children 为响应式嵌套数组：整体替换同样只触发一次结构变更记录
+            container.splice(0, container.length, ...next);
+        }
+        this.history.cancelPending();
+        // 取回响应式代理实例（非浏览器环境 resetElements 会整体换数组，需从最新引用查找）
+        const groupProxy = (isTopLevel ? this.elements : container).find(el => el.id === group.id);
+        this.clearActiveElements();
+        groupProxy.status = Element.SELECTED;
+        this.activeElements.push(groupProxy);
+        this.renderAll();
+        return groupProxy;
+    }
+
+    /**
+     * 取消组合（参考 AI 取消组合 Ctrl+Shift+G）：每次解散一层，子元素恢复画布
+     * 绝对坐标并继承组合的层级位置，取消后原成员整体处于选中态；嵌套组合保留内层
+     * @returns {Array|null} 释放出的子元素，未选中组合时返回 null
+     */
+    ungroupElements() {
+        const container = this._activeContainer();
+        const groups = this.activeElements.filter(el => el.type === 'group');
+        if (!groups.length) return null;
+        const next = [...container];
+        const released = [];
+        for (const group of groups) {
+            const index = next.findIndex(el => el.id === group.id);
+            if (index === -1) continue;
+            // 坐标还原与层级继承是组合的内部表示，由 Group.release 负责
+            const children = group.release();
+            next.splice(index, 1, ...children);
+            released.push(...children);
+        }
+        if (!released.length) return null;
+        if (container === this.elements) {
+            this.resetElements(next);
+        } else {
+            container.splice(0, container.length, ...next);
+        }
+        this.history.cancelPending();
+        this.clearActiveElements();
+        for (const el of released) {
+            el.status = Element.SELECTED;
+            this.activeElements.push(el);
+        }
+        this.renderAll();
+        return released;
     }
 
     /**
@@ -1130,7 +1444,8 @@ class CanvasEditor {
      * @returns {{left: number|null, right: number|null, top: number|null, bottom: number|null, cx: number, cy: number}}
      */
     _targetAnchors(el) {
-        const {x, y, w, h} = el.getSelectionBounds();
+        // 组合内子元素为组内局部坐标，统一换算为画布绝对坐标参与吸附
+        const {x, y, w, h} = this._absoluteBounds(el);
         const cx = x + w / 2;
         const cy = y + h / 2;
         if (el.angle) {
@@ -1154,7 +1469,8 @@ class CanvasEditor {
             if (el.angle) hasRotated = true;
             const fp = freePositions.get(el);
             const {w, h} = this._elementSize(el);
-            const x = fp.x, y = fp.y;
+            // 隔离模式下被拖子元素为组内局部坐标，换算为画布绝对坐标参与吸附计算
+            const x = fp.x + (fp.offX || 0), y = fp.y + (fp.offY || 0);
             sumCx += x + w / 2;
             sumCy += y + h / 2;
             left = Math.min(left, x);
@@ -1195,9 +1511,11 @@ class CanvasEditor {
             ? [{key: 'cy', val: drag.cy}]
             : [{key: 'top', val: drag.top}, {key: 'cy', val: drag.cy}, {key: 'bottom', val: drag.bottom}];
 
-        // 候选目标：除被拖元素外的所有元素 + 画布（中心与四边）
+        // 候选目标：隔离模式取当前组合的直接子元素（AI：隔离内对齐组合内部），
+        // 否则取全部顶层元素；被拖元素本身排除。组合自身不可为候选：
+        // 其包围盒含被拖子元素的上一帧位置，会形成自我吸附反馈（吸附线跟随元素乱跳）
         const candidates = [];
-        for (const el of this.elements) {
+        for (const el of this._activeContainer()) {
             if (targetElements.includes(el)) continue;
             candidates.push(this._targetAnchors(el));
         }
@@ -1332,8 +1650,15 @@ class CanvasEditor {
      * 绘制元素到 canvas 上
      */
     drawElements() {
+        // 隔离模式（参考 AI）：隔离子树正常绘制，其余内容半透明降维
+        const dimIds = this._dimmedElementIds();
         // 绘制所有文本
         for (const element of this.elements) {
+            const dimmed = dimIds && dimIds.has(element.id);
+            if (dimmed) {
+                this.ctx.save();
+                this.ctx.globalAlpha = CanvasEditor.ISOLATION_DIM_ALPHA;
+            }
             // 绘制元素
             element.draw(this.ctx);
             if (element.type === 'text') {
@@ -1349,6 +1674,23 @@ class CanvasEditor {
             if (this.hasActiveElement(element)) {
                 element.selection(this.ctx)
             }
+            if (dimmed) {
+                this.ctx.restore();
+            }
+        }
+        // 组合内部被选中 / 编辑中的子元素：沿祖先链平移后绘制选框与编辑装饰
+        for (const el of this.activeElements) {
+            if (this.hasElement(el)) continue;
+            this._drawDeep(el, ctx => el.selection(ctx));
+        }
+        if (this.isEditing && this.editingText && !this.hasElement(this.editingText)) {
+            const el = this.editingText;
+            this._drawDeep(el, ctx => {
+                el.drawEditBackground(ctx, this.cursorStart, this.cursorEnd)
+                if (this.isCursorVisible) {
+                    el.drawCursor(ctx, this.cursorStart, this.cursorEnd)
+                }
+            })
         }
     }
 
@@ -1419,7 +1761,7 @@ class CanvasEditor {
         if (event.button !== 0) return;
         const startTime = Date.now();
         const {x: startX, y: startY} = this.getCanvasPosition(event);
-        const element = this.getElementAt(startX, startY, element => element.selectable);
+        const element = this._hitTest(startX, startY);
 
         // 实际参与拖拽的对象：Alt 拷贝后切换为副本，原元素保持原位
         let dragElement = element;
@@ -1443,13 +1785,14 @@ class CanvasEditor {
             const {x: moveX, y: moveY} = this.getCanvasPosition(e);
             const moved = startX !== moveX || startY !== moveY;
             if (!element) {
-                const elements = this.getElements();
+                // 隔离模式仅在当前组合内部框选；子元素包围盒换算为画布绝对坐标参与判定
+                const elements = this._activeContainer();
                 const left = Math.min(startX, moveX)
                 const right = Math.max(startX, moveX)
                 const top = Math.min(startY, moveY)
                 const bottom = Math.max(startY, moveY)
                 for (let el of elements) {
-                    const {x: bx, y: by, w, h} = el.getSelectionBounds();
+                    const {x: bx, y: by, w, h} = this._absoluteBounds(el);
                     // 统一「完全包含」语义：元素可能部分位于画布外，而框选矩形受，getCanvasPosition 钳制无法超出画布，直接判定原包围盒会永远选不中。
                     // 这里将元素包围盒先裁剪到画布范围，取其在画布内的可见部分，要求框选矩形完整覆盖该可见部分才触发选中
                     const visLeft = Math.max(bx, 0);
@@ -1495,7 +1838,8 @@ class CanvasEditor {
                     : Array.from(this.activeElements).filter(el => el.draggable);
                 // Alt + 拖拽拷贝：仅在拖拽首帧判定（freePositions 尚未捕获时按下 Alt 才生效，
                 // 拖拽中途再按 Alt 不拷贝），克隆被拖元素并改为拖拽副本，原元素保持原位
-                if (e.altKey && !freePositions && targetElements.length) {
+                // Alt + 拖拽拷贝仅在顶层可用：隔离中副本应落回所属组合，而非顶层元素数组
+                if (e.altKey && !freePositions && targetElements.length && !this._getIsolationGroup()) {
                     const clones = targetElements.map(el => {
                         // Alt 拷贝属同一拖拽手势的中间态：抑制 addElement 的立即记录，与随后的位移合并为一条历史
                         this.history.suppressed = true;
@@ -1513,11 +1857,12 @@ class CanvasEditor {
                     targetElements = clones;
                     dragElement = clones[clones.length - 1];
                 }
-                // 首次进入拖拽时，捕获各元素的自由（未吸附）起始位置
+                // 首次进入拖拽时，捕获各元素的自由（未吸附）起始位置与祖先原点偏移
                 if (!freePositions) {
                     freePositions = new Map();
                     for (const el of targetElements) {
-                        freePositions.set(el, {x: el.x, y: el.y, cx: el.centerX, cy: el.centerY});
+                        const off = this._originOffset(el) || {x: 0, y: 0};
+                        freePositions.set(el, {x: el.x, y: el.y, cx: el.centerX, cy: el.centerY, offX: off.x, offY: off.y});
                     }
                 }
                 // 用鼠标增量推进自由位置（不写入元素，避免吸附状态污染）
@@ -1837,6 +2182,7 @@ class CanvasEditor {
         if (this.isBrowser) {
             // 移除事件监听
             this.eventScope.removeEventListener('mousedown', this.handleMouseDown);
+            this.eventScope.removeEventListener('dblclick', this.handleDoubleClick);
             // 移除隐藏输入框
             this.removeHiddenInput();
             // 清除定时器
@@ -2029,7 +2375,8 @@ class CanvasEditor {
 
 
     /**
-     * 从 JSON 解析裸数据：解析 JSON、解码图片并构造元素（不触碰画布）
+     * 从 JSON 解析裸数据：解析 JSON、解码图片并构造元素（不触碰画布）。
+     * 组合元素递归构造子元素
      * @param {string} json - JSON 类型数据
      * @returns {Promise<{width, height, zoom, elements}>}
      */
@@ -2039,23 +2386,45 @@ class CanvasEditor {
             const {width, height, elements, zoom} = JSON.parse(json);
             const preloadElements = [];
             for (let element of elements) {
-                if (element.type === 'text') {
-                    preloadElements.push(new Text(element.text, element));
-                } else if (element.type === 'image') {
-                    const image = this.enableCache ? this.cache.get(element.src) : null;
-                    const instance = image ? new Image(image, element) : await Image.fromURL(element.src, element);
-                    preloadElements.push(instance);
-                    if (this.enableCache && instance.cacheable && !this.cache.has(element.src)) {
-                        this.cache.set(instance.src, instance.image);
-                    }
-                } else if (element.type === 'rect') {
-                    preloadElements.push(new Rect(element));
-                }
+                const instance = await this._parseElement(element);
+                if (instance) preloadElements.push(instance);
             }
             return {width, height, zoom, elements: preloadElements};
         } catch (e) {
             throw new Error(`加载失败: ${e.message}`);
         }
+    }
+
+
+    /**
+     * 按类型构造单个元素实例（图片异步解码；组合递归构造子元素），未知类型返回 null
+     * @param {Object} element - 元素裸数据
+     * @returns {Promise<Object|null>} 元素实例
+     */
+    async _parseElement(element) {
+        if (element.type === 'text') {
+            return new Text(element.text, element);
+        }
+        if (element.type === 'image') {
+            const image = this.enableCache ? this.cache.get(element.src) : null;
+            const instance = image ? new Image(image, element) : await Image.fromURL(element.src, element);
+            if (this.enableCache && instance.cacheable && !this.cache.has(element.src)) {
+                this.cache.set(instance.src, instance.image);
+            }
+            return instance;
+        }
+        if (element.type === 'rect') {
+            return new Rect(element);
+        }
+        if (element.type === 'group') {
+            const children = [];
+            for (const child of element.children || []) {
+                const instance = await this._parseElement(child);
+                if (instance) children.push(instance);
+            }
+            return new Group({...element, children});
+        }
+        return null;
     }
 
 
@@ -2223,9 +2592,17 @@ class HistoryManager {
      */
     flush() {
         if (!this.pendingTimer) return;
+        this.cancelPending();
+        this.push();
+    }
+
+    /**
+     * 丢弃防抖中未入栈的属性变更（结构变更已立即入栈时调用，避免随后产生内容相同的重复快照）
+     */
+    cancelPending() {
+        if (!this.pendingTimer) return;
         clearTimeout(this.pendingTimer);
         this.pendingTimer = null;
-        this.push();
     }
 
     /**
@@ -3314,7 +3691,8 @@ class Image extends Element {
             return
         }
         ctx.save();
-        ctx.globalAlpha = this.alpha;
+        // 与外层 globalAlpha 相乘而非覆盖（组合隔离模式对子树外内容降维依赖外层 alpha）
+        ctx.globalAlpha = this.alpha * ctx.globalAlpha;
 
         const width = this.width * this.scale;
         const height = this.height * this.scale;
@@ -3533,7 +3911,8 @@ class LazyImage extends Element {
             return
         }
         ctx.save();
-        ctx.globalAlpha = this.alpha;
+        // 与外层 globalAlpha 相乘而非覆盖（组合隔离模式对子树外内容降维依赖外层 alpha）
+        ctx.globalAlpha = this.alpha * ctx.globalAlpha;
 
         const width = this.width * this.scale;
         const height = this.height * this.scale;
@@ -3760,6 +4139,118 @@ class Rect extends Element {
         ctx.closePath();
         ctx.clip();
     }
+}
+
+
+/**
+ * 组合元素（参考 AI 组合）：持有子元素的复合元素。
+ * 子元素以组内局部坐标存储（组合原点为 x/y），组合的移动 / 对齐 / 吸附只需
+ * 操作组合自身，与普通元素走完全相同的路径；命中任意子元素即命中整个组合
+ */
+class Group extends Element {
+
+    constructor(options = {}) {
+        super(options);
+        this.type = 'group';
+        this.children = Array.isArray(options.children) ? options.children : [];
+    }
+
+    /**
+     * 工厂：把一组元素合成为组合。子元素坐标由画布绝对坐标转入组内局部坐标系
+     * （原点取联合包围盒左上角），并继承最上层成员的层级与可拖拽性。
+     * 调用方需保证 targets 为堆叠顺序且至少两个元素
+     * @param {Array} targets - 待组合元素
+     * @returns {Group}
+     */
+    static fromElements(targets) {
+        let minX = Infinity, minY = Infinity;
+        for (const el of targets) {
+            const b = el.getSelectionBounds();
+            minX = Math.min(minX, b.x);
+            minY = Math.min(minY, b.y);
+        }
+        for (const el of targets) {
+            el.x -= minX;
+            el.y -= minY;
+            // 旋转基准同步转入组内坐标系（与拖拽移动保持一致）
+            el.centerX -= minX;
+            el.centerY -= minY;
+            el.status = Element.NONE;
+        }
+        const group = new Group({x: minX, y: minY, children: targets});
+        group.order = targets[targets.length - 1].order;
+        group.draggable = targets.some(el => el.draggable);
+        return group;
+    }
+
+    /**
+     * 解散组合：子元素由组内局部坐标恢复为画布绝对坐标（含旋转基准），
+     * 继承组合的层级位置并复位状态；组合本体由调用方负责从文档移除
+     * @returns {Array} 还原后的子元素
+     */
+    release() {
+        for (const child of this.children) {
+            child.x += this.x;
+            child.y += this.y;
+            child.centerX += this.x;
+            child.centerY += this.y;
+            // 继承组合的层级位置（等值排序为稳定排序，保持当前堆叠）
+            child.order = this.order;
+            child.status = Element.NONE;
+        }
+        return [...this.children];
+    }
+
+    /**
+     * 联合包围盒（子元素包围盒的并集，组内局部坐标 + 组合原点）
+     * @returns {{x: number, y: number, w: number, h: number}}
+     */
+    getSelectionBounds() {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const child of this.children) {
+            const b = child.getSelectionBounds();
+            minX = Math.min(minX, b.x);
+            minY = Math.min(minY, b.y);
+            maxX = Math.max(maxX, b.x + b.w);
+            maxY = Math.max(maxY, b.y + b.h);
+        }
+        if (minX === Infinity) return {x: this.x, y: this.y, w: 0, h: 0};
+        return {x: this.x + minX, y: this.y + minY, w: maxX - minX, h: maxY - minY};
+    }
+
+    // 联合包围盒尺寸（只读派生，面板与吸附可直接读取）
+    get width() {
+        return this.getSelectionBounds().w;
+    }
+
+    get height() {
+        return this.getSelectionBounds().h;
+    }
+
+    contains(x, y) {
+        return this.children.some(child => child.contains(x - this.x, y - this.y));
+    }
+
+    draw(ctx) {
+        ctx.save();
+        // 子元素为组内局部坐标，绘制前平移到组合原点
+        ctx.translate(this.x, this.y);
+        for (const child of this.children) {
+            child.draw(ctx);
+        }
+        ctx.restore();
+    }
+
+    /**
+     * 克隆组合：子元素逐个克隆（基类深拷贝不处理元素实例，会产生共享引用）
+     * @returns {Group}
+     */
+    clone() {
+        const copy = super.clone();
+        copy.children = this.children.map(child => child.clone());
+        return copy;
+    }
+
 }
 
 
@@ -4033,4 +4524,4 @@ class ReactiveObserver {
     }
 }
 
-export {CanvasEditor, Text, EditableText, Image, Rect, LazyImage, ReactiveObserver};
+export {CanvasEditor, Text, EditableText, Image, Rect, LazyImage, Group, ReactiveObserver};

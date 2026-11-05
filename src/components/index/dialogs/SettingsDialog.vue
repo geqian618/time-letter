@@ -766,6 +766,8 @@ const shortcutItems = [
   {key: 'deleteImage', labelKey: 'settings.shortcutLabels.deleteImage'},
   {key: 'clearCanvas', labelKey: 'settings.shortcutLabels.clearCanvas'},
   {key: 'resetCanvas', labelKey: 'settings.shortcutLabels.resetCanvas'},
+  {key: 'groupElements', labelKey: 'settings.shortcutLabels.groupElements'},
+  {key: 'ungroupElements', labelKey: 'settings.shortcutLabels.ungroupElements'},
 ]
 
 const isMac = window.electronAPI?.platform === 'darwin'

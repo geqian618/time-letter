@@ -7,7 +7,9 @@ const LOCAL_SHORTCUT_ACTIONS = {
     deleteImage: 2,
     savePreset: 4,
     clearCanvas: 6,
-    resetCanvas: 7
+    resetCanvas: 7,
+    groupElements: 8,
+    ungroupElements: 9
 }
 
 const registerLocalShortcut = (window, shortcuts = defaultShortcuts) => {

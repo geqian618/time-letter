@@ -48,6 +48,20 @@ const createContextMenu = (mainWindow, shortcuts = defaultShortcuts) => {
             }
         },
         {
+            label: t('menu.groupElements'),
+            accelerator: shortcuts.groupElements,
+            click: () => {
+                send('contextMenu:watch', {type: 8});
+            }
+        },
+        {
+            label: t('menu.ungroupElements'),
+            accelerator: shortcuts.ungroupElements,
+            click: () => {
+                send('contextMenu:watch', {type: 9});
+            }
+        },
+        {
             label: t('menu.syncConfig'),
             submenu: [
                 {

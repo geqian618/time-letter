@@ -151,6 +151,8 @@ export default {
             deleteImage: 'Delete Image',
             clearCanvas: 'Clear Canvas',
             resetCanvas: 'Reset Canvas',
+            groupElements: 'Group',
+            ungroupElements: 'Ungroup',
         },
     },
     panel: {

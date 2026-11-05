@@ -258,6 +258,11 @@ const watchContextMenu = () => {
       } else if (type === 7) {
         const paths = Array.from(canvasesStore.selectedPreviewList.keys());
         paths.forEach(path => resetCanvas(path))
+      } else if (type === 8) {
+        // 文本编辑中不响应组合（与撤销/恢复的编辑中忽略惯例一致），避免编辑中的文本被卷入组合
+        if (canvasEditor && !canvasEditor.isEditing) canvasEditor.groupElements()
+      } else if (type === 9) {
+        if (canvasEditor && !canvasEditor.isEditing) canvasEditor.ungroupElements()
       }
     }
   });
@@ -1142,6 +1147,23 @@ const handleRemoveElement = (event) => {
 }
 
 
+// Esc 退出组合内部编辑（隔离模式），逐层退出并重新选中当前组合
+const handleEscapeExitIsolation = (event) => {
+
+  if (event.key !== 'Escape') return;
+
+  // 已被更内层（如文本编辑）处理过的按键不再响应：文本编辑中 Esc 会先 cancelEditing 并释放焦点，
+  // 冒泡到这里时 activeElement 已不是可输入元素，只能靠 defaultPrevented 区分
+  if (event.defaultPrevented) return;
+
+  if (!canvasEditor || canvasEditor.isEditing) return;
+
+  if (!canvasEditor.isolationGroupId) return;
+
+  canvasEditor.exitIsolation();
+}
+
+
 const preventSwitchingElements = (event) => {
   if (event.key === 'Tab') {
     // 阻止切换元素
@@ -1198,9 +1220,10 @@ useEventListener(canvasWorkspaceRef, 'scroll', handleMoveScrollbar);
 useEventListener(canvasWorkspaceRef, 'mousedown', handleDragMoveCanvas);
 useEventListener(canvasWorkspaceRef, 'wheel', handleCanvasResize, {passive: false});
 
-// 文档级按键：删除元素 / 撤销恢复 / 方向键移动 / 空格拖拽画布 / 阻止 Tab 切换
+// 文档级按键：删除元素 / Esc 退出组合隔离 / 撤销恢复 / 方向键移动 / 空格拖拽画布 / 阻止 Tab 切换
 useEventListener(document, 'dragend', handleDragend);
 useEventListener(document, 'keydown', handleRemoveElement)
+useEventListener(document, 'keydown', handleEscapeExitIsolation)
 useEventListener(document, 'keydown', handleUndoRedo)
 useEventListener(document, 'keydown', handleKeyDownMoveElement)
 useEventListener(document, 'keydown', triggerDragCanvas)

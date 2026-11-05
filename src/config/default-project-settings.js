@@ -7,7 +7,9 @@ const defaultShortcuts = {
     removeImage: 'CommandOrControl+D',
     deleteImage: 'CommandOrControl+Alt+D',
     clearCanvas: 'CommandOrControl+L',
-    resetCanvas: 'CommandOrControl+R'
+    resetCanvas: 'CommandOrControl+R',
+    groupElements: 'CommandOrControl+G',
+    ungroupElements: 'CommandOrControl+Shift+G'
 }
 
 const defaultProjectSettings = {

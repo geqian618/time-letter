@@ -27,6 +27,8 @@ module.exports = {
         deleteImage: 'Delete Image',
         clearCanvas: 'Clear Canvas',
         resetCanvas: 'Reset Canvas',
+        groupElements: 'Group',
+        ungroupElements: 'Ungroup',
         syncConfig: 'Sync Settings',
         syncByValue: 'Sync by Fixed Values',
         syncByRatio: 'Sync by Ratio',

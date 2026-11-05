@@ -27,6 +27,8 @@ module.exports = {
         deleteImage: '删除图片',
         clearCanvas: '清空画布',
         resetCanvas: '重置画布',
+        groupElements: '组合',
+        ungroupElements: '取消组合',
         syncConfig: '同步配置',
         syncByValue: '按固定数值同步',
         syncByRatio: '按比例同步',

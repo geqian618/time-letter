@@ -151,6 +151,8 @@ export default {
             deleteImage: '删除图片',
             clearCanvas: '清空画布',
             resetCanvas: '重置画布',
+            groupElements: '组合',
+            ungroupElements: '取消组合',
         },
     },
     panel: {
