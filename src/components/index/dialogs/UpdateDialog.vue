@@ -119,10 +119,16 @@ const disposeError = window.electronAPI.watchUpdateError(() => {
   if (status.value === 'downloading') fallbackCheck()
 })
 
+// 托盘「检查更新」的 IPC 监听（卸载时解绑，防 HMR 重挂载累积监听器）
+const disposeOpenUpdateDialog = window.electronAPI.openUpdateDialog(() => {
+  check()
+})
+
 onUnmounted(() => {
   disposeProgress?.()
   disposeDownloaded?.()
   disposeError?.()
+  disposeOpenUpdateDialog?.()
 })
 
 defineExpose({check})

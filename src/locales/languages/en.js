@@ -151,7 +151,7 @@ export default {
             deleteImage: 'Delete Image',
             clearCanvas: 'Clear Canvas',
             resetCanvas: 'Reset Canvas',
-            groupElements: 'Group',
+            groupElements: 'Create Group',
             ungroupElements: 'Ungroup',
         },
     },
@@ -250,7 +250,7 @@ export default {
         border: 'Border',
         borderType: 'Type',
         borderTypeOptions: {
-            general: 'General',
+            solid: 'Solid',
             blur: 'Blur',
             custom: 'Custom',
         },

@@ -36,3 +36,6 @@ data
 *.sw?
 
 *.tsbuildinfo
+
+# 服务端渲染编辑器：scripts/build-canvas-lib.js 从 src/canvas（单一来源）自动生成的 CJS 产物，勿手工修改
+electron/canvas/NodeCanvasEditor.js

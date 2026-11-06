@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     watchDownloadProgress: (callback) => subscribe('download-progress:watch', callback),
     openSettingsDialog: (callback) => subscribe('settings-dialog:open', callback),
     openAboutDialog: (callback) => subscribe('about-dialog:open', callback),
+    openUpdateDialog: (callback) => subscribe('update-dialog:open', callback),
     openExternal: (url) => ipcRenderer.send('shell:open-external', url),
     checkAppUpdate: () => ipcRenderer.invoke('update:check'),
     installAppUpdate: () => ipcRenderer.send('update:install'),

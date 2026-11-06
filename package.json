@@ -15,6 +15,7 @@
     "compile": "node scripts/compile.js",
     "check:build-env": "node scripts/check-build-env.js",
     "bundle:main": "node scripts/bundle-main.js",
+    "canvas:lib": "node scripts/build-canvas-lib.js",
     "vite:start": "vite",
     "vite:build": "vite build",
     "build": "run-p type-check \"build-only {@}\" --",

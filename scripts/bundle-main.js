@@ -13,6 +13,7 @@
 const path = require('path')
 const fs = require('fs')
 const esbuild = require('esbuild')
+const {buildCanvasLib} = require('./build-canvas-lib')
 
 const CACHE_DIR = path.join('node_modules', '.cache', 'electron-bundle')
 const MAIN_BUNDLE = path.join(CACHE_DIR, 'main.bundle.js')
@@ -68,6 +69,10 @@ async function main() {
       __ENCRYPTOR_PKG_PATH__: JSON.stringify((cfg.renderer && cfg.renderer.output) || 'resources/renderer.pkg')
     }
   })
+
+  // 服务端渲染编辑器：由 src/canvas 单一代码源生成 CJS 产物（详见 build-canvas-lib.js）。
+  // 必须在 worker 打包之前生成：worker.bundle 会把它一并打进子进程包
+  await buildCanvasLib()
 
   await esbuild.build({
     entryPoints: ['electron/thread/worker.js'],

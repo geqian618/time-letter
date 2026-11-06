@@ -151,7 +151,7 @@ export default {
             deleteImage: '删除图片',
             clearCanvas: '清空画布',
             resetCanvas: '重置画布',
-            groupElements: '组合',
+            groupElements: '创建组合',
             ungroupElements: '取消组合',
         },
     },
@@ -250,7 +250,7 @@ export default {
         border: '边框',
         borderType: '边框类型',
         borderTypeOptions: {
-            general: '通用',
+            solid: '纯色',
             blur: '模糊',
             custom: '自定义',
         },

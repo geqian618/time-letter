@@ -195,7 +195,7 @@
                       @change="handleBorderTypeChange">
                     <el-option
                         v-for="item in [
-                          {value: 0, label: $t('right.borderTypeOptions.general')},
+                          {value: 0, label: $t('right.borderTypeOptions.solid')},
                           {value: 1, label: $t('right.borderTypeOptions.blur')},
                           {value: 2, label: $t('right.borderTypeOptions.custom')}
                         ]"
