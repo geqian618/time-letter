@@ -790,7 +790,8 @@ const useTemplate = async (settings, path) => {
     element.offsetX *= factor;
     element.offsetY *= factor;
     // 组合：重建后实际尺寸由子元素联合包围盒决定，子树按同一系数等比缩放；
-    if (element.type === 'group') {
+    // 早期预设无 sourceInitZoom，子树不换算
+    if (element.type === 'group' && sourceInitZoom) {
       scaleGroupChildren(element.children, factor);
       // 旋转基准点为组内局部坐标，随子树同步缩放
       if (element.pivotX != null) {
