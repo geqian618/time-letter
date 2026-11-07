@@ -716,60 +716,86 @@ const scaleGroupChildren = (children, f) => {
 
 
 /**
- * 将预设 / 同步数据应用到目标画布：按目标图片尺寸换算背景边框与前景元素几何，
+ * 将预设 / 同步数据应用到目标画布：按目标照片尺寸换算背景边框与前景元素几何，
  * 换算后落盘到画布数据并触发选中画布重渲染。前景元素为源画布原始值，
- * 统一乘折算系数 factor，组合子树随顶层元素同系数缩放
+ * 统一乘几何折算系数 geometryScale，组合子树随顶层元素同系数缩放
  * @param {Object} settings - 预设数据（idealWidth / idealHeight / background / foreground / sourceInitZoom）
  * @param {string} path - 目标画布路径
  */
 const useTemplate = async (settings, path) => {
   const canvas = CanvasManager.getCanvas(path);
-  const {idealWidth, idealHeight, background, foreground, sourceInitZoom} = settings;
+  // 模板保存时的工作区基准尺寸：几何换算（savedPhotoFitRatio / geometryScale）与滚动居中以此为准
+  const {
+    idealWidth: savedWorkspaceWidth,
+    idealHeight: savedWorkspaceHeight,
+    background,
+    foreground,
+    sourceInitZoom
+  } = settings;
+  // 目标画布照片尺寸：画布单位 ≈ 照片像素，全部几何换算以它为基准
   const {height: imageHeight, width: imageWidth} = canvas.metadata;
-
-  const {idealWidth: containerWidth, idealHeight: containerHeight} = canvasWorkspaceRef.value;
-  const initZoom = Math.min(containerHeight / imageHeight, containerWidth / imageWidth);
-  const zoom = initZoom * settingsStore.projectSettings.others.defaultCanvasScale;
-  const idealZoom = Math.min(idealHeight / imageHeight, idealWidth / imageWidth);
-
-  const zoomRatio = initZoom / idealZoom;
-
-  // 几何折算系数：源画布值 → 目标画布值。
-  // 预设元素为源画布原始值，系数 = 源画布初始缩放 × zoomRatio / initZoom；
-  // 早期预设数据已折算 initZoom，sourceInitZoom 缺省按 1 处理
-  const factor = (sourceInitZoom || 1) * zoomRatio / initZoom;
 
   const border = background.elements[0];
   const photo = background.elements[1];
   const borderOptions = border.meta;
   const photoOptions = photo.meta;
 
-  borderOptions.borderLeft = borderOptions.borderLeft * zoomRatio
-  borderOptions.borderRight = borderOptions.borderRight * zoomRatio
-  borderOptions.borderTop = borderOptions.borderTop * zoomRatio
-  borderOptions.borderBottom = borderOptions.borderBottom * zoomRatio
-  borderOptions.borderRadius = borderOptions.borderRadius * zoomRatio
-  borderOptions.borderBlur = borderOptions.borderBlur * zoomRatio
+  // 换算模型：画布单位（≈目标照片像素）× 照片适配比 = 屏幕像素（100% 标定下面板展示的值）。
+  // 照片适配比 = 目标照片 contain 适配工作区的 min 比率，以目标照片（而非模板源照片）计算——
+  // 布局锚定工作区，边框 / 元素屏幕尺寸不随照片大小变化
+  // 目标照片适配"保存时工作区"的比率（保存时刻汇率）：模板屏幕像素 → 画布单位的除数
+  const savedPhotoFitRatio = Math.min(savedWorkspaceHeight / imageHeight, savedWorkspaceWidth / imageWidth);
 
-  photoOptions.borderRadius = photoOptions.borderRadius * zoomRatio
+  // 当前工作区尺寸（CSS 像素）：100% 标定与本画布适配比以此为准
+  const {idealWidth: currentWorkspaceWidth, idealHeight: currentWorkspaceHeight} = canvasWorkspaceRef.value;
+  // 目标照片适配"当前工作区"的比率（本画布汇率）：屏幕像素类元数据（边框 / 圆角 / 模糊）→ 画布单位的除数
+  const currentPhotoFitRatio = Math.min(currentWorkspaceHeight / imageHeight, currentWorkspaceWidth / imageWidth);
 
-  const borderLeft = borderOptions.borderLeft / initZoom
-  const borderRight = borderOptions.borderRight / initZoom
-  const borderTop = borderOptions.borderTop / initZoom
-  const borderBottom = borderOptions.borderBottom / initZoom
+  // 整张画布尺寸 = 照片 + 四周边框：边框画布单位 = 屏厚 / savedPhotoFitRatio
+  const composedWidth = imageWidth + (borderOptions.borderLeft + borderOptions.borderRight) / savedPhotoFitRatio;
+  const composedHeight = imageHeight + (borderOptions.borderTop + borderOptions.borderBottom) / savedPhotoFitRatio;
+  // 100% 标定：整张画布 contain 适配当前工作区，至少一条边贴满；落盘 canvas.initZoom 供面板换算与后续同步
+  const initZoom = Math.min(currentWorkspaceWidth / composedWidth, currentWorkspaceHeight / composedHeight);
+  // 初始显示缩放 = 标定 × 默认画布比例（仅画布缩放未被用户改动时采用）
+  const defaultZoom = initZoom * settingsStore.projectSettings.others.defaultCanvasScale;
 
-  const newWidth = imageWidth + borderLeft + borderRight
-  const newHeight = imageHeight + borderTop + borderBottom
+  // 工作区缩放比（当前 / 保存时）：分子分母同为"目标照片适配"口径，照片尺寸相约，
+  // 只反映工作区大小变化；工作区相同时恒为 1，元数据原样保留，面板数值不漂移
+  const workspaceScaleRatio = currentPhotoFitRatio / savedPhotoFitRatio;
 
-  background.width = foreground.width = newWidth
-  background.height = foreground.height = newHeight
+  // 几何折算系数：源画布单位 → 目标画布单位。
+  // 推导：保存时屏幕尺寸 = 源单位 × sourceInitZoom，随工作区等比 × workspaceScaleRatio，
+  // 再按本画布适配比折回画布单位 ÷ currentPhotoFitRatio；
+  // 化简后 = sourceInitZoom / savedPhotoFitRatio，currentPhotoFitRatio 消去，
+  // 几何与当前工作区无关（当前工作区仅通过 initZoom 影响初始显示缩放）。
+  // 早期预设数据已折算过 initZoom，sourceInitZoom 缺省按 1 处理
+  const geometryScale = (sourceInitZoom || 1) * workspaceScaleRatio / currentPhotoFitRatio;
 
-  border.radius = borderOptions.borderRadius / initZoom
-  border.width = newWidth
-  border.height = newHeight
+  // 屏幕像素类元数据随工作区等比适配：这是持久化到画布数据 / 面板的值（工作区不变则原样保留）
+  borderOptions.borderLeft = borderOptions.borderLeft * workspaceScaleRatio
+  borderOptions.borderRight = borderOptions.borderRight * workspaceScaleRatio
+  borderOptions.borderTop = borderOptions.borderTop * workspaceScaleRatio
+  borderOptions.borderBottom = borderOptions.borderBottom * workspaceScaleRatio
+  borderOptions.borderRadius = borderOptions.borderRadius * workspaceScaleRatio
+  borderOptions.borderBlur = borderOptions.borderBlur * workspaceScaleRatio
+
+  photoOptions.borderRadius = photoOptions.borderRadius * workspaceScaleRatio
+
+  // 适配后的屏幕像素 → 画布单位：照片贴着边框内沿定位（photo.x / photo.y）用
+  const borderTop = borderOptions.borderTop / currentPhotoFitRatio
+  const borderLeft = borderOptions.borderLeft / currentPhotoFitRatio
+  // const borderBottom = borderOptions.borderBottom / currentPhotoFitRatio
+  // const borderRight = borderOptions.borderRight / currentPhotoFitRatio
+
+  background.width = foreground.width = composedWidth
+  background.height = foreground.height = composedHeight
+
+  border.radius = borderOptions.borderRadius / currentPhotoFitRatio
+  border.width = composedWidth
+  border.height = composedHeight
 
   if (border.type === 'image') {
-    border.blur = borderOptions.borderBlur / initZoom
+    border.blur = borderOptions.borderBlur / currentPhotoFitRatio
     if (borderOptions.borderType === 1) {
       border.src = canvas.url
       border.path = canvas.path
@@ -782,30 +808,30 @@ const useTemplate = async (settings, path) => {
   photo.height = imageHeight
   photo.x = borderLeft
   photo.y = borderTop
-  photo.radius = photoOptions.borderRadius / initZoom
+  photo.radius = photoOptions.borderRadius / currentPhotoFitRatio
 
   for (let element of foreground.elements) {
-    element.width *= factor;
-    element.height *= factor;
-    element.offsetX *= factor;
-    element.offsetY *= factor;
+    element.width *= geometryScale;
+    element.height *= geometryScale;
+    element.offsetX *= geometryScale;
+    element.offsetY *= geometryScale;
     // 组合：重建后实际尺寸由子元素联合包围盒决定，子树按同一系数等比缩放；
     // 早期预设无 sourceInitZoom，子树不换算
     if (element.type === 'group' && sourceInitZoom) {
-      scaleGroupChildren(element.children, factor);
+      scaleGroupChildren(element.children, geometryScale);
       // 旋转基准点为组内局部坐标，随子树同步缩放
       if (element.pivotX != null) {
-        element.pivotX *= factor;
-        element.pivotY *= factor;
+        element.pivotX *= geometryScale;
+        element.pivotY *= geometryScale;
       }
     }
 
     const {position, centerXRatio, centerYRatio} = element;
 
     if (element.type === 'text') {
-      element.fontSize *= factor;
+      element.fontSize *= geometryScale;
       const newText = getText({path, ...element.meta, content: element.text})
-      if (initZoom !== idealZoom || element.text !== newText) {
+      if (currentPhotoFitRatio !== savedPhotoFitRatio || element.text !== newText) {
         const text = new Text(newText, {...element});
         const measureText = text.measureText(canvasEditor.ctx);
         element.width = measureText.width;
@@ -815,19 +841,19 @@ const useTemplate = async (settings, path) => {
     }
 
     if (templatesStore.synchronousMode === 0) {
-      element.x = position[0] === 'left' ? element.offsetX : newWidth - (element.offsetX + element.width)
-      element.y = position[1] === 'top' ? element.offsetY : newHeight - (element.offsetY + element.height)
+      element.x = position[0] === 'left' ? element.offsetX : composedWidth - (element.offsetX + element.width)
+      element.y = position[1] === 'top' ? element.offsetY : composedHeight - (element.offsetY + element.height)
     }
 
     if (templatesStore.synchronousMode === 1) {
-      element.x = position[0] === 'left' ? centerXRatio * newWidth - element.width / 2 : newWidth - (centerXRatio * newWidth + element.width / 2)
-      element.y = position[1] === 'top' ? centerYRatio * newHeight - element.height / 2 : newHeight - (centerYRatio * newHeight + element.height / 2)
+      element.x = position[0] === 'left' ? centerXRatio * composedWidth - element.width / 2 : composedWidth - (centerXRatio * composedWidth + element.width / 2)
+      element.y = position[1] === 'top' ? centerYRatio * composedHeight - element.height / 2 : composedHeight - (centerYRatio * composedHeight + element.height / 2)
     }
 
   }
 
   canvas.initZoom = initZoom;
-  canvas.zoom = canvas.zoom !== 1 ? canvas.zoom : zoom;
+  canvas.zoom = canvas.zoom !== 1 ? canvas.zoom : defaultZoom;
   canvas.width = imageWidth;
   canvas.height = imageHeight;
   canvas.borderOptions = _.cloneDeep(border.meta)
@@ -840,8 +866,8 @@ const useTemplate = async (settings, path) => {
     // 计算滚动位置，使图形内容居中（与 scrollBarMoveToCenter 同口径：
     // 包装容器宽 = max(图片宽, 工作区理想宽)，可视区用 clientWidth 扣除滚动条）
     const {clientWidth, clientHeight} = canvasWorkspaceRef.value;
-    const scrollLeft = (Math.max(imageWidth, idealWidth) - clientWidth) / 2;
-    const scrollTop = (Math.max(imageHeight, idealHeight) - clientHeight) / 2;
+    const scrollLeft = (Math.max(imageWidth, savedWorkspaceWidth) - clientWidth) / 2;
+    const scrollTop = (Math.max(imageHeight, savedWorkspaceHeight) - clientHeight) / 2;
     canvas.scrollLeft = Math.max(0, scrollLeft);
     canvas.scrollTop = Math.max(0, scrollTop);
     canvas.completed = true;
