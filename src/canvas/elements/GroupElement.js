@@ -1,7 +1,8 @@
 /**
  * 组合元素（参考 AI 组合）：持有子元素的复合元素。
  * 子元素以组内局部坐标存储（组合原点为 x/y），组合的移动 / 对齐 / 吸附只需
- * 操作组合自身，与普通元素走完全相同的路径；命中任意子元素即命中整个组合
+ * 操作组合自身，与普通元素走完全相同的路径；命中范围为联合包围盒（选框范围），
+ * 子元素之间的空白处同样可命中并拖动整个组合
  */
 import {Element} from './Element.js';
 
@@ -155,9 +156,18 @@ export class Group extends Element {
         this.pivotY *= f;
     }
 
+    /**
+     * 联合包围盒（选框范围）内即命中，子元素之间的空白处也可拖动组合；
+     * 点先经 _toLocal 反旋转换算到组内局部坐标，与 _localBounds 同一坐标系
+     * @param {number} x - 父系 X 坐标
+     * @param {number} y - 父系 Y 坐标
+     * @returns {boolean}
+     */
     contains(x, y) {
+        const b = this._localBounds();
+        if (!b.w && !b.h) return false;
         const local = this._toLocal(x, y);
-        return this.children.some(child => child.contains(local.x, local.y));
+        return local.x >= b.x && local.x <= b.x + b.w && local.y >= b.y && local.y <= b.y + b.h;
     }
 
     draw(ctx) {

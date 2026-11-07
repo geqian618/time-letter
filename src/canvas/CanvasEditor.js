@@ -1655,9 +1655,9 @@ class CanvasEditor {
     }
 
     /**
-     * 悬浮光标提示（参考 AI）：缩放手柄显示方向缩放光标、角外旋转热区显示弧形箭头光标、
-     * 可拖拽元素本体显示移动光标。拖拽中（有按键按下，光标由拖拽手势接管）与
-     * 文本编辑态不接管光标
+     * 悬浮光标提示（参考 AI）：缩放手柄显示方向缩放光标、角外旋转热区显示弧形箭头光标。
+     * 元素本体不接管光标，移动光标仅在真正拖拽时由拖拽手势设置；
+     * 拖拽中（有按键按下，光标由拖拽手势接管）与文本编辑态不接管光标
      * @param {MouseEvent} event
      */
     handleMouseMove(event) {
@@ -1669,9 +1669,6 @@ class CanvasEditor {
             cursor = hit.handle === 'rotate'
                 ? CanvasEditor.getRotateCursor(hit.corner || 0, hit.element.angle)
                 : CanvasEditor.HANDLE_CURSORS[hit.handle];
-        } else {
-            const element = this._hitTest(x, y);
-            if (element && element.draggable) cursor = 'move';
         }
         if (this.canvas.style.cursor !== cursor) {
             this.canvas.style.cursor = cursor;
