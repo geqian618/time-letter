@@ -13,8 +13,8 @@ export class Image extends Element {
         super(options);
         this.type = 'image'
         this.image = image
-        this.path = image?.src || options.path || options.src || null
         this.src = image?.src || options.src || options.path || null
+        this.path = options.path || image?.src || options.src || null
         this.crossOrigin = options.crossOrigin || 'anonymous'
         this.cacheable = options.cacheable || false
         this.scale = options.scale || 1
@@ -225,8 +225,8 @@ export class LazyImage extends Element {
         super(options);
         this.type = 'image'
         this.image = null
-        this.path = options.path || options.src || null
         this.src = options.src || options.path || null
+        this.path = options.path || options.src || null
         this.crossOrigin = options.crossOrigin || 'anonymous'
         this.cacheable = options.cacheable || false
         this.scale = options.scale || 1

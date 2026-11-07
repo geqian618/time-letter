@@ -410,6 +410,7 @@ const doRenderCanvas = async (canvas, currentVersion) => {
 
     const image = await Image.fromURL({
       src: canvas.url,
+      path: canvas.path,
       selectable: false,
       cacheable: true,
       meta: {...new PhotographOptions()}
@@ -722,17 +723,17 @@ const useTemplate = async (settings, path) => {
     border.blur = borderOptions.borderBlur / initZoom
     if (borderOptions.borderType === 1) {
       border.src = canvas.url
+      border.path = canvas.path
     }
   }
 
   photo.src = canvas.url
+  photo.path = canvas.path
   photo.width = imageWidth
   photo.height = imageHeight
   photo.x = borderLeft
   photo.y = borderTop
   photo.radius = photoOptions.borderRadius / initZoom
-
-  photoOptions.path = canvas.path
 
   for (let element of foreground.elements) {
 

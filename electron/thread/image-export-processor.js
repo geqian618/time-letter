@@ -103,8 +103,8 @@ const exportFiles = async ({projectSettings, outputDirectory, settings}, progres
                 await runTask(child, {projectSettings, outputDirectory, setting});
             } catch (err) {
                 errors++;
-                errorMessages.push({path: setting.path, message: err.message});
-                console.error(`处理图片 ${setting.path} 失败:`, err);
+                errorMessages.push({path: setting.filePath, message: err.message});
+                console.error(`处理图片 ${setting.filePath} 失败:`, err);
             } finally {
                 completed++;
                 updateProgress();
