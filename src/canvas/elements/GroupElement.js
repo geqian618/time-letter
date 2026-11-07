@@ -170,7 +170,13 @@ export class Group extends Element {
         return local.x >= b.x && local.x <= b.x + b.w && local.y >= b.y && local.y <= b.y + b.h;
     }
 
-    draw(ctx) {
+    /**
+     * 绘制组合：原点平移（angle≠0 时绕基准点旋转）后逐个绘制子元素。
+     * dim 为隔离模式的降维提示，命中 ids 的子元素以 alpha 半透明绘制
+     * @param ctx
+     * @param {null|{ids: Set<number>, alpha: number}} dim - 需降维的元素 id 集合与透明度
+     */
+    draw(ctx, dim) {
         ctx.save();
         if (this.angle) {
             // 旋转绕固定基准点（组内局部坐标）：原点与基准点不随子元素移动而变化，
@@ -189,7 +195,15 @@ export class Group extends Element {
             ctx.translate(this.x, this.y);
         }
         for (const child of this.children) {
-            child.draw(ctx);
+            const dimmed = dim && dim.ids.has(child.id);
+            if (dimmed) {
+                ctx.save();
+                ctx.globalAlpha = dim.alpha;
+            }
+            child.draw(ctx, dim);
+            if (dimmed) {
+                ctx.restore();
+            }
         }
         ctx.restore();
     }

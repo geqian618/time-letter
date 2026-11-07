@@ -841,16 +841,33 @@ class CanvasEditor {
     }
 
     /**
-     * 隔离模式下需降维绘制的顶层元素 id 集合：隔离子树（祖先链 + 当前组合）之外的顶层元素。
-     * 嵌套组合的祖先链正常显示（其内部承载着被编辑内容）
+     * 隔离模式下需降维绘制的元素 id 集合：隔离子树（祖先链 + 当前组合及其全部后代）
+     * 之外的整棵元素树。集合以元素为单位下发到绘制层，被保留的祖先组合据此对其余
+     * 子元素降维，嵌套组合内部同样适用
      * @returns {Set|null} 非隔离模式返回 null
      */
     _dimmedElementIds() {
         const isolation = this._getIsolationGroup();
         if (!isolation) return null;
         const keep = new Set((this._ancestorChain(isolation) || []).map(el => el.id));
-        keep.add(isolation.id);
-        return new Set(this.elements.filter(el => !keep.has(el.id)).map(el => el.id));
+        const collectKept = (el) => {
+            keep.add(el.id);
+            if (el.type === 'group') el.children.forEach(collectKept);
+        };
+        collectKept(isolation);
+        const dimmed = new Set();
+        const walk = (list) => {
+            for (const el of list) {
+                if (!keep.has(el.id)) {
+                    dimmed.add(el.id);
+                    continue;
+                }
+                // 保留的祖先组合继续下钻，其内部非保留的子元素需要降维
+                if (el.type === 'group') walk(el.children);
+            }
+        };
+        walk(this.elements);
+        return dimmed;
     }
 
     /**
@@ -1330,6 +1347,8 @@ class CanvasEditor {
     drawElements() {
         // 隔离模式（参考 AI）：隔离子树正常绘制，其余内容半透明降维
         const dimIds = this._dimmedElementIds();
+        // 降维提示（保留的祖先组合对其余子元素降维）：ids 为需降维的元素 id 集合
+        const dim = dimIds && {ids: dimIds, alpha: CanvasEditor.ISOLATION_DIM_ALPHA};
         // 绘制所有文本
         for (const element of this.elements) {
             const dimmed = dimIds && dimIds.has(element.id);
@@ -1338,7 +1357,7 @@ class CanvasEditor {
                 this.ctx.globalAlpha = CanvasEditor.ISOLATION_DIM_ALPHA;
             }
             // 绘制元素
-            element.draw(this.ctx);
+            element.draw(this.ctx, dim);
             if (element.type === 'text') {
                 // 如果是正在编辑的文本，绘制背景颜色
                 if (element.status === Element.EDITING) {
