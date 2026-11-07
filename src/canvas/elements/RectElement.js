@@ -57,6 +57,18 @@ export class Rect extends Element {
         return {x: this.x, y: this.y, w: this.width, h: this.height};
     }
 
+    /**
+     * 绕锚点等比缩放：矩形尺寸即 width/height
+     */
+    scaleAt(f, ax, ay) {
+        this.width *= f;
+        this.height *= f;
+        this.x = ax + (this.x - ax) * f;
+        this.y = ay + (this.y - ay) * f;
+        this.centerX = ax + (this.centerX - ax) * f;
+        this.centerY = ay + (this.centerY - ay) * f;
+    }
+
     draw(ctx) {
         // 保存当前画布状态
         ctx.save();

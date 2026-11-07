@@ -71,11 +71,12 @@ class DraggableElementFactory {
                     const scale = Math.min(width / this.settings.naturalWidth, height / this.settings.naturalHeight)
                     fitWidth = this.settings.naturalWidth * scale
                 }
-                Image.fromURL(url, {
+                Image.fromURL({
+                    src: url,
+                    path,
                     width: fitWidth / zoom,
                     draggable: true,
-                    cacheable: true,
-                    path
+                    cacheable: true
                 }).then(image => {
                     resolve(image);
                 }).catch(error => {

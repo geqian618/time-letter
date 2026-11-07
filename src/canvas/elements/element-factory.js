@@ -9,36 +9,37 @@ import {Group} from './GroupElement.js';
 
 // 类型 → 构造器注册表；context 携带图片缓存等宿主资源，避免工厂反向依赖编辑器
 const CREATORS = {
-    text: (data) => new Text(data.text, data),
+    
+    text: (options) => new Text(options.text, options),
 
-    image: async (data, context) => {
-        const image = context.enableCache ? context.cache.get(data.src) : null;
-        const instance = image ? new Image(image, data) : await Image.fromURL(data.src, data);
-        if (context.enableCache && instance.cacheable && !context.cache.has(data.src)) {
+    image: async (options, context) => {
+        const image = context.enableCache ? context.cache.get(options.src) : null;
+        const instance = image ? new Image(image, options) : await Image.fromURL(options);
+        if (context.enableCache && instance.cacheable && !context.cache.has(options.src)) {
             context.cache.set(instance.src, instance.image);
         }
         return instance;
     },
 
-    rect: (data) => new Rect(data),
+    rect: (options) => new Rect(options),
 
-    group: async (data, context) => {
+    group: async (options, context) => {
         const children = [];
-        for (const child of data.children || []) {
+        for (const child of options.children || []) {
             const instance = await createElement(child, context);
             if (instance) children.push(instance);
         }
-        return new Group({...data, children});
+        return new Group({...options, children});
     },
 };
 
 /**
  * 按类型构造单个元素实例（图片异步解码；组合递归构造子元素），未知类型返回 null
- * @param {Object} data - 元素裸数据
+ * @param {Object} options - 元素裸数据
  * @param {{enableCache: boolean, cache: Map}} context - 宿主资源（图片缓存）
  * @returns {Promise<Object|null>} 元素实例
  */
-export async function createElement(data, context) {
-    const creator = data && CREATORS[data.type];
-    return creator ? creator(data, context) : null;
+export async function createElement(options, context) {
+    const creator = options && CREATORS[options.type];
+    return creator ? creator(options, context) : null;
 }

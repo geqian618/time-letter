@@ -929,7 +929,6 @@ const handleCreateBorders = async (file) => {
   canvasActions.centerCanvasScrollBar()
 
   if (borderType === 0 && background.type !== 'rect') {
-    delete background.meta.path
     delete background.meta.url
     elements[0] = new Rect({
       width: newWidth,
@@ -944,15 +943,18 @@ const handleCreateBorders = async (file) => {
       height: newHeight,
       radius: newBorderRadius,
       blur: newBorderBlur || 15 / initZoom,
-      meta: {...background.meta, path: target.meta.path, url: target.meta.url, borderBlur: borderBlur || 15}
+      path: target.path,
+      meta: {...background.meta, url: target.meta.url, borderBlur: borderBlur || 15}
     })
   } else if (borderType === 2 && file) {
-    elements[0] = await Image.fromURL(file.url, {
+    elements[0] = await Image.fromURL({
+      src: file.url,
       width: newWidth,
       height: newHeight,
       radius: 0,
       blur: 0,
-      meta: {...background.meta, path: file.path, url: file.url, borderBlur: 0, borderRadius: 0}
+      path: file.path,
+      meta: {...background.meta, url: file.url, borderBlur: 0, borderRadius: 0}
     })
   }
 

@@ -23,6 +23,41 @@ import {SnapEngine} from './core/snap-engine.js';
 import {alignToReference, distributeByEdges, distributeByCenters} from './core/align-strategies.js';
 import * as textCaret from './core/text-caret.js';
 
+/**
+ * 生成角部朝向的旋转光标（CSS 光标图无法动态旋转，四个角各预生成一个方向）：
+ * 一段 96° 弧线两端各一个反向切向箭头，白色主体黑色描边（与系统箭头 / 缩放手柄同风格），
+ * rotation 使弧的凸面朝向所抓的角（0°=凸向左上 NW，顺时针每角 +90°），热点取弧心与抓取角重合
+ */
+const rotateCursor = (rotation) => {
+    const C = 16;
+    const R = 5.5;
+    const rad = (d) => d * Math.PI / 180;
+    const round = (n) => +n.toFixed(2);
+    const pt = (a) => [C + R * Math.cos(rad(a)), C + R * Math.sin(rad(a))];
+    // 弧自北偏东(-80°)逆时针画到西偏南(-176°)，跨度 96°，中点 -128° 即凸面朝角方向，旋转角叠加
+    const a1 = -80 + rotation;
+    const a2 = -176 + rotation;
+    const [ax, ay] = pt(a1);
+    const [bx, by] = pt(a2);
+    // 箭头：tip 沿切向伸出 4.5，底边沿径向 ±2.8；A 端顺时针切向、B 端逆时针切向（反向）
+    const head = (a, tan) => {
+        const [px, py] = pt(a);
+        const n = [Math.cos(rad(a)), Math.sin(rad(a))];
+        return `M${round(px + 4.5 * tan[0])} ${round(py + 4.5 * tan[1])} `
+            + `${round(px + 2.8 * n[0])} ${round(py + 2.8 * n[1])} `
+            + `${round(px - 2.8 * n[0])} ${round(py - 2.8 * n[1])}Z`;
+    };
+    const arc = `M${round(ax)} ${round(ay)}A${R} ${R} 0 0 0 ${round(bx)} ${round(by)}`;
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">'
+        // 黑色垫底仅比白芯宽 0.8，露出约 0.4px 描边
+        + `<path d="${arc}" fill="none" stroke="black" stroke-width="2.8" stroke-linecap="round"/>`
+        + `<path d="${arc}" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>`
+        + `<path d="${head(a1, [-Math.sin(rad(a1)), Math.cos(rad(a1))])}" fill="white" stroke="black" stroke-width="0.4" stroke-linejoin="round"/>`
+        + `<path d="${head(a2, [Math.sin(rad(a2)), -Math.cos(rad(a2))])}" fill="white" stroke="black" stroke-width="0.4" stroke-linejoin="round"/>`
+        + '</svg>';
+    return `url("data:image/svg+xml,${encodeURIComponent(svg)}") 16 16, auto`;
+};
+
 class CanvasEditor {
 
     // 事件名：选中 / 移动 / 添加 / 属性更新 / 历史变化
@@ -38,6 +73,33 @@ class CanvasEditor {
 
     // 隔离模式下组合外部内容的降维透明度（参考 AI 隔离模式的半透明效果）
     static ISOLATION_DIM_ALPHA = 0.35
+
+    // 缩放手柄的对位映射：0-3 为四角（NW/NE/SW/SE）对应对角，4-7 为边中点（上/下/左/右）对应对边
+    static HANDLE_MIRROR = [3, 2, 1, 0, 5, 4, 7, 6]
+
+    // 缩放手柄悬浮光标（与 HANDLE_MIRROR 同序），拖拽与悬浮共用
+    static HANDLE_CURSORS = ['nwse-resize', 'nesw-resize', 'nesw-resize', 'nwse-resize', 'ns-resize', 'ns-resize', 'ew-resize', 'ew-resize']
+
+    // 旋转光标：CSS 光标图无法动态旋转，15° 一档预生成 24 个朝向，
+    // 按触发角的基准朝向 + 元素当前旋转角取最接近一档，使弧的凸面始终包住所抓的角
+    static ROTATE_CURSORS = Array.from({length: 24}, (_, i) => rotateCursor(i * 15))
+
+    // 触发角的基准朝向（角序 0=NW/1=NE/2=SW/3=SE → 凸面朝向 0°/90°/270°/180°）
+    static CORNER_CURSOR_BASE = [0, 90, 270, 180]
+
+    /**
+     * 取触发角在元素当前旋转下应使用的旋转光标（15° 一档就近匹配）
+     * @param {number} corner - 触发角序号（0=NW/1=NE/2=SW/3=SE）
+     * @param {number} angle - 元素当前旋转角（度，顺时针为正）
+     * @returns {string} CSS cursor 值
+     */
+    static getRotateCursor(corner, angle) {
+        const deg = ((this.CORNER_CURSOR_BASE[corner] + (angle || 0)) % 360 + 360) % 360;
+        return this.ROTATE_CURSORS[Math.round(deg / 15) % 24];
+    }
+
+    // 角部旋转热区半径（屏幕像素）：选框角点（含选框外沿）周围一圈，缩放方块手柄优先命中
+    static ROTATE_CORNER_REACH = 18
 
     /**
      * 构造函数
@@ -131,6 +193,7 @@ class CanvasEditor {
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.handleInput = this.handleInput.bind(this);
         this.handleMouseDown = this.handleMouseDown.bind(this);
+        this.handleMouseMove = this.handleMouseMove.bind(this);
         this.handleDoubleClick = this.handleDoubleClick.bind(this);
         // this.handleKeyUp = this.handleKeyUp.bind(this);
         // this.handleBlur = this.handleBlur.bind(this);
@@ -152,6 +215,7 @@ class CanvasEditor {
         // 仅浏览器环境生效
         if (this.isBrowser) {
             this.eventScope.addEventListener('mousedown', this.handleMouseDown);
+            this.eventScope.addEventListener('mousemove', this.handleMouseMove);
             this.eventScope.addEventListener('dblclick', this.handleDoubleClick);
             this.createHiddenInput();
             // 设置响应式
@@ -646,7 +710,8 @@ class CanvasEditor {
     }
 
     /**
-     * 在组合的直接子元素中按画布坐标命中（子元素为组内局部坐标，先减去组合的绝对原点）
+     * 在组合的直接子元素中按画布坐标命中：先减祖先组合原点，再经组合自身的
+     * 原点平移与旋转变换（_toLocal）换算到组内局部坐标
      * @param {Object} group - 组合元素
      * @param {number} x - 画布 X 坐标
      * @param {number} y - 画布 Y 坐标
@@ -655,11 +720,10 @@ class CanvasEditor {
      */
     _childAt(group, x, y, filter) {
         const off = this._originOffset(group) || {x: 0, y: 0};
-        const localX = x - off.x - group.x;
-        const localY = y - off.y - group.y;
+        const local = group._toLocal(x - off.x, y - off.y);
         const children = [...group.children].reverse();
         for (const child of children) {
-            if (child.contains(localX, localY) && (!filter || filter(child))) return child;
+            if (child.contains(local.x, local.y) && (!filter || filter(child))) return child;
         }
         return null;
     }
@@ -751,7 +815,17 @@ class CanvasEditor {
         if (!chain || !chain.length) return;
         const ctx = this.ctx;
         ctx.save();
-        for (const g of chain) ctx.translate(g.x, g.y);
+        for (const g of chain) {
+            // 沿祖先链施加与 Group.draw 一致的变换：原点平移 + 绕组内局部中心的旋转，
+            // 组合自身带旋转时子元素选框 / 编辑装饰才能落对位置
+            ctx.translate(g.x, g.y);
+            if (g.angle) {
+                const c = g._localCenter();
+                ctx.translate(c.x, c.y);
+                ctx.rotate(g.angle * Math.PI / 180);
+                ctx.translate(-c.x, -c.y);
+            }
+        }
         draw(ctx);
         ctx.restore();
     }
@@ -1351,10 +1425,271 @@ class CanvasEditor {
      * 处理 canvas 内鼠标相关事件
      * @param event
      */
+    /**
+     * 元素的父系坐标 → 画布坐标：沿祖先组合链逐级"绕组内中心旋转 + 平移"，
+     * 与 Group.draw 的嵌套变换严格互逆（祖先带旋转时不可只加原点偏移）
+     * @param {Object} el - 元素
+     * @param {number} x - 父系 X（直接父组合的局部坐标）
+     * @param {number} y - 父系 Y
+     * @returns {{x: number, y: number}}
+     */
+    _parentToCanvas(el, x, y) {
+        const chain = this._ancestorChain(el) || [];
+        let px = x, py = y;
+        for (let i = chain.length - 1; i >= 0; i--) {
+            const g = chain[i];
+            if (g.angle) {
+                const c = g._localCenter();
+                const rad = g.angle * Math.PI / 180;
+                const vx = px - c.x, vy = py - c.y;
+                px = c.x + vx * Math.cos(rad) - vy * Math.sin(rad);
+                py = c.y + vx * Math.sin(rad) + vy * Math.cos(rad);
+            }
+            px += g.x;
+            py += g.y;
+        }
+        return {x: px, y: py};
+    }
+
+    /**
+     * 画布坐标 → 元素的父系坐标：_parentToCanvas 的逆变换（外层组合先逆）
+     */
+    _canvasToParent(el, x, y) {
+        const chain = this._ancestorChain(el) || [];
+        let px = x, py = y;
+        for (const g of chain) {
+            px -= g.x;
+            py -= g.y;
+            if (g.angle) {
+                const c = g._localCenter();
+                const rad = -g.angle * Math.PI / 180;
+                const vx = px - c.x, vy = py - c.y;
+                px = c.x + vx * Math.cos(rad) - vy * Math.sin(rad);
+                py = c.y + vx * Math.sin(rad) + vy * Math.cos(rad);
+            }
+        }
+        return {x: px, y: py};
+    }
+
+    /**
+     * 元素选框坐标系（父系坐标、未含元素自身旋转）→ 画布坐标：
+     * 先绕旋转中心（元素中心 / 组合基准点）施加元素自身角度，再沿祖先组合链变换。
+     * 选框手柄 / 旋转支点等选框系坐标由此落到画布
+     */
+    _selectionToCanvas(el, x, y) {
+        let px, py;
+        if (el.angle) {
+            const rad = el.angle * Math.PI / 180;
+            const vx = x - el.centerX, vy = y - el.centerY;
+            px = el.centerX + vx * Math.cos(rad) - vy * Math.sin(rad);
+            py = el.centerY + vx * Math.sin(rad) + vy * Math.cos(rad);
+        } else {
+            px = x;
+            py = y;
+        }
+        return this._parentToCanvas(el, px, py);
+    }
+
+    /**
+     * 画布坐标 → 元素选框坐标系：_selectionToCanvas 的逆变换
+     */
+    _canvasToSelection(el, x, y) {
+        const p = this._canvasToParent(el, x, y);
+        if (!el.angle) return p;
+        const rad = -el.angle * Math.PI / 180;
+        const vx = p.x - el.centerX, vy = p.y - el.centerY;
+        return {x: el.centerX + vx * Math.cos(rad) - vy * Math.sin(rad), y: el.centerY + vx * Math.sin(rad) + vy * Math.cos(rad)};
+    }
+
+    /**
+     * 祖先组合旋转角之和：画布位移换算到元素父系位移用（旋转方向逐层叠加）
+     */
+    _ancestorAngle(el) {
+        const chain = this._ancestorChain(el) || [];
+        return chain.reduce((sum, g) => sum + (g.angle || 0), 0);
+    }
+
+    /**
+     * 命中选中框手柄（8 个缩放方块或角外旋转热区）：倒序遍历激活元素，顶层优先。
+     * 鼠标先经祖先组合逆变换到父系，再绕元素中心反旋转自身角度，换算到未旋转
+     * 选框坐标系后与手柄中心求距离；旋转无专用手柄，命中选框角点外围热区
+     * （含选框外沿，与参考编辑器逐帧比对确认的触发位置）
+     * @param {number} x - 画布 X 坐标
+     * @param {number} y - 画布 Y 坐标
+     * @returns {{element: Object, handle: number|'rotate', corner?: number}|null}
+     */
+    _hitSelectionHandle(x, y) {
+        const transformScale = this.getTransformScale(this.ctx);
+        // 命中半径：手柄半宽外扩 2 屏幕像素容差
+        const radius = (Element.HANDLE_SIZE / 2 + 2) / transformScale;
+        const reach = CanvasEditor.ROTATE_CORNER_REACH / transformScale;
+        for (const el of [...this.activeElements].reverse()) {
+            if (!el.draggable || el.status !== Element.SELECTED) continue;
+            const frame = el.getSelectionFrame(transformScale);
+            if (!frame) continue;
+            const local = this._canvasToSelection(el, x, y);
+            const lx = local.x;
+            const ly = local.y;
+            for (let i = 0; i < frame.handles.length; i++) {
+                const [hx, hy] = frame.handles[i];
+                if (Math.hypot(lx - hx, ly - hy) <= radius) {
+                    return {element: el, handle: i};
+                }
+            }
+            // 旋转热区：角点外围（选框外沿，到最近角点的距离）。不可旋转的元素如组合跳过；
+            // corner 记录触发角（0=NW/1=NE/2=SW/3=SE）供选择朝向光标
+            if (el.rotatable !== false) {
+                const {sx, sy, sw, sh} = frame;
+                const inBox = lx >= sx && lx <= sx + sw && ly >= sy && ly <= sy + sh;
+                if (!inBox) {
+                    // 到最近垂直边 / 水平边距离的合成即到最近角点的距离
+                    const dx = Math.min(Math.abs(lx - sx), Math.abs(lx - (sx + sw)));
+                    const dy = Math.min(Math.abs(ly - sy), Math.abs(ly - (sy + sh)));
+                    if (Math.hypot(dx, dy) <= reach) {
+                        const corner = (Math.abs(lx - (sx + sw)) < Math.abs(lx - sx) ? 1 : 0)
+                            + (Math.abs(ly - (sy + sh)) < Math.abs(ly - sy) ? 2 : 0);
+                        return {element: el, handle: 'rotate', corner};
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 手柄拖拽变换（缩放 / 旋转）：与 handleMouseDown 的移动拖拽同为 document 级闭包手势，
+     * 结束时重发 selection:object 让属性面板同步缩放 / 角度，避免后续面板写回旧值
+     * @param {{element: Object, handle: number|'rotate'}} hit - _hitSelectionHandle 的命中结果
+     * @param {number} startX - 起始画布 X
+     * @param {number} startY - 起始画布 Y
+     */
+    _startTransformDrag({element, handle, corner = 0}, startX, startY) {
+        const transformScale = this.getTransformScale(this.ctx);
+
+        const finish = () => {
+            if (!this.isEditing) {
+                this.canvas.style.cursor = ''
+            }
+            this.events.emit(CanvasEditor.SELECTION_OBJECT, {target: element});
+            this.renderAll();
+            document.removeEventListener('mousemove', handleMousemove);
+            document.removeEventListener('mouseup', handleMouseup);
+        };
+
+        let handleMousemove;
+        let handleMouseup;
+
+        // ---------- 旋转：绕元素中心 / 组合基准点，角度 = 起始角 + 指向角增量（绝对写入，无累积误差） ----------
+        if (handle === 'rotate') {
+            let pivot;
+            if (element.type === 'group') {
+                // 组合每次旋转手势重取联合盒中心为基准点，并补偿组合原点使换点瞬间内容不动
+                const c = element._localCenter();
+                if (element.pivotX !== c.x || element.pivotY !== c.y) {
+                    const r = (element.angle || 0) * Math.PI / 180;
+                    const cos = Math.cos(r), sin = Math.sin(r);
+                    element.x += element.pivotX - c.x - (element.pivotX * cos - element.pivotY * sin) + (c.x * cos - c.y * sin);
+                    element.y += element.pivotY - c.y - (element.pivotX * sin + element.pivotY * cos) + (c.x * sin + c.y * cos);
+                    element.pivotX = c.x;
+                    element.pivotY = c.y;
+                }
+                pivot = this._parentToCanvas(element, element.x + element.pivotX, element.y + element.pivotY);
+            } else {
+                const b = element.getSelectionBounds();
+                pivot = this._selectionToCanvas(element, b.x + b.w / 2, b.y + b.h / 2);
+            }
+            const cx = pivot.x;
+            const cy = pivot.y;
+            const startAngle = element.angle || 0;
+            const startRad = Math.atan2(startY - cy, startX - cx);
+            // 光标凸面朝向所抓的角在当前旋转下的实际方向，拖拽全程保持
+            this.canvas.style.cursor = CanvasEditor.getRotateCursor(corner, element.angle);
+            handleMousemove = (e) => {
+                const {x, y} = this.getCanvasPosition(e);
+                const rad = Math.atan2(y - cy, x - cx);
+                // 归一化到 [-180, 180)：属性面板角度滑杆量程即此区间，超界值会在选中同步时
+                // 被滑杆钳制并经深度监听写回旧值，表现为旋转过半圈后自动弹回
+                element.angle = ((startAngle + (rad - startRad) * 180 / Math.PI + 180) % 360 + 360) % 360 - 180;
+                this.renderAll();
+            };
+        } else {
+            // ---------- 缩放：锚点为手柄对位点，累计系数 = 鼠标到锚点距离 / 起始距离 ----------
+            const frame = element.getSelectionFrame(transformScale);
+            const anchorLocal = frame.handles[CanvasEditor.HANDLE_MIRROR[handle]];
+            // 锚点绕旋转中心（元素中心 / 组合基准点的父系位置）转到可视位置，scaleAt 以该点为固定点
+            let ax, ay;
+            if (element.angle) {
+                const px = element.type === 'group' ? element.x + element.pivotX : element.centerX;
+                const py = element.type === 'group' ? element.y + element.pivotY : element.centerY;
+                const rad = element.angle * Math.PI / 180;
+                const vx = anchorLocal[0] - px, vy = anchorLocal[1] - py;
+                ax = px + vx * Math.cos(rad) - vy * Math.sin(rad);
+                ay = py + vx * Math.sin(rad) + vy * Math.cos(rad);
+            } else {
+                ax = anchorLocal[0];
+                ay = anchorLocal[1];
+            }
+            // 锚点的画布位置：沿祖先组合变换
+            const anchorCanvas = this._parentToCanvas(element, ax, ay);
+            const {w: w0, h: h0} = element.getSelectionBounds();
+            // 元素几何异常（空包围盒）不参与缩放
+            if (!w0 || !h0) return;
+            // 最小 2 画布单位：防止拖过锚点后系数转负导致元素镜像翻转
+            const minFactor = 2 / Math.min(w0, h0);
+            const startDist = Math.hypot(startX - anchorCanvas.x, startY - anchorCanvas.y) || 1;
+            // scaleAt 按当前尺寸乘系数，这里换算为本帧增量（target / 已应用），避免逐帧连乘漂移
+            let applied = 1;
+            this.canvas.style.cursor = CanvasEditor.HANDLE_CURSORS[handle];
+            handleMousemove = (e) => {
+                const {x, y} = this.getCanvasPosition(e);
+                const target = Math.max(Math.hypot(x - anchorCanvas.x, y - anchorCanvas.y) / startDist, minFactor);
+                element.scaleAt(target / applied, ax, ay);
+                applied = target;
+                this.renderAll();
+            };
+        }
+
+        handleMouseup = finish;
+        document.addEventListener('mousemove', handleMousemove);
+        document.addEventListener('mouseup', handleMouseup);
+    }
+
+    /**
+     * 悬浮光标提示（参考 AI）：缩放手柄显示方向缩放光标、角外旋转热区显示弧形箭头光标、
+     * 可拖拽元素本体显示移动光标。拖拽中（有按键按下，光标由拖拽手势接管）与
+     * 文本编辑态不接管光标
+     * @param {MouseEvent} event
+     */
+    handleMouseMove(event) {
+        if (event.buttons !== 0 || this.isEditing) return;
+        const {x, y} = this.getCanvasPosition(event);
+        const hit = this._hitSelectionHandle(x, y);
+        let cursor = '';
+        if (hit) {
+            cursor = hit.handle === 'rotate'
+                ? CanvasEditor.getRotateCursor(hit.corner || 0, hit.element.angle)
+                : CanvasEditor.HANDLE_CURSORS[hit.handle];
+        } else {
+            const element = this._hitTest(x, y);
+            if (element && element.draggable) cursor = 'move';
+        }
+        if (this.canvas.style.cursor !== cursor) {
+            this.canvas.style.cursor = cursor;
+        }
+    }
+
     handleMouseDown(event) {
         if (event.button !== 0) return;
         const startTime = Date.now();
         const {x: startX, y: startY} = this.getCanvasPosition(event);
+
+        // 选中框手柄命中（缩放 / 旋转）优先于元素命中与框选：手柄浮于选框之上
+        const handleHit = this._hitSelectionHandle(startX, startY);
+        if (handleHit) {
+            this._startTransformDrag(handleHit, startX, startY);
+            return;
+        }
+
         const element = this._hitTest(startX, startY);
 
         // 实际参与拖拽的对象：Alt 拷贝后切换为副本，原元素保持原位
@@ -1459,13 +1794,17 @@ class CanvasEditor {
                         freePositions.set(el, {x: el.x, y: el.y, cx: el.centerX, cy: el.centerY, offX: off.x, offY: off.y});
                     }
                 }
-                // 用鼠标增量推进自由位置（不写入元素，避免吸附状态污染）
+                // 用鼠标增量推进自由位置（不写入元素，避免吸附状态污染）；
+                // 画布位移按 -Σ祖先组合角 反旋转到父系坐标（祖先带旋转时拖拽方向才与鼠标一致）
                 for (const el of targetElements) {
                     const fp = freePositions.get(el);
-                    fp.x += offsetX;
-                    fp.y += offsetY;
-                    fp.cx += offsetX;
-                    fp.cy += offsetY;
+                    const aa = -this._ancestorAngle(el) * Math.PI / 180;
+                    const dx = offsetX * Math.cos(aa) - offsetY * Math.sin(aa);
+                    const dy = offsetX * Math.sin(aa) + offsetY * Math.cos(aa);
+                    fp.x += dx;
+                    fp.y += dy;
+                    fp.cx += dx;
+                    fp.cy += dy;
                 }
                 // 计算磁性吸附偏移量与对齐线
                 const snap = this.computeSnap(targetElements, freePositions);
@@ -1770,6 +2109,7 @@ class CanvasEditor {
         if (this.isBrowser) {
             // 移除事件监听
             this.eventScope.removeEventListener('mousedown', this.handleMouseDown);
+            this.eventScope.removeEventListener('mousemove', this.handleMouseMove);
             this.eventScope.removeEventListener('dblclick', this.handleDoubleClick);
             // 移除隐藏输入框
             this.removeHiddenInput();

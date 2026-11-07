@@ -13,7 +13,8 @@ export class Image extends Element {
         super(options);
         this.type = 'image'
         this.image = image
-        this.src = image?.src
+        this.path = image?.src || options.path || options.src || null
+        this.src = image?.src || options.src || options.path || null
         this.crossOrigin = options.crossOrigin || 'anonymous'
         this.cacheable = options.cacheable || false
         this.scale = options.scale || 1
@@ -54,29 +55,31 @@ export class Image extends Element {
     }
 
 
-    static fromURL(src, options = {}) {
+    static fromURL(options = {}) {
         return new Promise((resolve, reject) => {
-            if (!src) {
-                return reject(`Failed to load image: src is null`);
+            const source = typeof window !== 'undefined'
+                ? (options.src || options.path)
+                : (options.path || options.src);
+            if (!source) {
+                return reject(new Error(`Failed to load image: src is null`));
             }
             if (typeof window !== 'undefined') {
                 const image = new window.Image();
                 image.onload = () => {
-                    const instance = new Image(image, options);
-                    resolve(instance);
+                    resolve(new Image(image, options));
                 };
                 image.onerror = () => {
-                    reject(`Failed to load image: ${src}`);
+                    reject(new Error(`Failed to load image: ${source}`));
                 };
                 // crossOrigin 必须在赋 src 之前设置才生效：后设等于没设，跨域图片会污染画布，exportPNG/JPEG 直接抛 SecurityError
                 image.crossOrigin = options.crossOrigin || 'anonymous';
-                image.src = src;
+                image.src = source;
             } else {
                 const {loadImage} = require('@napi-rs/canvas')
-                loadImage(src).then(image => {
+                loadImage(source).then(image => {
                     resolve(new Image(image, options))
                 }).catch(err => {
-                    reject(`Failed to load image from URL: ${src}. ${err.message}`)
+                    reject(new Error(`Failed to load image from URL: ${source}. ${err && err.message}`))
                 })
             }
         })
@@ -218,11 +221,12 @@ export class Image extends Element {
 
 export class LazyImage extends Element {
 
-    constructor(src, options = {}) {
+    constructor(options = {}) {
         super(options);
         this.type = 'image'
         this.image = null
-        this.src = src
+        this.path = options.path || options.src || null
+        this.src = options.src || options.path || null
         this.crossOrigin = options.crossOrigin || 'anonymous'
         this.cacheable = options.cacheable || false
         this.scale = options.scale || 1
@@ -247,8 +251,9 @@ export class LazyImage extends Element {
 
     load() {
         return new Promise((resolve, reject) => {
-            if (!this.src) {
-                return reject(`Failed to load image: src is null`);
+            const source = typeof window !== 'undefined' ? this.src : this.path;
+            if (!source) {
+                return reject(new Error(`Failed to load image: src is null`));
             }
             if (typeof window !== 'undefined') {
                 const image = new window.Image();
@@ -270,15 +275,15 @@ export class LazyImage extends Element {
                     resolve();
                 };
                 image.onerror = () => {
-                    reject(`Failed to load image: ${this.src}`);
+                    reject(new Error(`Failed to load image: ${source}`));
                 };
                 // crossOrigin 必须在赋 src 之前设置才生效（同 Image.fromURL）
                 image.crossOrigin = this.crossOrigin;
-                image.src = this.src;
+                image.src = source;
                 this.image = image;
             } else {
                 const {loadImage} = require('@napi-rs/canvas')
-                loadImage(this.src).then(image => {
+                loadImage(source).then(image => {
                     this.image = image;
                     const {naturalWidth, naturalHeight} = image;
                     // 如果没有设置宽高，使用图片原始尺寸
@@ -296,7 +301,7 @@ export class LazyImage extends Element {
                     }
                     resolve()
                 }).catch(err => {
-                    reject(`Failed to load image from URL: ${this.src}. ${err.message}`)
+                    reject(new Error(`Failed to load image from URL: ${source}. ${err && err.message}`))
                 })
             }
         })

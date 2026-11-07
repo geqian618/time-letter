@@ -214,7 +214,8 @@ const watchContextMenu = () => {
               height: imageHeight,
               elements: [
                 new Rect({imageWidth, imageHeight, meta: new BorderOptions()}),
-                new LazyImage(canvas.url, {
+                new LazyImage({
+                  src: canvas.url,
                   selectable: false,
                   cacheable: true,
                   path: canvas.path,
@@ -407,7 +408,8 @@ const doRenderCanvas = async (canvas, currentVersion) => {
 
   if (!canvas.completed) {
 
-    const image = await Image.fromURL(canvas.url, {
+    const image = await Image.fromURL({
+      src: canvas.url,
       selectable: false,
       cacheable: true,
       meta: {...new PhotographOptions(), url: canvas.url}
@@ -561,7 +563,8 @@ const resetCanvas = (path) => {
     height: imageHeight,
     elements: [
       new Rect({imageWidth, imageHeight, meta: new BorderOptions()}),
-      new LazyImage(canvas.url, {
+      new LazyImage({
+        src: canvas.url,
         selectable: false,
         cacheable: true,
         path: canvas.path,

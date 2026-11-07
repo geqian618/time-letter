@@ -271,6 +271,19 @@ export class Text extends Element {
     }
 
     /**
+     * 绕锚点等比缩放：文本尺寸由字号派生，字号与绝对像素的字间距同步缩放；
+     * width/height 在下次绘制时按新字号测量回写（缩放比即字号比，先按系数推进坐标）
+     */
+    scaleAt(f, ax, ay) {
+        this.fontSize *= f;
+        if (this.spacing) this.spacing *= f;
+        this.x = ax + (this.x - ax) * f;
+        this.y = ay + (this.y - ay) * f;
+        this.centerX = ax + (this.centerX - ax) * f;
+        this.centerY = ay + (this.centerY - ay) * f;
+    }
+
+    /**
      * 测量文字宽高
      *
      * @param ctx
