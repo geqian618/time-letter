@@ -1091,7 +1091,8 @@ const handleKeyDownMoveElement = (event) => {
 
   event.preventDefault();
 
-  const step = settingsStore.projectSettings.others.movingStepSize;
+  // 设置的步长为屏幕像素：除以当前缩放换算为画布位移，缩放大小不影响屏幕上的实际移动距离
+  const step = settingsStore.projectSettings.others.movingStepSize / canvasEditor.getZoom();
 
   const activeElements = canvasEditor.getActiveElements();
 
