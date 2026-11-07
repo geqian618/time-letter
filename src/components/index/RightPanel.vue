@@ -895,7 +895,6 @@ const handleCreateBorders = async (resource) => {
   const {
     width,
     height,
-    initZoom,
   } = currentCanvas;
 
   const {
@@ -913,12 +912,20 @@ const handleCreateBorders = async (resource) => {
   const background = elements[0];
   const target = elements[1];
 
-  const newBorderLeft = borderLeft / initZoom
-  const newBorderRight = borderRight / initZoom
-  const newBorderTop = borderTop / initZoom
-  const newBorderBottom = borderBottom / initZoom
-  const newBorderRadius = borderRadius / initZoom
-  const newBorderBlur = borderBlur / initZoom
+  // 重算 100% 标定：边框变化后整张画布（照片 + 边框）重新 contain 适配工作区（闭式解见 computeBorderFitZoom）。
+  // 标定与换算除数必须同步更新，否则 100% 下整张画布按旧标定渲染，边框增大会溢出工作区
+  const {idealWidth, idealHeight} = canvasesStore.getWorkspace();
+  const fitZoom = canvasActions.computeBorderFitZoom(
+    idealWidth, idealHeight, width, height,
+    borderLeft + borderRight, borderTop + borderBottom
+  );
+
+  const newBorderLeft = borderLeft / fitZoom
+  const newBorderRight = borderRight / fitZoom
+  const newBorderTop = borderTop / fitZoom
+  const newBorderBottom = borderBottom / fitZoom
+  const newBorderRadius = borderRadius / fitZoom
+  const newBorderBlur = borderBlur / fitZoom
   target.x = newBorderLeft
   target.y = newBorderTop
   const newWidth = width + newBorderLeft + newBorderRight
@@ -941,7 +948,7 @@ const handleCreateBorders = async (resource) => {
       width: newWidth,
       height: newHeight,
       radius: newBorderRadius,
-      blur: newBorderBlur || 15 / initZoom,
+      blur: (newBorderBlur || 15) / fitZoom,
       path: target.path,
       meta: {...background.meta, borderBlur: borderBlur || 15}
     })
@@ -962,6 +969,8 @@ const handleCreateBorders = async (resource) => {
   canvasEditor.renderAll();
   backgroundCanvasEditor.renderAll();
 
+  // 落盘新标定：之后缩放胶囊的 100% 即整张画布贴满工作区（用户当前缩放 canvas.zoom 不动，重新点 100% 生效）
+  currentCanvas.initZoom = fitZoom
   borderOptions.value = elements[0].meta
   currentCanvas.borderOptions = _.cloneDeep(elements[0].meta)
   currentCanvas.foreground = canvasEditor.exportToObject()
@@ -996,12 +1005,21 @@ const handleUpdateBorders = () => {
   const background = elements[0];
   const target = elements[1];
 
-  const newBorderLeft = borderLeft / initZoom
-  const newBorderRight = borderRight / initZoom
-  const newBorderTop = borderTop / initZoom
-  const newBorderBottom = borderBottom / initZoom
-  const newBorderRadius = borderRadius / initZoom
-  const newBorderBlur = borderBlur / initZoom
+  // 重算 100% 标定：边框变化后整张画布（照片 + 边框）重新 contain 适配工作区（闭式解见 computeBorderFitZoom）。
+  // 标定与换算除数必须同步更新，否则 100% 下整张画布按旧标定渲染，边框增大会溢出工作区。
+  // initZoom 为旧标定，仅用于把旧边框换算回画布单位（前景跟随量的基准）
+  const {idealWidth, idealHeight} = canvasesStore.getWorkspace();
+  const fitZoom = canvasActions.computeBorderFitZoom(
+    idealWidth, idealHeight, width, height,
+    borderLeft + borderRight, borderTop + borderBottom
+  );
+
+  const newBorderLeft = borderLeft / fitZoom
+  const newBorderRight = borderRight / fitZoom
+  const newBorderTop = borderTop / fitZoom
+  const newBorderBottom = borderBottom / fitZoom
+  const newBorderRadius = borderRadius / fitZoom
+  const newBorderBlur = borderBlur / fitZoom
   target.x = newBorderLeft
   target.y = newBorderTop
   const newWidth = width + newBorderLeft + newBorderRight
@@ -1017,11 +1035,11 @@ const handleUpdateBorders = () => {
   background.radius = newBorderRadius;
   background.blur = newBorderBlur;
 
-  if (borderLeft !== lastBorderLeft || borderTop !== lastBorderTop) {
-    for (let element of canvasEditor.getElements()) {
-      element.x += (borderLeft - lastBorderLeft) / initZoom;
-      element.y += (borderTop - lastBorderTop) / initZoom;
-    }
+  // 前景元素跟随照片：照片画布位置从 lastBorder/initZoom（旧标定）移到 border/fitZoom（新标定），
+  // 元素平移同一差量，保持与照片左上角的相对位置（差量为 0 时是空操作）
+  for (let element of canvasEditor.getElements()) {
+    element.x += borderLeft / fitZoom - lastBorderLeft / initZoom;
+    element.y += borderTop / fitZoom - lastBorderTop / initZoom;
   }
 
   domRefs.canvasElement.classList.remove('scale-animation')
@@ -1030,6 +1048,7 @@ const handleUpdateBorders = () => {
   backgroundCanvasEditor.renderAll();
 
   currentCanvas.borderOptions = _.cloneDeep(borderOptions.value)
+  currentCanvas.initZoom = fitZoom
   currentCanvas.foreground = canvasEditor.exportToObject()
   currentCanvas.background = backgroundCanvasEditor.exportToObject();
 }

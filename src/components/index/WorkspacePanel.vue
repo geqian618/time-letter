@@ -555,6 +555,13 @@ const resetCanvas = (path) => {
 
   const {metadata: {width: imageWidth, height: imageHeight}} = canvas;
 
+  // 重置后边框归 0：100% 标定随之回到照片适配比（computeBorderFitZoom 边框为 0 的退化形式）。
+  // 不重算的话 initZoom 仍是重置前（含边框）的标定，100% 时照片占不满工作区
+  const {idealWidth, idealHeight} = canvasWorkspaceRef.value;
+  canvas.initZoom = computeBorderFitZoom(idealWidth, idealHeight, imageWidth, imageHeight, 0, 0);
+
+  // 用户当前缩放保持不变（不恢复默认缩放）：序列化不携带 zoom，编辑器重渲染时沿用当前缩放；
+  // initZoom 已重算，缩放胶囊按新标定重新计百分比，重新点 100% 即整张画布贴满工作区
   const foreground = {
     width: imageWidth,
     height: imageHeight,
@@ -579,6 +586,9 @@ const resetCanvas = (path) => {
   canvas.foreground = JSON.stringify(foreground);
 
   canvas.background = JSON.stringify(background);
+
+    // 同步边框快照：边框面板的重算基准（handleUpdateBorders 的跟随差量）依赖它与实际边框一致
+  canvas.borderOptions = _.cloneDeep(background.elements[0].meta);
 
   if (path === CanvasManager.getSelectedPath()) {
     renderCanvas(canvas)
@@ -716,6 +726,38 @@ const scaleGroupChildren = (children, f) => {
 
 
 /**
+ * 整张画布（照片 + 边框）contain 适配工作区的 100% 标定（闭式解）。
+ *
+ * initZoom 与整张画布宽互相依赖（循环）：
+ *   initZoom = min(工作区宽 / composedWidth, 工作区高 / composedHeight)
+ *   composedWidth = 照片宽 + 边框屏幕总厚 / initZoom
+ * 联立消元（以宽度分支为例）：initZoom × 照片宽 + 边框屏幕总厚 = 工作区宽
+ *   → initZoom = min((工作区宽 − 边框屏幕总厚) / 照片宽, (工作区高 − 边框屏幕总厚) / 照片高)
+ * 语义：100% 时主导边恰好贴满——边框占其屏幕厚度、照片占其余，整张画布无溢出；
+ * 边框为 0 时退化为照片适配比，与普通画布（doRenderCanvas）口径自然统一。
+ * 分子钳制为正：边框屏幕总厚超过工作区的极端输入下方程无正数解，钳制避免标定为 0 / 负
+ * @param {number} workspaceWidth - 工作区理想宽（CSS 像素）
+ * @param {number} workspaceHeight - 工作区理想高（CSS 像素）
+ * @param {number} photoWidth - 照片宽（画布单位）
+ * @param {number} photoHeight - 照片高（画布单位）
+ * @param {number} borderScreenWidth - 左右边框屏幕总厚（CSS 像素）
+ * @param {number} borderScreenHeight - 上下边框屏幕总厚（CSS 像素）
+ * @returns {number} 100% 标定缩放
+ */
+const computeBorderFitZoom = (
+  workspaceWidth,
+  workspaceHeight,
+  photoWidth,
+  photoHeight,
+  borderScreenWidth,
+  borderScreenHeight
+) => Math.min(
+  Math.max(workspaceWidth - borderScreenWidth, 1) / photoWidth,
+  Math.max(workspaceHeight - borderScreenHeight, 1) / photoHeight
+);
+
+
+/**
  * 将预设 / 同步数据应用到目标画布：按目标照片尺寸换算背景边框与前景元素几何，
  * 换算后落盘到画布数据并触发选中画布重渲染。前景元素为源画布原始值，
  * 统一乘几何折算系数 geometryScale，组合子树随顶层元素同系数缩放
@@ -724,7 +766,7 @@ const scaleGroupChildren = (children, f) => {
  */
 const useTemplate = async (settings, path) => {
   const canvas = CanvasManager.getCanvas(path);
-  // 模板保存时的工作区基准尺寸：几何换算（savedPhotoFitRatio / geometryScale）与滚动居中以此为准
+  // 模板保存时的工作区基准尺寸：几何换算（workspaceScaleRatio / geometryScale）与滚动居中以此为准
   const {
     idealWidth: savedWorkspaceWidth,
     idealHeight: savedWorkspaceHeight,
@@ -740,36 +782,21 @@ const useTemplate = async (settings, path) => {
   const borderOptions = border.meta;
   const photoOptions = photo.meta;
 
-  // 换算模型：画布单位（≈目标照片像素）× 照片适配比 = 屏幕像素（100% 标定下面板展示的值）。
-  // 照片适配比 = 目标照片 contain 适配工作区的 min 比率，以目标照片（而非模板源照片）计算——
-  // 布局锚定工作区，边框 / 元素屏幕尺寸不随照片大小变化
-  // 目标照片适配"保存时工作区"的比率（保存时刻汇率）：模板屏幕像素 → 画布单位的除数
+  // 换算模型：画布单位（≈目标照片像素）× 本画布标定 initZoom = 屏幕像素（100% 缩放下面板展示的值）。
+  // 本画布标定 = 整张画布（照片 + 边框）contain 适配当前工作区的比率（闭式解见下方 initZoom），
+  // 面板展示（值 × initZoom）/ 编辑（值 ÷ initZoom）/ 渲染（unit × zoom）全用这一口径；
+  // 模板的屏幕像素类数值（边框 / 圆角 / 模糊 / 字号）按保存时工作区锚定，应用时随工作区等比适配
+  // 目标照片适配"保存时工作区"的比率：与当前比率相除得工作区缩放比（两端同用目标照片，照片尺寸相约）
   const savedPhotoFitRatio = Math.min(savedWorkspaceHeight / imageHeight, savedWorkspaceWidth / imageWidth);
 
-  // 当前工作区尺寸（CSS 像素）：100% 标定与本画布适配比以此为准
+  // 当前工作区尺寸（CSS 像素）：标定与工作区缩放比以此为准
   const {idealWidth: currentWorkspaceWidth, idealHeight: currentWorkspaceHeight} = canvasWorkspaceRef.value;
-  // 目标照片适配"当前工作区"的比率（本画布汇率）：屏幕像素类元数据（边框 / 圆角 / 模糊）→ 画布单位的除数
+  // 目标照片适配"当前工作区"的比率：与保存时比率相除得工作区缩放比
   const currentPhotoFitRatio = Math.min(currentWorkspaceHeight / imageHeight, currentWorkspaceWidth / imageWidth);
-
-  // 整张画布尺寸 = 照片 + 四周边框：边框画布单位 = 屏厚 / savedPhotoFitRatio
-  const composedWidth = imageWidth + (borderOptions.borderLeft + borderOptions.borderRight) / savedPhotoFitRatio;
-  const composedHeight = imageHeight + (borderOptions.borderTop + borderOptions.borderBottom) / savedPhotoFitRatio;
-  // 100% 标定：整张画布 contain 适配当前工作区，至少一条边贴满；落盘 canvas.initZoom 供面板换算与后续同步
-  const initZoom = Math.min(currentWorkspaceWidth / composedWidth, currentWorkspaceHeight / composedHeight);
-  // 初始显示缩放 = 标定 × 默认画布比例（仅画布缩放未被用户改动时采用）
-  const defaultZoom = initZoom * settingsStore.projectSettings.others.defaultCanvasScale;
 
   // 工作区缩放比（当前 / 保存时）：分子分母同为"目标照片适配"口径，照片尺寸相约，
   // 只反映工作区大小变化；工作区相同时恒为 1，元数据原样保留，面板数值不漂移
   const workspaceScaleRatio = currentPhotoFitRatio / savedPhotoFitRatio;
-
-  // 几何折算系数：源画布单位 → 目标画布单位。
-  // 推导：保存时屏幕尺寸 = 源单位 × sourceInitZoom，随工作区等比 × workspaceScaleRatio，
-  // 再按本画布适配比折回画布单位 ÷ currentPhotoFitRatio；
-  // 化简后 = sourceInitZoom / savedPhotoFitRatio，currentPhotoFitRatio 消去，
-  // 几何与当前工作区无关（当前工作区仅通过 initZoom 影响初始显示缩放）。
-  // 早期预设数据已折算过 initZoom，sourceInitZoom 缺省按 1 处理
-  const geometryScale = (sourceInitZoom || 1) * workspaceScaleRatio / currentPhotoFitRatio;
 
   // 屏幕像素类元数据随工作区等比适配：这是持久化到画布数据 / 面板的值（工作区不变则原样保留）
   borderOptions.borderLeft = borderOptions.borderLeft * workspaceScaleRatio
@@ -781,21 +808,46 @@ const useTemplate = async (settings, path) => {
 
   photoOptions.borderRadius = photoOptions.borderRadius * workspaceScaleRatio
 
-  // 适配后的屏幕像素 → 画布单位：照片贴着边框内沿定位（photo.x / photo.y）用
-  const borderTop = borderOptions.borderTop / currentPhotoFitRatio
-  const borderLeft = borderOptions.borderLeft / currentPhotoFitRatio
-  // const borderBottom = borderOptions.borderBottom / currentPhotoFitRatio
-  // const borderRight = borderOptions.borderRight / currentPhotoFitRatio
+  // 100% 标定（落盘 canvas.initZoom）：整张画布（照片 + 边框）contain 适配当前工作区。
+  // 标定必须与单位换算同口径（除数同为 initZoom），否则预设值经保存→应用会整体缩小
+  // （两口径之比，14 号字变 13.6 即此因）。闭式解推导见 computeBorderFitZoom
+  const initZoom = computeBorderFitZoom(
+    currentWorkspaceWidth,
+    currentWorkspaceHeight,
+    imageWidth,
+    imageHeight,
+    borderOptions.borderLeft + borderOptions.borderRight,
+    borderOptions.borderTop + borderOptions.borderBottom
+  );
+
+  // 初始显示缩放 = 标定 × 默认画布比例（仅画布缩放未被用户改动时采用）
+  const defaultZoom = initZoom * settingsStore.projectSettings.others.defaultCanvasScale;
+
+  // 适配后的屏幕像素 → 画布单位：除数 = 本画布标定（与面板换算同口径），照片贴着边框内沿定位用
+  const borderLeft = borderOptions.borderLeft / initZoom
+  const borderRight = borderOptions.borderRight / initZoom
+  const borderTop = borderOptions.borderTop / initZoom
+  const borderBottom = borderOptions.borderBottom / initZoom
+
+  // 整张画布尺寸 = 照片 + 四周边框（画布单位）：在 initZoom 下渲染恰为 contain 适配工作区
+  const composedWidth = imageWidth + borderLeft + borderRight
+  const composedHeight = imageHeight + borderTop + borderBottom
+
+  // 几何折算系数：源画布单位 → 目标画布单位。
+  // 推导：保存时屏幕尺寸 = 源单位 × sourceInitZoom，随工作区等比 × workspaceScaleRatio，
+  // 再按本画布标定折回画布单位 ÷ initZoom（换算与标定同口径，面板数值不漂移）。
+  // 早期预设数据已折算过 initZoom，sourceInitZoom 缺省按 1 处理
+  const geometryScale = (sourceInitZoom || 1) * workspaceScaleRatio / initZoom;
 
   background.width = foreground.width = composedWidth
   background.height = foreground.height = composedHeight
 
-  border.radius = borderOptions.borderRadius / currentPhotoFitRatio
+  border.radius = borderOptions.borderRadius / initZoom
   border.width = composedWidth
   border.height = composedHeight
 
   if (border.type === 'image') {
-    border.blur = borderOptions.borderBlur / currentPhotoFitRatio
+    border.blur = borderOptions.borderBlur / initZoom
     if (borderOptions.borderType === 1) {
       border.src = canvas.url
       border.path = canvas.path
@@ -808,7 +860,7 @@ const useTemplate = async (settings, path) => {
   photo.height = imageHeight
   photo.x = borderLeft
   photo.y = borderTop
-  photo.radius = photoOptions.borderRadius / currentPhotoFitRatio
+  photo.radius = photoOptions.borderRadius / initZoom
 
   for (let element of foreground.elements) {
     element.width *= geometryScale;
@@ -831,7 +883,7 @@ const useTemplate = async (settings, path) => {
     if (element.type === 'text') {
       element.fontSize *= geometryScale;
       const newText = getText({path, ...element.meta, content: element.text})
-      if (currentPhotoFitRatio !== savedPhotoFitRatio || element.text !== newText) {
+      if (geometryScale !== 1 || element.text !== newText) {
         const text = new Text(newText, {...element});
         const measureText = text.measureText(canvasEditor.ctx);
         element.width = measureText.width;
@@ -888,6 +940,8 @@ Object.assign(canvasActions, {
   refreshZoom,
   permanentlyRemoveSelectedCanvas,
   useTemplate,
+  // 整张画布（照片 + 边框）contain 适配工作区的 100% 标定闭式解：边框面板重算标定用
+  computeBorderFitZoom,
   // 编辑器当前加载的画布路径：供预览面板在切换时判断能否把编辑器内容导出给离开的画布
   getLoadedCanvasPath: () => loadedCanvasPath,
 })
