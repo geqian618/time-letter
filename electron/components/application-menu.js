@@ -370,10 +370,10 @@ const importTemplates = async () => {
             const elements = newTemplate.settings?.foreground?.elements;
             if (elements && Array.isArray(elements)) {
                 for (const element of elements) {
-                    if (element.type === 'image' && element.meta?.path) {
-                        const fileName = path.basename(element.meta.path);
+                    if (element.type === 'image' && element.path) {
+                        const fileName = path.basename(element.path);
                         const newFilePath = path.join(getResourcePath(), fileName);
-                        element.meta.path = newFilePath;
+                        element.path = newFilePath;
                         element.src = localPathToUrl(newFilePath);
                     }
                 }

@@ -24,11 +24,11 @@ const forEachImageElement = (templates, fn) => {
 const serializeTemplates = (templates) => {
     const resourcePath = getResourcePath()
     forEachImageElement(templates, element => {
-        const filePath = element.meta?.path
+        const filePath = element.path
         if (!filePath) return
         delete element.src
         if (isInside(resourcePath, filePath)) {
-            element.meta.path = RESOURCE_PREFIX + path.relative(resourcePath, filePath).split(path.sep).join('/')
+            element.path = RESOURCE_PREFIX + path.relative(resourcePath, filePath).split(path.sep).join('/')
         }
     })
     return JSON.stringify(templates, null, 2)
@@ -39,15 +39,15 @@ const deserializeTemplates = (json) => {
     const templates = JSON.parse(json)
     const resourcePath = getResourcePath()
     forEachImageElement(templates, element => {
-        const filePath = element.meta?.path
+        const filePath = element.path
         if (!filePath) return
         if (RESOURCE_TOKEN.test(filePath)) {
             const resolved = path.join(resourcePath, ...filePath.split(/[\\/]/).slice(1))
             // 相对引用只允许落在图片库内，防手改文件穿越目录
             if (!isInside(resourcePath, resolved)) return
-            element.meta.path = resolved
+            element.path = resolved
         }
-        element.src = localPathToUrl(element.meta.path)
+        element.src = localPathToUrl(element.path)
     })
     return templates
 }

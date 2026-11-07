@@ -102,15 +102,6 @@ async function exportFile(params) {
         elements.splice(0, 1);
     }
 
-    for (let element of elements) {
-        if (element.type === 'image') {
-            element.src = element.meta.path
-        }
-        if (element.shadow) {
-            element.shadow.blur = element.shadow.blur * 0.7;
-        }
-    }
-
     if (type === 0) {
         settings.zoom = 1
     } else if (type === 1) {

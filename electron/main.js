@@ -593,7 +593,7 @@ const setupIpcHandlers = () => {
             const elements = template.settings.foreground.elements;
             for (let element of elements) {
                 if (element.type === 'image') {
-                    const imagePath = element.meta?.path;
+                    const imagePath = element.path;
                     if (!imagePath || !fs.existsSync(imagePath)) {
                         dialog.showMessageBox({
                             type: 'error',

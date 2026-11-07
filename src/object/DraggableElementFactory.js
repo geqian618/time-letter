@@ -75,7 +75,7 @@ class DraggableElementFactory {
                     width: fitWidth / zoom,
                     draggable: true,
                     cacheable: true,
-                    meta: {path}
+                    path
                 }).then(image => {
                     resolve(image);
                 }).catch(error => {

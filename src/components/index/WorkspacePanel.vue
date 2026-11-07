@@ -217,7 +217,8 @@ const watchContextMenu = () => {
                 new LazyImage(canvas.url, {
                   selectable: false,
                   cacheable: true,
-                  meta: {...new PhotographOptions(), path: canvas.path}
+                  path: canvas.path,
+                  meta: {...new PhotographOptions()}
                 })
               ]
             };
@@ -226,7 +227,7 @@ const watchContextMenu = () => {
 
           // 解析出普通对象后新建数组做合并：不深克隆整个条目，也不改动画布持有的原数据
           // （此前 _.cloneDeep 既慢，还靠它隐式把元素的 image（DOM 引用）克隆成 {} 才让载荷可发；
-          //   现在直接序列化，DOM 引用同样被 JSON.stringify 剥离，导出子进程按 meta.path 重载图片）
+          //   现在直接序列化，DOM 引用同样被 JSON.stringify 剥离，导出子进程按元素 path 重载图片）
           const parseLayer = (layer) => typeof layer === 'string' ? JSON.parse(layer) : layer
           const background = parseLayer(canvas.background)
           const foreground = parseLayer(canvas.foreground)
@@ -409,7 +410,7 @@ const doRenderCanvas = async (canvas, currentVersion) => {
     const image = await Image.fromURL(canvas.url, {
       selectable: false,
       cacheable: true,
-      meta: {...new PhotographOptions(), path: canvas.path, url: canvas.url}
+      meta: {...new PhotographOptions(), url: canvas.url}
     });
 
     // 非最终渲染图片，放弃渲染
@@ -563,7 +564,8 @@ const resetCanvas = (path) => {
       new LazyImage(canvas.url, {
         selectable: false,
         cacheable: true,
-        meta: {...new PhotographOptions(), path: canvas.path}
+        path: canvas.path,
+        meta: {...new PhotographOptions()}
       })
     ]
   };
