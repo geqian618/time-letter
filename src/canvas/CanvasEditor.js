@@ -424,17 +424,27 @@ class CanvasEditor {
     }
 
     /**
-     * 添加元素
-     * @returns {number} 新添加元素的索引
+     * 添加元素到当前编辑作用域：隔离模式下加入当前组合的 children，否则加入顶层元素数组。
+     * 隔离中入组元素携带画布绝对坐标，需沿祖先组合与组合自身变换换算为组内局部坐标
      * @param element
+     * @returns {number} 元素在目标容器中的索引
      */
     addElement(element) {
-        this.elements.push(element);
+        const isolation = this._getIsolationGroup();
+        const container = isolation ? isolation.children : this.elements;
+        if (isolation) {
+            // 画布坐标 → 组合父系坐标 → 组内局部坐标
+            const parent = this._canvasToParent(isolation, element.x, element.y);
+            const local = isolation._toLocal(parent.x, parent.y);
+            element.x = local.x;
+            element.y = local.y;
+        }
+        container.push(element);
         if (element.type === 'image' && this.enableCache && element.cacheable) {
             this.cache.set(element.src, element.image)
         }
         this.events.emit(CanvasEditor.ADD_OBJECT, {x: element.x, y: element.y, target: element});
-        return this.elements.length - 1;
+        return container.length - 1;
     }
 
 
