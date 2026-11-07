@@ -8,7 +8,9 @@
       </div>
       <h2 class="empty-title">{{ $t('workspace.dropTitle') }}</h2>
       <p class="empty-hint">{{ $t('workspace.dropHint') }}</p>
-      <button type="button" class="empty-button" @click="requestImportFiles({isDragOver: false})">{{ $t('workspace.chooseFile') }}</button>
+      <button type="button" class="empty-button" @click="requestImportFiles({isDragOver: false})">
+        {{ $t('workspace.chooseFile') }}
+      </button>
       <p class="empty-shortcut">{{ $t('workspace.quickImport') }}</p>
     </div>
 
@@ -640,7 +642,10 @@ const getText = (meta) => {
   }
 }
 
-// 将选中画布的前景元素按定位方式同步到其他画布
+/**
+ * 将选中画布的前景元素按定位方式同步到其他画布。
+ * 元素几何保持源画布原始单位，随 settings 携带 sourceInitZoom 供目标侧换算
+ */
 const synchronizeTemplate = () => {
   if (CanvasManager.getSelectedPath()) {
     const {background, foreground: {width, height, elements}, initZoom} = CanvasManager.getCurrentCanvas();
@@ -654,14 +659,14 @@ const synchronizeTemplate = () => {
           const vertical = centerY < height / 2 ? 'top' : 'bottom';
           const item = {...element}
           item.position = [horizontal, vertical]
-          item.offsetX = horizontal === 'left' ? element.x * initZoom : (width - element.x - element.width) * initZoom
-          item.offsetY = vertical === 'top' ? element.y * initZoom : (height - element.y - element.height) * initZoom
+          item.offsetX = horizontal === 'left' ? element.x : (width - element.x - element.width)
+          item.offsetY = vertical === 'top' ? element.y : (height - element.y - element.height)
           item.centerXRatio = horizontal === 'left' ? centerX / width : (width - centerX) / width
           item.centerYRatio = vertical === 'top' ? centerY / height : (height - centerY) / height
-          item.width = element.width * initZoom
-          item.height = element.height * initZoom
+          item.width = element.width
+          item.height = element.height
           if (element.type === 'text') {
-            item.fontSize = element.fontSize * initZoom
+            item.fontSize = element.fontSize
           }
           items.push(item)
         }
@@ -670,6 +675,8 @@ const synchronizeTemplate = () => {
           idealWidth,
           idealHeight,
           background,
+          // 源画布初始缩放：组合子树为源画布坐标，供目标侧换算缩放系数
+          sourceInitZoom: initZoom,
           foreground: {width, height, elements: items}
         }), path)
       }
@@ -678,9 +685,46 @@ const synchronizeTemplate = () => {
 }
 
 
+/**
+ * 组合子树按系数等比缩放，与编辑器 scaleAt(f, 0, 0) 语义一致：
+ * 子元素坐标同步缩放；文本只缩字号与字间距（宽高由绘制时按字号重新测量回写）；
+ * 图片缩放走 scale 字段；矩形缩宽高；嵌套组合递归，旋转基准点同步缩放。
+ * 子元素为 cloneDeep 克隆，保留原型但无私有字段（如 Text 的 #width），
+ * 读原型访问器会抛 TypeError，只读写自有数据属性
+ * @param {Array} children - 组合子元素（同步数据形态的普通对象）
+ * @param {number} f - 等比缩放系数
+ */
+const scaleGroupChildren = (children, f) => {
+  for (const child of children || []) {
+    child.x *= f;
+    child.y *= f;
+    if (child.type === 'group') {
+      child.pivotX *= f;
+      child.pivotY *= f;
+      scaleGroupChildren(child.children, f);
+    } else if (child.type === 'text') {
+      child.fontSize *= f;
+      if (child.spacing) child.spacing *= f;
+    } else if (child.type === 'image') {
+      child.scale = (child.scale || 1) * f;
+    } else {
+      child.width *= f;
+      child.height *= f;
+    }
+  }
+}
+
+
+/**
+ * 将预设 / 同步数据应用到目标画布：按目标图片尺寸换算背景边框与前景元素几何，
+ * 换算后落盘到画布数据并触发选中画布重渲染。前景元素为源画布原始值，
+ * 统一乘折算系数 factor，组合子树随顶层元素同系数缩放
+ * @param {Object} settings - 预设数据（idealWidth / idealHeight / background / foreground / sourceInitZoom）
+ * @param {string} path - 目标画布路径
+ */
 const useTemplate = async (settings, path) => {
   const canvas = CanvasManager.getCanvas(path);
-  const {idealWidth, idealHeight, background, foreground} = settings;
+  const {idealWidth, idealHeight, background, foreground, sourceInitZoom} = settings;
   const {height: imageHeight, width: imageWidth} = canvas.metadata;
 
   const {idealWidth: containerWidth, idealHeight: containerHeight} = canvasWorkspaceRef.value;
@@ -689,6 +733,11 @@ const useTemplate = async (settings, path) => {
   const idealZoom = Math.min(idealHeight / imageHeight, idealWidth / imageWidth);
 
   const zoomRatio = initZoom / idealZoom;
+
+  // 几何折算系数：源画布值 → 目标画布值。
+  // 预设元素为源画布原始值，系数 = 源画布初始缩放 × zoomRatio / initZoom；
+  // 早期预设数据已折算 initZoom，sourceInitZoom 缺省按 1 处理
+  const factor = (sourceInitZoom || 1) * zoomRatio / initZoom;
 
   const border = background.elements[0];
   const photo = background.elements[1];
@@ -736,16 +785,24 @@ const useTemplate = async (settings, path) => {
   photo.radius = photoOptions.borderRadius / initZoom
 
   for (let element of foreground.elements) {
-
-    element.width = (element.width * zoomRatio) / initZoom;
-    element.height = (element.height * zoomRatio) / initZoom;
-    element.offsetX = (element.offsetX * zoomRatio) / initZoom;
-    element.offsetY = (element.offsetY * zoomRatio) / initZoom;
+    element.width *= factor;
+    element.height *= factor;
+    element.offsetX *= factor;
+    element.offsetY *= factor;
+    // 组合：重建后实际尺寸由子元素联合包围盒决定，子树按同一系数等比缩放；
+    if (element.type === 'group') {
+      scaleGroupChildren(element.children, factor);
+      // 旋转基准点为组内局部坐标，随子树同步缩放
+      if (element.pivotX != null) {
+        element.pivotX *= factor;
+        element.pivotY *= factor;
+      }
+    }
 
     const {position, centerXRatio, centerYRatio} = element;
 
     if (element.type === 'text') {
-      element.fontSize = (element.fontSize * zoomRatio) / initZoom;
+      element.fontSize *= factor;
       const newText = getText({path, ...element.meta, content: element.text})
       if (initZoom !== idealZoom || element.text !== newText) {
         const text = new Text(newText, {...element});
@@ -1197,10 +1254,10 @@ const handleUndoRedo = (event) => {
   const activeElement = document.activeElement;
 
   const isEditable = activeElement && (
-    activeElement.tagName === 'INPUT' ||
-    activeElement.tagName === 'TEXTAREA' ||
-    activeElement.tagName === 'SELECT' ||
-    activeElement.isContentEditable
+      activeElement.tagName === 'INPUT' ||
+      activeElement.tagName === 'TEXTAREA' ||
+      activeElement.tagName === 'SELECT' ||
+      activeElement.isContentEditable
   );
 
   if (isEditable) return;
@@ -1326,6 +1383,7 @@ onUnmounted(() => {
     color: var(--ui-text-faint);
   }
 }
+
 /* ---------- 浮动缩放胶囊 ---------- */
 .zoom-pill {
   position: absolute;

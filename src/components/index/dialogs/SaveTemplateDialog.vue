@@ -61,7 +61,10 @@ watch(() => templatesStore.saveTemplateDialogVisible, (visible) => {
   }
 })
 
-// 保存当前画布前景元素为模版（相对定位参数按缩放换算）
+/**
+ * 保存当前画布前景元素为模版。
+ * 元素几何保持源画布原始单位，随 settings 携带 sourceInitZoom，换算由 useTemplate 完成
+ */
 const saveTemplates = async () => {
   if (!saveTemplateForm?.value) return
   await saveTemplateForm.value.validate(async (valid, fields) => {
@@ -78,12 +81,12 @@ const saveTemplates = async () => {
         item.position = [horizontal, vertical]
         item.centerXRatio = horizontal === 'left' ? centerX / width : (width - centerX) / width
         item.centerYRatio = vertical === 'top' ? centerY / height : (height - centerY) / height
-        item.offsetX = horizontal === 'left' ? element.x * initZoom : (width - element.x - element.width) * initZoom
-        item.offsetY = vertical === 'top' ? element.y * initZoom : (height - element.y - element.height) * initZoom
-        item.width = element.width * initZoom
-        item.height = element.height * initZoom
+        item.offsetX = horizontal === 'left' ? element.x : (width - element.x - element.width)
+        item.offsetY = vertical === 'top' ? element.y : (height - element.y - element.height)
+        item.width = element.width
+        item.height = element.height
         if (element.type === 'text') {
-          item.fontSize = element.fontSize * initZoom
+          item.fontSize = element.fontSize
         }
         // 模板只认 src：带上 DOM Image 引用会把整张解码位图钉在常驻 store 里直到退出
         delete item.image
@@ -93,8 +96,10 @@ const saveTemplates = async () => {
       const settings = _.cloneDeep({
         idealWidth,
         idealHeight,
+        // 源画布初始缩放，供 useTemplate 换算几何（含组合子树）
+        sourceInitZoom: initZoom,
         background,
-        foreground: {width, height, zoom, elements: items}
+        foreground: {width, height, zoom, elements: items},
       })
       // cloneDeep 对 DOM 对象返回原引用，background 图层里的解码位图需单独摘除
       settings.background.elements?.forEach(element => delete element.image)
