@@ -753,7 +753,7 @@ const handleFilterFonts = (search) => {
 
 const formatSliderTooltip = (val) => {
   return Math.floor(val);
-};;
+};
 
 const requestImportBorderImage = () => {
   window.electronAPI.requestImportBackgroundImage();
@@ -886,7 +886,7 @@ const handleUpdatePhotograph = async () => {
 
 
 // 边框类型切换 / 导入边框图片时重建背景层
-const handleCreateBorders = async (file) => {
+const handleCreateBorders = async (resource) => {
   const currentCanvas = CanvasManager.getCurrentCanvas();
   if (!currentCanvas) return
   const canvasEditor = canvasesStore.getCanvasEditor()
@@ -929,7 +929,6 @@ const handleCreateBorders = async (file) => {
   canvasActions.centerCanvasScrollBar()
 
   if (borderType === 0 && background.type !== 'rect') {
-    delete background.meta.url
     elements[0] = new Rect({
       width: newWidth,
       height: newHeight,
@@ -944,17 +943,17 @@ const handleCreateBorders = async (file) => {
       radius: newBorderRadius,
       blur: newBorderBlur || 15 / initZoom,
       path: target.path,
-      meta: {...background.meta, url: target.meta.url, borderBlur: borderBlur || 15}
+      meta: {...background.meta, borderBlur: borderBlur || 15}
     })
-  } else if (borderType === 2 && file) {
+  } else if (borderType === 2 && resource) {
     elements[0] = await Image.fromURL({
-      src: file.url,
+      src: resource.url,
       width: newWidth,
       height: newHeight,
       radius: 0,
       blur: 0,
-      path: file.path,
-      meta: {...background.meta, url: file.url, borderBlur: 0, borderRadius: 0}
+      path: resource.path,
+      meta: {...background.meta, borderBlur: 0, borderRadius: 0}
     })
   }
 
@@ -1037,8 +1036,8 @@ const handleUpdateBorders = () => {
 
 
 // 边框图片导入监听：导入成功后以该图片重建边框（卸载时解绑，防 HMR 重挂载累积监听器）
-const disposeWatchImportBackgroundImage = window.electronAPI.watchImportBackgroundImage(async (event, data) => {
-  handleCreateBorders(data)
+const disposeWatchImportBackgroundImage = window.electronAPI.watchImportBackgroundImage(async (event, resource) => {
+  handleCreateBorders(resource)
 })
 
 onUnmounted(() => disposeWatchImportBackgroundImage?.())

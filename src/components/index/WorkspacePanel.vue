@@ -412,7 +412,7 @@ const doRenderCanvas = async (canvas, currentVersion) => {
       src: canvas.url,
       selectable: false,
       cacheable: true,
-      meta: {...new PhotographOptions(), url: canvas.url}
+      meta: {...new PhotographOptions()}
     });
 
     // 非最终渲染图片，放弃渲染
@@ -722,8 +722,6 @@ const useTemplate = async (settings, path) => {
     border.blur = borderOptions.borderBlur / initZoom
     if (borderOptions.borderType === 1) {
       border.src = canvas.url
-      borderOptions.url = canvas.url;
-      borderOptions.path = canvas.path;
     }
   }
 
