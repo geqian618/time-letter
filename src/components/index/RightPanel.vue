@@ -2,7 +2,8 @@
   <div class="settings-details">
     <el-aside>
       <el-scrollbar>
-        <el-menu :default-openeds="['1', '5', '2', '3', '4']" ref="menuRef" @open="handleOpenMenu" @close="handleCloseMenu">
+        <el-menu :default-openeds="['1', '5', '2', '3', '4']" ref="menuRef" @open="handleOpenMenu"
+                 @close="handleCloseMenu">
           <el-sub-menu index="1" class="sub-menu sub-menu-metadata" :class="{'is-active': activeSection === '1'}">
             <template #title>
               <span class="title-text" @click="setActiveSection('1')">{{ $t('right.metadata') }}</span>
@@ -11,7 +12,8 @@
             <ul class="options metadata" ref="metadataRef">
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="cameraBrand">{{ $t('right.cameraBrand') }}
+                  <div class="text-resource" draggable="true" type="metadata" expression="cameraBrand">
+                    {{ $t('right.cameraBrand') }}
                   </div>
                 </div>
                 <div class="value">
@@ -20,7 +22,8 @@
               </li>
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="cameraModel">{{ $t('right.cameraModel') }}
+                  <div class="text-resource" draggable="true" type="metadata" expression="cameraModel">
+                    {{ $t('right.cameraModel') }}
                   </div>
                 </div>
                 <div class="value">
@@ -29,7 +32,8 @@
               </li>
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="lensModel">{{ $t('right.lensModel') }}
+                  <div class="text-resource" draggable="true" type="metadata" expression="lensModel">
+                    {{ $t('right.lensModel') }}
                   </div>
                 </div>
                 <div class="value">
@@ -38,7 +42,8 @@
               </li>
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="focalLength">{{ $t('right.focalLength') }}
+                  <div class="text-resource" draggable="true" type="metadata" expression="focalLength">
+                    {{ $t('right.focalLength') }}
                   </div>
                 </div>
                 <div class="value">
@@ -47,7 +52,10 @@
               </li>
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="iso">{{ $t('right.iso') }}</div>
+                  <div class="text-resource" draggable="true" type="metadata" expression="iso">{{
+                      $t('right.iso')
+                    }}
+                  </div>
                 </div>
                 <div class="value">
                   <el-input spellcheck="false" v-model="canvasesStore.metadataOptions.iso" size="small"/>
@@ -55,7 +63,9 @@
               </li>
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="shutter">{{ $t('right.shutter') }}</div>
+                  <div class="text-resource" draggable="true" type="metadata" expression="shutter">
+                    {{ $t('right.shutter') }}
+                  </div>
                 </div>
                 <div class="value">
                   <el-input spellcheck="false" v-model="canvasesStore.metadataOptions.shutter" size="small"/>
@@ -63,7 +73,9 @@
               </li>
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="aperture">{{ $t('right.aperture') }}</div>
+                  <div class="text-resource" draggable="true" type="metadata" expression="aperture">
+                    {{ $t('right.aperture') }}
+                  </div>
                 </div>
                 <div class="value">
                   <el-input spellcheck="false" v-model="canvasesStore.metadataOptions.aperture" size="small"/>
@@ -71,7 +83,8 @@
               </li>
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="shootingTime">{{ $t('right.shootingDate') }}
+                  <div class="text-resource" draggable="true" type="metadata" expression="shootingTime">
+                    {{ $t('right.shootingDate') }}
                   </div>
                 </div>
                 <div class="value">
@@ -80,7 +93,8 @@
               </li>
               <li class="option">
                 <div class="label">
-                  <div class="text-resource" draggable="true" type="metadata" expression="filename">{{ $t('right.filename') }}
+                  <div class="text-resource" draggable="true" type="metadata" expression="filename">
+                    {{ $t('right.filename') }}
                   </div>
                 </div>
                 <div class="value">
@@ -211,7 +225,10 @@
               <li class="option" v-show="canvasesStore.borderOptions.borderType === 2">
                 <div class="label">{{ $t('right.borderImage') }}</div>
                 <div class="value">
-                  <el-button @click="requestImportBorderImage" size="small" type="primary">{{ $t('right.choose') }}</el-button>
+                  <el-button @click="requestImportBorderImage" size="small" type="primary">{{
+                      $t('right.choose')
+                    }}
+                  </el-button>
                 </div>
               </li>
               <li class="option">
@@ -916,8 +933,8 @@ const handleCreateBorders = async (resource) => {
   // 标定与换算除数必须同步更新，否则 100% 下整张画布按旧标定渲染，边框增大会溢出工作区
   const {idealWidth, idealHeight} = canvasesStore.getWorkspace();
   const fitZoom = canvasActions.computeBorderFitZoom(
-    idealWidth, idealHeight, width, height,
-    borderLeft + borderRight, borderTop + borderBottom
+      idealWidth, idealHeight, width, height,
+      borderLeft + borderRight, borderTop + borderBottom
   );
 
   const newBorderLeft = borderLeft / fitZoom
@@ -948,7 +965,7 @@ const handleCreateBorders = async (resource) => {
       width: newWidth,
       height: newHeight,
       radius: newBorderRadius,
-      blur: (newBorderBlur || 15) / fitZoom,
+      blur: newBorderBlur || (15 / fitZoom),
       path: target.path,
       meta: {...background.meta, borderBlur: borderBlur || 15}
     })
@@ -1010,8 +1027,8 @@ const handleUpdateBorders = () => {
   // initZoom 为旧标定，仅用于把旧边框换算回画布单位（前景跟随量的基准）
   const {idealWidth, idealHeight} = canvasesStore.getWorkspace();
   const fitZoom = canvasActions.computeBorderFitZoom(
-    idealWidth, idealHeight, width, height,
-    borderLeft + borderRight, borderTop + borderBottom
+      idealWidth, idealHeight, width, height,
+      borderLeft + borderRight, borderTop + borderBottom
   );
 
   const newBorderLeft = borderLeft / fitZoom
@@ -1303,12 +1320,12 @@ useEventListener(metadataRef, 'dragstart', handleDragStart)
             min-width: 0;
             padding-left: 4px;
 
-          .number-input {
-            /* 缩窄数字框让滑块更宽；右缘贴齐父容器 */
-            flex: 0 0 34px;
-            width: 34px;
-            margin-left: 0;
-            margin-right: 0;
+            .number-input {
+              /* 缩窄数字框让滑块更宽；右缘贴齐父容器 */
+              flex: 0 0 34px;
+              width: 34px;
+              margin-left: 0;
+              margin-right: 0;
               font-size: 10px;
               font-variant-numeric: tabular-nums;
               text-align: right;
