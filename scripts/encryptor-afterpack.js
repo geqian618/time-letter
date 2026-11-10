@@ -101,4 +101,25 @@ module.exports = async function afterPack(context) {
   ].join('\n')
   fs.writeFileSync(path.join(resourcesDir, 'app.yml'), yamlData, 'utf-8')
   console.log('[encryptor-afterpack] app.yml regenerated for final app.asar')
+
+  // 5. 断言「写进去的 renderer.pkg 位置」== 「运行时 loader 要读的位置」
+  //    2.0.1 的 macOS 包之所以启动即 ENOENT，就是因为写端在 Contents/Resources/renderer.pkg，
+  //    读端却按 Contents/Resources/resources/renderer.pkg 拼接，而没有任何构建步骤校验两者一致。
+  //    这里按 electron/runtime/renderer-loader.js 的解析规则（应用根目录 + renderer.output）复算一次，
+  //    缺失就让打包失败，避免同类问题再次流入用户手里。
+  const pkgRelative = (cfg.renderer && cfg.renderer.output) || 'resources/renderer.pkg'
+  // 与 renderer-loader.js getPackagedAppRootDir() / resolveRendererPkgPath() 保持一致：
+  //   macOS 以 <App>.app/Contents 为根；Windows / Linux 以可执行文件所在目录为根。
+  // 另保留 resourcesDir 直挂候选，避免大小写敏感卷上 `resources` 与 `Resources` 不是同一目录。
+  const appRootDir = isMac ? appOutDir : context.appOutDir
+  const pkgCandidates = path.isAbsolute(pkgRelative)
+    ? [pkgRelative]
+    : [path.join(appRootDir, pkgRelative), path.join(resourcesDir, path.basename(pkgRelative))]
+  const actualPkgPath = pkgCandidates.find((p) => fs.existsSync(p))
+  if (!actualPkgPath) {
+    throw new Error(
+      `[encryptor-afterpack] renderer.pkg 校验失败：运行时将按以下候选读取，但均不存在：\n  ${pkgCandidates.join('\n  ')}`
+    )
+  }
+  console.log(`[encryptor-afterpack] renderer.pkg 校验通过：${actualPkgPath}`)
 }

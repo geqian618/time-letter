@@ -120,7 +120,12 @@ function registerPrivilegedSchemes() {
 function registerRendererProtocol() {
 
   if (resourcesMap) return
-  const pkgPath = path.join(getPackagedAppRootDir(), PKG_RELATIVE_PATH)
+  const pkgPath = resolveRendererPkgPath()
+  if (!fs.existsSync(pkgPath)) {
+    // 走到这里说明打包产物缺少 renderer.pkg（或 output 配置与应用根目录约定不一致），
+    // 提前给出可定位的日志，避免只抛一句无上下文的 ENOENT。
+    console.error(`[renderer-loader] 未找到渲染进程包：${pkgPath}（平台：${process.platform}）`)
+  }
   pendingEntries = loadPendingEntries(pkgPath)
   resourcesMap = new Map()
 
@@ -153,17 +158,41 @@ function registerRendererProtocol() {
 }
 
 /**
- * 打包布局的平台差异：
- *   Windows / Linux —— 可执行文件同级 resources/ 目录（electron-builder 默认布局）；
- *   macOS           —— <App>.app/Contents/Resources（process.resourcesPath）。
- * renderer.pkg 由 encryptor 写入 <App>.app/Contents/Resources/resources/ 下，
- * app.asar / app.yml 各平台均位于 process.resourcesPath。
+ * 「应用根目录」：encryptor 的 renderer.output（默认 'resources/renderer.pkg'）
+ * 始终相对于它拼接。各平台布局：
+ *   Windows / Linux —— 可执行文件所在目录（resources/ 是它的子目录）；
+ *   macOS           —— <App>.app/Contents（resources/ 是它的子目录，即 Resource* 目录）。
+ *
+ * 注意 macOS 必须以 Contents 为根，不能用 process.resourcesPath：
+ * resourcesPath 已经是 <App>.app/Contents/Resources，再拼 'resources/renderer.pkg'
+ * 会得到 Contents/Resources/resources/renderer.pkg（不存在的多套一层目录），
+ * 这正是 2.0.1 在 macOS 上启动即 ENOENT 的原因。
  */
 function getPackagedAppRootDir() {
   if (process.platform === 'darwin') {
-    return process.resourcesPath
+    const resourcesPath = process.resourcesPath ||
+      path.join(path.dirname(process.execPath), '..', 'Resources')
+    return path.dirname(resourcesPath)
   }
   return path.dirname(process.execPath)
+}
+
+/**
+ * 解析 renderer.pkg 的绝对路径：优先按「应用根目录 + renderer.output」拼接
+ * （与 encryptor 写入位置严格一致），并回退到 <resourcesPath>/renderer.pkg。
+ * macOS 的 APFS 默认大小写不敏感，写入时的 'resources' 与系统目录 'Resources'
+ * 是同一个目录，两种候选都能命中；任一候选存在即返回，便于跨平台/自定义 output。
+ */
+function resolveRendererPkgPath() {
+  if (path.isAbsolute(PKG_RELATIVE_PATH)) return PKG_RELATIVE_PATH
+  const candidates = [
+    path.join(getPackagedAppRootDir(), PKG_RELATIVE_PATH),
+    path.join(process.resourcesPath || getPackagedAppRootDir(), path.basename(PKG_RELATIVE_PATH))
+  ]
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate
+  }
+  return candidates[0]
 }
 
 /**
