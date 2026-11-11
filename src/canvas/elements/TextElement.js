@@ -18,14 +18,6 @@ export class Text extends Element {
     // 模块级复用的离屏画布（按需扩容，避免每次绘制重新分配）
     static #supersampleCanvas = null;
 
-    #width = 0;
-
-    #height = 0;
-
-    #chars = []
-
-    #lines = []
-
     constructor(text, options = {}) {
         super(options);
         // 元素类型
@@ -43,12 +35,17 @@ export class Text extends Element {
 
         this.lineHeight = options.lineHeight || 1;
 
+        // 测量派生字段（由绘制/布局回写，普通属性保证对 Proxy 观察层可写，导出由 toJSON 排除）
+        this.width = 0;
+        this.height = 0;
+        this.chars = [];
+        this.lines = [];
+
         // 字体属性
         this.fontSize = options.fontSize || 16;
         this.fontStyle = options.fontStyle || 'normal';
         this.fontFamily = options.fontFamily || 'Microsoft YaHei';
         this.fontWeight = options.fontWeight || 400;
-
 
         // 颜色
         this.fontColor = options.fontColor || 'black';
@@ -66,46 +63,10 @@ export class Text extends Element {
     }
 
 
-    // 外部可访问
-    get width() {
-        return this.#width;
-    }
-
-    // 外部可访问
-    get height() {
-        return this.#height;
-    }
-
-
-    set width(value) {
-        this.#width = value;
-    }
-
-
-    set height(value) {
-        this.#height = value;
-    }
-
-
-    // 外部可访问
-    get chars() {
-        return this.#chars;
-    }
-
-
-    // 外部可访问
-    set chars(value) {
-        this.#chars = value;
-    }
-
-    // 外部可访问的行布局
-    get lines() {
-        return this.#lines;
-    }
-
-    // 外部可访问的行布局
-    set lines(value) {
-        this.#lines = value;
+    // 测量派生字段在基类排除清单上追加，维持导出格式
+    toJSON() {
+        const {width, height, chars, lines, ...rest} = super.toJSON();
+        return rest;
     }
 
     splitTextLines(text = this.text) {

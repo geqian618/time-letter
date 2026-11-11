@@ -3,7 +3,7 @@
  *
  * 模块划分（本文件只保留编辑器编排，职责单一的可复用逻辑下沉到子模块）：
  * - core/history-manager.js  撤销 / 恢复栈纪律（策略注入 capture / restore）
- * - core/reactive-observer.js 响应式数据监听（观察者）
+ * - core/state-observer.js     状态数据监听（观察者）
  * - core/event-emitter.js    事件总线（观察者）
  * - core/snap-engine.js      磁性吸附纯几何计算
  * - core/align-strategies.js 对齐 / 分布策略
@@ -18,7 +18,7 @@ import {Group} from './elements/GroupElement.js';
 import {createElement} from './elements/element-factory.js';
 import {EventEmitter} from './core/event-emitter.js';
 import {HistoryManager} from './core/history-manager.js';
-import {ReactiveObserver} from './core/reactive-observer.js';
+import {createStateObserver} from './core/state-observer.js';
 import {SnapEngine} from './core/snap-engine.js';
 import {alignToReference, distributeByEdges, distributeByCenters} from './core/align-strategies.js';
 import * as textCaret from './core/text-caret.js';
@@ -218,13 +218,14 @@ class CanvasEditor {
             this.eventScope.addEventListener('mousemove', this.handleMouseMove);
             this.eventScope.addEventListener('dblclick', this.handleDoubleClick);
             this.createHiddenInput();
-            // 设置响应式
-            this.elements = new ReactiveObserver([], (value) => {
-                const {target, property} = value;
+            // 设置响应式（保留句柄，供 destroy() 断开监听）
+            this._stateObserver = createStateObserver([], (value) => {
+                // state-observer 的数组变异动作统一在 action（method 事件即方法名），属性名在 property
+                const property = value.type === 'method' ? value.action : value.property;
                 if (['chars', 'ascent', 'descent', 'centerX', 'centerY', 'status'].includes(property)) return;
                 // 跳过 order 变更内部排序触发的冗余回调
                 if (property === 'sort' && this._sorting) return;
-                this.events.emit(CanvasEditor.UPDATE_OBJECT, target);
+                this.events.emit(CanvasEditor.UPDATE_OBJECT, value.target);
                 if (property === 'order') {
                     this._sorting = true;
                     this.elements.sort((a, b) => a.order - b.order);
@@ -239,7 +240,9 @@ class CanvasEditor {
                 }
             }, {
                 deep: true
-            })
+            });
+
+            this.elements = this._stateObserver.state;
 
             // 以初始空状态为基线快照，首个变更可通过 undo 回退到空画布
             this.history.push();
@@ -2143,6 +2146,8 @@ class CanvasEditor {
             clearInterval(this.cursorBlinkInterval);
             // 清除历史栈与防抖定时器
             this.history.destroy();
+            // 断开 elements 的状态监听，丢弃销毁时仍排在微任务里的事件
+            this._stateObserver && this._stateObserver.disconnect();
 
             this.events.clear();
         }
@@ -2429,4 +2434,4 @@ class CanvasEditor {
 
 
 // 兼容导出：保持既有 `from '@/canvas/CanvasEditor'` 导入不变
-export {CanvasEditor, Text, EditableText, Image, Rect, LazyImage, Group, ReactiveObserver};
+export {CanvasEditor, Text, EditableText, Image, Rect, LazyImage, Group};

@@ -26,11 +26,6 @@ export class Element {
     // Node 端 SHADOW_BLUR 偏差比例：Node 环境构造时阴影模糊按此系数衰减，使导出渲染的阴影观感与屏幕一致
     static NODE_SHADOW_BLUR_RATIO = 0.7
 
-    // 中心点坐标（所有形状通用；私有访问器，不可枚举，不进入 JSON 导出）
-    #centerX = 0;
-
-    #centerY = 0;
-
     constructor(options) {
 
         // Node 环境构造时阴影模糊按 NODE_SHADOW_BLUR_RATIO 衰减（原 worker 导出预处理逻辑
@@ -45,6 +40,11 @@ export class Element {
         this.x = options.x || 0;
 
         this.y = options.y || 0;
+
+        // 中心点（渲染派生值，普通属性保证对 Proxy 观察层可写，导出由 toJSON 排除）
+        this.centerX = 0;
+
+        this.centerY = 0;
 
         // 旋转角度（所有形状通用）
         this.angle = options.angle || 0;
@@ -72,20 +72,10 @@ export class Element {
 
     }
 
-    set centerX(value) {
-        this.#centerX = value;
-    }
-
-    get centerX() {
-        return this.#centerX;
-    }
-
-    set centerY(value) {
-        this.#centerY = value;
-    }
-
-    get centerY() {
-        return this.#centerY;
+    // 派生字段不进 JSON 导出（原私有访问器不可枚举行为的等价实现）
+    toJSON() {
+        const {centerX, centerY, ...rest} = this;
+        return rest;
     }
 
     static getTransformScale(ctx) {
@@ -104,8 +94,8 @@ export class Element {
 
     /**
      * 克隆元素：生成属性相同、id 不同的独立副本（Alt + 拖拽拷贝用）
-     * 必须经构造函数创建实例：私有字段（#centerX / Text 的 #width/#chars 等）
-     * 只会在构造时安装，Object.create 出的空壳调用 setter 会因私有品牌检查抛 TypeError
+     * 必须经构造函数创建实例（如 LazyImage 的 image 引用需按构造语义重置），
+     * 实例自身的可枚举属性整体作为 options 传入，构造后逐键覆盖默认值
      * @returns {Element}
      */
     clone() {
@@ -136,15 +126,6 @@ export class Element {
         // 覆盖构造函数写入的默认值（含 LazyImage 被重置为 null 的 image 引用）
         for (const key of Object.keys(this)) {
             copy[key] = deepCopy(this[key]);
-        }
-        // 访问器背后的私有字段不随自身属性拷贝，显式赋值走 setter
-        copy.centerX = this.centerX;
-        copy.centerY = this.centerY;
-        if (this.type === 'text') {
-            copy.width = this.width;
-            copy.height = this.height;
-            copy.chars = this.chars;
-            copy.lines = this.lines;
         }
         // 新 id：hasElement / removeElement 均按 id 匹配，复用 id 会误伤原元素
         copy.id = Date.now() + Math.random();
