@@ -696,25 +696,36 @@ const synchronizeTemplate = () => {
 
 
 /**
- * 组合子树按系数等比缩放，与编辑器 scaleAt(f, 0, 0) 语义一致：
+ * 组合子树刷新到目标画布：按系数等比缩放（与编辑器 scaleAt(f, 0, 0) 语义一致）并重新求值动态文本。
  * 子元素坐标同步缩放；文本只缩字号与字间距（宽高由绘制时按字号重新测量回写）；
+ * 并按目标照片重新求值动态文本（元数据 / 脚本等，不随组合失效）——内容变化时
+ * 重测宽高：联合包围盒与后续渲染依赖子元素尺寸，未选中画布无渲染回写机会；
  * 图片缩放走 scale 字段；矩形缩宽高；嵌套组合递归，旋转基准点同步缩放。
  * 子元素为 cloneDeep 克隆，保留原型但无私有字段（如 Text 的 #width），
  * 读原型访问器会抛 TypeError，只读写自有数据属性
  * @param {Array} children - 组合子元素（同步数据形态的普通对象）
  * @param {number} f - 等比缩放系数
+ * @param {string} path - 目标画布路径（动态文本按其照片元数据求值）
  */
-const scaleGroupChildren = (children, f) => {
+const refreshGroupChildren = (children, f, path) => {
   for (const child of children || []) {
     child.x *= f;
     child.y *= f;
     if (child.type === 'group') {
       child.pivotX *= f;
       child.pivotY *= f;
-      scaleGroupChildren(child.children, f);
+      refreshGroupChildren(child.children, f, path);
     } else if (child.type === 'text') {
       child.fontSize *= f;
       if (child.spacing) child.spacing *= f;
+      const newText = getText({path, ...child.meta, content: child.text});
+      if (child.text !== newText) {
+        const text = new Text(newText, {...child});
+        const measureText = text.measureText(canvasEditor.ctx);
+        child.width = measureText.width;
+        child.height = measureText.height;
+        child.text = newText;
+      }
     } else if (child.type === 'image') {
       child.scale = (child.scale || 1) * f;
     } else {
@@ -867,10 +878,8 @@ const useTemplate = async (settings, path) => {
     element.height *= geometryScale;
     element.offsetX *= geometryScale;
     element.offsetY *= geometryScale;
-    // 组合：重建后实际尺寸由子元素联合包围盒决定，子树按同一系数等比缩放；
-    // 早期预设无 sourceInitZoom，子树不换算
-    if (element.type === 'group' && sourceInitZoom) {
-      scaleGroupChildren(element.children, geometryScale);
+    if (element.type === 'group') {
+      refreshGroupChildren(element.children, geometryScale, path);
       // 旋转基准点为组内局部坐标，随子树同步缩放
       if (element.pivotX != null) {
         element.pivotX *= geometryScale;
