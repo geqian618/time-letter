@@ -320,6 +320,10 @@ Add them via "Extensions → Font Library → Import Fonts", or drop font files 
 
 ### v2.0.2 (2026-11 · Current release)
 
+> **⚠️ Upgrade notice**: this release reworks the canvas core and main-process structure substantially. If you have an earlier version installed, **uninstall it and install fresh rather than installing over it**, otherwise stale bytecode or caches may prevent the app from starting.
+>
+> During uninstall, **clear** the "Also delete the data folder" checkbox on the "Data Folder" step (it is checked by default). Leaving it checked removes your template presets, text library, fonts, image library and settings along with the app. Keep it unchecked, then reinstall to the same directory to carry your data over.
+
 **🆕 Added**
 
 - Group & ungroup elements (`Ctrl/⌘ + G` to group, `Ctrl/⌘ + Shift + G` to ungroup), transformed as a whole, with nested groups entered layer by layer
