@@ -10,7 +10,7 @@
 
 [![Gitee Star](https://gitee.com/geqian618/time-letter/badge/star.svg?theme=dark)](https://gitee.com/geqian618/time-letter/stargazers)
 [![GitHub Star](https://img.shields.io/github/stars/geqian618/time-letter?style=flat&logo=github&label=Star)](https://github.com/geqian618/time-letter/stargazers)
-[![Version](https://img.shields.io/badge/version-v2.0.1-blue)](https://github.com/geqian618/time-letter/releases)
+[![Version](https://img.shields.io/badge/version-v2.0.2-blue)](https://github.com/geqian618/time-letter/releases)
 [![Build](https://github.com/geqian618/time-letter/actions/workflows/build.yml/badge.svg)](https://github.com/geqian618/time-letter/actions/workflows/build.yml)
 [![Electron](https://img.shields.io/badge/Electron-22.3-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![Vue](https://img.shields.io/badge/Vue-3.x-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
@@ -318,7 +318,7 @@ Add them via "Extensions → Font Library → Import Fonts", or drop font files 
 
 > See the full commit history on [GitHub](https://github.com/geqian618/time-letter/commits) / [Gitee](https://gitee.com/geqian618/time-letter/commits).
 
-### v2.0.2 (2026-11 · In development, unreleased)
+### v2.0.2 (2026-11 · Current release)
 
 **🆕 Added**
 
@@ -338,7 +338,7 @@ Add them via "Extensions → Font Library → Import Fonts", or drop font files 
 - Adding elements inside a group
 - Incorrect tooltip display for canvas widgets
 
-### v2.0.1 (2026-10 · Current release)
+### v2.0.1 (2026-10)
 
 **🆕 Added**
 
