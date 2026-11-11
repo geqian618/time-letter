@@ -320,9 +320,9 @@ Add them via "Extensions → Font Library → Import Fonts", or drop font files 
 
 ### v2.0.2 (2026-11 · Current release)
 
-> **⚠️ Upgrade notice**: this release reworks the canvas core and main-process structure substantially. If you have an earlier version installed, **uninstall it and install fresh rather than installing over it**, otherwise stale bytecode or caches may prevent the app from starting.
+> **⚠️ Upgrade notice**: this release changes how elements and templates are stored (image references are now saved differently), so data left behind by earlier versions is **incompatible**. If you have an earlier version installed, **uninstall it and install fresh rather than installing over it** — an overwrite keeps the old-format data and may cause template loading failures or startup errors.
 >
-> During uninstall, **clear** the "Also delete the data folder" checkbox on the "Data Folder" step (it is checked by default). Leaving it checked removes your template presets, text library, fonts, image library and settings along with the app. Keep it unchecked, then reinstall to the same directory to carry your data over.
+> Old data is not migrated automatically, so leave the "Also delete the data folder" checkbox on the "Data Folder" step checked during uninstall (it is checked by default) and let the new version start from clean data. If a template holds text you want to keep, export it from the old version first: text and layout survive, but image references must be re-assigned in the new version.
 
 **🆕 Added**
 
