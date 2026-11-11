@@ -219,24 +219,27 @@ class CanvasEditor {
             this.eventScope.addEventListener('dblclick', this.handleDoubleClick);
             this.createHiddenInput();
             // 设置响应式（保留句柄，供 destroy() 断开监听）
-            this._stateObserver = createStateObserver([], (value) => {
-                // state-observer 的数组变异动作统一在 action（method 事件即方法名），属性名在 property
-                const property = value.type === 'method' ? value.action : value.property;
-                if (['chars', 'ascent', 'descent', 'centerX', 'centerY', 'status'].includes(property)) return;
-                // 跳过 order 变更内部排序触发的冗余回调
-                if (property === 'sort' && this._sorting) return;
-                this.events.emit(CanvasEditor.UPDATE_OBJECT, value.target);
-                if (property === 'order') {
-                    this._sorting = true;
-                    this.elements.sort((a, b) => a.order - b.order);
-                    this._sorting = false;
-                }
-                // 历史记录：结构变更（增删清排序）立即入栈，属性变更防抖合并为一条；
-                // 渲染派生属性（如首次绘制测量回写的 width/height/lines）不算编辑，跳过
-                if (HistoryManager.ARRAY_METHODS.includes(property)) {
-                    this.history.push();
-                } else if (!HistoryManager.DERIVED_PROPS.includes(property)) {
-                    this.history.schedule();
+            this._stateObserver = createStateObserver([], (events) => {
+                // 回调统一收到事件数组（sync / microtask 一致），逐条处理
+                for (const value of events) {
+                    // state-observer 的数组变异动作统一在 action（method 事件即方法名），属性名在 property
+                    const property = value.type === 'method' ? value.action : value.property;
+                    if (['chars', 'ascent', 'descent', 'centerX', 'centerY', 'status'].includes(property)) continue;
+                    // 跳过 order 变更内部排序触发的冗余回调
+                    if (property === 'sort' && this._sorting) continue;
+                    this.events.emit(CanvasEditor.UPDATE_OBJECT, value.target);
+                    if (property === 'order') {
+                        this._sorting = true;
+                        this.elements.sort((a, b) => a.order - b.order);
+                        this._sorting = false;
+                    }
+                    // 历史记录：结构变更（增删清排序）立即入栈，属性变更防抖合并为一条；
+                    // 渲染派生属性（如首次绘制测量回写的 width/height/lines）不算编辑，跳过
+                    if (HistoryManager.ARRAY_METHODS.includes(property)) {
+                        this.history.push();
+                    } else if (!HistoryManager.DERIVED_PROPS.includes(property)) {
+                        this.history.schedule();
+                    }
                 }
             }, {
                 deep: true
