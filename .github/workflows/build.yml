@@ -96,6 +96,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # extract-changelog.js 用 git describe 找上一个 tag 拼 compare 链接，需要完整 tag 历史
+          fetch-depth: 0
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -106,11 +109,16 @@ jobs:
       - name: Merge macOS update metadata
         run: node scripts/merge-mac-latest.js artifacts
 
+      # 变更条目统一维护在 README 的更新日志里，这里转成 Release 正文；
+      # GitHub 自动 notes 依赖 PR，本项目直接推 master，抓不到内容
+      - name: Generate release notes from README
+        run: node scripts/extract-changelog.js "${{ github.ref_name }}" release-body.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: 时光信笺 ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
           draft: false
-          generate_release_notes: true
+          body_path: release-body.md
           files: artifacts/**/*
