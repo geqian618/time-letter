@@ -74,8 +74,8 @@
 - **Three border types**: general (solid color), blur (extended blurred photo edges), and custom image — each side independently controllable in width and color
 - **Photo properties**: rounded corners, shadow (color / offset / blur), opacity, scale, etc.
 - **Professional canvas experience**: layer management, free dragging, property anchor, focal zoom, adjustable move step, canvas alignment guides & auto-snapping, with undo & redo — interactions consistent with common drawing software
-- **Direct mouse transforms**: drag any of the 8 handles to scale (four corners / four edge midpoints), drag just outside a corner to rotate — the rotation cursor follows the element's angle in real time
-- **Group & ungroup**: combine a multi-selection into a group hit-tested by its union bounding box, transform it (move / scale / rotate / snap) as a whole, and dissolve it anytime; nested groups can be entered layer by layer
+- **Direct mouse transforms**: drag the 8 handles to scale, drag just outside a corner to rotate
+- **Group & ungroup**: one-click grouping of a multi-selection, transformed as a whole, with nesting and dissolving
 - **Batch processing**: multiple canvases edited in parallel; the bottom preview panel supports landscape / portrait filtering, marquee multi-select and quick paging
 
 ### 💾 Templates & Libraries
@@ -322,9 +322,8 @@ Add them via "Extensions → Font Library → Import Fonts", or drop font files 
 
 **🆕 Added**
 
-- Group & ungroup elements (`Ctrl/⌘ + G` to group, `Ctrl/⌘ + Shift + G` to ungroup); groups are hit-tested by their union bounding box, so the empty space between children still drags the whole group
-- Direct mouse scaling & rotation: 8 scale handles (four corners / four edge midpoints) plus corner rotation hot zones, with a rotation cursor that follows the element's angle
-- Nested groups can be entered and edited layer by layer
+- Group & ungroup elements (`Ctrl/⌘ + G` to group, `Ctrl/⌘ + Shift + G` to ungroup), transformed as a whole, with nested groups entered layer by layer
+- Direct mouse scaling & rotation: 8 scale handles, plus rotation by dragging just outside a corner
 
 **⚡ Improved**
 
