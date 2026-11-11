@@ -74,6 +74,8 @@
 - **Three border types**: general (solid color), blur (extended blurred photo edges), and custom image — each side independently controllable in width and color
 - **Photo properties**: rounded corners, shadow (color / offset / blur), opacity, scale, etc.
 - **Professional canvas experience**: layer management, free dragging, property anchor, focal zoom, adjustable move step, canvas alignment guides & auto-snapping, with undo & redo — interactions consistent with common drawing software
+- **Direct mouse transforms**: drag any of the 8 handles to scale (four corners / four edge midpoints), drag just outside a corner to rotate — the rotation cursor follows the element's angle in real time
+- **Group & ungroup**: combine a multi-selection into a group hit-tested by its union bounding box, transform it (move / scale / rotate / snap) as a whole, and dissolve it anytime; nested groups can be entered layer by layer
 - **Batch processing**: multiple canvases edited in parallel; the bottom preview panel supports landscape / portrait filtering, marquee multi-select and quick paging
 
 ### 💾 Templates & Libraries
@@ -124,6 +126,7 @@ Video demos and tutorials on Bilibili:
 | Internationalization | vue-i18n (Chinese / English)                                                                |
 | Desktop | Electron 22 + electron-builder                                                              |
 | Image processing | sharp (main-process export) + @napi-rs/canvas (Node-side canvas rendering) + Worker threads |
+| Canvas engine | A single `src/canvas` source shared by the renderer and the export thread, bundled to CJS at build time for the Worker |
 | Metadata | exiftool-vendored / exif (EXIF reading & write-back)                                        |
 | File watching | chokidar (hot reload for image / font libraries)                                            |
 
@@ -134,7 +137,7 @@ time-letter
 ├── electron/                     # Electron main process
 │   ├── main.js                   # Entry point (windows / menus / tray / IPC)
 │   ├── preload/                  # Preload scripts (contextBridge IPC channels)
-│   ├── canvas/                   # Node-side canvas rendering
+│   ├── canvas/                   # Node-side canvas rendering (NodeCanvasEditor.js generated from src/canvas)
 │   ├── components/               # Native components: app menu / context menu / tray / file watchers / shortcuts / secondary window
 │   ├── thread/                   # Worker threads: image export processing
 │   ├── locales/                  # Main-process i18n (native menus, etc.)
@@ -142,11 +145,19 @@ time-letter
 │   └── resources/                # Built-in assets: app icon, brand logos, bundled fonts
 ├── scripts/                      # Build scripts
 │   ├── bundle-main.js            # esbuild bundling for main process / worker / preload
+│   ├── build-canvas-lib.js       # Bundle src/canvas to CJS for the export thread
+│   ├── compile.js                # bytenode compilation of main / worker / preload bytecode
+│   ├── check-build-env.js        # Pre-build environment check (Windows integrity level)
+│   ├── encryptor-afterpack.js    # Post-pack source protection & asar handling
+│   ├── merge-mac-latest.js       # Merge update metadata of both macOS architectures
 │   └── nsis/                     # NSIS installer script fragment
 ├── src/                          # Renderer process (Vue 3)
 │   ├── views/                    # Pages (main workspace / image manager extension)
 │   ├── components/               # Panel components & dialogs
-│   ├── canvas/                   # Canvas editor (renderer side)
+│   ├── canvas/                   # Canvas editor (shared by renderer and export)
+│   │   ├── CanvasEditor.js       # Editor class: interaction, transforms, rendering entry
+│   │   ├── core/                 # Alignment strategies, snap engine, history, state observer, text caret
+│   │   └── elements/             # Element models: text / image / rect / group + factory
 │   ├── object/                   # Domain objects: CanvasManager, Configuration, etc.
 │   ├── stores/                   # Pinia stores (canvases / templates / text resources / settings)
 │   ├── composables/              # Composables
@@ -224,6 +235,8 @@ npm run electron:build:mac
 | `Ctrl/⌘ + R` | Reset canvas |
 | `Ctrl/⌘ + Z` | Undo |
 | `Ctrl/⌘ + Shift + Z` | Redo |
+| `Ctrl/⌘ + G` | Group elements |
+| `Ctrl/⌘ + Shift + G` | Ungroup elements |
 
 > Except for undo / redo, all shortcuts can be customized in "Preferences → Shortcuts".
 
@@ -305,7 +318,28 @@ Add them via "Extensions → Font Library → Import Fonts", or drop font files 
 
 > See the full commit history on [GitHub](https://github.com/geqian618/time-letter/commits) / [Gitee](https://gitee.com/geqian618/time-letter/commits).
 
-### v2.0.1 (2026-10 · Current)
+### v2.0.2 (2026-11 · In development, unreleased)
+
+**🆕 Added**
+
+- Group & ungroup elements (`Ctrl/⌘ + G` to group, `Ctrl/⌘ + Shift + G` to ungroup); groups are hit-tested by their union bounding box, so the empty space between children still drags the whole group
+- Direct mouse scaling & rotation: 8 scale handles (four corners / four edge midpoints) plus corner rotation hot zones, with a rotation cursor that follows the element's angle
+- Nested groups can be entered and edited layer by layer
+
+**⚡ Improved**
+
+- Modular canvas core: `CanvasEditor` split into `core` (alignment / snapping / history / state observer / text caret) and `elements` (text / image / rect / group)
+- Renderer and export thread share one canvas editor source, so exports match the on-canvas preview
+- Canvas state notifications reworked into a fine-grained observer, cutting unrelated repaints
+
+**🐛 Fixed**
+
+- macOS build failing to start after packaging
+- Parent group rendered semi-transparent when entering a nested group
+- Adding elements inside a group
+- Incorrect tooltip display for canvas widgets
+
+### v2.0.1 (2026-10 · Current release)
 
 **🆕 Added**
 

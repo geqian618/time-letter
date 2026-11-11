@@ -74,6 +74,8 @@
 - **三种边框类型**：纯色（常规）、模糊（照片边缘延伸虚化）、自定义图片，每一边的宽度与颜色均可独立控制
 - **照片属性**：圆角、阴影（颜色 / 偏移 / 模糊）、透明度、缩放等
 - **专业画布体验**：图层管理、自由拖拽、属性锚点、焦点缩放、移动步长可调，画布对齐参考线与自动吸附，支持撤销与恢复，交互与常见绘图软件保持一致
+- **鼠标直接变换**：选中元素后拖拽 8 个手柄缩放（四角 / 四边中点），拖拽角部外侧热区旋转，旋转光标随元素角度实时变化
+- **组合与解组**：多选后一键成组，组合按联合包围盒命中，可整体移动 / 缩放 / 旋转 / 吸附，也可随时解散还原；支持多层嵌套组合逐层进入编辑
 - **批量处理**：多个画布并行编辑；底部预览面板支持横排 / 竖排筛选、框选多选与快速翻页
 
 ### 💾 模板与资源库
@@ -132,6 +134,7 @@
 | 国际化   | vue-i18n（中文 / 英文）                                     |
 | 桌面端   | Electron 22 + electron-builder                        |
 | 图像处理  | sharp（主进程导出）+ @napi-rs/canvas（Node 侧画布渲染）+ Worker 多线程 |
+| 画布内核  | 渲染进程与导出线程共用 `src/canvas` 单份源码，构建期打包为 CJS 供 Worker 复用 |
 | 元数据   | exiftool-vendored / exif（EXIF 读取与回写）                  |
 | 文件监听  | chokidar（图片库 / 字体库热加载）                                |
 
@@ -144,7 +147,7 @@ time-letter
 ├── electron/                     # Electron 主进程
 │   ├── main.js                   # 入口文件（窗口 / 菜单 / 托盘 / IPC）
 │   ├── preload/                  # 预加载脚本（contextBridge IPC 通道）
-│   ├── canvas/                   # Node 侧画布渲染
+│   ├── canvas/                   # Node 侧画布渲染（NodeCanvasEditor.js 由 src/canvas 自动生成）
 │   ├── components/               # 原生组件：应用菜单 / 右键菜单 / 托盘 / 文件监听 / 快捷键 / 副窗口
 │   ├── thread/                   # Worker 线程：图片导出处理
 │   ├── locales/                  # 主进程国际化（原生菜单等）
@@ -152,11 +155,19 @@ time-letter
 │   └── resources/                # 内置资源：应用图标、品牌 LOGO、内置字体
 ├── scripts/                      # 构建脚本
 │   ├── bundle-main.js            # esbuild 打包主进程 / worker / preload
+│   ├── build-canvas-lib.js       # 将 src/canvas 打包为 CJS，供导出线程复用
+│   ├── compile.js                # bytenode 编译主进程 / worker / preload 字节码
+│   ├── check-build-env.js        # 打包前环境检查（Windows 目录完整性标签）
+│   ├── encryptor-afterpack.js    # 打包后源码保护与 asar 处理
+│   ├── merge-mac-latest.js       # 合并 macOS 双架构的更新元数据
 │   └── nsis/                     # NSIS 安装脚本片段
 ├── src/                          # 渲染进程（Vue 3）
 │   ├── views/                    # 页面（主工作区 / 图片管理器扩展）
 │   ├── components/               # 面板组件与弹窗
-│   ├── canvas/                   # 画布编辑器（渲染进程侧）
+│   ├── canvas/                   # 画布编辑器（渲染进程与导出共用）
+│   │   ├── CanvasEditor.js       # 编辑器主类：交互、变换、渲染入口
+│   │   ├── core/                 # 对齐策略、吸附引擎、历史记录、状态观察、文本光标
+│   │   └── elements/             # 元素模型：文本 / 图片 / 矩形 / 组合与工厂
 │   ├── object/                   # 领域对象：CanvasManager、Configuration 等
 │   ├── stores/                   # Pinia 状态（画布 / 模板 / 文本资源 / 设置）
 │   ├── composables/              # 组合式函数
@@ -240,6 +251,8 @@ npm run electron:build:mac
 | `Ctrl/⌘ + R`       | 重置画布   |
 | `Ctrl/⌘ + Z`       | 撤销     |
 | `Ctrl/⌘ + Shift + Z` | 恢复   |
+| `Ctrl/⌘ + G`       | 创建组合   |
+| `Ctrl/⌘ + Shift + G` | 取消组合 |
 
 > 除撤销 / 恢复外，其余快捷键均可在"偏好设置 → 快捷键"中自定义。
 
@@ -337,7 +350,28 @@ Windows（NSIS 安装版 + 便携版 zip）、macOS（dmg + zip，Intel / Apple 
 
 > 完整记录见 <a href="https://github.com/geqian618/time-letter/commits" target="_blank">GitHub 提交历史</a> / <a href="https://gitee.com/geqian618/time-letter/commits" target="_blank">Gitee 提交历史</a>。
 
-### v2.0.1（2026-10 · 当前版本）
+### v2.0.2（2026-11 · 开发中，未发布）
+
+**🆕 新增**
+
+- 元素组合与解组（`Ctrl/⌘ + G` 创建、`Ctrl/⌘ + Shift + G` 取消），组合按联合包围盒命中，子元素间空白处也可整体拖动
+- 鼠标直接缩放与旋转：8 个缩放手柄（四角 / 四边中点）+ 角部旋转热区，旋转光标随元素角度实时变化
+- 多层嵌套组合支持逐层进入编辑
+
+**⚡ 优化**
+
+- 画布内核模块化重构：`CanvasEditor` 拆分为 `core`（对齐 / 吸附 / 历史 / 状态观察 / 文本光标）与 `elements`（文本 / 图片 / 矩形 / 组合）两层
+- 渲染进程与导出线程共用同一份画布编辑器源码，导出结果与画布预览一致
+- 画布状态变更通知改为细粒度观察器，减少无关重绘
+
+**🐛 修复**
+
+- macOS 版本打包后启动异常
+- 进入多层嵌套组合时，父级组合元素显示半透明
+- 组合内部添加元素异常
+- 画布小组件提示错误显示
+
+### v2.0.1（2026-10 · 当前发布版）
 
 **🆕 新增**
 
