@@ -74,7 +74,8 @@ function createObserver(callback, {deep = true, callbackMode = 'sync'} = {}) {
     const notify = (event) => {
         if (!active) return;
         if (callbackMode === 'sync') {
-            callback(event);
+            // 与 microtask 模式保持同一签名：回调恒收到事件数组
+            callback([event]);
             return;
         }
         pendingEvents.push(event);
@@ -437,7 +438,7 @@ function createObserver(callback, {deep = true, callbackMode = 'sync'} = {}) {
  *
  * @template T
  * @param {T} source Object, class instance, Array, Map, Set, or primitive.
- * @param {(eventOrEvents: object|object[]) => void} callback Mutation callback.
+ * @param {(events: object[]) => void} callback Mutation callback（sync / microtask 均收到事件数组）
  * @param {{ deep?: boolean, callbackMode?: 'sync'|'microtask' }} [options]
      * @returns {{ state: T extends object ? T : { value: T }, flush: () => void, disconnect: () => void }}
  */
