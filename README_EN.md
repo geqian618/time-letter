@@ -320,9 +320,7 @@ Add them via "Extensions → Font Library → Import Fonts", or drop font files 
 
 ### v2.0.2 (2026-11 · Current release)
 
-> **⚠️ Upgrade notice**: this release changes how elements and templates are stored (image references are now saved differently), so data left behind by earlier versions is **incompatible**. If you have an earlier version installed, **uninstall it and install fresh rather than installing over it** — an overwrite keeps the old-format data and may cause template loading failures or startup errors.
->
-> Old data is not migrated automatically, so leave the "Also delete the data folder" checkbox on the "Data Folder" step checked during uninstall (it is checked by default) and let the new version start from clean data. If a template holds text you want to keep, export it from the old version first: text and layout survive, but image references must be re-assigned in the new version.
+> **⚠️ Upgrade notice**: this release changes how elements and templates are stored. After installing the new version, **some previously saved templates may stop working** (their images can no longer be read); reassign the images or save the templates again.
 
 **🆕 Added**
 
