@@ -48,9 +48,13 @@ function createObserver(callback, {deep = true, callbackMode = 'sync'} = {}) {
     const pendingEvents = [];
     let active = true;
     let flushScheduled = false;
-    let mutationDepth = 0;
-    const pendingPropertySets = new WeakSet();
-    const pendingArrayLengths = new WeakSet();
+    // 正在执行自身变异方法（push/sort/splice 等）的原始数组：只屏蔽该数组自身的下标与
+    // length 写入（一次调用折叠为一个 method 事件）。不能做成全局深度计数器，
+    // 否则 sort 比较器里对元素对象的写入也会被一并吞掉
+    const mutatingArrays = new WeakSet();
+    // 记录「正由 set trap 处理」的 (target, property)：普通数据属性的写入会被引擎转交给
+    // defineProperty trap，两边必须协调，否则同一次写入会重复上报或互相甩锅
+    const pendingSets = new WeakMap();
 
     const flush = () => {
         flushScheduled = false;
@@ -81,7 +85,7 @@ function createObserver(callback, {deep = true, callbackMode = 'sync'} = {}) {
     // - type        变异层面（按变异的表达方式区分，互斥；trap 是拦截机制，不参与分类）：
     //               'property' 语法操作：= 赋值 / delete 运算符 / Object.defineProperty，单属性粒度
     //               'method'   具名方法调用：push/splice/set/add 等，一次调用内部的 N 次属性
-    //                          写入被 mutationDepth 折叠为单个语义事件
+    //                          写入被折叠为单个语义事件
     //               'value'    原始值整体替换
     // - action      具体动作：
     //                 property → 'set' 普通赋值 | 'define' Object.defineProperty 重定义 | 'delete' 删除
@@ -113,9 +117,36 @@ function createObserver(callback, {deep = true, callbackMode = 'sync'} = {}) {
         ...details,
     });
 
-    const notifyProperty = (target, action, property, oldValue, newValue) => {
-        if (mutationDepth || Object.is(oldValue, newValue)) return;
+    const notifyProperty = (target, action, property, oldValue, newValue, allowEqual = false) => {
+        // 本数组正在执行自己的变异方法：其下标 / length 写入折叠进随后的 method 事件。
+        // 不用全局计数，否则 sort 比较器里对其他对象的写入会被一并吞掉
+        if (mutatingArrays.has(target)) return;
+        if (!allowEqual && Object.is(oldValue, newValue)) return;
         notify(event({type: 'property', action, target: proxyCache.get(target) ?? target, property, oldValue, newValue}));
+    };
+
+    // 标记「该属性正由 set trap 写入」，返回的释放函数必须放在 finally 里调用：
+    // setter 抛异常时若不释放，标记会永久残留并把后续 defineProperty 误判成 set
+    const markPendingSet = (target, property) => {
+        let properties = pendingSets.get(target);
+        if (!properties) {
+            properties = new Set();
+            pendingSets.set(target, properties);
+        }
+        properties.add(property);
+        return () => {
+            properties.delete(property);
+            if (properties.size === 0) pendingSets.delete(target);
+        };
+    };
+
+    // 命中说明本次 defineProperty 由 set trap 转交而来，事件已由 set trap 上报，此处不得重复
+    const consumePendingSet = (target, property) => {
+        const properties = pendingSets.get(target);
+        if (!properties || !properties.has(property)) return false;
+        properties.delete(property);
+        if (properties.size === 0) pendingSets.delete(target);
+        return true;
     };
 
     const wrap = (value, force = false) => {
@@ -147,48 +178,46 @@ function createObserver(callback, {deep = true, callbackMode = 'sync'} = {}) {
         },
         set(target, property, value, receiver) {
             const oldValue = Reflect.get(target, property, target);
-            const hadProperty = hasOwn(target, property);
             const rawValue = toRaw(value);
-            // Ordinary proxy writes delegate to defineProperty; report that one event as set.
-            const succeedsThroughDefine = receiver !== target &&
-                !(property === 'length' && Array.isArray(target));
-            if (succeedsThroughDefine) {
-                pendingPropertySets.add(target);
-                if (property === 'length' && Array.isArray(target)) pendingArrayLengths.add(target);
+            const release = markPendingSet(target, property);
+            let succeeded;
+            try {
+                succeeded = Reflect.set(target, property, rawValue, receiver);
+            } finally {
+                release();
             }
-            const succeeded = Reflect.set(target, property, rawValue, receiver);
-            if (succeedsThroughDefine) pendingPropertySets.delete(target);
-            if (succeeded && !succeedsThroughDefine) {
-                notifyProperty(
-                    target,
-                    'set',
-                    property,
-                    hadProperty ? oldValue : undefined,
-                    rawValue,
-                );
-            }
+            // 普通数据属性的写入会先被 defineProperty trap 消费标记（那边不上报），
+            // 访问器属性的写入不经过 defineProperty —— 两种情况都统一由这里上报，
+            // 保证一次赋值恰好一个 set 事件（含数组 length、含无 value 字段的访问器）
+            if (succeeded) notifyProperty(target, 'set', property, oldValue, rawValue);
             return succeeded;
         },
         defineProperty(target, property, descriptor) {
-            const oldDescriptor = Reflect.getOwnPropertyDescriptor(target, property);
-            const oldValue = oldDescriptor?.value;
+            // 访问器 descriptor 没有 value 字段，旧值只能经 getter 读（旧值可能抛错，降级为 undefined）
+            let oldValue;
+            try {
+                oldValue = Reflect.get(target, property, target);
+            } catch {
+                oldValue = undefined;
+            }
             const succeeded = Reflect.defineProperty(target, property, {
                 ...descriptor,
                 ...(hasOwn(descriptor, 'value') ? {value: toRaw(descriptor.value)} : {}),
             });
-            if (succeeded && hasOwn(descriptor, 'value')) {
-                const action = pendingPropertySets.delete(target) ? 'set' : 'define';
-                if (property !== 'length' || pendingArrayLengths.delete(target)) {
-                    notifyProperty(target, action, property, oldValue, toRaw(descriptor.value));
-                }
-            }
-            return succeeded;
+            if (!succeeded) return false;
+            // 由 set trap 转交的写入：已上报，此处放行以免重复
+            if (consumePendingSet(target, property)) return true;
+            // 直接 Object.defineProperty（含定义访问器）属于结构重定义，一律上报。
+            // 访问器没有 value 字段，新旧值都是 undefined，必须跳过相等去重，否则整个事件被吞掉
+            const newValue = hasOwn(descriptor, 'value') ? toRaw(descriptor.value) : undefined;
+            notifyProperty(target, 'define', property, oldValue, newValue, !hasOwn(descriptor, 'value'));
+            return true;
         },
         deleteProperty(target, property) {
             if (!hasOwn(target, property)) return Reflect.deleteProperty(target, property);
             const oldValue = Reflect.get(target, property, target);
             const succeeded = Reflect.deleteProperty(target, property);
-            if (succeeded && !mutationDepth) {
+            if (succeeded && !mutatingArrays.has(target)) {
                 notify(event({
                     type: 'property',
                     action: 'delete',
@@ -215,12 +244,13 @@ function createObserver(callback, {deep = true, callbackMode = 'sync'} = {}) {
                     return (...args) => {
                         const oldValue = Array.from(array, toRaw);
                         const rawArgs = args.map(toRaw);
-                        mutationDepth += 1;
+                        // 只屏蔽本数组自身的结构写入；sort 比较器里对其他对象的写入必须正常上报
+                        mutatingArrays.add(array);
                         let returnValue;
                         try {
                             returnValue = Array.prototype[property].apply(receiver, rawArgs);
                         } finally {
-                            mutationDepth -= 1;
+                            mutatingArrays.delete(array);
                         }
                         const newValue = Array.from(array, toRaw);
                         const changed = oldValue.length !== newValue.length ||
@@ -233,7 +263,11 @@ function createObserver(callback, {deep = true, callbackMode = 'sync'} = {}) {
                                 args: rawArgs,
                                 oldValue,
                                 newValue,
-                                returnValue,
+                                // splice 返回新数组：raw 化后与 oldValue 身份一致；
+                                // sort / reverse 返回的就是 receiver 本身，保持代理身份
+                                returnValue: Array.isArray(returnValue) && returnValue !== receiver
+                                    ? Array.from(returnValue, toRaw)
+                                    : returnValue,
                             }));
                         }
                         return returnValue;
