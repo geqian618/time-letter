@@ -17,6 +17,14 @@ function wrapIterator(iterator, transform) {
             if (!result.done) result.value = transform(result.value);
             return result;
         },
+        // 必须转发 return / throw，否则 for-of 提前 break 时原生迭代器的关闭逻辑丢失
+        return(value) {
+            return typeof iterator.return === 'function' ? iterator.return(value) : {done: true, value};
+        },
+        throw(error) {
+            if (typeof iterator.throw === 'function') return iterator.throw(error);
+            throw error;
+        },
         [Symbol.iterator]() {
             return this;
         },
@@ -235,13 +243,18 @@ function createObserver(callback, {deep = true, callbackMode = 'sync'} = {}) {
     }
 
     function createArrayProxy(target) {
+        // 每个代理缓存一份变异方法：热路径上反复取 state.push 不再每次分配新闭包，
+        // 同时保证 state.push === state.push
+        const mutators = new Map();
         return new Proxy(target, {
             ...baseHandlers,
             get(array, property, receiver) {
                 if (property === RAW) return array;
                 if (property === OBSERVER) return true;
                 if (ARRAY_MUTATORS.has(property)) {
-                    return (...args) => {
+                    let mutator = mutators.get(property);
+                    if (mutator) return mutator;
+                    mutator = (...args) => {
                         const oldValue = Array.from(array, toRaw);
                         const rawArgs = args.map(toRaw);
                         // 只屏蔽本数组自身的结构写入；sort 比较器里对其他对象的写入必须正常上报
@@ -263,15 +276,21 @@ function createObserver(callback, {deep = true, callbackMode = 'sync'} = {}) {
                                 args: rawArgs,
                                 oldValue,
                                 newValue,
-                                // splice 返回新数组：raw 化后与 oldValue 身份一致；
-                                // sort / reverse 返回的就是 receiver 本身，保持代理身份
-                                returnValue: Array.isArray(returnValue) && returnValue !== receiver
-                                    ? Array.from(returnValue, toRaw)
-                                    : returnValue,
+                                // 返回值可能带出元素（splice 的数组、pop/shift 的单个元素）：
+                                // 一律 raw 化，与 oldValue 保持同一身份，避免同一事件里两种引用并存。
+                                // sort / reverse 返回 receiver 本身，必须在 raw 化之前单独放行，
+                                // 否则 toRaw 会顺着 RAW 符号把整个数组也拆成原始对象
+                                returnValue: returnValue === receiver
+                                    ? returnValue
+                                    : (Array.isArray(returnValue)
+                                        ? Array.from(returnValue, toRaw)
+                                        : toRaw(returnValue)),
                             }));
                         }
                         return returnValue;
                     };
+                    mutators.set(property, mutator);
+                    return mutator;
                 }
                 return wrap(Reflect.get(array, property, receiver));
             },
@@ -280,6 +299,9 @@ function createObserver(callback, {deep = true, callbackMode = 'sync'} = {}) {
 
     function createMapProxy(target) {
         return new Proxy(target, {
+            // 补齐 set / defineProperty / deleteProperty：Map 的真实数据在内部槽位里不走属性 trap，
+            // 但挂在实例上的自定义属性写入同样应当可见
+            ...baseHandlers,
             get(map, property) {
                 if (property === RAW) return map;
                 if (property === OBSERVER) return true;
@@ -348,6 +370,8 @@ function createObserver(callback, {deep = true, callbackMode = 'sync'} = {}) {
 
     function createSetProxy(target) {
         return new Proxy(target, {
+            // 同 Map：补齐自定义属性的写入 / 删除通知
+            ...baseHandlers,
             get(set, property) {
                 if (property === RAW) return set;
                 if (property === OBSERVER) return true;
@@ -433,18 +457,20 @@ export function createStateObserver(source, callback, options = {}) {
             if (typeof source === 'function') {
                 throw new TypeError('source type is not supported');
             }
-            let currentValue = source;
+            let currentValue = toRaw(source);
             const container = {};
             Object.defineProperty(container, 'value', {
                 enumerable: true,
-                get: () => currentValue,
+                // 读时包装：.value 装进对象后仍与对象代理一致可观察（wrap 内部按 raw 去重，身份稳定）
+                get: () => observer.wrap(currentValue),
                 set: (newValue) => {
+                    const rawValue = toRaw(newValue);
                     const oldValue = currentValue;
-                    if (Object.is(oldValue, newValue)) return;
-                    currentValue = newValue;
+                    if (Object.is(oldValue, rawValue)) return;
+                    currentValue = rawValue;
                     observer.notify(observer.event({
                         type: 'value', action: 'replace', target: container,
-                        property: 'value', oldValue, newValue,
+                        property: 'value', oldValue, newValue: rawValue,
                     }));
                 },
             });
