@@ -188,6 +188,12 @@ function createObserver(callback, {deep = true, callbackMode = 'sync'} = {}) {
         set(target, property, value, receiver) {
             const oldValue = Reflect.get(target, property, target);
             const rawValue = toRaw(value);
+            // 越界下标写入会让 length 隐式增长，且这次增长不经过任何 trap：
+            // 写入前记下旧长度，成功后补发一条 length 事件
+            const growsLength = Array.isArray(target) && property !== 'length'
+                && typeof property === 'string' && /^(0|[1-9]\d*)$/.test(property)
+                && Number(property) >= target.length;
+            const oldLength = growsLength ? target.length : 0;
             const release = markPendingSet(target, property);
             let succeeded;
             try {
@@ -198,8 +204,14 @@ function createObserver(callback, {deep = true, callbackMode = 'sync'} = {}) {
             // 普通数据属性的写入会先被 defineProperty trap 消费标记（那边不上报），
             // 访问器属性的写入不经过 defineProperty —— 两种情况都统一由这里上报，
             // 保证一次赋值恰好一个 set 事件（含数组 length、含无 value 字段的访问器）
-            if (succeeded) notifyProperty(target, 'set', property, oldValue, rawValue);
-            return succeeded;
+            if (!succeeded) return false;
+            // 变异方法内部产生的 length 变化归属于随后的 method 事件，不能在此重复上报
+            if (mutatingArrays.has(target)) return true;
+            notifyProperty(target, 'set', property, oldValue, rawValue);
+            if (growsLength && target.length !== oldLength) {
+                notifyProperty(target, 'set', 'length', oldLength, target.length);
+            }
+            return true;
         },
         defineProperty(target, property, descriptor) {
             // 访问器 descriptor 没有 value 字段，旧值只能经 getter 读（旧值可能抛错，降级为 undefined）
@@ -435,6 +447,18 @@ function createObserver(callback, {deep = true, callbackMode = 'sync'} = {}) {
 
 /**
  * Observe mutations without dependency tracking or rendering.
+ *
+ * 注意事项（易踩坑的行为，均为有意为之，非缺陷）：
+ * - 写入拒绝会抛错：trap 严格遵循规范，向只读属性、不可扩展对象或已冻结对象写入时，
+ *   会像原生对象一样在严格模式下抛 TypeError（ES 模块即为严格模式），且不产生事件。
+ *   这是正确行为 —— 若改成静默吞掉，调用方会误以为写入成功，导致 UI 与实际状态不一致。
+ *   需要「失败可感知但不抛错」时，请调用方自行检查 Reflect.set 的返回值。
+ * - 数组 length 缩小（如 arr.length = 1）只上报长度变化，被裁掉的元素无法取得：
+ *   ArraySetLength 在原始 target 上直接删除元素，不经过任何 trap。
+ *   需要拿到被删元素时请改用 splice。
+ * - 越界下标写入（如 arr[3] = x）会额外补发一条 length 事件：
+ *   该写入让 length 隐式增长，若不上报，只监听 length 的消费方会漏掉这次变长。
+ *   因此这类写入会产生两条事件，而非一条。
  *
  * @template T
  * @param {T} source Object, class instance, Array, Map, Set, or primitive.
