@@ -1032,6 +1032,18 @@ const handleCanvasScale = () => {
     if (canvas.completed) {
       const newZoom = defaultCanvasScale * canvas.initZoom;
       canvas.zoom = newZoom;
+      // 切换画布时缩放从序列化的 foreground/background 恢复（resizeCanvas），不同步它的话
+      // 改动只对当前正在显示的照片生效，切到其他照片又回到旧缩放
+      for (const key of ['foreground', 'background']) {
+        const data = canvas[key];
+        if (typeof data === 'string') {
+          const parsed = JSON.parse(data);
+          parsed.zoom = newZoom;
+          canvas[key] = JSON.stringify(parsed);
+        } else if (data && typeof data === 'object') {
+          data.zoom = newZoom;
+        }
+      }
       if (canvas.path === CanvasManager.getSelectedPath()) {
         canvasesStore.getCanvasEditor().setZoom(newZoom);
         canvasesStore.getBackgroundCanvasEditor().setZoom(newZoom);
