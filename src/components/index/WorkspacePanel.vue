@@ -427,7 +427,8 @@ const doRenderCanvas = async (canvas, currentVersion) => {
 
     const {idealWidth, idealHeight} = canvasWorkspaceRef.value;
     const initZoom = Math.min(idealHeight / height, idealWidth / width);
-    const scale = initZoom * settingsStore.projectSettings.others.defaultCanvasScale;
+    // 全局缩放下拉的临时缩放比优先于偏好设置的全局默认值（会话级，见 canvasesStore.tempGlobalCanvasScale）
+    const scale = initZoom * (canvasesStore.tempGlobalCanvasScale ?? settingsStore.projectSettings.others.defaultGlobalCanvasScale);
 
     canvasEditor.clearCanvas();
     backgroundCanvasEditor.clearCanvas();
@@ -831,8 +832,8 @@ const useTemplate = async (settings, path) => {
     borderOptions.borderTop + borderOptions.borderBottom
   );
 
-  // 初始显示缩放 = 标定 × 默认画布比例（仅画布缩放未被用户改动时采用）
-  const defaultZoom = initZoom * settingsStore.projectSettings.others.defaultCanvasScale;
+  // 初始显示缩放 = 标定 × 缩放比例（仅画布缩放未被用户改动时采用；全局下拉的临时缩放比优先于全局默认值）
+  const defaultZoom = initZoom * (canvasesStore.tempGlobalCanvasScale ?? settingsStore.projectSettings.others.defaultGlobalCanvasScale);
 
   // 适配后的屏幕像素 → 画布单位：除数 = 本画布标定（与面板换算同口径），照片贴着边框内沿定位用
   const borderLeft = borderOptions.borderLeft / initZoom

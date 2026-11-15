@@ -32,6 +32,10 @@ export const useCanvasesStore = defineStore('canvases', () => {
 
     const deleteTipsDialogVisible = ref(false)
 
+    // 工具栏缩放下拉的会话级全局临时缩放比（相对 initZoom，对所有照片生效）：仅本次运行生效、不持久化，
+    // 未渲染照片首次渲染时用它替代偏好设置里的全局默认缩放（null = 未设置，走默认值）
+    const tempGlobalCanvasScale = ref(null)
+
 
     // ---------- 共享资源注册（非响应式：DOM 引用与画布编辑器实例，仅存取） ----------
 
@@ -119,6 +123,7 @@ export const useCanvasesStore = defineStore('canvases', () => {
         downloadProgressVisible,
         downloadProgressPercentage,
         deleteTipsDialogVisible,
+        tempGlobalCanvasScale,
         uploadVisible,
         availableCanvases,
         thumbnailVisible,

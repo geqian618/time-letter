@@ -124,7 +124,7 @@ export default {
         dataDirError: 'Operation failed, please retry',
         canvasGroup: 'Canvas',
         moveStep: 'Move Step',
-        defaultScale: 'Default Zoom',
+        defaultScale: 'Global Default Zoom',
         focalZoom: 'Cursor Zoom',
         resetConfirm: {
             title: 'Restore Default Settings',

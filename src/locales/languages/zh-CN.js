@@ -124,7 +124,7 @@ export default {
         dataDirError: '操作失败，请重试',
         canvasGroup: '画布',
         moveStep: '移动步长',
-        defaultScale: '默认缩放',
+        defaultScale: '全局默认缩放',
         focalZoom: '焦点缩放',
         resetConfirm: {
             title: '恢复默认设置',

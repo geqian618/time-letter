@@ -545,7 +545,7 @@
                   <div class="row-control w-slider">
                     <el-slider
                         @change="handleCanvasScale"
-                        v-model="settingsStore.projectSettings.others.defaultCanvasScale"
+                        v-model="settingsStore.projectSettings.others.defaultGlobalCanvasScale"
                         :min="0.05"
                         :max="1"
                         :step="0.05"
@@ -1024,13 +1024,13 @@ const handleFocalLength = (type) => {
   }
 }
 
-// 默认缩放变化后按比例更新所有已完成画布的缩放
+// 全局默认缩放变化后按比例更新所有已完成画布的缩放
 const handleCanvasScale = () => {
-  const defaultCanvasScale = settingsStore.projectSettings.others.defaultCanvasScale;
+  const defaultGlobalCanvasScale = settingsStore.projectSettings.others.defaultGlobalCanvasScale;
   const canvases = CanvasManager.getCanvases();
   canvases.forEach(canvas => {
     if (canvas.completed) {
-      const newZoom = defaultCanvasScale * canvas.initZoom;
+      const newZoom = defaultGlobalCanvasScale * canvas.initZoom;
       canvas.zoom = newZoom;
       // 切换画布时缩放从序列化的 foreground/background 恢复（resizeCanvas），不同步它的话
       // 改动只对当前正在显示的照片生效，切到其他照片又回到旧缩放

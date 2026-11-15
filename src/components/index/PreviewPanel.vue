@@ -774,14 +774,32 @@ const zoomRatioLabel = computed(() => {
 });
 
 const handleZoom = (val) => {
-  const canvas = CanvasManager.getCurrentCanvas();
   const editor = canvasesStore.getCanvasEditor();
-  const bgEditor = canvasesStore.getBackgroundCanvasEditor();
-  if (!canvas || !canvas.initZoom || !editor) return;
-  const newZoom = canvas.initZoom * (val / 100);
-  canvas.zoom = newZoom;
-  editor?.setZoom(newZoom);
-  bgEditor?.setZoom(newZoom);
+  if (!editor) return;
+  // 会话级全局临时缩放比：对所有照片生效且不持久化；未渲染照片首次渲染用它替代全局默认缩放
+  const ratio = val / 100;
+  canvasesStore.tempGlobalCanvasScale = ratio;
+  for (const canvas of CanvasManager.getCanvases().values()) {
+    if (!canvas.completed || !canvas.initZoom) continue;
+    const newZoom = canvas.initZoom * ratio;
+    canvas.zoom = newZoom;
+    // 同步进序列化数据：切换照片时缩放从此恢复，否则改动只落在当前照片（见 SettingsDialog.handleCanvasScale）
+    for (const key of ['foreground', 'background']) {
+      const data = canvas[key];
+      if (typeof data === 'string') {
+        const parsed = JSON.parse(data);
+        parsed.zoom = newZoom;
+        canvas[key] = JSON.stringify(parsed);
+      } else if (data && typeof data === 'object') {
+        data.zoom = newZoom;
+      }
+    }
+  }
+  const canvas = CanvasManager.getCurrentCanvas();
+  if (canvas?.completed) {
+    editor.setZoom(canvas.zoom);
+    canvasesStore.getBackgroundCanvasEditor()?.setZoom(canvas.zoom);
+  }
   canvasActions.reflowWorkspace?.();
   // 同步右下角浮动缩放胶囊的百分比显示
   canvasActions.refreshZoom?.();

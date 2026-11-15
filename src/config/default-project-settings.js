@@ -66,7 +66,7 @@ const defaultProjectSettings = {
     others: {
         optionAnchorPoint: true,
         movingStepSize: 1,
-        defaultCanvasScale: 0.75,
+        defaultGlobalCanvasScale: 0.75,
         deleteTipVisible: true,
         autoCenterOnToggle: true,
         focalZoom: false
