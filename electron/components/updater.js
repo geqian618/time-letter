@@ -22,7 +22,7 @@ const setup = () => {
     const instance = updater()
     instance.autoDownload = true
     instance.autoInstallOnAppQuit = true
-    instance.on('download-progress', (info) => broadcast('update:progress', Math.round(info.percent)))
+    instance.on('download-progress', (info) => broadcast('update:progress', {percent: Math.round(info.percent), speed: info.bytesPerSecond || 0}))
     instance.on('update-downloaded', (info) => broadcast('update:downloaded', {version: info?.version || ''}))
     instance.on('error', (error) => broadcast('update:error', {message: String(error?.message || error)}))
 }

@@ -3,6 +3,7 @@
     <el-dialog v-model="visible" :title="$t('toolbar.checkUpdate')" width="400" align-center
                :close-on-click-modal="false">
       <div class="update" :class="status">{{ message }}</div>
+      <el-progress v-if="status === 'downloading'" class="update-progress" :percentage="percent"/>
       <template #footer>
         <div class="update-footer">
           <template v-if="status === 'available'">
@@ -39,6 +40,7 @@ const {t} = useI18n()
 const visible = ref(false)
 const status = ref('checking')
 const percent = ref(0)
+const speed = ref(0)
 const current = ref('')
 const latest = ref('')
 const url = ref('')
@@ -50,7 +52,7 @@ const message = computed(() => {
     case 'latest':
       return t('update.latest', {version: current.value})
     case 'downloading':
-      return t('update.downloading', {percent: percent.value})
+      return t('update.downloading', {speed: formatSpeed(speed.value)})
     case 'downloaded':
       return t('update.downloaded')
     case 'available':
@@ -80,10 +82,16 @@ const fallbackCheck = async () => {
   status.value = result.hasUpdate ? 'available' : 'latest'
 }
 
+// 下载速度格式化为 KB/s 或 MB/s
+const formatSpeed = (bytes) => bytes >= 1024 * 1024
+  ? `${(bytes / 1024 / 1024).toFixed(1)} MB/s`
+  : `${Math.round(bytes / 1024)} KB/s`
+
 const check = async () => {
   visible.value = true
   status.value = 'checking'
   percent.value = 0
+  speed.value = 0
   const result = await window.electronAPI.checkAppUpdate()
   if (!result || result.error) {
     await fallbackCheck()
@@ -106,8 +114,9 @@ const download = () => {
 
 const restart = () => window.electronAPI.installAppUpdate()
 
-const disposeProgress = window.electronAPI.watchUpdateProgress((event, value) => {
-  percent.value = value
+const disposeProgress = window.electronAPI.watchUpdateProgress((event, {percent: p, speed: s}) => {
+  percent.value = p
+  speed.value = s
   if (status.value === 'checking') status.value = 'downloading'
 })
 const disposeDownloaded = window.electronAPI.watchUpdateDownloaded((event, info) => {
@@ -143,6 +152,14 @@ defineExpose({check})
   font-size: 13px;
   line-height: 1.6;
   color: var(--app-regular-text);
+}
+
+.update-progress {
+  margin-top: 8px;
+
+  :deep(.el-progress__text) {
+    min-width: 40px;
+  }
 }
 
 .update-footer {

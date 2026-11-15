@@ -21,6 +21,7 @@ declare module 'vue' {
     ElDropdown: typeof import('element-plus/es')['ElDropdown']
     ElDropdownItem: typeof import('element-plus/es')['ElDropdownItem']
     ElDropdownMenu: typeof import('element-plus/es')['ElDropdownMenu']
+    ElEmpty: typeof import('element-plus/es')['ElEmpty']
     ElForm: typeof import('element-plus/es')['ElForm']
     ElFormItem: typeof import('element-plus/es')['ElFormItem']
     ElInput: typeof import('element-plus/es')['ElInput']
@@ -57,5 +58,8 @@ declare module 'vue' {
     TopToolbar: typeof import('./src/components/index/TopToolbar.vue')['default']
     UpdateDialog: typeof import('./src/components/index/dialogs/UpdateDialog.vue')['default']
     WorkspacePanel: typeof import('./src/components/index/WorkspacePanel.vue')['default']
+  }
+  export interface GlobalDirectives {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }

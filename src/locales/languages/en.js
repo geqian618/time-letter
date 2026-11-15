@@ -434,7 +434,7 @@ export default {
         latest: 'You are on the latest version (v{version})',
         available: 'Version v{version} is available. You are on v{current}.',
         unreleased: 'No published release is available yet. Check the Releases page.',
-        downloading: 'Downloading update {percent}%',
+        downloading: 'Downloading update ({speed})',
         downloaded: 'Update downloaded. Restart to finish installing.',
         download: 'Download',
         restart: 'Restart Now',

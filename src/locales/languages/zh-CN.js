@@ -434,7 +434,7 @@ export default {
         latest: '当前已是最新版本（v{version}）',
         available: '发现新版本 v{version}，当前版本 v{current}。',
         unreleased: '暂未发布可下载的版本，请前往 Releases 页面查看。',
-        downloading: '正在下载更新 {percent}%',
+        downloading: '正在下载更新（{speed}）',
         downloaded: '更新已下载，重启后完成安装',
         download: '前往下载',
         restart: '立即重启',

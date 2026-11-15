@@ -120,6 +120,7 @@
             </button>
           </el-tooltip>
         </div>
+        <span class="align-divider"/>
         <div class="counter">{{
             $t('preview.counter', {
               selected: canvasesStore.selectedPreviewList.size,
@@ -913,14 +914,24 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
       display: flex;
       align-items: center;
       gap: 2px;
+    }
 
-      .align-divider {
-        flex: 0 0 auto;
-        width: 1px;
-        height: 20px;
-        margin: 0 7px;
-        background: var(--ui-border);
-      }
+    /* 分隔线：组内（对齐/分布族之间）与组外（按钮组与计数之间）同款，高度与图标一致 */
+    .align-divider {
+      flex: 0 0 auto;
+      width: 1px;
+      height: 16px;
+      background: var(--ui-border);
+    }
+
+    .align-group .align-divider {
+      /* 组内 gap 2px + 7px = 9px 间距 */
+      margin: 0 7px;
+    }
+
+    > .align-divider {
+      /* 组外 gap 14px：不补偿，两侧净间距 14px（组内 9px） */
+      margin: 0;
     }
 
     .counter {
