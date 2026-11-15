@@ -3,6 +3,51 @@
  */
 import {Element, getTransformScale} from './Element.js';
 
+/**
+ * 惰性 ½ 链 mipmap 金字塔（按源位图 WeakMap 缓存，命中后零开销，位图回收即随 GC 释放）：
+ * 源图远大于目标设备像素时 drawImage 单次重采样会稀疏采样导致锯齿/摩尔纹
+ * （Safari 忽略 imageSmoothingQuality 时尤其明显），先取最近的 ½ 链层级
+ * （最终重采样比 ≤ 2x，落入 'high' 滤波的甜点区）再画到目标，效果等价 GPU mipmap；
+ * 层级画布从上一级继续减半生成（每步一次高质量重采样）。实例间可安全共享：
+ * 同一位图的层级内容恒等且构建后只读，clone / 快照恢复无需处理
+ */
+const mipCache = new WeakMap();
+
+function mipmapSource(image, destW, destH) {
+    let w = image.naturalWidth;
+    let h = image.naturalHeight;
+    let level = 0;
+    // 逐级减半到再减就小于目标为止；8 级 / 最小约 128 封顶，避免为极端小目标生成碎层级
+    while (w / 2 >= destW && h / 2 >= destH && level < 8 && w > 128 && h > 128) {
+        w /= 2;
+        h /= 2;
+        level++;
+    }
+    if (!level) return image;
+    let mips = mipCache.get(image);
+    if (!mips) mipCache.set(image, (mips = new Map()));
+    let mip = mips.get(level);
+    if (!mip) {
+        // 递归取上一级（自动补齐缺失的中间层级），从其继续减半
+        const prev = level === 1 ? image : mipmapSource(image, w * 2, h * 2);
+        const width = Math.max(1, Math.round(w));
+        const height = Math.max(1, Math.round(h));
+        if (typeof document !== 'undefined') {
+            mip = document.createElement('canvas');
+            mip.width = width;
+            mip.height = height;
+        } else {
+            mip = require('@napi-rs/canvas').createCanvas(width, height);
+        }
+        const ctx = mip.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(prev, 0, 0, width, height);
+        mips.set(level, mip);
+    }
+    return mip;
+}
+
 
 export class Image extends Element {
 
@@ -181,7 +226,8 @@ export class Image extends Element {
             // 设置图像平滑质量
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(this.image, this.x, this.y, width, height);
+            // 大倍率缩小先降采样到最近 mipmap 层级，最终重采样比 ≤ 2x 才无走样
+            ctx.drawImage(mipmapSource(this.image, width * transformScale, height * transformScale), this.x, this.y, width, height);
         }
         ctx.restore();
     }
@@ -403,7 +449,8 @@ export class LazyImage extends Element {
             // 设置图像平滑质量
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(this.image, this.x, this.y, width, height);
+            // 大倍率缩小先降采样到最近 mipmap 层级，最终重采样比 ≤ 2x 才无走样
+            ctx.drawImage(mipmapSource(this.image, width * transformScale, height * transformScale), this.x, this.y, width, height);
         }
 
         ctx.restore();
