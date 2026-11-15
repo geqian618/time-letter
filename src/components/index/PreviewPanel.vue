@@ -299,7 +299,8 @@ const appMetricsText = computed(() => {
     t('preview.statusMemory', {value: padValue(memory, 8)}),
     // 槽位 6 字符：按 100.0% 上限预留（覆盖到 999.9%，常规范围内位数变化不位移）
     t('preview.statusCpu', {value: padValue(`${metrics.cpuPercent.toFixed(1)}%`, 6)}),
-    t('preview.statusFps', {value: padValue(fps.value > 0 ? fps.value : '--', 3)}),
+    // 槽位 4 字符：3 位帧率占满槽位，多留 1 字符间隔才与内存 / CPU 段间距一致
+    t('preview.statusFps', {value: padValue(fps.value > 0 ? fps.value : '--', 4)}),
   ]
   if (metrics.gpuAccelerated != null) {
     items.push(t(metrics.gpuAccelerated ? 'preview.statusGpuOn' : 'preview.statusGpuOff'))
