@@ -42,7 +42,7 @@ if (typeof global.gc !== 'function' && process.env.LEAK_NO_GC !== '1') {
 const getCachedCanvasEditor = () => {
     if (!cachedCanvasEditor) {
         const canvas = new createCanvas(0, 0)
-        cachedCanvasEditor = new CanvasEditor(canvas, {strictIntegerDimensions: true});
+        cachedCanvasEditor = new CanvasEditor(canvas);
     }
     return cachedCanvasEditor;
 }

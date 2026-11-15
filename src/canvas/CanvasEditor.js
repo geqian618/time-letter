@@ -133,9 +133,6 @@ class CanvasEditor {
         // 默认不开启图片缓存
         this.enableCache = options.enableCache || false;
 
-        // canvas 宽高是否必须为整数值
-        this.strictIntegerDimensions = options.strictIntegerDimensions || false;
-
         this.width = options.width || this.canvas.width || 0;
 
         this.height = options.height || this.canvas.height || 0;
@@ -284,21 +281,10 @@ class CanvasEditor {
             return;
         }
 
-        // 重新计算缩放因子，使逻辑坐标精确对应物理像素
-        let scaleX = this.zoom * dpr;
-        let scaleY = this.zoom * dpr;
-
-        // 计算尺寸
-        let physicalWidth = this.width * this.zoom * dpr;
-        let physicalHeight = this.height * this.zoom * dpr;
-
-        // canvas 宽高是否必须为整数值
-        if (this.strictIntegerDimensions) {
-            physicalWidth = Math.round(physicalWidth);
-            physicalHeight = Math.round(physicalHeight);
-            scaleX = physicalWidth / this.width;
-            scaleY = physicalHeight / this.height;
-        }
+        // 物理尺寸取整（小数赋给 canvas.width 会被 WebIDL 截断）并按轴反推 scale，
+        // 逻辑坐标精确对应物理像素：内容铺满、无边缘裁切，整数倍率时反推值恒等于 zoom×dpr
+        const physicalWidth = Math.max(1, Math.round(this.width * this.zoom * dpr));
+        const physicalHeight = Math.max(1, Math.round(this.height * this.zoom * dpr));
 
         // 设置物理尺寸
         this.canvas.width = physicalWidth;
@@ -313,7 +299,7 @@ class CanvasEditor {
         }
 
         // 重置并应用变换
-        this.ctx.setTransform(scaleX, 0, 0, scaleY, 0, 0);
+        this.ctx.setTransform(physicalWidth / this.width, 0, 0, physicalHeight / this.height, 0, 0);
 
         // 重设 canvas.width 已把上下文状态重置为默认值，重新应用高质量渲染选项
         this.applyContextQuality();
@@ -2388,49 +2374,100 @@ class CanvasEditor {
 
 
     /**
-     * 导出 JPEG 图片
-     * @param filename
-     * @param quality
+     * 离屏导出画布：按目标倍率重绘干净场景（背景 + 元素），与屏幕缩放 / 显示器 dpr 解耦，
+     * 不含选中框、网格、对齐线、编辑光标等界面元素；隔离模式导出完整文档（不降维）。
+     * 浏览器与 Node（@napi-rs/canvas）双环境通用
+     * @param {number} [scale] - 导出倍率，默认 max(1, 当前 zoom × dpr)，不低于屏显分辨率
+     * @returns {HTMLCanvasElement|Object} 导出画布（Node 端为 @napi-rs/canvas 画布）
      */
-    exportJPEG(filename, quality = 0.95) {
-        const dataURL = this.canvas.toDataURL('image/jpeg', quality);
-        this.#downloadFile(dataURL, filename)
+    exportCanvas(scale) {
+        const dpr = this.isBrowser ? (window.devicePixelRatio || 1) : 1;
+        const s = Number.isFinite(scale) && scale > 0 ? scale : Math.max(1, this.zoom * dpr);
+        const outWidth = Math.max(1, Math.round(this.width * s));
+        const outHeight = Math.max(1, Math.round(this.height * s));
+        let out;
+        if (this.isBrowser) {
+            out = document.createElement('canvas');
+            out.width = outWidth;
+            out.height = outHeight;
+        } else {
+            out = require('@napi-rs/canvas').createCanvas(outWidth, outHeight);
+        }
+        const ctx = out.getContext('2d');
+        // 取整尺寸后按轴反推 scale（与 setupCanvas 的 strict 数学一致）：内容精确铺满输出画布，
+        // 消除小数倍率下最右/最下 ≤0.5px 的内容裁切或背景缝；整数倍率时反推值恒等于原值
+        ctx.setTransform(outWidth / this.width, 0, 0, outHeight / this.height, 0, 0);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        // 透明背景的 fillRect 为无操作，PNG 保留 alpha；JPEG 无 alpha 通道，透明背景导出即黑底
+        ctx.fillStyle = this.backgroundColor;
+        ctx.fillRect(0, 0, this.width, this.height);
+        // 干净场景：界面装饰（选中框 / 对齐线 / 编辑光标）不参与导出
+        for (const element of this.elements) element.draw(ctx);
+        return out;
     }
 
 
     /**
-     * 导出 PNG 图片
+     * 导出 JPEG 图片：浏览器端触发下载，Node 端返回 Buffer（写文件由调用方处理）
      * @param filename
+     * @param quality - 0~1（Node 端换算为 0~100）
+     * @param {number} [scale] - 导出倍率，透传 exportCanvas
      */
-    exportPNG(filename) {
-        const dataURL = this.canvas.toDataURL('image/png');
-        this.#downloadFile(dataURL, filename)
+    exportJPEG(filename, quality = 0.95, scale) {
+        const out = this.exportCanvas(scale);
+        if (this.isBrowser) {
+            out.toBlob((blob) => this.#downloadBlob(blob, filename), 'image/jpeg', quality);
+        } else {
+            return out.encodeSync('jpeg', Math.round(quality * 100));
+        }
     }
 
 
     /**
-     * 导出 WEBP 图片
+     * 导出 PNG 图片：浏览器端触发下载，Node 端返回 Buffer（写文件由调用方处理）
      * @param filename
-     * @param quality
+     * @param {number} [scale] - 导出倍率，透传 exportCanvas
      */
-    exportWEBP(filename, quality = 0.95) {
-        const dataURL = this.canvas.toDataURL('image/webp', quality);
-        this.#downloadFile(dataURL, filename)
+    exportPNG(filename, scale) {
+        const out = this.exportCanvas(scale);
+        if (this.isBrowser) {
+            out.toBlob((blob) => this.#downloadBlob(blob, filename), 'image/png');
+        } else {
+            return out.encodeSync('png');
+        }
     }
 
 
     /**
-     * 下载文件
+     * 导出 WEBP 图片：浏览器端触发下载，Node 端返回 Buffer（写文件由调用方处理）
      * @param filename
-     * @param dataURL
+     * @param quality - 0~1（Node 端换算为 0~100）
+     * @param {number} [scale] - 导出倍率，透传 exportCanvas
      */
-    #downloadFile(dataURL, filename) {
+    exportWEBP(filename, quality = 0.95, scale) {
+        const out = this.exportCanvas(scale);
+        if (this.isBrowser) {
+            out.toBlob((blob) => this.#downloadBlob(blob, filename), 'image/webp', quality);
+        } else {
+            return out.encodeSync('webp', Math.round(quality * 100));
+        }
+    }
+
+
+    /**
+     * 下载 Blob 文件
+     * @param blob
+     * @param filename
+     */
+    #downloadBlob(blob, filename) {
         const link = document.createElement('a');
         link.download = filename;
-        link.href = dataURL;
+        link.href = URL.createObjectURL(blob);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
     }
 
 }
