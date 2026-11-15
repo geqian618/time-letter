@@ -214,6 +214,8 @@ class CanvasEditor {
             this.eventScope.addEventListener('mousedown', this.handleMouseDown);
             this.eventScope.addEventListener('mousemove', this.handleMouseMove);
             this.eventScope.addEventListener('dblclick', this.handleDoubleClick);
+            // 监听 dpr 变化（窗口跨显示器拖动），重栅格化避免按旧 dpr 渲染变糊
+            this._observeDprChange();
             this.createHiddenInput();
             // 设置响应式（保留句柄，供 destroy() 断开监听）
             this._stateObserver = createStateObserver([], (events) => {
@@ -306,6 +308,25 @@ class CanvasEditor {
 
         // 清除画布
         this.ctx.clearRect(0, 0, this.width, this.height);
+    }
+
+
+    /**
+     * 监听设备像素比变化（窗口跨显示器拖动）：matchMedia 只能精确匹配当前 dpr，
+     * 变化触发后需以新 dpr 重订阅；once 订阅使旧查询触发后自毁，任意时刻仅一个存活监听。
+     * 不处理时画布仍按旧 dpr 栅格化，跨屏后整体变糊
+     */
+    _observeDprChange() {
+        if (!this.isBrowser) return;
+        const dpr = window.devicePixelRatio || 1;
+        this._dprMediaQuery?.removeEventListener('change', this._onDprChange);
+        this._onDprChange = () => {
+            this.setupCanvas();
+            this.renderAll();
+            this._observeDprChange();
+        };
+        this._dprMediaQuery = window.matchMedia(`(resolution: ${dpr}dppx)`);
+        this._dprMediaQuery.addEventListener('change', this._onDprChange, {once: true});
     }
 
 
@@ -2129,6 +2150,8 @@ class CanvasEditor {
             this.eventScope.removeEventListener('mousedown', this.handleMouseDown);
             this.eventScope.removeEventListener('mousemove', this.handleMouseMove);
             this.eventScope.removeEventListener('dblclick', this.handleDoubleClick);
+            // 移除 dpr 变化监听
+            this._dprMediaQuery?.removeEventListener('change', this._onDprChange);
             // 移除隐藏输入框
             this.removeHiddenInput();
             // 清除定时器

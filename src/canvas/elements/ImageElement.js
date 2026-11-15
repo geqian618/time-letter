@@ -48,6 +48,49 @@ function mipmapSource(image, destW, destH) {
     return mip;
 }
 
+/**
+ * 模糊绘制用边缘复制垫图（Skia kClamp 同款思路）：blur 核在图外采样到透明会让元素边缘
+ * 半透明（实测 alpha 减半），把原图等距放中、四周 pad 环用最外圈像素拉伸复制，
+ * 模糊时核采到的是内容延伸而非透明，边缘保持不透明且几何零变形
+ * （替代旧的整图拉伸到扩展矩形方案——w≠h 时非等比变形，blur 越大越重）
+ * 每帧重建（环宽/设备尺寸随 zoom 变化，缓存命中率低）：9 次 drawImage 为 GPU 微秒级操作
+ * @param image 源位图
+ * @param destW/destH 元素目标设备像素尺寸（中心按此等距放置，回贴主画布时 1:1 无重采样）
+ * @param pad 环宽（设备像素），调用方取 ceil(blurAmount * 2) ≥ 4σ 覆盖高斯有效范围
+ * @returns {canvas} (destW + 2pad) × (destH + 2pad) 垫图画布
+ */
+function blurPadSource(image, destW, destH, pad) {
+    const w = Math.max(1, Math.round(destW));
+    const h = Math.max(1, Math.round(destH));
+    let source;
+    if (typeof document !== 'undefined') {
+        source = document.createElement('canvas');
+        source.width = w + 2 * pad;
+        source.height = h + 2 * pad;
+    } else {
+        source = require('@napi-rs/canvas').createCanvas(w + 2 * pad, h + 2 * pad);
+    }
+    const ctx = source.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    // 中心：等距放原图（走 mipmap 层级，大图缩小进垫图同样无走样）
+    const mip = mipmapSource(image, w, h);
+    const mw = mip === image ? image.naturalWidth : mip.width;
+    const mh = mip === image ? image.naturalHeight : mip.height;
+    ctx.drawImage(mip, pad, pad, w, h);
+    // 四条边：最外 1px 行/列沿法线方向拉伸出 pad 环
+    ctx.drawImage(mip, 0, 0, 1, mh, 0, pad, pad, h);
+    ctx.drawImage(mip, mw - 1, 0, 1, mh, pad + w, pad, pad, h);
+    ctx.drawImage(mip, 0, 0, mw, 1, pad, 0, w, pad);
+    ctx.drawImage(mip, 0, mh - 1, mw, 1, pad, pad + h, w, pad);
+    // 四角：最近角点 1px 复制成 pad 方块
+    ctx.drawImage(mip, 0, 0, 1, 1, 0, 0, pad, pad);
+    ctx.drawImage(mip, mw - 1, 0, 1, 1, pad + w, 0, pad, pad);
+    ctx.drawImage(mip, 0, mh - 1, 1, 1, 0, pad + h, pad, pad);
+    ctx.drawImage(mip, mw - 1, mh - 1, 1, 1, pad + w, pad + h, pad, pad);
+    return source;
+}
+
 
 export class Image extends Element {
 
@@ -210,16 +253,12 @@ export class Image extends Element {
 
         // 如果有背景模糊效果
         if (this.blur && this.blur > 0) {
-            // 计算模糊扩展区域（防止边缘半透明）
             const blurAmount = this.blur * transformScale;
-            // 扩展区域，通常是模糊半径的2倍
-            const expansion = Math.ceil(blurAmount * 2);
-            // 保存当前上下文状态
+            // pad 环 ≥ 4σ 覆盖高斯有效范围；垫图中心等距放原图，回贴后几何零变形且边缘不透明
+            const pad = Math.ceil(blurAmount * 2);
             ctx.save();
-            // 应用模糊滤镜
             ctx.filter = `blur(${blurAmount}px)`;
-            // 在扩展区域内绘制图像
-            ctx.drawImage(this.image, this.x - expansion, this.y - expansion, width + 2 * expansion, height + 2 * expansion);
+            ctx.drawImage(blurPadSource(this.image, width * transformScale, height * transformScale, pad), this.x - pad, this.y - pad, width + 2 * pad, height + 2 * pad);
             // 恢复上下文状态（这会清除filter）
             ctx.restore();
         } else {
@@ -433,16 +472,12 @@ export class LazyImage extends Element {
 
         // 如果有背景模糊效果
         if (this.blur && this.blur > 0) {
-            // 计算模糊扩展区域（防止边缘半透明）
             const blurAmount = this.blur * transformScale;
-            // 扩展区域，通常是模糊半径的2倍
-            const expansion = Math.ceil(blurAmount * 2);
-            // 保存当前上下文状态
+            // pad 环 ≥ 4σ 覆盖高斯有效范围；垫图中心等距放原图，回贴后几何零变形且边缘不透明
+            const pad = Math.ceil(blurAmount * 2);
             ctx.save();
-            // 应用模糊滤镜
             ctx.filter = `blur(${blurAmount}px)`;
-            // 在扩展区域内绘制图像
-            ctx.drawImage(this.image, this.x - expansion, this.y - expansion, width + 2 * expansion, height + 2 * expansion);
+            ctx.drawImage(blurPadSource(this.image, width * transformScale, height * transformScale, pad), this.x - pad, this.y - pad, width + 2 * pad, height + 2 * pad);
             // 恢复上下文状态（这会清除filter）
             ctx.restore();
         } else {
