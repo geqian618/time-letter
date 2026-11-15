@@ -336,11 +336,11 @@ export default {
     },
     workspace: {
         dragUpload: '拖拽上传文件',
-        dropTitle: '支持 JPG · PNG · WebP · GIF · AVIF',
+        dropTitle: '支持 JPG · PNG · WEBP · GIF · AVIF',
         dropHint: '拖到此处，或点击下方按钮',
         chooseFile: '选择文件',
         pasteFromClipboard: '从剪贴板粘贴',
-        quickImport: '或按 Ctrl O 快速导入',
+        quickImport: '或按 {shortcut} 快速导入',
     },
     imageManager: {
         title: '图片管理器',

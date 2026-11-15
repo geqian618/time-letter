@@ -336,11 +336,11 @@ export default {
     },
     workspace: {
         dragUpload: 'Drag and drop files to upload',
-        dropTitle: 'Supports JPG · PNG · WebP · GIF · AVIF',
+        dropTitle: 'Supports JPG · PNG · WEBP · GIF · AVIF',
         dropHint: 'Drag files here, or click the button below',
         chooseFile: 'Choose Files',
         pasteFromClipboard: 'Paste from clipboard',
-        quickImport: 'or press Ctrl O to import quickly',
+        quickImport: 'or press {shortcut} to import quickly',
     },
     imageManager: {
         title: 'Image Manager',

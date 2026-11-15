@@ -11,7 +11,7 @@
       <button type="button" class="empty-button" @click="requestImportFiles({isDragOver: false})">
         {{ $t('workspace.chooseFile') }}
       </button>
-      <p class="empty-shortcut">{{ $t('workspace.quickImport') }}</p>
+      <p class="empty-shortcut">{{ $t('workspace.quickImport', { shortcut: importShortcut }) }}</p>
     </div>
 
     <div class="canvas-workspace" id="canvas-workspace" ref="canvasWorkspaceRef" @mousedown="triggerContextMenu">
@@ -47,7 +47,7 @@
 
 <script setup lang="js">
 
-import {ref, onMounted, onUnmounted} from 'vue'
+import {ref, computed, onMounted, onUnmounted} from 'vue'
 
 import _ from 'lodash'
 
@@ -176,6 +176,20 @@ let zoomPin = null
 let zoomLastEvent = 0
 // 覆盖 100ms 过渡 + 连续滚轮重定向的余量
 const ZOOM_RAF_MS = 220
+
+// 空状态快速导入快捷键展示：读取偏好设置（可在设置中自定义），与设置弹窗 formatAccelerator 同规则；
+// macOS 无 Ctrl 键，用 ⌘ 等符号且紧凑连接（⌘I），Windows 用 Ctrl 并以 + 连接
+const isMac = window.electronAPI?.platform === 'darwin'
+
+const formatShortcut = (accelerator) => (accelerator || '').split('+').map(part => {
+  if (part === 'CommandOrControl') return isMac ? '⌘' : 'Ctrl'
+  if (part === 'Control') return isMac ? '⌃' : 'Ctrl'
+  if (part === 'Alt') return isMac ? '⌥' : 'Alt'
+  if (part === 'Shift') return isMac ? '⇧' : 'Shift'
+  return part
+}).join(isMac ? '' : ' + ')
+
+const importShortcut = computed(() => formatShortcut(settingsStore.projectSettings.shortcuts.importImages))
 
 const requestImportFiles = (options) => {
   window.electronAPI.requestImportFiles(options)
