@@ -757,7 +757,7 @@ const handleMovePreviewList = useThrottle((e) => {
 
 
 // 工具栏缩放下拉：点击图标弹出百分比预设，选中即应用（相对 initZoom，100% 即占满工作区的适配尺寸）
-const zoomPresets = [10, 25, 50, 75, 100, 150, 200, 300, 500];
+const zoomPresets = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95, 100];
 
 // 当前画布缩放百分比（直接从 canvas.zoom 读取，不另存响应式副本）
 const getZoomPct = () => {
