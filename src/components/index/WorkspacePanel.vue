@@ -562,6 +562,9 @@ const removeSelectedCanvas = () => {
     }
   }
   canvasesStore.selectedPreviewList.clear();
+  // 编辑器元素与预览 DOM 已随删除释放：等本轮渲染卸载完成后再回收图片缓存
+  // （同步调用会让 GC 抢在 Vue 卸载 DOM 之前执行，等于没回收）
+  setTimeout(() => window.electronAPI.releaseMemory(), 0)
 }
 
 const resetCanvas = (path) => {

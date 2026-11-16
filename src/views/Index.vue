@@ -616,6 +616,8 @@ const watchImageManagerRemoveApply = () => {
         canvasActions.clearCanvas()
       }
     }
+    // 同 WorkspacePanel 的移除流程：等 DOM 卸载后再回收解码图片缓存
+    setTimeout(() => window.electronAPI.releaseMemory(), 0)
   })
 }
 

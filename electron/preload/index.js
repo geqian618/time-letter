@@ -39,6 +39,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     watchProjectSettings: (callback) => subscribe('settings:watch', callback),
     exportSettings: (args) => ipcRenderer.send('settings:export', args),
     deleteImages: (args) => ipcRenderer.send('images:delete', args),
+    // 通知主进程回收渲染进程中已无引用的图片缓存（移除图片 / 清空画布后调用）
+    releaseMemory: () => ipcRenderer.send('app:release-memory'),
     requestImportBackgroundImage: (args) => ipcRenderer.send('image:request-import', args),
     watchImportBackgroundImage: (callback) => subscribe('image:watch-import', callback),
     // 图片管理器（独立窗口，画布数据经主进程中转）
