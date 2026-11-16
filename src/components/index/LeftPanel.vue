@@ -58,8 +58,11 @@
             <div class="section-body" v-show="opened.images">
               <div class="brand-grid" ref="imageResourceRef">
                 <div class="brand-chip image-wrapper" :key="key" v-for="([key, image]) in canvasesStore.imageResources">
+                  <!-- 展示用缩略图（thumb:// 由主进程压到 256px），原图 URL 单独携带供拖拽使用：
+                       图库是常驻面板，直接解码原图会让几千万像素的 PNG 长期占用渲染/显存 -->
                   <img class="image-resource"
-                       :src="image.url"
+                       :src="image.thumbUrl || image.url"
+                       :url="image.url"
                        :path="image.path"
                        draggable="true"
                        alt="">
@@ -303,7 +306,9 @@ const handleDragStart = function (event) {
   // 可编辑性：资源条目按其 editable 标记（true 才可编辑），无标记的条目（日期/时间/元数据等）默认不可编辑
   const editable = component.getAttribute('editable') === 'true'
 
-  const url = component.getAttribute('src');
+  // 图片库芯片的 src 是展示用缩略图，拖到画布要用原图 URL（url 属性），
+  // 否则落图会是 256px 的缩略图
+  const url = component.getAttribute('url') || component.getAttribute('src');
   const path = component.getAttribute('path');
   const tagName = component.tagName.toLowerCase();
 

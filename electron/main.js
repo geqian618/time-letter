@@ -675,9 +675,11 @@ const setupIpcHandlers = () => {
     // 释放渲染进程内存：解码后的图片位图由 Chromium 图像缓存持有，删除画布 / DOM 引用后
     // 它只响应内存压力信号，不会自行归还（表现为「移除图片后内存不回落」）。
     // 先全量 GC 回收已无引用的元素对象，再发 critical 压力让 Blink 清空图像缓存
-    ipcMain.on('app:release-memory', async (event) => {
+    ipcMain.on('app:release-memory', async (event, level) => {
         const webContents = event.sender
         if (!webContents || webContents.isDestroyed()) return
+        // 删除图片用 critical（彻底清缓存），切换画布用 moderate（轻量、不打断交互）
+        const pressureLevel = level === 'moderate' ? 'moderate' : 'critical'
         // DevTools 已打开时 debugger 无法附加，attach 会同步抛错，必须包在 try 里
         const send = (method, params) => {
             if (!webContents.debugger.isAttached()) webContents.debugger.attach('1.3')
@@ -691,7 +693,7 @@ const setupIpcHandlers = () => {
             console.error('[release-memory] GC 失败:', error)
         }
         try {
-            await send('Memory.simulatePressureNotification', {level: 'critical'})
+            await send('Memory.simulatePressureNotification', {level: pressureLevel})
         } catch (error) {
             console.error('[release-memory] 内存压力信号发送失败:', error)
         } finally {

@@ -115,6 +115,9 @@ let viewOwnerPath = null;
 // 这两个共享实例。避免多次 load 的配置在 await 期间交错写入同一编辑器造成渲染错乱
 let renderTask = Promise.resolve();
 
+// 切换画布后的空闲期轻量回收的调度函数：由下方闭包赋值，定时器私有在闭包内
+let scheduleMemoryRelease
+
 const zoomOptions = {
   minZoom: 0.1,
   maxZoom: 5
@@ -515,6 +518,18 @@ const doRenderCanvas = async (canvas, currentVersion) => {
   refreshZoom()
 }
 
+// 切换画布后的空闲期做一次轻量回收：Chromium 的图像缓存不随画布切换归还，
+// 连续浏览多张照片会逐张累积；防抖到渲染落定后再触发，避免打断当前渲染。
+// 定时器收在闭包里，闭包只交出清空函数
+const clearMemoryReleaseTimer = (() => {
+  let timer = null
+  scheduleMemoryRelease = () => {
+    clearTimeout(timer)
+    timer = setTimeout(() => window.electronAPI.releaseMemory('moderate'), 1000)
+  }
+  return () => clearTimeout(timer)
+})()
+
 const renderCanvas = (canvas) => {
   canvasElement.value.classList.remove('scale-animation')
   backgroundElement.value.classList.remove('scale-animation')
@@ -526,6 +541,7 @@ const renderCanvas = (canvas) => {
     // 排队期间已有更新的渲染入队，本次为过期请求，直接跳过避免无谓的 load
     if (currentVersion !== renderVersion) return;
     await doRenderCanvas(canvas, currentVersion);
+    scheduleMemoryRelease()
   }).catch((error) => {
     // 单次渲染失败不能打断队列，否则后续渲染会永久卡死
     console.error('[renderCanvas] render failed:', error);
@@ -1414,6 +1430,7 @@ onMounted(() => {
 // 卸载时取消进行中的缩放跟随，避免悬空 rAF
 onUnmounted(() => {
   cancelZoomPin()
+  clearMemoryReleaseTimer()
   disposeWatchContextMenu?.()
 })
 
