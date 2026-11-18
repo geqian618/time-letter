@@ -482,6 +482,7 @@ const selectImageResources = async () => {
                 return {
                     filename: path.basename(target),
                     url: localPathToUrl(target),
+                    thumbUrl: localPathToThumbUrl(target),
                     path: target,
                     extname: path.extname(target).slice(1)
                 };
