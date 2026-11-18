@@ -674,9 +674,9 @@ const setupIpcHandlers = () => {
 
     // 释放渲染进程内存：解码后的图片位图由 Chromium 图像缓存持有，删除画布 / DOM 引用后
     // 它只响应内存压力信号，不会自行归还（表现为「移除图片后内存不回落」）。
-    // 先全量 GC 回收已无引用的元素对象，再发 critical 压力让 Blink 清空图像缓存
-    ipcMain.on('app:release-memory', async (event, level) => {
-        const webContents = event.sender
+    // 删除时先全量 GC 回收已无引用的元素对象，再发 critical 压力清 Blink 图像缓存；
+    // 切换画布只发 moderate 压力，全量 GC 是 stop-the-world，会卡住切换后的交互
+    const releaseMemory = async (webContents, level) => {
         if (!webContents || webContents.isDestroyed()) return
         // 删除图片用 critical（彻底清缓存），切换画布用 moderate（轻量、不打断交互）
         const pressureLevel = level === 'moderate' ? 'moderate' : 'critical'
@@ -686,11 +686,13 @@ const setupIpcHandlers = () => {
             return webContents.debugger.sendCommand(method, params)
         }
         // 两条命令各自独立执行：GC 命令名不可用时不至于把内存压力信号也一并跳过
-        try {
-            await send('HeapProfiler.enable')
-            await send('HeapProfiler.collectGarbage')
-        } catch (error) {
-            console.error('[release-memory] GC 失败:', error)
+        if (pressureLevel === 'critical') {
+            try {
+                await send('HeapProfiler.enable')
+                await send('HeapProfiler.collectGarbage')
+            } catch (error) {
+                console.error('[release-memory] GC 失败:', error)
+            }
         }
         try {
             await send('Memory.simulatePressureNotification', {level: pressureLevel})
@@ -704,6 +706,15 @@ const setupIpcHandlers = () => {
                 console.error('[release-memory] 调试会话断开失败:', error)
             }
         }
+    }
+
+    // 所有请求共用同一个调试会话：重叠执行时前一次的 detach 会让后一次的在途命令报错，必须串行
+    let releaseQueue = Promise.resolve()
+
+    ipcMain.on('app:release-memory', (event, level) => {
+        releaseQueue = releaseQueue
+            .then(() => releaseMemory(event.sender, level))
+            .catch((error) => console.error('[release-memory] 执行失败:', error))
     })
 
     // 删除文件（移入回收站）
