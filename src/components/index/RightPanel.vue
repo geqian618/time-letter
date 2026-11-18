@@ -782,6 +782,8 @@ const requestImportBorderImage = () => {
 // 选中画布元素时（选项对象被整体替换）自动展开对应的属性子菜单
 watch(textOptions, (newVal, oldValue) => {
   if (newVal === oldValue || !settingsStore.projectSettings.others.optionAnchorPoint) return
+  // 删除/取消选中照片时属性对象会被重置成默认值，不是选中元素，不展开也不滚动
+  if (!CanvasManager.getSelectedPath()) return
   activeSection.value = '3'
   openSubMenu('3')
   nextTick(() => {
@@ -791,6 +793,7 @@ watch(textOptions, (newVal, oldValue) => {
 
 watch(imageOptions, (newVal, oldValue) => {
   if (newVal === oldValue || !settingsStore.projectSettings.others.optionAnchorPoint) return
+  if (!CanvasManager.getSelectedPath()) return
   activeSection.value = '4'
   openSubMenu('4')
   nextTick(() => {

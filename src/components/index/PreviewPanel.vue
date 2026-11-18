@@ -1133,7 +1133,6 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
     display: flex;
     align-items: center;
     margin-left: 12px;
-    color: var(--ui-text-faint);
   }
 
   /* 系统 / 应用 两组之间的竖线分隔符：两侧留白 + 颜色调浅（不抢指标文字） */

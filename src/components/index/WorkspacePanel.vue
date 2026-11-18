@@ -67,7 +67,7 @@ import DraggableElementFactory from '@/object/DraggableElementFactory'
 
 import {canvasActions} from '@/object/canvas-actions'
 
-import {BorderOptions, PhotographOptions} from '@/object/Configuration'
+import {BorderOptions, PhotographOptions, Metadata, TextOptions, ImageOptions} from '@/object/Configuration'
 
 import FontManager from '@/utils/font-manager'
 
@@ -661,6 +661,12 @@ const clearCanvas = () => {
   loadedCanvasPath = null
   CanvasManager.setSelectedObject({path: '', previewElement: null})
   zoomPct.value = 100
+  // 删除的是当前显示的照片：右侧属性面板一并回到默认值，不残留已删照片的参数
+  canvasesStore.borderOptions = new BorderOptions()
+  canvasesStore.photographOptions = new PhotographOptions()
+  canvasesStore.metadataOptions = new Metadata()
+  canvasesStore.textOptions = new TextOptions()
+  canvasesStore.imageOptions = new ImageOptions()
 }
 
 
