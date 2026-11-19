@@ -655,11 +655,12 @@ const clearCanvasElements = (path) => {
 const clearCanvas = () => {
   // 作废排队中的渲染：删除/清空时可能仍有画布在异步加载，不 bump 会让过期渲染把已删除的图片画回清空的画布
   renderVersion++
-  canvasEditor.clearCanvas();
-  backgroundCanvasEditor.clearCanvas()
-  // 编辑器已清空，内容归属重置，避免切换时把空内容导出给画布
+  // 必须先重置归属与选中再清空编辑器：清空触发 history:change 同步回写，
+  // 此时选中若仍指向旧画布，会把空内容覆盖进刚序列化保存的画布数据
   loadedCanvasPath = null
   CanvasManager.setSelectedObject({path: '', previewElement: null})
+  canvasEditor.clearCanvas();
+  backgroundCanvasEditor.clearCanvas()
   zoomPct.value = 100
   // 删除的是当前显示的照片：右侧属性面板一并回到默认值，不残留已删照片的参数
   canvasesStore.borderOptions = new BorderOptions()

@@ -535,6 +535,8 @@ const handleSelectPreviewElement = (event, canvas) => {
     element.classList.remove('active');
     canvasesStore.selectedPreviewList.delete(canvas.path)
     if (CanvasManager.getSelectedPath() === canvas.path) {
+      // 取消选中只是暂不显示，先把编辑器内容写回画布数据，切回时配置才不丢
+      serializeLoadedCanvas(canvas.path)
       canvasActions.clearCanvas()
     }
   } else {
