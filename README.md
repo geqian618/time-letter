@@ -1,3 +1,5 @@
+简体中文 | [English](README_EN.md)
+
 <div align="center">
 
 <img src="electron/resources/favicon.png" width="120" alt="时光信笺"/>
