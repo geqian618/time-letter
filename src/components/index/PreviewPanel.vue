@@ -32,7 +32,7 @@
           </button>
         </el-tooltip>
 
-        <el-tooltip :show-after="1500" :content="$t('preview.zoom')" placement="top" :disabled="tooltipDisabled">
+        <el-tooltip :show-after="1500" :content="$t('preview.zoomAll')" placement="top" :disabled="tooltipDisabled">
           <el-dropdown trigger="click" placement="top-start"
                        @visible-change="handleVisibleChange"
                        @command="handleZoom"
@@ -55,9 +55,14 @@
             <SvgIcon name="select-all"/>
           </button>
         </el-tooltip>
-        <el-tooltip :show-after="1500" :content="$t('preview.center')" placement="top">
-          <button type="button" class="bar-icon" @click="canvasActions.centerCanvasScrollBar()">
+        <el-tooltip :show-after="1500" :content="$t('preview.centerAll')" placement="top">
+          <button type="button" class="bar-icon" @click="canvasActions.centerAllCanvasScrollBar()">
             <SvgIcon name="center-canvas"/>
+          </button>
+        </el-tooltip>
+        <el-tooltip :show-after="1500" :content="$t('preview.fillAll')" placement="top">
+          <button type="button" class="bar-icon" @click="handleFillAll">
+            <SvgIcon name="fit-view"/>
           </button>
         </el-tooltip>
       </div>
@@ -807,6 +812,14 @@ const handleZoom = (val) => {
   canvasActions.reflowWorkspace?.();
   // 同步右下角浮动缩放胶囊的百分比显示
   canvasActions.refreshZoom?.();
+};
+
+
+// 全部铺满：所有照片回到 100%（工作区适配尺寸），与全部缩放同一全局口径，
+// 并把全部视图滚动重置到居中（缩放胶囊的单图铺满也会经 reflow 居中，此处对齐该行为）
+const handleFillAll = () => {
+  handleZoom(100);
+  canvasActions.centerAllCanvasScrollBar();
 };
 
 

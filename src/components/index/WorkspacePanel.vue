@@ -35,6 +35,11 @@
         </button>
       </el-tooltip>
       <span class="zoom-divider"></span>
+      <el-tooltip :show-after="1500" :content="$t('preview.center')" placement="top">
+        <button type="button" class="zoom-button" @click="centerCanvasScrollBar">
+          <SvgIcon name="center-canvas"/>
+        </button>
+      </el-tooltip>
       <el-tooltip :show-after="1500" :content="$t('preview.fill')" placement="top">
         <button type="button" class="zoom-button" @click="fitToView">
           <SvgIcon name="fit-view"/>
@@ -400,6 +405,20 @@ const centerCanvasScrollBar = () => {
   if (CanvasManager.getSelectedPath()) {
     scrollBarMoveToCenter(CanvasManager.getCurrentCanvas())
   }
+}
+
+// 全部图片居中：当前画布直接滚动工作区；其余画布按渲染时同口径预算居中滚动位置
+// 写入各自存储（切回时 updateScrollBar 恢复），未渲染过的画布首次渲染本就居中，跳过
+const centerAllCanvasScrollBar = () => {
+  if (!CanvasManager.getSelectedPath()) return
+  const {clientWidth, clientHeight, idealWidth, idealHeight} = canvasWorkspaceRef.value
+  for (const canvas of CanvasManager.getCanvases().values()) {
+    if (!canvas.completed || canvas.path === CanvasManager.getSelectedPath()) continue
+    const {width: imageWidth, height: imageHeight} = canvas.metadata
+    canvas.scrollLeft = Math.max(0, (Math.max(imageWidth, idealWidth) - clientWidth) / 2)
+    canvas.scrollTop = Math.max(0, (Math.max(imageHeight, idealHeight) - clientHeight) / 2)
+  }
+  centerCanvasScrollBar()
 }
 
 // 面板收放过渡期间逐帧重设 wrapper 大小至 max(画布宽, 工作区宽)，
@@ -986,6 +1005,7 @@ Object.assign(canvasActions, {
   renderCanvas,
   clearCanvas,
   centerCanvasScrollBar,
+  centerAllCanvasScrollBar,
   reflowWorkspace,
   refreshZoom,
   permanentlyRemoveSelectedCanvas,
