@@ -366,6 +366,8 @@ const toggleViewingMode = () => {
     if (saved.right) savedRightWidth.value = rightFrom;
     if (saved.bottom) savedBottomHeight.value = bottomFrom;
     viewingMode.value = true;
+    // 画布元素交互一并禁用：观看模式只看不可操作，滚轮缩放 / 平移不受影响
+    canvasActions.setInteraction?.(false);
     leftEl.style.minWidth = '0';
     rightEl.style.minWidth = '0';
     bottomEl.style.minHeight = '0';
@@ -397,6 +399,7 @@ const toggleViewingMode = () => {
 
   // 退出：各面板还原到快照值（观看期间被手动收起的也按快照展开），面板找回的宽高从工作区 / 主区扣回
   viewingMode.value = false;
+  canvasActions.setInteraction?.(true);
   const saved = viewingSaved.value;
   const leftTo = saved.left ? saved.leftWidth : 0;
   const rightTo = saved.right ? saved.rightWidth : 0;

@@ -1090,6 +1090,9 @@ Object.assign(canvasActions, {
   centerCanvasScrollBar,
   centerAllCanvasScrollBar,
   fitCanvasesToWorkspace,
+  // 观看模式下禁用画布元素交互：委托编辑器的 setInteraction（CanvasEditor 鼠标处理器守卫），
+  // 元素选择 / 拖拽 / 双击编辑失效；滚轮缩放 / 空格拖拽平移等工作区级操作不经过编辑器监听，不受影响
+  setInteraction: (enabled) => canvasesStore.getCanvasEditor()?.setInteraction(enabled),
   reflowWorkspace,
   refreshZoom,
   permanentlyRemoveSelectedCanvas,

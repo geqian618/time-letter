@@ -119,6 +119,9 @@ class CanvasEditor {
 
         // 事件触发作用域
         this.eventScope = options.eventScope || this.canvas;
+        // 元素可操作开关：false 时元素选择 / 拖拽 / 双击编辑全部失效（观看模式用），
+        // 工作区级的滚轮缩放 / 平移不经过本类监听，不受影响
+        this.enableInteraction = true;
 
         this.ctx = this.canvas.getContext('2d');
 
@@ -889,7 +892,7 @@ class CanvasEditor {
      * @param event
      */
     handleDoubleClick(event) {
-        if (this.isEditing) return;
+        if (!this.enableInteraction || this.isEditing) return;
         const {x, y} = this.getCanvasPosition(event);
         const isolation = this._getIsolationGroup();
         const groupFilter = element => element.selectable && element.type === 'group';
@@ -1256,6 +1259,15 @@ class CanvasEditor {
      */
     getZoom() {
         return this.zoom
+    }
+
+    /**
+     * 设置元素交互开关（观看模式用）：false 时元素选择 / 拖拽 / 双击编辑失效，
+     * 工作区级的滚轮缩放 / 平移不经过本类监听，不受影响
+     * @param {boolean} enabled
+     */
+    setInteraction(enabled) {
+        if (typeof enabled === 'boolean') this.enableInteraction = enabled;
     }
 
 
@@ -1703,7 +1715,7 @@ class CanvasEditor {
      * @param {MouseEvent} event
      */
     handleMouseMove(event) {
-        if (event.buttons !== 0 || this.isEditing) return;
+        if (!this.enableInteraction || event.buttons !== 0 || this.isEditing) return;
         const {x, y} = this.getCanvasPosition(event);
         const hit = this._hitSelectionHandle(x, y);
         let cursor = '';
@@ -1718,7 +1730,7 @@ class CanvasEditor {
     }
 
     handleMouseDown(event) {
-        if (event.button !== 0) return;
+        if (!this.enableInteraction || event.button !== 0) return;
         const startTime = Date.now();
         const {x: startX, y: startY} = this.getCanvasPosition(event);
 
