@@ -1267,7 +1267,16 @@ class CanvasEditor {
      * @param {boolean} enabled
      */
     setInteraction(enabled) {
-        if (typeof enabled === 'boolean') this.enableInteraction = enabled;
+        if (typeof enabled !== 'boolean') return;
+        this.enableInteraction = enabled;
+        // 进入不可交互状态时清理现场：提交文本编辑（与点击空白处的行为一致）、退出组合隔离、取消全部选中
+        if (enabled) return;
+        if (this.isEditing) this.finishEditing();
+        if (this.isolationGroupId) this.exitIsolation();
+        if (this.activeElements.length) this.clearActiveElements();
+        // 清掉悬停在缩放 / 旋转手柄上残留的光标：禁用后 mousemove 守卫不再执行重置，不清理会一直卡住
+        this.canvas.style.cursor = '';
+        this.renderAll();
     }
 
 
