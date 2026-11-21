@@ -5,34 +5,34 @@
     <div class="preview-bar">
       <div class="left-preview-bar">
         <!-- 底部面板伸缩 -->
-        <el-tooltip :show-after="1500" :content="$t('panel.collapseBottom')" placement="top">
+        <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('panel.collapseBottom')" placement="top">
           <button type="button" class="bar-icon" @click="$emit('toggle-bottom')">
             <SvgIcon name="panel-collapse-bottom"/>
           </button>
         </el-tooltip>
 
-        <el-tooltip :show-after="1500" :content="$t('preview.first')" placement="top">
+        <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.first')" placement="top">
           <button type="button" class="bar-icon" @click="switchFirstPreviewElement">
             <SvgIcon name="step-first"/>
           </button>
         </el-tooltip>
-        <el-tooltip :show-after="1500" :content="$t('preview.prev')" placement="top">
+        <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.prev')" placement="top">
           <button type="button" class="bar-icon" @click="switchPrevPreviewElement">
             <SvgIcon name="step-prev"/>
           </button>
         </el-tooltip>
-        <el-tooltip :show-after="1500" :content="$t('preview.next')" placement="top">
+        <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.next')" placement="top">
           <button type="button" class="bar-icon" @click="switchNextPreviewElement">
             <SvgIcon name="step-next"/>
           </button>
         </el-tooltip>
-        <el-tooltip :show-after="1500" :content="$t('preview.last')" placement="top">
+        <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.last')" placement="top">
           <button type="button" class="bar-icon" @click="switchLastPreviewElement">
             <SvgIcon name="step-last"/>
           </button>
         </el-tooltip>
 
-        <el-tooltip :show-after="1500" :content="$t('preview.zoomAll')" placement="top" :disabled="tooltipDisabled">
+        <el-tooltip :disabled="tooltipDisabled || bottomCollapsed" :show-after="1500" :content="$t('preview.zoomAll')" placement="top">
           <el-dropdown trigger="click" placement="top-start"
                        @visible-change="handleVisibleChange"
                        @command="handleZoom"
@@ -50,19 +50,27 @@
           </el-dropdown>
         </el-tooltip>
 
-        <el-tooltip :show-after="1500" :content="$t('preview.selectAll')" placement="top">
+        <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.selectAll')" placement="top">
           <button type="button" class="bar-icon" @click="handleSelectAllPreviewElements">
             <SvgIcon name="select-all"/>
           </button>
         </el-tooltip>
-        <el-tooltip :show-after="1500" :content="$t('preview.centerAll')" placement="top">
+        <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.centerAll')" placement="top">
           <button type="button" class="bar-icon" @click="canvasActions.centerAllCanvasScrollBar()">
             <SvgIcon name="center-canvas"/>
           </button>
         </el-tooltip>
-        <el-tooltip :show-after="1500" :content="$t('preview.fillAll')" placement="top">
+        <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.fillAll')" placement="top">
           <button type="button" class="bar-icon" @click="handleFillAll">
             <SvgIcon name="fit-view"/>
+          </button>
+        </el-tooltip>
+        <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="viewingMode ? $t('panel.exitViewingMode') : $t('panel.viewingMode')"
+                    placement="top">
+          <button type="button" class="bar-icon" :class="{'is-active': viewingMode}"
+                  :disabled="!canvasesStore.availableCanvases.size"
+                  @click="$emit('toggle-viewing')">
+            <SvgIcon :name="viewingMode ? 'exit-viewing-mode' : 'viewing-mode'"/>
           </button>
         </el-tooltip>
       </div>
@@ -72,54 +80,54 @@
         <!-- 对齐 / 分布：描边图标，分组与元素位置参考 PS 选项栏 -->
         <!-- 分组：[水平对齐族（竖参考线）] │ [垂直对齐族（横参考线）] │ [分布] -->
         <div class="align-group">
-          <el-tooltip :show-after="1500" :content="$t('preview.alignLeft')" placement="top">
+          <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.alignLeft')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('left')">
               <SvgIcon name="align-left"/>
             </button>
           </el-tooltip>
-          <el-tooltip :show-after="1500" :content="$t('preview.alignCenterH')" placement="top">
+          <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.alignCenterH')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('center-h')">
               <SvgIcon name="align-center-h"/>
             </button>
           </el-tooltip>
-          <el-tooltip :show-after="1500" :content="$t('preview.alignRight')" placement="top">
+          <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.alignRight')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('right')">
               <SvgIcon name="align-right"/>
             </button>
           </el-tooltip>
           <span class="align-divider"/>
-          <el-tooltip :show-after="1500" :content="$t('preview.alignTop')" placement="top">
+          <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.alignTop')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('top')">
               <SvgIcon name="align-top"/>
             </button>
           </el-tooltip>
-          <el-tooltip :show-after="1500" :content="$t('preview.alignCenterV')" placement="top">
+          <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.alignCenterV')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('center-v')">
               <SvgIcon name="align-center-v"/>
             </button>
           </el-tooltip>
-          <el-tooltip :show-after="1500" :content="$t('preview.alignBottom')" placement="top">
+          <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.alignBottom')" placement="top">
             <button type="button" class="bar-icon" @click="handleAlign('bottom')">
               <SvgIcon name="align-bottom"/>
             </button>
           </el-tooltip>
           <span class="align-divider"/>
-          <el-tooltip :show-after="1500" :content="$t('preview.distributeH')" placement="top">
+          <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.distributeH')" placement="top">
             <button type="button" class="bar-icon" @click="handleDistribute('horizontal')">
               <SvgIcon name="distribute-h"/>
             </button>
           </el-tooltip>
-          <el-tooltip :show-after="1500" :content="$t('preview.distributeV')" placement="top">
+          <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.distributeV')" placement="top">
             <button type="button" class="bar-icon" @click="handleDistribute('vertical')">
               <SvgIcon name="distribute-v"/>
             </button>
           </el-tooltip>
-          <el-tooltip :show-after="1500" :content="$t('preview.distributeCenterH')" placement="top">
+          <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.distributeCenterH')" placement="top">
             <button type="button" class="bar-icon" @click="handleDistributeCenter('horizontal')">
               <SvgIcon name="distribute-center-h"/>
             </button>
           </el-tooltip>
-          <el-tooltip :show-after="1500" :content="$t('preview.distributeCenterV')" placement="top">
+          <el-tooltip :disabled="bottomCollapsed" :show-after="1500" :content="$t('preview.distributeCenterV')" placement="top">
             <button type="button" class="bar-icon" @click="handleDistributeCenter('vertical')">
               <SvgIcon name="distribute-center-v"/>
             </button>
@@ -154,6 +162,7 @@
       <template :key="key" v-for="([key, canvas]) in CanvasManager.getCanvases()">
         <el-popover
             width="fit-content"
+            :disabled="!canvasesStore.thumbnailVisible(canvas)"
             :show-after="2000"
             :hide-after="0"
             :persistent="false"
@@ -225,8 +234,16 @@ import useEventListener from '@/composables/common/useEventListener'
 
 import {useThrottle} from '@/utils/throttle'
 
-// 底部面板伸缩事件转发给 Index.vue（面板状态由父组件持有）
-defineEmits(['toggle-bottom'])
+// 底部面板伸缩 / 观看模式切换事件转发给 Index.vue（面板状态由父组件持有）
+defineEmits(['toggle-bottom', 'toggle-viewing'])
+
+// 观看模式进行中（父组件下发）：按钮切换为“退出观看模式”提示并保持按下态；
+// 底部面板收起（父组件下发）：工具条随宿主 v-show 隐藏，禁用全部 tooltip
+// 强制关闭已打开的 popper，否则参考元素消失后 popper 定位回退 (0,0) 残留在窗口左上角
+defineProps({
+  viewingMode: {type: Boolean, default: false},
+  bottomCollapsed: {type: Boolean, default: false},
+})
 
 import {parseDate, formatDate} from '@/utils/datetime'
 
@@ -914,6 +931,23 @@ useEventListener(document, 'keydown', handleSelectAllPreviewElements)
     }
 
     &:hover {
+      background: var(--ui-control);
+      color: var(--ui-text);
+    }
+
+    /* 无图片（或全部被筛选）时禁用 */
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+
+      &:hover {
+        background: transparent;
+        color: var(--ui-text-secondary);
+      }
+    }
+
+    /* 观看模式进行中：保持按下态（此时点击即退出） */
+    &.is-active {
       background: var(--ui-control);
       color: var(--ui-text);
     }

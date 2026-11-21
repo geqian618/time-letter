@@ -85,22 +85,22 @@
           <Transition name="collapse" v-bind="collapseTransition">
             <div class="section-body" v-show="opened.texts">
               <div class="text-grid" ref="textResourceRef">
-                <el-tooltip :show-after="1500" :content="$t('left.text')" placement="top">
+                <el-tooltip :disabled="collapsed" :show-after="1500" :content="$t('left.text')" placement="top">
                   <div class="text-chip text-resource" draggable="true" text="文本" type="text" editable="true">
                     <span class="chip-icon"><SvgIcon name="text"/></span>
                   </div>
                 </el-tooltip>
-                <el-tooltip :show-after="1500" :content="$t('left.date')" placement="top">
+                <el-tooltip :disabled="collapsed" :show-after="1500" :content="$t('left.date')" placement="top">
                   <div class="text-chip text-resource" draggable="true" type="date">
                     <span class="chip-icon"><SvgIcon name="date"/></span>
                   </div>
                 </el-tooltip>
-                <el-tooltip :show-after="1500" :content="$t('left.datetime')" placement="top">
+                <el-tooltip :disabled="collapsed" :show-after="1500" :content="$t('left.datetime')" placement="top">
                   <div class="text-chip text-resource" draggable="true" type="datetime">
                     <span class="chip-icon"><SvgIcon name="datetime"/></span>
                   </div>
                 </el-tooltip>
-                <el-tooltip :show-after="1500" v-for="text in textResourcesStore.textResources" :key="text.id"
+                <el-tooltip :disabled="collapsed" :show-after="1500" v-for="text in textResourcesStore.textResources" :key="text.id"
                             :content="text.tips" placement="top">
                   <div
                       class="text-chip text-resource"
@@ -122,7 +122,7 @@
     </el-scrollbar>
 
     <!-- 新建预设：无选中画布时禁用（预设以当前画布为来源），tooltip 仅在禁用时提示 -->
-    <el-tooltip :show-after="1500" :content="$t('left.newPresetDisabled')" placement="top" :disabled="hasCurrentCanvas">
+    <el-tooltip :disabled="hasCurrentCanvas || collapsed" :show-after="1500" :content="$t('left.newPresetDisabled')" placement="top">
       <button type="button" class="new-preset-button" :disabled="!hasCurrentCanvas" @click="handleCreatePreset">
         <SvgIcon name="plus"/>
         <span>{{ $t('left.newPreset') }}</span>
@@ -133,6 +133,12 @@
 </template>
 
 <script setup lang="js">
+
+// 面板随宿主 v-show 隐藏时，禁用全部 tooltip 强制关闭已打开的 popper，
+// 否则参考元素消失后 popper 定位回退 (0,0) 残留在窗口左上角
+defineProps({
+  collapsed: {type: Boolean, default: false},
+})
 
 import {ref, reactive, computed} from 'vue'
 

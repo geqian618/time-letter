@@ -13,7 +13,7 @@
           <div class="page-left" ref="leftPanelRef" :class="{collapsed: leftCollapsed}">
             <div class="left-resize" v-show="!leftCollapsed" ref="leftResizeRef"
                  @mousedown="handleLeftSidebarResize"></div>
-            <LeftPanel v-show="!leftCollapsed"/>
+            <LeftPanel v-show="!leftCollapsed" :collapsed="leftCollapsed"/>
           </div>
 
           <WorkspacePanel/>
@@ -28,8 +28,9 @@
         <div class="page-bottom" ref="bottomPanelRef" :class="{collapsed: bottomCollapsed}">
           <div class="bottom-resize" v-show="!bottomCollapsed" ref="bottomResizeRef"
                @mousedown="handleBottomSidebarResize"></div>
-          <PreviewPanel v-show="!bottomCollapsed" @toggle-bottom="toggleBottom"/>
-          <!-- 收起后底部工具栏随之隐藏，仅保留这个浮动箭头用于展开 -->
+          <PreviewPanel v-show="!bottomCollapsed" :viewing-mode="viewingMode" :bottom-collapsed="bottomCollapsed"
+                        @toggle-bottom="toggleBottom" @toggle-viewing="toggleViewingMode"/>
+          <!-- 收起后底部工具栏随之隐藏，仅保留这个浮动箭头用于展开；观看模式仅通过 Esc 退出 -->
           <el-tooltip :show-after="1500" v-if="bottomCollapsed" :content="$t('panel.expandBottom')" placement="top"
                       :disabled="tipDisabled">
             <button class="panel-toggle toggle-bottom" @click="toggleBottom">
@@ -61,6 +62,8 @@
 <script setup lang="js">
 
 import {ref, watch, onMounted, onUnmounted} from "vue";
+
+import useEventListener from '@/composables/common/useEventListener'
 
 // 面板展开箭头：统一通过 <SvgIcon name="expand-bottom"/> 使用（注册表见 src/components/SvgIcon.vue）
 
@@ -132,6 +135,12 @@ const savedLeftWidth = ref(18);
 const savedRightWidth = ref(22);
 const savedBottomHeight = ref(25);
 
+// 观看模式：进入时收起全部面板只留画布，退出时还原进入前布局
+const viewingMode = ref(false);
+
+// 进入观看模式前的面板布局快照：expanded 标记 + 各面板当时的宽高百分比
+const viewingSaved = ref(null);
+
 const COLLAPSE_DURATION = 220;
 
 // 收放期间禁用收缩标记的悬浮提示：触发元素随面板移动后，popper 可能落到光标下方，
@@ -177,6 +186,8 @@ const runResizeAnim = () => {
     if (settingsStore.projectSettings.others.autoCenterOnToggle) {
       centerAllCanvases();
     }
+    // 工作区尺寸落定后重标定：图片缩放数值保持不变，实际大小重新适配工作区
+    canvasActions.fitCanvasesToWorkspace?.();
   }
 };
 
@@ -323,6 +334,109 @@ const toggleBottom = () => {
     });
   }
 };
+
+// 观看模式：进入时收起左右与底部面板只留画布（退出时还原进入前布局）。
+// 不复用三次 toggle*：连续调用会互相取消 rAF 动画，只有最后一个真正执行，
+// 这里把全部变量放进同一次 animateResize 一次性插值
+const toggleViewingMode = () => {
+  if (isResizing()) return;
+  const leftEl = leftPanelRef.value;
+  const rightEl = rightPanelRef.value;
+  const bottomEl = bottomPanelRef.value;
+  const leftFrom = readPct('--page-left-width');
+  const rightFrom = readPct('--page-right-width');
+  const bottomFrom = readPct('--page-bottom-height');
+  const wsFrom = readPct('--canvas-workspace-width');
+  const mainFrom = readPct('--page-main-height');
+
+  if (!viewingMode.value) {
+    // 快照进入前布局（此刻保证静止，中间值不会写入）
+    const saved = {
+      left: !leftCollapsed.value,
+      right: !rightCollapsed.value,
+      bottom: !bottomCollapsed.value,
+      leftWidth: leftFrom,
+      rightWidth: rightFrom,
+      bottomHeight: bottomFrom,
+    };
+    viewingSaved.value = saved;
+    // 同步面板收放的暂存尺寸：观看模式下经顶部工具栏 / 浮动箭头单独展开面板时，
+    // 还原到进入时的真实尺寸，而不是过期（或默认）的暂存值
+    if (saved.left) savedLeftWidth.value = leftFrom;
+    if (saved.right) savedRightWidth.value = rightFrom;
+    if (saved.bottom) savedBottomHeight.value = bottomFrom;
+    viewingMode.value = true;
+    leftEl.style.minWidth = '0';
+    rightEl.style.minWidth = '0';
+    bottomEl.style.minHeight = '0';
+    leftCollapsed.value = rightCollapsed.value = bottomCollapsed.value = true;
+    syncWorkspaceIdealSize(wsFrom + leftFrom + rightFrom, mainFrom + bottomFrom);
+    animateResize([
+      {name: '--page-left-width', from: leftFrom, to: 0},
+      {name: '--page-right-width', from: rightFrom, to: 0},
+      {name: '--page-bottom-height', from: bottomFrom, to: 0},
+      {name: '--canvas-workspace-width', from: wsFrom, to: wsFrom + leftFrom + rightFrom},
+      {name: '--page-main-height', from: mainFrom, to: mainFrom + bottomFrom},
+    ], () => {
+      // 工作区没有显示图片时：进入观看模式自动显示第一张（选中态与渲染一并设置）。
+      // 渲染放在动画落定后，缩放按观看模式的最终工作区尺寸计算
+      if (!viewingMode.value || CanvasManager.getSelectedPath()) return;
+      const first = canvasesStore.availableCanvases.getFirstNode()?.value;
+      if (!first) return;
+      const previewElement = first.getPreviewElement?.();
+      CanvasManager.setSelectedObject({path: first.path, previewElement});
+      if (previewElement) {
+        previewElement.classList.add('active');
+        previewElement.setAttribute('selected', 'true');
+        canvasesStore.selectedPreviewList.set(first.path, previewElement);
+      }
+      canvasActions.renderCanvas(first);
+    });
+    return;
+  }
+
+  // 退出：各面板还原到快照值（观看期间被手动收起的也按快照展开），面板找回的宽高从工作区 / 主区扣回
+  viewingMode.value = false;
+  const saved = viewingSaved.value;
+  const leftTo = saved.left ? saved.leftWidth : 0;
+  const rightTo = saved.right ? saved.rightWidth : 0;
+  const bottomTo = saved.bottom ? saved.bottomHeight : 0;
+  const wsTo = Math.max(wsFrom - (leftTo - leftFrom) - (rightTo - rightFrom), 5);
+  const mainTo = Math.max(mainFrom - (bottomTo - bottomFrom), 20);
+  leftCollapsed.value = !saved.left;
+  rightCollapsed.value = !saved.right;
+  bottomCollapsed.value = !saved.bottom;
+  syncWorkspaceIdealSize(wsTo, mainTo);
+  animateResize([
+    {name: '--page-left-width', from: leftFrom, to: leftTo},
+    {name: '--page-right-width', from: rightFrom, to: rightTo},
+    {name: '--page-bottom-height', from: bottomFrom, to: bottomTo},
+    {name: '--canvas-workspace-width', from: wsFrom, to: wsTo},
+    {name: '--page-main-height', from: mainFrom, to: mainTo},
+  ], () => {
+    if (saved.left) leftEl.style.minWidth = '';
+    if (saved.right) rightEl.style.minWidth = '';
+    if (saved.bottom) bottomEl.style.minHeight = '';
+  });
+};
+
+// Esc 退出观看模式（焦点在弹窗 / 输入框内时不接管，交给弹窗自身的关闭逻辑）
+const handleGlobalKeydown = (event) => {
+  if (event.key !== 'Escape' || !viewingMode.value) return;
+  const target = event.target;
+  if (target instanceof Element && target.closest?.('.el-overlay, input, textarea, select')) return;
+  toggleViewingMode();
+};
+onMounted(() => window.addEventListener('keydown', handleGlobalKeydown));
+onUnmounted(() => window.removeEventListener('keydown', handleGlobalKeydown));
+
+// 按钮点击后立即释放焦点：Space / Enter 等快捷键（如空格拖动画布）不会落在残留焦点的按钮上被再次触发。
+// event.detail > 0 过滤键盘激活的点击（detail 为 0），保留键盘用户的焦点行为
+useEventListener(document, 'click', (event) => {
+  if (!(event.detail > 0)) return;
+  const button = event.target instanceof Element ? event.target.closest('button') : null;
+  button?.blur();
+});
 
 const handleLeftSidebarResize = (e) => {
 

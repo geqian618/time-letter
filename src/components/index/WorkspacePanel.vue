@@ -435,6 +435,86 @@ const reflowWorkspace = () => {
   scrollBarMoveToCenter(canvas);
 }
 
+// 工作区尺寸变化（观看模式进出 / 面板收放 / 窗口缩放）后重新标定：
+// 各画布 initZoom 按新可视区重算（100% = 照片 + 边框 contain 适配，与渲染 / 模板换算同口径），
+// zoom 保持百分比不变随标定等比缩放，边框屏幕像素随标定系数同步，
+// 使"缩放数值"始终对应实际显示大小；窗口 resize 由下方防抖监听触发
+const fitCanvasesToWorkspace = () => {
+  const ws = canvasWorkspaceRef.value;
+  if (!ws) return;
+  const wsWidth = ws.clientWidth;
+  const wsHeight = ws.clientHeight;
+  if (!wsWidth || !wsHeight) return;
+  // 后续新渲染 / 重置 / 模板换算与本次标定同口径
+  ws.idealWidth = wsWidth;
+  ws.idealHeight = wsHeight;
+  const current = CanvasManager.getCurrentCanvas();
+  let currentScale = 1;
+  for (const canvas of CanvasManager.getCanvases().values()) {
+    if (!canvas.completed || !canvas.initZoom || !canvas.zoom) continue;
+    const pct = canvas.zoom / canvas.initZoom;
+    // 边框持久值（屏幕像素）折回画布单位参与 contain 计算
+    const border = canvas.borderOptions;
+    const borderW = border ? (border.borderLeft + border.borderRight) / canvas.initZoom : 0;
+    const borderH = border ? (border.borderTop + border.borderBottom) / canvas.initZoom : 0;
+    const newInitZoom = Math.min(
+      Math.max(wsWidth, 1) / Math.max(canvas.width + borderW, 1),
+      Math.max(wsHeight, 1) / Math.max(canvas.height + borderH, 1)
+    );
+    const scale = newInitZoom / canvas.initZoom;
+    if (scale === 1) continue;
+    if (canvas === current) currentScale = scale;
+    canvas.initZoom = newInitZoom;
+    canvas.zoom = newInitZoom * pct;
+    // 边框屏幕值随标定系数同步，保持边框与照片的比例
+    if (border) {
+      for (const key of ['borderLeft', 'borderRight', 'borderTop', 'borderBottom', 'borderRadius', 'borderBlur']) {
+        if (typeof border[key] === 'number') border[key] *= scale;
+      }
+    }
+    // 序列化数据同步 zoom：切回该画布时缩放从此恢复（与 handleZoom 同规则）
+    for (const key of ['foreground', 'background']) {
+      const data = canvas[key];
+      if (typeof data === 'string') {
+        const parsed = JSON.parse(data);
+        parsed.zoom = canvas.zoom;
+        canvas[key] = JSON.stringify(parsed);
+      } else if (data && typeof data === 'object') {
+        data.zoom = canvas.zoom;
+      }
+    }
+  }
+  // 当前画布带过渡动画应用新缩放（与滚轮缩放同机制：CSS 盒子 0.1s 过渡 + rAF 逐帧同步滚动，
+  // 锚点取中心 fx=fy=0.5——flex 居中下该锚点公式保持滚动一致并正确处理溢出钳制）；
+  // 其余画布仅更新存储值，无 DOM 不需要过渡
+  if (current?.completed && currentScale !== 1) {
+    const workspace = canvasWorkspaceRef.value;
+    // 先按新工作区重排 wrapper 并落定滚动，再以过渡前的盒子尺寸 / 滚动为锚
+    reflowWorkspace();
+    if (workspace && canvasElement.value) {
+      const rect = canvasElement.value.getBoundingClientRect();
+      zoomLastEvent = Date.now();
+      zoomPin = {
+        sx: workspace.scrollLeft,
+        sy: workspace.scrollTop,
+        w0: rect.width,
+        h0: rect.height,
+        fx: 0.5,
+        fy: 0.5
+      };
+      canvasElement.value.classList.add('scale-animation');
+      backgroundElement.value.classList.add('scale-animation');
+      if (zoomRafId == null) zoomRafId = requestAnimationFrame(runZoomPin);
+    }
+    canvasesStore.getCanvasEditor()?.setZoom(current.zoom);
+    canvasesStore.getBackgroundCanvasEditor()?.setZoom(current.zoom);
+    refreshZoom();
+  }
+};
+
+// 窗口尺寸变化：连续触发防抖，落定后一次重标定
+useEventListener(window, 'resize', _.debounce(fitCanvasesToWorkspace, 150));
+
 const updateScrollBar = (canvas) => {
   // 设置滚动位置
   canvasWorkspaceRef.value.scrollLeft = canvas.scrollLeft;
@@ -1006,6 +1086,7 @@ Object.assign(canvasActions, {
   clearCanvas,
   centerCanvasScrollBar,
   centerAllCanvasScrollBar,
+  fitCanvasesToWorkspace,
   reflowWorkspace,
   refreshZoom,
   permanentlyRemoveSelectedCanvas,

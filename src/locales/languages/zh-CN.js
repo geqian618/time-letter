@@ -162,6 +162,8 @@ export default {
         collapseRight: '收起右侧面板',
         expandBottom: '展开底部面板',
         collapseBottom: '收起底部面板',
+        viewingMode: '观看模式（Esc 退出）',
+        exitViewingMode: '退出观看模式',
     },
     toolbar: {
         brand: '时光信笺',

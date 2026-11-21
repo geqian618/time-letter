@@ -162,6 +162,8 @@ export default {
         collapseRight: 'Collapse right panel',
         expandBottom: 'Expand bottom panel',
         collapseBottom: 'Collapse bottom panel',
+        viewingMode: 'Viewing Mode (Esc to exit)',
+        exitViewingMode: 'Exit Viewing Mode',
     },
     toolbar: {
         brand: 'Time Letter',

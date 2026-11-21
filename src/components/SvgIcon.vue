@@ -49,6 +49,8 @@ import ExportIcon from '@/assets/icon/export.svg'
 import FitViewIcon from '@/assets/icon/fit-view.svg'
 import GithubIcon from '@/assets/icon/github.svg'
 import PanelCollapseBottomIcon from '@/assets/icon/panel-collapse-bottom.svg'
+import ViewingModeIcon from '@/assets/icon/viewing-mode.svg'
+import ExitViewingModeIcon from '@/assets/icon/exit-viewing-mode.svg'
 import PanelCollapseLeftIcon from '@/assets/icon/panel-collapse-left.svg'
 import PanelCollapseRightIcon from '@/assets/icon/panel-collapse-right.svg'
 import PlusIcon from '@/assets/icon/plus.svg'
@@ -110,6 +112,8 @@ const registry = {
   'fit-view': FitViewIcon,
   'github': GithubIcon,
   'panel-collapse-bottom': PanelCollapseBottomIcon,
+  'viewing-mode': ViewingModeIcon,
+  'exit-viewing-mode': ExitViewingModeIcon,
   'panel-collapse-left': PanelCollapseLeftIcon,
   'panel-collapse-right': PanelCollapseRightIcon,
   'plus': PlusIcon,
