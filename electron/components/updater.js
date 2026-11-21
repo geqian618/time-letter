@@ -20,14 +20,20 @@ const setup = () => {
     if (initialized) return
     initialized = true
     const instance = updater()
-    instance.autoDownload = true
+    // 不自动下载：检测到新版本先在弹窗询问，用户确认后再 downloadUpdate（渲染层触发 update:download）
+    instance.autoDownload = false
     instance.autoInstallOnAppQuit = true
     instance.on('download-progress', (info) => broadcast('update:progress', {percent: Math.round(info.percent), speed: info.bytesPerSecond || 0}))
     instance.on('update-downloaded', (info) => broadcast('update:downloaded', {version: info?.version || ''}))
     instance.on('error', (error) => broadcast('update:error', {message: String(error?.message || error)}))
 }
 
-// 返回 {current, latest, hasUpdate} 或 {error}；autoDownload 开启，检查到新版本会自行开始下载
+// releaseNotes 兼容三种形态：字符串 / [{version, note}] / 空，统一折成纯文本
+const normalizeNotes = (notes) => Array.isArray(notes)
+    ? notes.map((item) => String(item?.note || '')).filter(Boolean).join('\n')
+    : String(notes || '')
+
+// 返回 {current, latest, hasUpdate, notes} 或 {error}；autoDownload 开启，检查到新版本会自行开始下载
 const checkForUpdate = () => {
     let check
     try {
@@ -39,6 +45,7 @@ const checkForUpdate = () => {
                     current: app.getVersion(),
                     latest: result.updateInfo.version,
                     hasUpdate: result.isUpdateAvailable,
+                    notes: normalizeNotes(result.updateInfo.releaseNotes),
                 })
             .catch((error) => ({error: String(error?.message || error)}))
     } catch (error) {
@@ -52,4 +59,14 @@ const checkForUpdate = () => {
 
 const quitAndInstall = () => updater().quitAndInstall(false, true)
 
-module.exports = {checkForUpdate, quitAndInstall}
+// 手动触发下载（检测到新版本且用户确认后调用）；失败广播 update:error 由渲染层回落 GitHub 页面
+const downloadUpdate = () => {
+    try {
+        setup()
+        updater().downloadUpdate().catch((error) => broadcast('update:error', {message: String(error?.message || error)}))
+    } catch (error) {
+        broadcast('update:error', {message: String(error?.message || error)})
+    }
+}
+
+module.exports = {checkForUpdate, downloadUpdate, quitAndInstall}

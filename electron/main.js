@@ -41,7 +41,7 @@ const {closeImageManagerWindow, getImageManagerWindow} = require('./components/i
 const {APP_NAME, APP_ICON_PATH, APP_VERSION, IMAGE_TYPES} = require('./constant/project-constants')
 const {initLanguage, t, setLanguage} = require('./locales')
 const {initTheme, setTheme} = require('./components/theme')
-const {checkForUpdate, quitAndInstall} = require('./components/updater')
+const {checkForUpdate, downloadUpdate, quitAndInstall} = require('./components/updater')
 const environment = process.env.NODE_ENV
 const isDev = environment === 'development'
 
@@ -272,8 +272,9 @@ const setupIpcHandlers = () => {
         }
     })
 
-    // 自动更新：安装版走 electron-updater（检查后自动下载，见 components/updater.js）
+    // 自动更新：安装版走 electron-updater（检查后先询问，用户确认再下载，见 components/updater.js）
     ipcMain.handle('update:check', () => checkForUpdate())
+    ipcMain.on('update:download', () => downloadUpdate())
     ipcMain.on('update:install', () => quitAndInstall())
 
     // 检查更新：读 GitHub 最新 release 与当前版本比较（只做检查，下载跳转 release 页）
@@ -321,6 +322,12 @@ const setupIpcHandlers = () => {
         if (release.status === 404) return {error: 'no-release', current, url: releasesUrl}
         if (release.status !== 200 || !release.data || !release.data.tag_name) return {error: 'request-failed', current}
 
+        // Windows：提供安装包资产直链（electron-builder 产出的 .exe，排除 blockmap 校验文件），
+        // 支持用户确认后应用内下载静默安装；其他平台无通用静默安装方式，维持跳转 release 页
+        const installer = process.platform === 'win32'
+            ? (release.data.assets || []).find((a) => /\.exe$/i.test(a.name) && !/blockmap/i.test(a.name))
+            : null
+
         const parse = (v) => String(v).replace(/^v/i, '').split(/[.-]/).map((n) => parseInt(n, 10) || 0)
         const latestParts = parse(release.data.tag_name)
         const currentParts = parse(current)
@@ -338,7 +345,84 @@ const setupIpcHandlers = () => {
             latest: String(release.data.tag_name).replace(/^v/i, ''),
             hasUpdate,
             url: release.data.html_url,
+            notes: String(release.data.body || ''),
+            downloadUrl: installer?.browser_download_url || '',
         }
+    })
+
+    // ---------- 回落路径的应用内下载：GitHub release 安装包（仅 Windows .exe） ----------
+    // electron-updater 不可用时（未配 publish / 未打包），用户确认后从 release 资产直链
+    // 下载安装包到临时目录，完成后「立即重启」静默安装并退出应用
+
+    let releaseDownload = null
+    // {filePath, version, downloaded} downloaded=true 表示包已就绪，重复触发下载直接回「已下载」
+
+    const broadcastUpdate = (channel, payload) => {
+        BrowserWindow.getAllWindows().forEach((win) => win.webContents.send(channel, payload))
+    }
+
+    const downloadReleaseAsset = ({url: downloadUrl, version}) => {
+        if (!downloadUrl) return
+        if (releaseDownload) {
+            if (releaseDownload.downloaded) broadcastUpdate('update:downloaded', {version: releaseDownload.version})
+            return
+        }
+        const filePath = path.join(app.getPath('temp'), `time-letter-setup-${version || 'latest'}.exe`)
+        const request = net.request({url: downloadUrl, method: 'GET'})
+        let received = 0
+        let total = 0
+        let lastTime = Date.now()
+        let lastBytes = 0
+        let fileStream = null
+        const fail = (message) => {
+            request.abort()
+            try { fileStream?.close() } catch { }
+            fs.unlink(filePath, () => { })
+            releaseDownload = null
+            broadcastUpdate('update:error', {message})
+        }
+        request.setHeader('User-Agent', 'time-letter')
+        request.on('response', (response) => {
+            if (response.statusCode !== 200) {
+                fail(`download failed: HTTP ${response.statusCode}`)
+                return
+            }
+            total = Number(response.headers['content-length'] || 0)
+            fileStream = fs.createWriteStream(filePath)
+            response.on('data', (chunk) => {
+                received += chunk.length
+                fileStream.write(chunk)
+                // 进度按 500ms 节流广播，速度为该窗口内的平均字节速率
+                const now = Date.now()
+                if (now - lastTime >= 500) {
+                    broadcastUpdate('update:progress', {
+                        percent: total ? Math.round(received / total * 100) : 0,
+                        speed: Math.round((received - lastBytes) / ((now - lastTime) / 1000)),
+                    })
+                    lastTime = now
+                    lastBytes = received
+                }
+            })
+            response.on('end', () => {
+                fileStream.end(() => {
+                    releaseDownload = {filePath, version, downloaded: true}
+                    broadcastUpdate('update:downloaded', {version})
+                })
+            })
+            response.on('error', () => fail('download interrupted'))
+        })
+        request.on('error', (error) => fail(String(error?.message || error)))
+        request.end()
+        releaseDownload = {filePath, version, downloaded: false}
+    }
+
+    ipcMain.on('update:download-release', (event, payload) => downloadReleaseAsset(payload || {}))
+
+    ipcMain.on('update:install-release', () => {
+        if (!releaseDownload?.downloaded) return
+        // NSIS 静默安装（electron-builder 安装包 /S），detached 脱离本进程后退出应用
+        require('child_process').spawn(releaseDownload.filePath, ['/S'], {detached: true, stdio: 'ignore'}).unref()
+        app.quit()
     })
 
     // ---------- 自绘窗口控制（无边框窗口由渲染进程顶部工具栏驱动） ----------
