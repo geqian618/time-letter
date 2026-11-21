@@ -845,6 +845,27 @@ const handleVisibleChange = (visible) => {
 }
 
 
+// ← / → 方向键切换上一张 / 下一张照片（复用底部导航按钮的节流切换）。
+// 焦点在输入框 / 富文本 / 弹窗（el-overlay）内、或画布正在编辑文字时不劫持按键
+const handleArrowKeyNavigation = (event) => {
+  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+  const target = event.target instanceof Element ? event.target : event.currentTarget
+  if (target.closest?.('input, textarea, select')) return
+  if (target.isContentEditable || target.closest?.('[contenteditable="true"]')) return
+  if (target.closest?.('.el-overlay')) return
+  if (canvasesStore.getCanvasEditor()?.isEditing) return
+  if (!CanvasManager.getSelectedPath()) return
+  event.preventDefault()
+  if (event.key === 'ArrowLeft') {
+    switchPrevPreviewElement()
+  } else {
+    switchNextPreviewElement()
+  }
+}
+
+// ← / → 切换照片
+useEventListener(document, 'keydown', handleArrowKeyNavigation)
+
 // Ctrl + A 全选预览图
 useEventListener(document, 'keydown', handleSelectAllPreviewElements)
 
