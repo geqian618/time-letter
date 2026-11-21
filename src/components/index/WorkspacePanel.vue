@@ -133,14 +133,17 @@ const zoomOptions = {
 // 缩放百分比预设档位（与底部预览栏的下拉预设保持一致）
 const ZOOM_STEPS = [10, 25, 50, 75, 100, 150, 200, 300, 500]
 
-const zoomPct = ref(100)
+// 空状态占位值：显示设置中的全局默认缩放（无画布可读时胶囊暂无数值可测）
+const defaultZoomPct = () => Math.round((settingsStore.projectSettings.others.defaultGlobalCanvasScale || 1) * 100)
+
+const zoomPct = ref(defaultZoomPct())
 
 // 从当前画布读取缩放百分比（相对 initZoom，100% 即适配工作区的尺寸）
 const refreshZoom = () => {
   const canvas = CanvasManager.getCurrentCanvas()
   zoomPct.value = canvas && canvas.initZoom && canvas.zoom
       ? Math.round(canvas.zoom / canvas.initZoom * 100)
-      : 100
+      : defaultZoomPct()
 }
 
 // 应用缩放百分比
@@ -760,7 +763,7 @@ const clearCanvas = () => {
   CanvasManager.setSelectedObject({path: '', previewElement: null})
   canvasEditor.clearCanvas();
   backgroundCanvasEditor.clearCanvas()
-  zoomPct.value = 100
+  zoomPct.value = defaultZoomPct()
   // 删除的是当前显示的照片：右侧属性面板一并回到默认值，不残留已删照片的参数
   canvasesStore.borderOptions = new BorderOptions()
   canvasesStore.photographOptions = new PhotographOptions()
